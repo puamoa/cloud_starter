@@ -86,7 +86,7 @@ export const curriculum: WeekCurriculum[] = [
       {
         session: 1,
         type: 'lab',
-        title: 'Amazon VPC 생성과 서브넷·IGW·라우팅 테이블 구성',
+        title: 'VPC 생성과 서브넷·IGW·라우팅 구성',
         hasContent: true,
         markdownPath: '/content/step1-vpc/1-1-vpc-subnet-igw-rt.md',
         description:
@@ -161,7 +161,7 @@ export const curriculum: WeekCurriculum[] = [
       {
         session: 3,
         type: 'lab',
-        title: 'Amazon EC2에 Spring Boot JAR 배포 및 서비스 등록',
+        title: 'EC2에 Spring Boot 배포 및 서비스 등록',
         hasContent: true,
         markdownPath: '/content/step2-ec2/2-3-ec2-spring.md',
         description:
@@ -223,7 +223,7 @@ export const curriculum: WeekCurriculum[] = [
       {
         session: 1,
         type: 'lab',
-        title: 'Amazon RDS용 DB Subnet Group 생성 및 배치 전략',
+        title: 'RDS Subnet Group 생성 및 배치 전략',
         hasContent: true,
         markdownPath: '/content/step4-rds/4-1-subnet-group.md',
         description:
@@ -234,7 +234,7 @@ export const curriculum: WeekCurriculum[] = [
       {
         session: 2,
         type: 'lab',
-        title: 'Amazon RDS Parameter Group (시간대·Connection 설정)',
+        title: 'RDS Parameter Group 설정',
         hasContent: true,
         markdownPath: '/content/step4-rds/4-2-rds-parameter.md',
         description:
@@ -276,7 +276,7 @@ export const curriculum: WeekCurriculum[] = [
       {
         session: 2,
         type: 'lab',
-        title: 'Spring Boot에서 Amazon S3 파일 업로드 구현',
+        title: 'Spring Boot S3 파일 업로드 구현',
         hasContent: true,
         markdownPath: '/content/step5-s3/5-2-spring-s3-integration.md',
         description: 'AWS SDK 설정, MultipartFile 업로드, Presigned URL 생성',
@@ -516,7 +516,7 @@ export const curriculum: WeekCurriculum[] = [
       {
         session: 2,
         type: 'lab',
-        title: 'AWS Lambda + Amazon API Gateway + Amazon DynamoDB 서버리스 API',
+        title: 'Lambda + API Gateway + DynamoDB 서버리스 API',
         hasContent: true,
         markdownPath: '/content/step10-serverless/9-2-lambda-api-dynamodb.md',
         description:
@@ -547,7 +547,7 @@ export const curriculum: WeekCurriculum[] = [
       {
         session: 1,
         type: 'lab',
-        title: 'Amazon Bedrock Playground에서 프롬프트 엔지니어링 체험',
+        title: 'Bedrock Playground 프롬프트 엔지니어링',
         hasContent: true,
         markdownPath: '/content/step11-bedrock/10-1-bedrock-playground.md',
         description:

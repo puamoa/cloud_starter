@@ -87,3 +87,21 @@ div[class*='awsui'][class*='drawer'][class*='tools'] {
     max-width: 320px !important;
   }
 }
+
+/* 사이드바 링크 텍스트 - 두 번째 줄 들여쓰기 */
+[class*='awsui_link-text'] {
+  padding-left: 1.2em !important;
+  text-indent: -1.2em !important;
+  display: inline-block !important;
+}
+
+/* 브레드크럼 수직 정렬 보정 */
+.breadcrumb-container [class*='awsui_breadcrumb'] {
+  display: flex !important;
+  align-items: center !important;
+}
+
+.breadcrumb-container [class*='awsui_icon'] {
+  display: flex !important;
+  align-items: center !important;
+}

@@ -267,7 +267,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
                   : []),
                 {
                   type: 'button' as const,
-                  iconName: 'status-info' as const,
+                  iconName: 'search' as const,
                   text: isMobile ? undefined : '목차 및 용어 사전',
                   onClick: () => setToolsOpen(!toolsOpen),
                   ariaLabel: '목차 및 용어 사전 열기',

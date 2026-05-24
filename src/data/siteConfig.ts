@@ -6,7 +6,7 @@ export const siteConfig = {
   // 과정명
   courseName: '실습 가이드',
   // 부제
-  semester: 'Step by Step',
+  semester: '',
   // 작성자
   professor: '',
   // 영문명 (홈 배지용)

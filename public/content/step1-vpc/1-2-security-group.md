@@ -146,7 +146,8 @@ estimatedCost: 무료 리소스 (Security Group은 항상 무료)
 22. [[Create security group]] 버튼을 클릭합니다.
 
 > [!OUTPUT]
-> RDS Security Group이 생성됩니다. Inbound rules에서 Source가 `sg-xxxxxxxx` (my-ec2-sg의 ID)로 표시되는지 확인합니다.
+> RDS Security Group이 생성됩니다.
+> Inbound rules에서 Source가 sg-xxxxxxxx (my-ec2-sg의 ID)로 표시되는지 확인합니다.
 
 ✅ **태스크 완료**: RDS용 Security Group(`my-rds-sg`)이 생성되었습니다.
 

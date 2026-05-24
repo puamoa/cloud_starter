@@ -253,8 +253,8 @@ EC2 인스턴스 타입을 추천해주세요.
 >
 > - ✅ EC2 사용 (Step 2)
 > - ✅ RDS 사용 (Step 4)
-> - ✅ Lambda 사용 (Step 9)
-> - ✅ Bedrock 사용 (Step 10 - 이 실습)
+> - ✅ Lambda 사용 (Step 10)
+> - ✅ Bedrock 사용 (Step 11 - 이 실습)
 > - ✅ Budgets 설정 (Step 0)
 >
 > 추가 $100 크레딧 전액을 받을 수 있습니다.

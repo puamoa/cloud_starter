@@ -280,8 +280,12 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
             .trim();
         };
 
-        // 들여쓰기 정규화
-        const normalizedCode = normalizeIndentation(codeContent);
+        // 들여쓰기 정규화 (언어가 지정된 코드 블록에만 적용)
+        // plaintext(언어 미지정)는 ASCII 아트 등 의도적 공백이 있으므로 들여쓰기 제거하지 않음
+        const normalizedCode =
+          language !== 'plaintext'
+            ? normalizeIndentation(codeContent)
+            : codeContent.replace(/^\n+|\n+$/g, '');
 
         // 언어별 하이라이터 매핑 (더 많은 언어 지원)
         switch (language) {

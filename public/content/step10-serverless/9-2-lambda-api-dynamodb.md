@@ -13,7 +13,7 @@ learningObjectives:
   - EC2 기반 API와 서버리스 API의 차이를 비교할 수 있습니다.
 prerequisites:
   - AWS 계정 생성 완료
-  - DynamoDB 테이블 생성 완료 (Step 9-1 참조, 또는 이 실습에서 생성)
+  - DynamoDB 테이블 생성 완료 (Step 10-1 참조, 또는 이 실습에서 생성)
 estimatedCost: 항상 무료 (Lambda·API Gateway·DynamoDB 모두 무료 티어 포함)
 ---
 
@@ -22,7 +22,7 @@ estimatedCost: 항상 무료 (Lambda·API Gateway·DynamoDB 모두 무료 티어
 API Gateway를 통해 외부에서 호출할 수 있는 CRUD API를 배포합니다.
 
 > [!NOTE]
-> 이 실습은 Step 9-1에서 생성한 `Items` 테이블을 사용합니다.
+> 이 실습은 Step 10-1에서 생성한 `Items` 테이블을 사용합니다.
 > 테이블이 없다면 태스크 0에서 생성합니다.
 
 ---

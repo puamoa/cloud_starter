@@ -1,11 +1,11 @@
 /* Alert 내부 콘텐츠 레이아웃 강제 */
-.info-box-content>div {
+.info-box-content > div {
   display: block !important;
   width: 100% !important;
   font-size: 14px !important;
 }
 
-.info-box-content>div>div {
+.info-box-content > div > div {
   display: block !important;
   width: 100% !important;
   margin-bottom: 0.5rem !important;
@@ -35,36 +35,36 @@
 
 /* 아이콘 색상을 박스 테두리 색상과 일치 */
 .info-box--note .info-box-icon svg {
-  fill: #8c4fff;
+  fill: #3b82f6;
 }
 
 .info-box--warning .info-box-icon svg {
-  fill: #ff9900;
+  fill: #dc2626;
 }
 
 .info-box--tip .info-box-icon svg,
 .info-box--success .info-box-icon svg {
-  fill: #01a88d;
+  fill: #10b981;
 }
 
 .info-box--error .info-box-icon svg {
-  fill: #dd344c;
+  fill: #ef4444;
 }
 
 .info-box--output .info-box-icon svg {
-  fill: #64748b;
+  fill: #ca8a04;
 }
 
 .info-box--cost .info-box-icon svg {
-  fill: #64748b;
+  fill: #475569;
 }
 
 .info-box--important .info-box-icon svg {
-  fill: #8c4fff;
+  fill: #6366f1;
 }
 
 .info-box--troubleshooting .info-box-icon svg {
-  fill: #ff9900;
+  fill: #f59e0b;
 }
 
 .info-box-content {
@@ -78,13 +78,13 @@
   max-width: 100%;
 }
 
-.info-box-content>div {
+.info-box-content > div {
   word-break: break-word;
   overflow-wrap: break-word;
 }
 
 /* 헤더 strong만 block으로 표시 */
-.info-box-content>strong {
+.info-box-content > strong {
   font-weight: 600;
   display: block;
   margin-bottom: 8px;
@@ -183,65 +183,59 @@
   background-color: rgba(255, 255, 255, 0.05);
 }
 
-/* 타입별 스타일 - AWS 배지 색상 기반 (alpha 투명도 적용) */
+/* 타입별 스타일 - 모던 색상 체계 */
 .info-box--note {
-  background-color: #f3f0ff;
-  /* AWS Networking 보라색 기반 - 라이트모드에서 명확하게 보이도록 */
-  border-color: rgba(140, 79, 255, 0.6);
+  background-color: rgba(59, 130, 246, 0.06);
+  border-color: rgba(59, 130, 246, 0.4);
 }
 
 .info-box--note .info-box-icon {
-  color: #8c4fff;
+  color: #3b82f6;
 }
 
 .info-box--warning {
-  background-color: rgba(255, 153, 0, 0.05);
-  /* AWS 오렌지 기반 */
-  border-color: rgba(255, 153, 0, 0.3);
+  background-color: rgba(220, 38, 38, 0.06);
+  border-color: rgba(220, 38, 38, 0.4);
 }
 
 .info-box--warning .info-box-icon {
-  color: #ff9900;
+  color: #dc2626;
 }
 
 .info-box--tip {
-  background-color: rgba(1, 168, 141, 0.05);
-  /* AWS SageMaker 청록색 기반 */
-  border-color: rgba(1, 168, 141, 0.3);
+  background-color: rgba(16, 185, 129, 0.06);
+  border-color: rgba(16, 185, 129, 0.4);
 }
 
 .info-box--tip .info-box-icon {
-  color: #01a88d;
+  color: #10b981;
 }
 
 .info-box--success {
-  background-color: rgba(1, 168, 141, 0.05);
-  /* AWS SageMaker 청록색 기반 */
-  border-color: rgba(1, 168, 141, 0.3);
+  background-color: rgba(16, 185, 129, 0.06);
+  border-color: rgba(16, 185, 129, 0.4);
 }
 
 .info-box--success .info-box-icon {
-  color: #01a88d;
+  color: #10b981;
 }
 
 .info-box--error {
-  background-color: rgba(221, 52, 76, 0.05);
-  /* AWS Security 빨간색 기반 */
-  border-color: rgba(221, 52, 76, 0.3);
+  background-color: rgba(239, 68, 68, 0.06);
+  border-color: rgba(239, 68, 68, 0.4);
 }
 
 .info-box--error .info-box-icon {
-  color: #dd344c;
+  color: #ef4444;
 }
 
 .info-box--output {
-  background-color: rgba(100, 116, 139, 0.04);
-  /* 회색 기반 */
-  border-color: rgba(100, 116, 139, 0.3);
+  background-color: #fefdf0;
+  border-color: #fde047;
 }
 
 .info-box--output .info-box-icon {
-  color: #64748b;
+  color: #ca8a04;
 }
 
 /* OUTPUT 블록 안의 CodeView 오버플로우 처리 */
@@ -266,100 +260,106 @@
 }
 
 .info-box--cost {
-  background-color: rgba(100, 116, 139, 0.06);
-  /* 연한 회색 - 중립적이고 튀지 않는 참고 정보 */
-  border-color: rgba(100, 116, 139, 0.25);
+  background-color: rgba(71, 85, 105, 0.04);
+  border-color: rgba(71, 85, 105, 0.25);
 }
 
 .info-box--cost .info-box-icon {
-  color: #64748b;
+  color: #475569;
 }
 
 .info-box--important {
-  background-color: #f3f0ff;
-  /* AWS 보라색 기반 - 중요 정보, 라이트모드에서 명확하게 보이도록 */
-  border-color: rgba(140, 79, 255, 0.6);
+  background-color: rgba(99, 102, 241, 0.06);
+  border-color: rgba(99, 102, 241, 0.4);
 }
 
 .info-box--important .info-box-icon {
-  color: #8c4fff;
+  color: #6366f1;
 }
 
 .info-box--troubleshooting {
-  background-color: rgba(255, 153, 0, 0.05);
-  /* AWS 오렌지 기반 - 문제 해결 */
-  border-color: rgba(255, 153, 0, 0.3);
+  background-color: rgba(245, 158, 11, 0.06);
+  border-color: rgba(245, 158, 11, 0.4);
 }
 
 .info-box--troubleshooting .info-box-icon {
-  color: #ff9900;
+  color: #f59e0b;
 }
 
-/* 다크모드 지원 - AWS 색상 기반 */
+/* 다크모드 지원 - 모던 색상 체계 */
 [data-awsui-theme='dark'] .info-box--note {
-  background-color: rgba(140, 79, 255, 0.08);
-  border-color: rgba(167, 139, 250, 0.4);
+  background-color: rgba(59, 130, 246, 0.1);
+  border-color: rgba(96, 165, 250, 0.4);
 }
 
 [data-awsui-theme='dark'] .info-box--note .info-box-icon {
-  color: #a78bfa;
+  color: #60a5fa;
 }
 
 [data-awsui-theme='dark'] .info-box--warning {
-  background-color: rgba(255, 153, 0, 0.08);
-  border-color: rgba(255, 184, 77, 0.4);
+  background-color: rgba(220, 38, 38, 0.1);
+  border-color: rgba(248, 113, 113, 0.4);
 }
 
 [data-awsui-theme='dark'] .info-box--warning .info-box-icon {
-  color: #ffb84d;
+  color: #f87171;
 }
 
 [data-awsui-theme='dark'] .info-box--tip {
-  background-color: rgba(1, 168, 141, 0.08);
-  border-color: rgba(31, 201, 168, 0.4);
+  background-color: rgba(16, 185, 129, 0.1);
+  border-color: rgba(52, 211, 153, 0.4);
 }
 
 [data-awsui-theme='dark'] .info-box--tip .info-box-icon {
-  color: #1fc9a8;
+  color: #34d399;
 }
 
 [data-awsui-theme='dark'] .info-box--success {
-  background-color: rgba(1, 168, 141, 0.08);
-  border-color: rgba(31, 201, 168, 0.4);
+  background-color: rgba(16, 185, 129, 0.1);
+  border-color: rgba(52, 211, 153, 0.4);
 }
 
 [data-awsui-theme='dark'] .info-box--success .info-box-icon {
-  color: #1fc9a8;
+  color: #34d399;
 }
 
 [data-awsui-theme='dark'] .info-box--error {
-  background-color: rgba(221, 52, 76, 0.08);
-  border-color: rgba(239, 107, 130, 0.4);
+  background-color: rgba(239, 68, 68, 0.1);
+  border-color: rgba(248, 113, 113, 0.4);
 }
 
 [data-awsui-theme='dark'] .info-box--error .info-box-icon {
-  color: #ef6b82;
+  color: #f87171;
 }
 
 [data-awsui-theme='dark'] .info-box--note .info-box-icon svg {
-  fill: #a78bfa;
+  fill: #60a5fa;
 }
 
 [data-awsui-theme='dark'] .info-box--warning .info-box-icon svg {
-  fill: #ffb84d;
+  fill: #f87171;
 }
 
 [data-awsui-theme='dark'] .info-box--tip .info-box-icon svg,
 [data-awsui-theme='dark'] .info-box--success .info-box-icon svg {
-  fill: #1fc9a8;
+  fill: #34d399;
 }
 
 [data-awsui-theme='dark'] .info-box--error .info-box-icon svg {
-  fill: #ef6b82;
+  fill: #f87171;
 }
 
 [data-awsui-theme='dark'] .info-box--output .info-box-icon svg {
-  fill: #94a3b8;
+  fill: #d4d4d8;
+}
+
+[data-awsui-theme='dark'] .info-box--output {
+  background-color: rgba(63, 63, 70, 0.3);
+  border-color: rgba(113, 113, 122, 0.4);
+}
+
+[data-awsui-theme='dark'] .info-box--output .info-box-icon {
+  color: #d4d4d8;
 }
 
 [data-awsui-theme='dark'] .info-box--cost {
@@ -376,29 +376,29 @@
 }
 
 [data-awsui-theme='dark'] .info-box--important {
-  background-color: rgba(140, 79, 255, 0.08);
-  border-color: rgba(167, 139, 250, 0.4);
+  background-color: rgba(99, 102, 241, 0.1);
+  border-color: rgba(129, 140, 248, 0.4);
 }
 
 [data-awsui-theme='dark'] .info-box--important .info-box-icon {
-  color: #a78bfa;
+  color: #818cf8;
 }
 
 [data-awsui-theme='dark'] .info-box--important .info-box-icon svg {
-  fill: #a78bfa;
+  fill: #818cf8;
 }
 
 [data-awsui-theme='dark'] .info-box--troubleshooting {
-  background-color: rgba(255, 153, 0, 0.08);
-  border-color: rgba(255, 184, 77, 0.4);
+  background-color: rgba(245, 158, 11, 0.1);
+  border-color: rgba(251, 191, 36, 0.4);
 }
 
 [data-awsui-theme='dark'] .info-box--troubleshooting .info-box-icon {
-  color: #ffb84d;
+  color: #fbbf24;
 }
 
 [data-awsui-theme='dark'] .info-box--troubleshooting .info-box-icon svg {
-  fill: #ffb84d;
+  fill: #fbbf24;
 }
 
 /* CONCEPT Alert 스타일 - 데모 가이드 전용 */
@@ -577,7 +577,7 @@
   border: 2px solid #232f3e;
   border-radius: 12px;
   background: linear-gradient(to bottom, #f7f8f9, #eceef1);
-  box-shadow: 0 4px 16px rgba(35, 47, 62, 0.10);
+  box-shadow: 0 4px 16px rgba(35, 47, 62, 0.1);
   overflow: hidden;
 }
 
@@ -609,7 +609,9 @@
   display: block;
   border-radius: 8px;
   cursor: zoom-in;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .architecture-box-content img:hover {
@@ -650,7 +652,7 @@
   .architecture-box-content {
     padding: 16px;
   }
-  
+
   .architecture-box-content img {
     max-width: 100%;
   }
@@ -753,12 +755,12 @@
     max-height: 80vh;
     padding: 12px;
   }
-  
+
   .image-zoom-close {
     top: -35px;
     font-size: 28px;
   }
-  
+
   .image-zoom-title {
     font-size: 0.85rem;
     padding: 6px 12px;
