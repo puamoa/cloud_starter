@@ -1,0 +1,18 @@
+/* AWS 버튼 공통 스타일 */
+.aws-button-orange,
+.aws-button-blue {
+    display: inline-block !important;
+    vertical-align: baseline !important;
+    font-size: 0.875rem !important;
+    padding: 2px 8px !important;
+    min-height: auto !important;
+    line-height: 1.5 !important;
+    border-radius: 20px !important;
+}
+
+/* large 크기 버튼 스타일 */
+.aws-button-large {
+    min-width: 120px;
+    font-size: 1rem !important;
+    padding: 8px 24px !important;
+}

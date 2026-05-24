@@ -1,0 +1,686 @@
+---
+title: 'GitHub Actions로 Amazon EC2 자동 배포 구축'
+week: 8
+session: 1
+awsServices:
+  - Amazon EC2
+  - Amazon RDS
+learningObjectives:
+  - GitHub Actions 워크플로우 YAML을 작성할 수 있습니다.
+  - GitHub Secrets에 민감 정보를 안전하게 저장할 수 있습니다.
+  - SSH를 통한 EC2 자동 배포 파이프라인을 구축할 수 있습니다.
+  - Spring Boot + Vue.js 프로젝트의 CI/CD를 구성할 수 있습니다.
+prerequisites:
+  - GitHub 계정 및 리포지토리
+  - EC2 인스턴스 실행 중 (SSH 접속 가능)
+  - Spring Boot 또는 Vue.js 프로젝트
+estimatedCost: 프리티어 (GitHub Actions Public 리포 무료, Private 월 2000분 무료)
+---
+
+이 실습에서는 GitHub Actions를 사용하여 코드를 push하면 자동으로 빌드하고
+EC2에 배포하는 CI/CD 파이프라인을 구축합니다. Spring Boot 백엔드와 Vue.js
+프론트엔드 각각의 배포 워크플로우를 작성합니다.
+
+> [!NOTE]
+> 이 실습에는 EC2 인스턴스(SSH 접속 가능)와 GitHub 리포지토리가 필요합니다.
+> EC2가 없다면 Step 2를 참조하여 인스턴스를 먼저 생성하세요.
+
+---
+
+## 태스크 1: GitHub Actions 개념 이해
+
+### CI/CD란?
+
+| 용어                            | 의미                          | 예시                      |
+| ------------------------------- | ----------------------------- | ------------------------- |
+| **CI** (Continuous Integration) | 코드 변경 시 자동 빌드/테스트 | push → 빌드 → 테스트 실행 |
+| **CD** (Continuous Delivery)    | 빌드 결과물을 자동 배포       | 테스트 통과 → EC2에 배포  |
+
+### GitHub Actions 핵심 구성 요소
+
+```
+Workflow (워크플로우)
+├── Event (이벤트/트리거): push, pull_request, schedule 등
+├── Job (잡): 독립적인 실행 단위
+│   ├── runs-on: 실행 환경 (ubuntu-latest 등)
+│   └── Steps (스텝): 순차 실행되는 작업들
+│       ├── uses: 미리 만들어진 Action 사용
+│       └── run: 직접 명령어 실행
+```
+
+> [!CONCEPT] GitHub Actions의 동작 방식
+>
+> 1. `.github/workflows/` 디렉토리에 YAML 파일을 작성합니다.
+> 2. 지정한 이벤트(push, PR 등)가 발생하면 워크플로우가 자동 실행됩니다.
+> 3. GitHub이 제공하는 가상 머신(Runner)에서 스텝이 순차적으로 실행됩니다.
+> 4. 모든 스텝이 성공하면 워크플로우가 완료됩니다.
+>
+> Public 리포지토리는 무료, Private 리포지토리는 월 2,000분 무료입니다.
+
+### 워크플로우 파일 위치
+
+```
+프로젝트 루트/
+├── .github/
+│   └── workflows/
+│       ├── deploy-backend.yml    ← Spring Boot 배포
+│       └── deploy-frontend.yml   ← Vue.js 배포
+├── src/
+├── build.gradle
+└── ...
+```
+
+✅ **태스크 완료** — GitHub Actions의 핵심 개념(워크플로우, 잡, 스텝, 트리거)을 이해했습니다.
+
+---
+
+## 태스크 2: GitHub Secrets 설정
+
+배포에 필요한 민감 정보(SSH 키, 비밀번호 등)를 GitHub Secrets에 저장합니다.
+
+### Secrets 설정 단계
+
+1. GitHub에서 리포지토리 페이지로 이동합니다.
+2. **Settings** 탭을 클릭합니다.
+3. 왼쪽 메뉴에서 **Secrets and variables** → **Actions**를 클릭합니다.
+4. [[New repository secret]]을 클릭합니다.
+
+### 필요한 Secrets 목록
+
+다음 Secrets를 하나씩 추가합니다:
+
+| Secret Name   | 값                        | 설명                      |
+| ------------- | ------------------------- | ------------------------- |
+| `EC2_HOST`    | `3.35.xxx.xxx`            | EC2 Public IP 또는 도메인 |
+| `EC2_USER`    | `ec2-user`                | SSH 접속 사용자명         |
+| `EC2_KEY`     | SSH Private Key 전체 내용 | `.pem` 파일 내용          |
+| `DB_URL`      | `jdbc:mysql://...`        | RDS 엔드포인트 (선택)     |
+| `DB_PASSWORD` | DB 비밀번호               | RDS 비밀번호 (선택)       |
+
+### EC2_KEY 등록 방법
+
+5. **Name**: `EC2_KEY`
+6. **Secret**: `.pem` 파일의 전체 내용을 붙여넣습니다.
+
+```bash
+# .pem 파일 내용 확인 (macOS/Linux)
+cat ~/.ssh/my-key.pem
+```
+
+> [!WARNING]
+> SSH Private Key를 붙여넣을 때 주의사항:
+>
+> - `-----BEGIN RSA PRIVATE KEY-----`부터 `-----END RSA PRIVATE KEY-----`까지 **전체**를 복사합니다.
+> - 앞뒤 공백이나 빈 줄이 없어야 합니다.
+> - 키 형식이 올바르지 않으면 SSH 접속이 실패합니다.
+
+### EC2_HOST 등록
+
+7. [[New repository secret]]을 다시 클릭합니다.
+8. **Name**: `EC2_HOST`
+9. **Secret**: EC2 인스턴스의 Public IP (예: `3.35.123.456`)
+
+> [!TIP]
+> EC2에 Elastic IP를 할당하면 인스턴스를 재시작해도 IP가 변경되지 않습니다.
+> Elastic IP 없이 사용하면 인스턴스 재시작 시 IP가 바뀌어 Secret을 업데이트해야 합니다.
+
+나머지 Secrets(`EC2_USER`, `DB_URL`, `DB_PASSWORD`)도 같은 방식으로 추가합니다.
+
+✅ **태스크 완료** — GitHub Secrets에 배포에 필요한 민감 정보를 저장했습니다.
+
+---
+
+## 태스크 3: Spring Boot 배포 워크플로우 작성
+
+`main` 브랜치에 push하면 자동으로 빌드하고 EC2에 배포하는 워크플로우를 작성합니다.
+
+### 워크플로우 파일 생성
+
+프로젝트 루트에 `.github/workflows/deploy-backend.yml` 파일을 생성합니다:
+
+```yaml
+# .github/workflows/deploy-backend.yml
+name: Deploy Spring Boot to EC2
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'build.gradle'
+      - 'settings.gradle'
+      - '.github/workflows/deploy-backend.yml'
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. 소스 코드 체크아웃
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      # 2. JDK 17 설정
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'corretto'
+
+      # 3. Gradle 캐시 (빌드 속도 향상)
+      - name: Cache Gradle packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      # 4. Gradle 빌드 (테스트 포함)
+      - name: Build with Gradle
+        run: |
+          chmod +x ./gradlew
+          ./gradlew clean bootJar
+
+      # 5. JAR 파일을 EC2로 전송
+      - name: Copy JAR to EC2
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_KEY }}
+          source: 'build/libs/*.jar'
+          target: '/home/ec2-user/app/'
+          strip_components: 2
+
+      # 6. EC2에서 애플리케이션 재시작
+      - name: Restart application on EC2
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_KEY }}
+          script: |
+            echo "=== 배포 시작: $(date) ==="
+
+            # 기존 프로세스 종료
+            sudo systemctl stop spring-app || true
+            sleep 2
+
+            # 새 JAR 파일로 교체
+            cd /home/ec2-user/app
+            JAR_FILE=$(ls -t *.jar | head -1)
+            echo "배포할 JAR: $JAR_FILE"
+
+            # 애플리케이션 시작
+            sudo systemctl start spring-app
+            sleep 10
+
+            # Health Check
+            echo "=== Health Check ==="
+            curl -f http://localhost:8080/actuator/health || exit 1
+            echo ""
+            echo "=== 배포 완료: $(date) ==="
+```
+
+> [!CONCEPT] 워크플로우 주요 설정 설명
+>
+> - `on.push.paths`: 특정 파일이 변경될 때만 워크플로우를 실행합니다. README만 수정했을 때 불필요한 배포를 방지합니다.
+> - `actions/cache`: Gradle 의존성을 캐시하여 빌드 시간을 단축합니다 (첫 빌드 3분 → 이후 1분).
+> - `appleboy/scp-action`: SSH를 통해 파일을 EC2로 전송합니다.
+> - `appleboy/ssh-action`: SSH로 EC2에 접속하여 명령어를 실행합니다.
+
+### EC2에 systemd 서비스 등록 (사전 준비)
+
+EC2에서 Spring Boot를 systemd 서비스로 관리하려면 다음 파일을 생성합니다:
+
+```bash
+# EC2에 SSH 접속 후 실행
+sudo vi /etc/systemd/system/spring-app.service
+```
+
+```ini
+[Unit]
+Description=Spring Boot Application
+After=network.target
+
+[Service]
+User=ec2-user
+WorkingDirectory=/home/ec2-user/app
+ExecStart=/usr/bin/java -jar /home/ec2-user/app/app.jar \
+  --spring.profiles.active=prod
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
+```
+
+```bash
+# 서비스 등록 및 활성화
+sudo systemctl daemon-reload
+sudo systemctl enable spring-app
+```
+
+✅ **태스크 완료** — Spring Boot 자동 배포 워크플로우를 작성했습니다.
+
+---
+
+## 태스크 4: Vue.js 배포 워크플로우 작성
+
+Vue.js 프론트엔드를 빌드하고 EC2의 Nginx 디렉토리에 배포합니다.
+
+### 워크플로우 파일 생성
+
+`.github/workflows/deploy-frontend.yml` 파일을 생성합니다:
+
+```yaml
+# .github/workflows/deploy-frontend.yml
+name: Deploy Vue.js to EC2
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'frontend/**'
+      - '.github/workflows/deploy-frontend.yml'
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. 소스 코드 체크아웃
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      # 2. Node.js 설정
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      # 3. 의존성 설치
+      - name: Install dependencies
+        working-directory: frontend
+        run: npm ci
+
+      # 4. 프로덕션 빌드
+      - name: Build for production
+        working-directory: frontend
+        run: npm run build
+        env:
+          VITE_API_URL: ${{ secrets.API_URL }}
+
+      # 5. 빌드 결과물을 EC2로 전송
+      - name: Deploy to EC2
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_KEY }}
+          source: 'frontend/dist/*'
+          target: '/home/ec2-user/frontend-deploy/'
+          strip_components: 2
+
+      # 6. Nginx 디렉토리에 복사 및 재시작
+      - name: Update Nginx and restart
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_KEY }}
+          script: |
+            echo "=== 프론트엔드 배포 시작: $(date) ==="
+
+            # 기존 파일 백업
+            sudo rm -rf /var/www/my-app/backup
+            sudo cp -r /var/www/my-app/html /var/www/my-app/backup 2>/dev/null || true
+
+            # 새 빌드 파일 복사
+            sudo rm -rf /var/www/my-app/html/*
+            sudo cp -r /home/ec2-user/frontend-deploy/* /var/www/my-app/html/
+
+            # Nginx 설정 테스트 및 재시작
+            sudo nginx -t && sudo systemctl reload nginx
+
+            echo "=== 프론트엔드 배포 완료: $(date) ==="
+```
+
+> [!TIP]
+> `npm ci`는 `npm install`과 달리 `package-lock.json`을 기반으로 정확한 버전을
+> 설치합니다. CI/CD 환경에서는 항상 `npm ci`를 사용하세요.
+> 빌드 결과물의 일관성을 보장합니다.
+
+### 환경 변수 주입
+
+Vue.js 빌드 시 API URL 등의 환경 변수를 주입할 수 있습니다:
+
+1. GitHub Secrets에 `API_URL` 추가: `https://api.yourdomain.com`
+2. 워크플로우에서 `env`로 전달: `VITE_API_URL: ${{ secrets.API_URL }}`
+3. Vue.js 코드에서 사용: `import.meta.env.VITE_API_URL`
+
+✅ **태스크 완료** — Vue.js 프론트엔드 자동 배포 워크플로우를 작성했습니다.
+
+---
+
+## 태스크 5: 배포 테스트
+
+작성한 워크플로우가 정상 동작하는지 테스트합니다.
+
+### 배포 트리거
+
+1. 코드를 수정합니다 (예: API 응답 메시지 변경).
+2. Git에 커밋하고 push합니다:
+
+```bash
+git add .
+git commit -m "feat: update API response message"
+git push origin main
+```
+
+### GitHub Actions 실행 확인
+
+3. GitHub 리포지토리 페이지에서 **Actions** 탭을 클릭합니다.
+4. 방금 트리거된 워크플로우를 클릭합니다.
+5. 각 스텝의 실행 상태를 확인합니다:
+   - ✅ 녹색 체크: 성공
+   - ❌ 빨간 X: 실패 (로그 확인 필요)
+   - 🟡 노란 원: 실행 중
+
+> [!OUTPUT]
+> 모든 스텝이 성공하면 워크플로우 옆에 ✅ 녹색 체크가 표시됩니다.
+> 전체 실행 시간은 보통 1~3분 정도 소요됩니다.
+
+### 배포 결과 확인
+
+6. 브라우저에서 서비스에 접속하여 변경사항이 반영되었는지 확인합니다:
+
+```bash
+# Spring Boot API 확인
+curl http://EC2_PUBLIC_IP:8080/actuator/health
+
+# 또는 도메인이 설정된 경우
+curl https://api.yourdomain.com/actuator/health
+```
+
+> [!OUTPUT]
+>
+> ```json
+> { "status": "UP" }
+> ```
+
+### 실패 시 디버깅
+
+워크플로우가 실패한 경우:
+
+1. Actions 탭에서 실패한 워크플로우를 클릭합니다.
+2. 실패한 스텝을 클릭하여 로그를 확인합니다.
+3. 일반적인 실패 원인:
+
+| 에러                            | 원인                       | 해결                        |
+| ------------------------------- | -------------------------- | --------------------------- |
+| `Permission denied (publickey)` | SSH 키가 잘못됨            | EC2_KEY Secret 재확인       |
+| `Connection timed out`          | EC2 IP 오류 또는 SG 미설정 | EC2_HOST 확인, 포트 22 열기 |
+| `Build failed`                  | 코드 컴파일 에러           | 로컬에서 빌드 테스트        |
+| `Health check failed`           | 앱 시작 실패               | EC2에서 로그 확인           |
+
+✅ **태스크 완료** — 배포를 트리거하고 결과를 확인했습니다.
+
+---
+
+## 태스크 6: 워크플로우 개선
+
+기본 워크플로우에 실용적인 기능을 추가합니다.
+
+### 6-1. Health Check 강화
+
+```yaml
+- name: Health Check with retry
+  uses: appleboy/ssh-action@v1
+  with:
+    host: ${{ secrets.EC2_HOST }}
+    username: ${{ secrets.EC2_USER }}
+    key: ${{ secrets.EC2_KEY }}
+    script: |
+      echo "Health Check 시작 (최대 30초 대기)..."
+      for i in $(seq 1 6); do
+        if curl -sf http://localhost:8080/actuator/health > /dev/null; then
+          echo "✅ Health Check 성공! (${i}번째 시도)"
+          exit 0
+        fi
+        echo "대기 중... (${i}/6)"
+        sleep 5
+      done
+      echo "❌ Health Check 실패!"
+      exit 1
+```
+
+### 6-2. 수동 배포 트리거 (workflow_dispatch)
+
+```yaml
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: # 수동 실행 버튼 추가
+    inputs:
+      environment:
+        description: '배포 환경'
+        required: true
+        default: 'prod'
+        type: choice
+        options:
+          - prod
+          - dev
+```
+
+> [!TIP]
+> `workflow_dispatch`를 추가하면 Actions 탭에서 [[Run workflow]] 버튼이 나타납니다.
+> 긴급 배포나 특정 환경에 수동 배포할 때 유용합니다.
+
+### 6-3. 배포 실패 시 Slack/Discord 알림
+
+```yaml
+# 워크플로우 마지막에 추가
+- name: Notify on failure
+  if: failure()
+  uses: appleboy/ssh-action@v1
+  with:
+    host: ${{ secrets.EC2_HOST }}
+    username: ${{ secrets.EC2_USER }}
+    key: ${{ secrets.EC2_KEY }}
+    script: |
+      # 이전 JAR로 롤백
+      echo "배포 실패! 이전 버전으로 롤백합니다..."
+      cd /home/ec2-user/app
+      if [ -f app.jar.backup ]; then
+        cp app.jar.backup app.jar
+        sudo systemctl restart spring-app
+        echo "롤백 완료"
+      fi
+```
+
+### 6-4. 배포 전 백업 추가
+
+```yaml
+- name: Backup current version
+  uses: appleboy/ssh-action@v1
+  with:
+    host: ${{ secrets.EC2_HOST }}
+    username: ${{ secrets.EC2_USER }}
+    key: ${{ secrets.EC2_KEY }}
+    script: |
+      cd /home/ec2-user/app
+      if [ -f app.jar ]; then
+        cp app.jar app.jar.backup
+        echo "현재 버전 백업 완료"
+      fi
+```
+
+✅ **태스크 완료** — Health Check, 수동 트리거, 롤백 기능을 추가했습니다.
+
+---
+
+## 태스크 7: 환경 분리 (dev/prod 브랜치별 배포)
+
+개발 환경과 프로덕션 환경을 분리하여 안전하게 배포합니다.
+
+### GitHub Environments 설정
+
+1. GitHub 리포지토리 → **Settings** → **Environments**
+2. [[New environment]]를 클릭합니다.
+3. **Name**: `production`을 입력하고 [[Configure environment]]를 클릭합니다.
+4. **Environment protection rules**:
+   - ✅ **Required reviewers**: 프로덕션 배포 전 승인 필요 (선택)
+   - ✅ **Wait timer**: 배포 전 대기 시간 설정 (선택)
+5. **Environment secrets**에 프로덕션 전용 Secrets를 추가합니다:
+   - `EC2_HOST`: 프로덕션 EC2 IP
+6. 같은 방식으로 `development` 환경도 생성합니다.
+
+### 브랜치별 배포 워크플로우
+
+```yaml
+# .github/workflows/deploy.yml
+name: Deploy Application
+
+on:
+  push:
+    branches:
+      - main # 프로덕션 배포
+      - develop # 개발 서버 배포
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: ${{ github.ref == 'refs/heads/main' && 'production' || 'development' }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'corretto'
+
+      - name: Build
+        run: |
+          chmod +x ./gradlew
+          ./gradlew clean bootJar
+
+      - name: Deploy
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_KEY }}
+          source: 'build/libs/*.jar'
+          target: '/home/ec2-user/app/'
+          strip_components: 2
+
+      - name: Restart
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_KEY }}
+          script: |
+            PROFILE=${{ github.ref == 'refs/heads/main' && 'prod' || 'dev' }}
+            echo "배포 환경: $PROFILE"
+            sudo systemctl restart spring-app
+```
+
+### 브랜치 전략
+
+```
+main (프로덕션)
+ ↑ PR (코드 리뷰 + 승인)
+develop (개발)
+ ↑ merge
+feature/xxx (기능 개발)
+```
+
+| 브랜치      | 배포 대상    | 자동/수동          | 승인 필요 |
+| ----------- | ------------ | ------------------ | --------- |
+| `main`      | 프로덕션 EC2 | 자동 (PR merge 시) | ✅ (선택) |
+| `develop`   | 개발 EC2     | 자동 (push 시)     | ❌        |
+| `feature/*` | 배포 안 함   | -                  | -         |
+
+> [!CONCEPT] GitHub Environments의 장점
+>
+> - 환경별로 다른 Secrets를 사용할 수 있습니다 (prod/dev EC2 IP 분리).
+> - 프로덕션 배포 전 승인(Required reviewers)을 강제할 수 있습니다.
+> - 배포 이력을 환경별로 추적할 수 있습니다.
+> - 대기 시간(Wait timer)을 설정하여 실수로 인한 즉시 배포를 방지할 수 있습니다.
+
+✅ **태스크 완료** — 브랜치별 환경 분리 배포를 구성했습니다.
+
+---
+
+# 🗑️ 리소스 정리
+
+> [!NOTE]
+> GitHub Actions는 Public 리포지토리에서 완전 무료이며, Private 리포지토리도 월 2,000분 무료입니다. 별도 비용이 발생하지 않습니다.
+
+---
+
+### 단계 1: 워크플로우 비활성화/삭제
+
+자동 배포를 중단하려면 워크플로우를 비활성화하거나 파일을 삭제합니다.
+
+**비활성화 (워크플로우 유지, 실행만 중단):**
+
+1. GitHub 리포지토리 → **Actions** 탭
+2. 왼쪽에서 비활성화할 워크플로우를 선택합니다.
+3. 우측 상단 `...` → [[Disable workflow]]
+
+**파일 삭제 (완전 제거):**
+
+```bash
+rm .github/workflows/deploy-backend.yml
+rm .github/workflows/deploy-frontend.yml
+git add .
+git commit -m "chore: remove deployment workflows"
+git push origin main
+```
+
+---
+
+### 단계 2: GitHub Secrets 삭제 (선택)
+
+1. GitHub 리포지토리 → **Settings** → **Secrets and variables** → **Actions**
+2. 각 Secret(`EC2_HOST`, `EC2_USER`, `EC2_KEY`, `DB_URL`, `DB_PASSWORD`) 옆의 🗑️ 아이콘을 클릭하여 삭제합니다.
+
+> [!NOTE]
+> Secrets는 무료이므로 유지해도 비용이 발생하지 않습니다. 보안상 더 이상 사용하지 않는 SSH 키는 삭제하는 것이 좋습니다.
+
+---
+
+### 단계 3: EC2 systemd 서비스 삭제 (선택)
+
+GitHub Actions로 배포한 서비스를 EC2에서 제거합니다.
+
+```bash
+# EC2에 SSH 접속 후 실행
+sudo systemctl stop spring-app
+sudo systemctl disable spring-app
+sudo rm /etc/systemd/system/spring-app.service
+sudo systemctl daemon-reload
+
+# 배포된 애플리케이션 파일 삭제
+rm -rf /home/ec2-user/app
+```
+
+---
+
+### 단계 4: 삭제 확인
+
+1. GitHub Actions 탭에서 워크플로우가 비활성화/삭제되었는지 확인합니다.
+2. EC2에서 `sudo systemctl status spring-app` 실행 시 "not found" 메시지가 표시되는지 확인합니다.
+
+✅ **실습 종료**: 모든 리소스가 정리되었습니다.

@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="AWS 기초 실습 가이드 - 단계별로 배우는 AWS 인프라 구축"
+    />
+
+    <!-- NexonLv1Gothic + GMarketSans 웹폰트 -->
+    <style>
+      @font-face {
+        font-family: 'NexonLv1Gothic';
+        src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_20-04@2.1/NEXON%20Lv1%20Gothic%20OTF.woff')
+          format('woff');
+        font-weight: normal;
+        font-display: swap;
+      }
+      @font-face {
+        font-family: 'GMarketSans';
+        src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2001@1.1/GmarketSansBold.woff')
+          format('woff');
+        font-weight: 700;
+        font-display: swap;
+      }
+    </style>
+
+    <title>AWS 기초 실습 가이드</title>
+    <script>
+      // Buffer polyfill을 가장 먼저 로드
+      window.global = window;
+
+      // GitHub Pages SPA 리다이렉트 복원
+      // 404.html에서 전달된 쿼리 파라미터를 읽어서 원래 경로로 복원
+      (function () {
+        var redirect = sessionStorage.redirect;
+        delete sessionStorage.redirect;
+        if (redirect && redirect !== location.href) {
+          history.replaceState(null, null, redirect);
+        }
+      })();
+
+      // 쿼리 파라미터 확인
+      (function () {
+        var l = window.location;
+        if (l.search) {
+          var q = {};
+          l.search
+            .slice(1)
+            .split('&')
+            .forEach(function (v) {
+              var a = v.split('=');
+              q[a[0]] = a.slice(1).join('=').replace(/~and~/g, '&');
+            });
+          if (q.p !== undefined) {
+            var path = q.p;
+            // 쿼리 파라미터 제거하고 원래 경로로 복원
+            history.replaceState(
+              null,
+              null,
+              l.pathname.slice(0, -1) + path + (q.q ? '?' + q.q : '') + l.hash,
+            );
+          }
+        }
+      })();
+    </script>
+  </head>
+
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
