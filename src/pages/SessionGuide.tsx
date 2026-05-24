@@ -136,6 +136,23 @@ const extractTasks = (content: string): string[] => {
   return tasks;
 };
 
+// 이론 콘텐츠에서 ## 섹션 제목 추출 (목차용)
+const extractSectionTitles = (content: string): string[] => {
+  const sectionRegex = /^##\s+(.+)$/gm;
+  const sections: string[] = [];
+  let match;
+
+  while ((match = sectionRegex.exec(content)) !== null) {
+    const title = match[1].trim();
+    // "학습 목표", "핵심 정리", "다음 단계" 같은 보조 섹션은 제외
+    if (!title.includes('학습 목표') && !title.includes('다음 단계')) {
+      sections.push(title);
+    }
+  }
+
+  return sections;
+};
+
 // 페이지 목차(TOC) 추출 인터페이스
 export interface TocItem {
   id: string;
@@ -282,7 +299,13 @@ export const SessionGuide: React.FC = () => {
           header={
             <Header variant="h2">
               <span className="session-section-title main-header">
-                📋 {sessionData.type === 'lab' ? '실습' : '데모'} 개요
+                📋{' '}
+                {sessionData.type === 'lab'
+                  ? '실습'
+                  : sessionData.type === 'theory'
+                    ? '이론'
+                    : '데모'}{' '}
+                개요
               </span>
             </Header>
           }
@@ -297,7 +320,13 @@ export const SessionGuide: React.FC = () => {
               <div key="learning-objectives-section">
                 <Box variant="h2" padding={{ bottom: 's' }}>
                   <span className="session-section-title sub-header">
-                    🎯 {sessionData.type === 'lab' ? '실습' : '데모'} 목표
+                    🎯{' '}
+                    {sessionData.type === 'lab'
+                      ? '실습'
+                      : sessionData.type === 'theory'
+                        ? '학습'
+                        : '데모'}{' '}
+                    목표
                   </span>
                 </Box>
                 {metadata?.learningObjectives &&
@@ -311,7 +340,11 @@ export const SessionGuide: React.FC = () => {
                   </ul>
                 ) : (
                   <div className="session-empty-message">
-                    학습 목표는 실습 가이드에서 확인하세요.
+                    학습 목표는{' '}
+                    {sessionData.type === 'theory'
+                      ? '이론 내용'
+                      : '실습 가이드'}
+                    에서 확인하세요.
                   </div>
                 )}
               </div>
@@ -319,20 +352,29 @@ export const SessionGuide: React.FC = () => {
               <div key="tasks-section">
                 <Box variant="h2" padding={{ bottom: 's' }}>
                   <span className="session-section-title sub-header">
-                    📋 주요 태스크
+                    📋{' '}
+                    {sessionData.type === 'theory'
+                      ? '학습 내용'
+                      : '주요 태스크'}
                   </span>
                 </Box>
-                {markdownContent && extractTasks(markdownContent).length > 0 ? (
+                {markdownContent &&
+                (sessionData.type === 'theory'
+                  ? extractSectionTitles(markdownContent).length > 0
+                  : extractTasks(markdownContent).length > 0) ? (
                   <ul className="session-tasks-list">
-                    {extractTasks(markdownContent).map(
-                      (task: string, index: number) => (
-                        <li key={`task-${index}`}>{task}</li>
-                      ),
-                    )}
+                    {(sessionData.type === 'theory'
+                      ? extractSectionTitles(markdownContent)
+                      : extractTasks(markdownContent)
+                    ).map((item: string, index: number) => (
+                      <li key={`task-${index}`}>{item}</li>
+                    ))}
                   </ul>
                 ) : (
                   <div className="session-empty-message">
-                    주요 태스크는 실습 가이드에서 확인하세요.
+                    {sessionData.type === 'theory'
+                      ? '학습 내용은 아래에서 확인하세요.'
+                      : '주요 태스크는 실습 가이드에서 확인하세요.'}
                   </div>
                 )}
               </div>
@@ -578,7 +620,9 @@ export const SessionGuide: React.FC = () => {
               <span className="guide-header-title">
                 {sessionData.type === 'demo'
                   ? '🎥 데모 가이드'
-                  : '🎯 실습 가이드'}
+                  : sessionData.type === 'theory'
+                    ? '📕 이론 내용'
+                    : '🎯 실습 가이드'}
               </span>
             </Header>
           }
@@ -588,7 +632,9 @@ export const SessionGuide: React.FC = () => {
               <Box variant="p" color="text-body-secondary">
                 {sessionData.type === 'demo'
                   ? '데모 가이드를'
-                  : '실습 가이드를'}{' '}
+                  : sessionData.type === 'theory'
+                    ? '이론 내용을'
+                    : '실습 가이드를'}{' '}
                 불러오는 중...
               </Box>
             </Box>

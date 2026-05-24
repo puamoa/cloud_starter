@@ -3,21 +3,17 @@ title: 'CI/CD 파이프라인 이론'
 week: 8
 session: 0
 type: theory
+learningObjectives:
+  - CI/CD의 정의와 각 단계의 역할을 설명할 수 있습니다.
+  - 빌드, 테스트, 배포 파이프라인 구조를 이해할 수 있습니다.
+  - 배포 전략(Rolling, Blue-Green, Canary)을 비교할 수 있습니다.
+  - 버전 관리 전략(Git Flow, GitHub Flow)을 이해할 수 있습니다.
+  - 환경 분리의 필요성과 구성을 설명할 수 있습니다.
+  - Infrastructure as Code 개념을 이해할 수 있습니다.
+  - GitOps 원칙을 설명할 수 있습니다.
 ---
 
 # CI/CD 파이프라인 이론
-
-## 학습 목표
-
-이 세션을 마치면 다음을 이해할 수 있습니다:
-
-- CI/CD의 정의와 각 단계의 역할
-- 빌드, 테스트, 배포 파이프라인 구조
-- 배포 전략 (Rolling, Blue-Green, Canary)
-- 버전 관리 전략 (Git Flow, GitHub Flow)
-- 환경 분리의 필요성과 구성
-- Infrastructure as Code 개념
-- GitOps 원칙
 
 ---
 

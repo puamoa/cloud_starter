@@ -153,7 +153,9 @@ export const HelpPanelContent: React.FC<HelpPanelContentProps> = ({
         const toc: TocItem[] = [];
 
         // 리소스 정리와 참고 섹션의 위치 찾기
-        const cleanupMatch = content.match(/\n##?\s+(?:🗑️\s*)?(?:태스크\s+\d+:\s*)?리소스 정리/);
+        const cleanupMatch = content.match(
+          /\n##?\s+(?:🗑️\s*)?(?:태스크\s+\d+:\s*)?리소스 정리/,
+        );
         const referenceMatch = content.match(/\n## (?:📚 )?참고:/);
 
         let mainContent = content;
@@ -187,7 +189,7 @@ export const HelpPanelContent: React.FC<HelpPanelContentProps> = ({
         // 1. 실습 개요 섹션 추가
         toc.push({
           id: 'overview',
-          title: '실습 개요',
+          title: sessionData.type === 'theory' ? '이론 개요' : '실습 개요',
           level: 1,
           emoji: '📋',
         });
@@ -195,27 +197,52 @@ export const HelpPanelContent: React.FC<HelpPanelContentProps> = ({
         // 2. 실습 가이드 대주제 추가
         toc.push({
           id: 'guide',
-          title: '실습 가이드',
+          title:
+            sessionData.type === 'theory'
+              ? '이론 내용'
+              : sessionData.type === 'demo'
+                ? '데모 가이드'
+                : '실습 가이드',
           level: 1,
-          emoji: '🎯',
+          emoji: sessionData.type === 'theory' ? '📕' : '🎯',
         });
 
-        // 3. 메인 콘텐츠에서 태스크 추출 (소주제로)
-        const taskRegex = /^##\s+태스크\s+(\d+):\s+(.+)$/gm;
-        const seenTaskIds = new Set<string>();
-        let match;
-        while ((match = taskRegex.exec(mainContent)) !== null) {
-          const taskNumber = match[1];
-          const taskTitle = match[2].trim();
-          const taskId = `task-${taskNumber}`;
-          if (!seenTaskIds.has(taskId)) {
-            seenTaskIds.add(taskId);
-            toc.push({
-              id: taskId,
-              title: `태스크 ${taskNumber}: ${taskTitle}`,
-              level: 2,
-              emoji: '📝',
-            });
+        // 3. 메인 콘텐츠에서 소주제 추출
+        if (sessionData.type === 'theory') {
+          // 이론: ## 섹션 제목 추출 (번호 기반 id로 통일)
+          const sectionRegex = /^##\s+(.+)$/gm;
+          let sectionIndex = 0;
+          let match;
+          while ((match = sectionRegex.exec(mainContent)) !== null) {
+            const title = match[1].trim();
+            if (!title.includes('학습 목표') && !title.includes('다음 단계')) {
+              sectionIndex++;
+              toc.push({
+                id: `section-${sectionIndex}`,
+                title,
+                level: 2,
+                emoji: '📌',
+              });
+            }
+          }
+        } else {
+          // 실습/데모: 태스크 추출
+          const taskRegex = /^##\s+태스크\s+(\d+):\s+(.+)$/gm;
+          const seenTaskIds = new Set<string>();
+          let match;
+          while ((match = taskRegex.exec(mainContent)) !== null) {
+            const taskNumber = match[1];
+            const taskTitle = match[2].trim();
+            const taskId = `task-${taskNumber}`;
+            if (!seenTaskIds.has(taskId)) {
+              seenTaskIds.add(taskId);
+              toc.push({
+                id: taskId,
+                title: `태스크 ${taskNumber}: ${taskTitle}`,
+                level: 2,
+                emoji: '📝',
+              });
+            }
           }
         }
 
@@ -395,7 +422,36 @@ export const HelpPanelContent: React.FC<HelpPanelContentProps> = ({
   // 목차 항목 클릭 핸들러
   const handleTocClick = (id: string) => {
     // 해당 섹션으로 스크롤
-    const element = document.getElementById(id);
+    let element = document.getElementById(id);
+
+    // id로 못 찾으면 section-N 패턴인 경우 n번째 h2를 찾기
+    if (!element && id.startsWith('section-')) {
+      const sectionNum = parseInt(id.replace('section-', ''));
+      if (!isNaN(sectionNum)) {
+        // guide 컨테이너 내의 h2 요소들을 찾기
+        const guideContainer = document.getElementById('guide');
+        if (guideContainer) {
+          const headings = guideContainer.querySelectorAll(
+            '[class*="markdown-h2"]',
+          );
+          // 학습 목표, 다음 단계를 제외한 n번째 헤딩
+          let count = 0;
+          for (const heading of headings) {
+            const text = heading.textContent || '';
+            if (!text.includes('학습 목표') && !text.includes('다음 단계')) {
+              count++;
+              if (count === sectionNum) {
+                element =
+                  (heading.closest('[id]') as HTMLElement) ||
+                  heading.parentElement;
+                break;
+              }
+            }
+          }
+        }
+      }
+    }
+
     if (element) {
       // 메인 콘텐츠 영역 찾기
       const mainContent = document.querySelector(
@@ -593,7 +649,7 @@ export const HelpPanelContent: React.FC<HelpPanelContentProps> = ({
                                         {highlightText(line, searchTerm)}
                                         {lineIdx <
                                           term.definition.split('\n').length -
-                                          1 && <br />}
+                                            1 && <br />}
                                       </React.Fragment>
                                     );
                                   })}

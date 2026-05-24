@@ -3,21 +3,17 @@ title: 'NAT와 네트워크 주소 변환 이론'
 week: 3
 session: 0
 type: theory
+learningObjectives:
+  - NAT(Network Address Translation)의 정의와 필요성을 설명할 수 있습니다.
+  - Public IP와 Private IP의 역할 차이를 이해할 수 있습니다.
+  - NAT의 동작 원리와 변환 과정을 설명할 수 있습니다.
+  - SNAT와 DNAT의 차이를 구분할 수 있습니다.
+  - AWS에서 NAT가 필요한 시나리오를 이해할 수 있습니다.
+  - Bastion Host의 개념과 용도를 설명할 수 있습니다.
+  - VPN과 Direct Connect의 기초 개념을 이해할 수 있습니다.
 ---
 
 # NAT와 네트워크 주소 변환 이론
-
-## 학습 목표
-
-이 세션을 마치면 다음을 이해할 수 있습니다:
-
-- NAT(Network Address Translation)의 정의와 필요성
-- Public IP와 Private IP의 역할 차이
-- NAT의 동작 원리와 변환 과정
-- SNAT와 DNAT의 차이
-- AWS에서 NAT가 필요한 시나리오
-- Bastion Host의 개념과 용도
-- VPN과 Direct Connect 기초
 
 ---
 

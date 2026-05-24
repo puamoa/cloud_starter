@@ -3,21 +3,17 @@ title: '서버리스와 NoSQL 이론'
 week: 10
 session: 0
 type: theory
+learningObjectives:
+  - 서버리스(FaaS, BaaS)의 정의와 특성을 설명할 수 있습니다.
+  - 이벤트 드리븐 아키텍처의 원리를 이해할 수 있습니다.
+  - Cold Start 문제와 해결 방법을 설명할 수 있습니다.
+  - NoSQL 데이터베이스 유형과 특성을 이해할 수 있습니다.
+  - CAP 정리와 Eventually Consistent를 설명할 수 있습니다.
+  - DynamoDB 설계 원칙(Single Table Design)을 이해할 수 있습니다.
+  - Lambda 실행 모델과 제약사항을 이해할 수 있습니다.
 ---
 
 # 서버리스와 NoSQL 이론
-
-## 학습 목표
-
-이 세션을 마치면 다음을 이해할 수 있습니다:
-
-- 서버리스(FaaS, BaaS)의 정의와 특성
-- 이벤트 드리븐 아키텍처의 원리
-- Cold Start 문제와 해결 방법
-- NoSQL 데이터베이스 유형과 특성
-- CAP 정리와 Eventually Consistent
-- DynamoDB 설계 원칙 (Single Table Design)
-- Lambda 실행 모델과 제약사항
 
 ---
 

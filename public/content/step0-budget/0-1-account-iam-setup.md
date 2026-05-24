@@ -122,18 +122,32 @@ Root 계정 대신 일상 작업에 사용할 IAM 사용자를 생성합니다.
     - ☐ **Users must create a new password at next sign-in** 체크 해제 (본인이 사용할 것이므로)
 29. [[Next]]를 클릭합니다.
 
-### 권한 설정
+### 권한 설정 (그룹 방식)
 
-30. **Set permissions** 페이지에서 **Attach policies directly**를 선택합니다.
-31. 검색창에 `AdministratorAccess`를 입력합니다.
-32. ✅ **AdministratorAccess** 정책을 체크합니다.
+30. **Set permissions** 페이지에서 **Add user to group**을 선택합니다.
+31. [[Create group]] 버튼을 클릭합니다.
+32. **User group name**에 `Administrators`를 입력합니다.
+33. 검색창에 `AdministratorAccess`를 입력합니다.
+34. ✅ **AdministratorAccess** 정책을 체크합니다.
+35. [[Create user group]]을 클릭합니다.
+36. 생성된 `Administrators` 그룹이 체크되어 있는지 확인합니다.
+
+> [!CONCEPT] 왜 사용자에게 직접 권한을 주지 않나요?
+> AWS 모범 사례는 **사용자에게 직접 정책을 붙이지 않고, 그룹에 정책을 연결한 뒤 사용자를 그룹에 추가**하는 것입니다.
+>
+> - **관리 편의성**: 팀원이 추가되면 그룹에 넣기만 하면 됨 (정책을 일일이 붙일 필요 없음)
+> - **일관성**: 같은 역할의 사용자들이 동일한 권한을 가짐
+> - **감사 용이**: 그룹 단위로 권한을 파악할 수 있어 보안 감사가 쉬움
+> - **변경 용이**: 정책을 변경하면 그룹 내 모든 사용자에게 즉시 반영
 
 > [!NOTE]
 > `AdministratorAccess`는 Billing을 제외한 모든 AWS 서비스에 대한 전체 권한을 부여합니다. 학습 목적에서는 이 정책이 편리합니다. 실무에서는 필요한 최소 권한만 부여하는 것이 모범 사례입니다.
 
-33. [[Next]]를 클릭합니다.
-34. **Review and create** 페이지에서 설정을 확인합니다.
-35. [[Create user]]를 클릭합니다.
+37. [[Next]]를 클릭합니다.
+38. **Review and create** 페이지에서 설정을 확인합니다:
+    - User name: `admin-user`
+    - Groups: `Administrators`
+39. [[Create user]]를 클릭합니다.
 
 > [!OUTPUT]
 > 사용자가 생성되면 **Console sign-in URL**이 표시됩니다:
@@ -150,14 +164,14 @@ Root 계정 대신 일상 작업에 사용할 IAM 사용자를 생성합니다.
 
 IAM 사용자에도 MFA를 설정하여 보안을 강화합니다.
 
-36. IAM 콘솔 → **Users** → `admin-user`를 클릭합니다.
-37. **Security credentials** 탭을 선택합니다.
-38. **Multi-factor authentication (MFA)** 섹션에서 [[Assign MFA device]]를 클릭합니다.
-39. **Device name**에 `admin-user-mfa`를 입력합니다.
-40. **Authenticator app**을 선택하고 [[Next]]를 클릭합니다.
-41. 스마트폰 인증 앱에서 QR 코드를 스캔합니다.
-42. 연속된 두 개의 MFA 코드를 입력합니다.
-43. [[Add MFA]]를 클릭합니다.
+40. IAM 콘솔 → **Users** → `admin-user`를 클릭합니다.
+41. **Security credentials** 탭을 선택합니다.
+42. **Multi-factor authentication (MFA)** 섹션에서 [[Assign MFA device]]를 클릭합니다.
+43. **Device name**에 `admin-user-mfa`를 입력합니다.
+44. **Authenticator app**을 선택하고 [[Next]]를 클릭합니다.
+45. 스마트폰 인증 앱에서 QR 코드를 스캔합니다.
+46. 연속된 두 개의 MFA 코드를 입력합니다.
+47. [[Add MFA]]를 클릭합니다.
 
 > [!TIP]
 > Root 계정과 IAM 사용자의 MFA는 별도로 관리됩니다. 인증 앱에서 두 개의 항목이 표시되며, 각각 다른 코드를 생성합니다. 구분하기 쉽도록 앱에서 이름을 설정하세요 (예: "AWS Root", "AWS Admin").
@@ -166,12 +180,12 @@ IAM 사용자에도 MFA를 설정하여 보안을 강화합니다.
 
 ## 태스크 5: IAM 사용자로 로그인 테스트
 
-44. 현재 Root 계정에서 로그아웃합니다.
-45. IAM 사용자 로그인 URL로 접속합니다:
+48. 현재 Root 계정에서 로그아웃합니다.
+49. IAM 사용자 로그인 URL로 접속합니다:
     - `https://123456789012.signin.aws.amazon.com/console`
     - 또는 AWS 로그인 페이지에서 **IAM user** 선택 → Account ID 입력
 
-46. 다음 정보로 로그인합니다:
+50. 다음 정보로 로그인합니다:
     - **Account ID**: `123456789012` (본인 계정 ID)
     - **IAM user name**: `admin-user`
     - **Password**: 설정한 비밀번호
@@ -180,7 +194,7 @@ IAM 사용자에도 MFA를 설정하여 보안을 강화합니다.
 > [!OUTPUT]
 > 로그인 성공 시 AWS Management Console 홈 화면이 표시됩니다. 우측 상단에 `admin-user @ 123456789012`로 표시됩니다.
 
-47. 상단 검색창에 `EC2`를 입력하고 접속하여 권한이 정상 동작하는지 확인합니다.
+51. 상단 검색창에 `EC2`를 입력하고 접속하여 권한이 정상 동작하는지 확인합니다.
 
 > [!NOTE]
 > 이후 모든 실습은 이 IAM 사용자(`admin-user`)로 진행합니다. Root 계정은 Billing 설정 변경이나 계정 삭제 등 특수한 경우에만 사용합니다.
@@ -191,19 +205,19 @@ IAM 사용자에도 MFA를 설정하여 보안을 강화합니다.
 
 IAM 사용자가 Billing 정보를 볼 수 있도록 Root 계정에서 권한을 활성화합니다. (Step 0-2 Budget 설정에 필요)
 
-48. IAM 사용자에서 로그아웃합니다.
-49. **Root 계정**으로 다시 로그인합니다.
-50. 우측 상단 계정 이름 → **Account**를 클릭합니다.
-51. 페이지를 스크롤하여 **IAM User and Role Access to Billing Information** 섹션을 찾습니다.
-52. [[Edit]]를 클릭합니다.
-53. ✅ **Activate IAM Access**를 체크합니다.
-54. [[Update]]를 클릭합니다.
+52. IAM 사용자에서 로그아웃합니다.
+53. **Root 계정**으로 다시 로그인합니다.
+54. 우측 상단 계정 이름 → **Account**를 클릭합니다.
+55. 페이지를 스크롤하여 **IAM User and Role Access to Billing Information** 섹션을 찾습니다.
+56. [[Edit]]를 클릭합니다.
+57. ✅ **Activate IAM Access**를 체크합니다.
+58. [[Update]]를 클릭합니다.
 
 > [!NOTE]
 > 이 설정을 활성화하지 않으면 IAM 사용자가 AdministratorAccess 권한이 있어도 Billing 페이지에 접근할 수 없습니다.
 
-55. Root 계정에서 로그아웃합니다.
-56. IAM 사용자(`admin-user`)로 다시 로그인합니다.
+59. Root 계정에서 로그아웃합니다.
+60. IAM 사용자(`admin-user`)로 다시 로그인합니다.
 
 ✅ **태스크 완료**: IAM 사용자의 Billing 접근 권한이 활성화되었습니다.
 

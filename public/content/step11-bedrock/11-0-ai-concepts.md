@@ -3,22 +3,18 @@ title: '생성형 AI와 프롬프트 엔지니어링 이론'
 week: 11
 session: 0
 type: theory
+learningObjectives:
+  - LLM(Large Language Model)의 정의와 특성을 설명할 수 있습니다.
+  - Transformer 아키텍처의 핵심 원리를 이해할 수 있습니다.
+  - 토큰의 개념과 비용 계산 방법을 이해할 수 있습니다.
+  - Foundation Model의 의미를 설명할 수 있습니다.
+  - Fine-tuning과 Prompt Engineering의 차이를 구분할 수 있습니다.
+  - RAG(Retrieval Augmented Generation) 패턴을 이해할 수 있습니다.
+  - Temperature, Top-P 파라미터의 역할을 설명할 수 있습니다.
+  - AI 서비스(Bedrock vs SageMaker vs OpenAI)를 비교할 수 있습니다.
 ---
 
 # 생성형 AI와 프롬프트 엔지니어링 이론
-
-## 학습 목표
-
-이 세션을 마치면 다음을 이해할 수 있습니다:
-
-- LLM(Large Language Model)의 정의와 특성
-- Transformer 아키텍처의 핵심 원리
-- 토큰의 개념과 비용 계산
-- Foundation Model의 의미
-- Fine-tuning과 Prompt Engineering의 차이
-- RAG(Retrieval Augmented Generation) 패턴
-- Temperature, Top-P 파라미터의 역할
-- AI 서비스 비교 (Bedrock vs SageMaker vs OpenAI)
 
 ---
 

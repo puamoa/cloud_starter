@@ -1128,7 +1128,20 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
       );
     },
     h2: ({ children }: ChildrenProps) => {
-      const text = String(children);
+      // children에서 순수 텍스트 추출 (React 노드 대응)
+      const extractTextFromChildren = (node: React.ReactNode): string => {
+        if (typeof node === 'string') return node;
+        if (typeof node === 'number') return String(node);
+        if (Array.isArray(node))
+          return node.map(extractTextFromChildren).join('');
+        if (node && typeof node === 'object' && 'props' in node) {
+          return extractTextFromChildren(
+            (node as React.ReactElement).props.children,
+          );
+        }
+        return '';
+      };
+      const text = extractTextFromChildren(children);
       // "태스크" 또는 "데모"로 시작하는 h2는 h3로 렌더링 (계층 구조 명확화)
       const isTask = text.includes('태스크') || text.includes('Task');
       const isDemo = text.includes('데모') || text.includes('Demo');
@@ -1164,6 +1177,15 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
           const stepNumber = stepMatch[1] || stepMatch[2];
           id = `cleanup-step-${stepNumber}`;
         }
+      }
+
+      // Fallback: slugify from text if no specific id was generated
+      if (!id) {
+        id = text
+          .toLowerCase()
+          .replace(/[^a-z0-9가-힣]/g, '-')
+          .replace(/-+/g, '-')
+          .replace(/^-|-$/g, '');
       }
 
       if (isTask || isDemo) {
@@ -1228,6 +1250,15 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
           const stepNumber = stepMatch[1] || stepMatch[2];
           id = `cleanup-step-${stepNumber}`;
         }
+      }
+
+      // Fallback: slugify from text if no specific id was generated
+      if (!id) {
+        id = text
+          .toLowerCase()
+          .replace(/[^a-z0-9가-힣]/g, '-')
+          .replace(/-+/g, '-')
+          .replace(/^-|-$/g, '');
       }
 
       return (

@@ -561,7 +561,7 @@ export const curriculum: WeekCurriculum[] = [
 ];
 
 export const sessionTypeConfig = {
-  theory: { icon: 'file', label: '이론', color: 'grey', emoji: '📖' },
+  theory: { icon: 'file', label: '이론', color: 'grey', emoji: '📕' },
   lab: { icon: 'settings', label: '실습', color: 'blue', emoji: '⚡' },
   demo: { icon: 'video-on', label: '데모', color: 'green', emoji: '🖥️' },
 } as const;

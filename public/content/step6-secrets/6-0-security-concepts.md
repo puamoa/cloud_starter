@@ -3,21 +3,17 @@ title: '보안과 자격 증명 관리 이론'
 week: 6
 session: 0
 type: theory
+learningObjectives:
+  - 인증(Authentication)과 인가(Authorization)의 차이를 설명할 수 있습니다.
+  - 대칭키와 비대칭키 암호화 원리를 이해할 수 있습니다.
+  - KMS(Key Management Service) 개념을 이해할 수 있습니다.
+  - 비밀값 관리의 중요성과 하드코딩 위험을 설명할 수 있습니다.
+  - 환경 변수와 비밀 저장소를 비교할 수 있습니다.
+  - 최소 권한 원칙(Principle of Least Privilege)을 설명할 수 있습니다.
+  - Zero Trust 보안 모델을 이해할 수 있습니다.
 ---
 
 # 보안과 자격 증명 관리 이론
-
-## 학습 목표
-
-이 세션을 마치면 다음을 이해할 수 있습니다:
-
-- 인증(Authentication)과 인가(Authorization)의 차이
-- 대칭키와 비대칭키 암호화 원리
-- KMS(Key Management Service) 개념
-- 비밀값 관리의 중요성과 하드코딩 위험
-- 환경 변수와 비밀 저장소 비교
-- 최소 권한 원칙 (Principle of Least Privilege)
-- Zero Trust 보안 모델
 
 ---
 
