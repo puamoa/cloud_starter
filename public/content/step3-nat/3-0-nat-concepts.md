@@ -22,6 +22,19 @@ learningObjectives:
 > [!CONCEPT] NAT의 정의와 필요성
 > **NAT**(Network Address Translation)는 IP 패킷의 출발지 또는 목적지 IP 주소를 다른 IP 주소로 변환하는 기술입니다. 사설 IP를 가진 장치가 인터넷과 통신할 수 있게 해주며, IPv4 주소 부족 문제를 해결하는 핵심 기술입니다.
 
+### 핵심 용어 정리
+
+| 용어                                  | 설명                                                                      | AWS 관련                    |
+| ------------------------------------- | ------------------------------------------------------------------------- | --------------------------- |
+| **NAT (Network Address Translation)** | 사설 IP를 공인 IP로 변환하여 인터넷 접근을 가능하게 하는 기술             | NAT Gateway                 |
+| **SNAT (Source NAT)**                 | 출발지 IP를 변환. 내부 → 외부 통신 시 사설 IP를 공인 IP로 변경            | NAT Gateway 기본 동작       |
+| **DNAT (Destination NAT)**            | 목적지 IP를 변환. 외부 → 내부 통신 시 공인 IP를 사설 IP로 변경            | ALB, Port Forwarding        |
+| **NAT Gateway**                       | AWS 관리형 NAT 서비스. Private Subnet에서 인터넷 접근 시 사용             | 시간당 + 데이터 처리량 과금 |
+| **Bastion Host (점프 서버)**          | Public Subnet에 위치하여 Private Subnet 인스턴스에 SSH 접속하는 중계 서버 | EC2 in Public Subnet        |
+| **VPN (Virtual Private Network)**     | 인터넷을 통해 암호화된 터널로 사설 네트워크에 접속하는 기술               | AWS Site-to-Site VPN        |
+| **Direct Connect**                    | AWS와 온프레미스를 전용 물리 회선으로 연결하는 서비스                     | AWS Direct Connect          |
+| **Elastic IP**                        | NAT Gateway에 연결하는 고정 공인 IP. 외부에서 보이는 출발지 IP가 됨       | NAT Gateway 필수 구성       |
+
 ### NAT가 필요한 이유
 
 ```
@@ -56,6 +69,15 @@ learningObjectives:
 
 > [!CONCEPT] Public IP와 Private IP의 차이
 > **Public IP**는 인터넷에서 직접 라우팅 가능한 전역 고유 주소이고, **Private IP**는 내부 네트워크에서만 유효한 주소입니다. Private IP는 인터넷으로 직접 나갈 수 없으며, 반드시 NAT를 거쳐야 합니다.
+
+### 주요 용어
+
+| 용어           | 설명                                                   |
+| -------------- | ------------------------------------------------------ |
+| **Public IP**  | 인터넷에서 직접 라우팅 가능한 전역 고유 주소           |
+| **Private IP** | 내부 네트워크에서만 유효한 주소. 인터넷 직접 통신 불가 |
+| **Elastic IP** | 수동 할당하는 고정 공인 IP. 인스턴스 중지 시에도 유지  |
+| **DHCP**       | IP 주소를 자동으로 할당하는 프로토콜                   |
 
 ### AWS에서의 IP 주소 체계
 
@@ -98,6 +120,14 @@ learningObjectives:
 > [!CONCEPT] NAT 테이블과 주소 변환 과정
 > NAT는 패킷이 네트워크 경계를 통과할 때 **IP 주소와 포트 번호를 변환**합니다. 이 변환 정보를 **NAT 테이블**에 기록하여, 응답 패킷이 돌아올 때 원래 장치로 정확히 전달합니다.
 
+### 주요 용어
+
+| 용어                                        | 설명                                                                 |
+| ------------------------------------------- | -------------------------------------------------------------------- |
+| **NAT 테이블**                              | IP 주소와 포트 변환 정보를 기록하는 매핑 테이블                      |
+| **PAT (Port Address Translation)**          | 포트 번호까지 변환하여 여러 사설 IP가 하나의 공인 IP를 공유하는 방식 |
+| **NAPT (Network Address Port Translation)** | PAT의 다른 이름. IP + 포트를 함께 변환                               |
+
 ### NAT 변환 과정 (PAT/NAPT)
 
 ```
@@ -134,6 +164,14 @@ EC2 (Private)          NAT Gateway              인터넷 서버
 
 > [!CONCEPT] SNAT와 DNAT의 차이
 > **SNAT**(Source NAT)는 출발지 IP를 변환하고, **DNAT**(Destination NAT)는 목적지 IP를 변환합니다. AWS에서 NAT Gateway는 SNAT를, ALB/NLB는 DNAT 역할을 수행합니다.
+
+### 주요 용어
+
+| 용어                       | 설명                                                         |
+| -------------------------- | ------------------------------------------------------------ |
+| **SNAT (Source NAT)**      | 출발지 IP를 변환. 내부→외부 통신 시 사설 IP를 공인 IP로 변경 |
+| **DNAT (Destination NAT)** | 목적지 IP를 변환. 외부→내부 통신 시 공인 IP를 사설 IP로 변경 |
+| **Port Forwarding**        | 특정 포트로 들어오는 트래픽을 내부 서버로 전달하는 DNAT 기법 |
 
 ### SNAT (Source NAT)
 
@@ -181,6 +219,14 @@ AWS 사용 사례: ALB, NLB, Port Forwarding
 
 > [!CONCEPT] Private Subnet에서 NAT가 필요한 이유
 > Private Subnet의 리소스가 인터넷에 접근해야 하지만, 외부에서의 직접 접근은 차단해야 할 때 NAT를 사용합니다. 보안과 접근성의 균형을 맞추는 핵심 아키텍처 패턴입니다.
+
+### 주요 용어
+
+| 용어             | 설명                                                           |
+| ---------------- | -------------------------------------------------------------- |
+| **NAT Gateway**  | AWS 관리형 NAT 서비스. 자동 이중화, 최대 100Gbps               |
+| **NAT Instance** | EC2에 NAT 기능을 설정한 인스턴스. 비용 저렴하나 직접 관리 필요 |
+| **VPC Endpoint** | NAT 없이 AWS 서비스(S3 등)에 직접 접근하는 프라이빗 연결       |
 
 ### 대표적인 NAT 필요 시나리오
 
@@ -241,6 +287,14 @@ AWS 사용 사례: ALB, NLB, Port Forwarding
 > [!CONCEPT] Bastion Host의 역할
 > **Bastion Host**는 Public Subnet에 위치하여 외부에서 Private Subnet의 인스턴스에 접근할 수 있는 유일한 진입점 역할을 하는 서버입니다. SSH 접속의 중계 역할을 하며, 보안 감사와 접근 제어의 단일 지점을 제공합니다.
 
+### 주요 용어
+
+| 용어                                    | 설명                                                          |
+| --------------------------------------- | ------------------------------------------------------------- |
+| **Bastion Host (점프 서버)**            | Public Subnet에서 Private 인스턴스로 SSH 접속을 중계하는 서버 |
+| **AWS Systems Manager Session Manager** | Bastion 없이 Private EC2에 접속하는 AWS 관리형 서비스         |
+| **SSM Agent**                           | EC2에 설치되어 Session Manager 연결을 처리하는 에이전트       |
+
 ### Bastion Host 접속 흐름
 
 ```
@@ -291,6 +345,15 @@ AWS 사용 사례: ALB, NLB, Port Forwarding
 
 > [!CONCEPT] VPN과 Direct Connect 비교
 > **VPN**(Virtual Private Network)은 인터넷을 통해 암호화된 터널로 AWS VPC에 연결하는 방식이고, **Direct Connect**는 전용 물리 회선으로 AWS에 직접 연결하는 방식입니다. 둘 다 On-Premise와 AWS 간 하이브리드 연결에 사용됩니다.
+
+### 주요 용어
+
+| 용어                              | 설명                                                      |
+| --------------------------------- | --------------------------------------------------------- |
+| **Site-to-Site VPN**              | 인터넷을 통해 IPsec 암호화 터널로 AWS VPC에 연결하는 방식 |
+| **AWS Direct Connect**            | 전용 물리 회선으로 AWS에 직접 연결하는 서비스             |
+| **IPsec**                         | IP 패킷을 암호화하는 보안 프로토콜                        |
+| **VGW (Virtual Private Gateway)** | VPC 측에서 VPN/Direct Connect 연결을 수신하는 게이트웨이  |
 
 ### 연결 방식 비교
 
