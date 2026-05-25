@@ -15,10 +15,12 @@ prerequisites:
 estimatedCost: 무료
 ---
 
-이 실습에서는 AWS 계정을 생성하고, 보안 모범 사례에 따라 Root 계정을 보호한 뒤 일상 작업용 IAM 사용자를 생성합니다. 이후 모든 실습은 이 IAM 사용자로 진행합니다.
+이 실습에서는 AWS 계정을 생성하고, 보안 모범 사례에 따라 Root 계정을 보호한 뒤 일상 작업용 IAM 사용자를 생성합니다.  
+이후 모든 실습은 이 IAM 사용자로 진행합니다.
 
 > [!WARNING]
-> Root 계정은 AWS 계정의 모든 권한을 가진 최상위 계정입니다. Root 계정이 탈취되면 모든 리소스가 위험에 노출됩니다. **Root 계정은 초기 설정 후 일상 작업에 사용하지 마세요.**
+> Root 계정은 AWS 계정의 모든 권한을 가진 최상위 계정입니다. Root 계정이 탈취되면 모든 리소스가 위험에 노출됩니다.  
+> **Root 계정은 초기 설정 후 일상 작업에 사용하지 마세요.**
 
 ## 태스크 1: AWS 계정 생성
 
@@ -26,40 +28,106 @@ estimatedCost: 무료
 > 이미 AWS 계정이 있다면 이 태스크를 건너뛰고 태스크 2로 이동합니다.
 
 1. 브라우저에서 [https://aws.amazon.com](https://aws.amazon.com)에 접속합니다.
-2. [[무료 계정 생성]] 또는 [[Create an AWS Account]] 버튼을 클릭합니다.
+2. 오른쪽 상단의 [[계정 생성]] 또는 [[Create account]] 버튼을 클릭합니다.
 3. **Root user email address**에 본인 이메일을 입력합니다.
 4. **AWS account name**에 계정 이름을 입력합니다 (예: `my-aws-account`).
 5. [[Verify email address]]를 클릭합니다.
-6. 이메일로 전송된 인증 코드를 입력합니다.
-7. Root 계정 비밀번호를 설정합니다.
+6. 이메일로 전송된 인증 코드를 입력하고 [[Verify]] 버튼을 클릭합니다.
+
+### 1단계: 비밀번호 생성
+
+7. **Root user password**에 비밀번호를 입력합니다.
+8. **Confirm root user password**에 동일한 비밀번호를 다시 입력합니다.
+9. "Matches"가 표시되면 [[Continue]]를 클릭합니다.
 
 > [!WARNING]
 > Root 비밀번호는 최소 12자 이상, 대문자/소문자/숫자/특수문자를 포함하여 강력하게 설정하세요. 이 비밀번호는 계정의 최종 방어선입니다.
 
-8. **Contact information** 페이지에서 연락처 정보를 입력합니다:
-   - **Account type**: `Personal` 선택
-   - 이름, 전화번호, 주소 입력
-9. **Payment information** 페이지에서 카드 정보를 입력합니다.
+### 2단계: 계정 플랜 선택
+
+10. **계정 플랜 선택** 페이지에서 **무료(6개월)** 플랜을 선택합니다.
+
+> [!CONCEPT] 무료 플랜 vs 유료 플랜
+>
+> | 구분           | 무료(6개월)                                  | 유료                    |
+> | -------------- | -------------------------------------------- | ----------------------- |
+> | 크레딧         | 최대 200 USD (기본 $100 + 활동 $100)         | 동일                    |
+> | 서비스 접근    | 일부 서비스                                  | 모든 AWS 서비스 및 기능 |
+> | 크레딧 소진 후 | 유료 플랜으로 업그레이드 가능 (안 하면 해지) | 종량제 요금 부과        |
+>
+> 학습 목적이라면 **무료 플랜**을 선택합니다.
+
+11. [[무료 플랜 선택]]을 클릭합니다.
+
+> [!TIP]
+> **기존 계정 (2025.07.15 이전 가입자)**: 플랜 선택 화면이 표시되지 않습니다.  
+> 기존 계정은 "Legacy AWS Free Tier" 프로그램이 적용되어 가입일로부터 12개월간 서비스별 무료 한도가 제공됩니다.(예: EC2 t2.micro 750시간/월)  
+> 이 가이드의 실습은 기존 계정으로도 동일하게 진행할 수 있습니다.
+
+> [!WARNING]
+> **"무료 플랜 대상이 아님" 메시지가 표시되는 경우**: 이전에 AWS 계정을 생성한 적이 있는 사용자 정보(이메일, 전화번호, 카드 등)로 가입하면  
+> "무료 플랜은 AWS 신규 고객에게만 독점 제공됩니다"라는 메시지와 함께 자동으로 **유료 플랜**으로 업그레이드됩니다.  
+> 이 경우:
+>
+> - 200 USD 크레딧이 적립되지 않음e
+> - 요금은 종량제 기반으로 즉시 부과
+> - 프리 티어 한도를 넘거나 혜택이 만료되면 청구서 발급
+>
+> 이 상황에서는 AWS Budgets 설정(Step 0-2)을 반드시 먼저 진행하고, 실습 후 리소스를 즉시 정리하세요.
+
+### 3단계: 결제 정보
+
+12. **청구 국가**에서 `대한민국`을 선택합니다.
+13. **신용카드 번호**를 입력합니다.
+14. **만료 날짜**를 선택합니다.
+15. **카드 소유자 이름**을 입력합니다.
+16. **청구지 주소**에서 `내 연락처 주소 사용`을 선택합니다.
+17. **이메일 주소**를 확인합니다.
+18. [[계속]]를 클릭합니다.
 
 > [!NOTE]
-> 카드 등록은 본인 인증 목적입니다. 무료 플랜을 선택하면 유료 전환 전까지 과금되지 않습니다. 일부 카드에서 $1 임시 결제 후 취소될 수 있습니다.
+> 카드 인증 팝업이 나타납니다. AWS 인증 프로세스는 1 USD(또는 그에 상당하는 금액)를 3~5일간 예치하여 계정을 인증합니다.  
+> 무료 플랜을 선택했으므로 유료 플랜으로 업그레이드할 때까지 요금이 발생하지 않습니다.
 
-10. **Identity verification** 페이지에서 전화번호 인증을 완료합니다.
-11. **Select a support plan** 페이지에서 `Basic support - Free`를 선택합니다.
-12. **Choose a plan** 페이지에서 **Free plan**을 선택합니다.
+19. 카드 정보 입력 팝업에서 카드번호, 비밀번호, 생년월일을 입력합니다.
+20. **서비스 이용에 대한 전체동의**를 체크합니다.
+21. [[다음]]을 클릭하여 카드 인증을 완료합니다.
 
-> [!CONCEPT] 무료 플랜 (Free Plan) 선택
-> 2025년 7월 15일 이후 신규 가입자는 가입 시 무료 플랜 또는 유료 플랜을 선택합니다.
->
-> - **무료 플랜**: 유료 전환 전까지 요금 없음. 학습 목적에 적합.
-> - **유료 플랜**: 크레딧 소진 후 과금. 실제 프로젝트에 적합.
->
-> 이 가이드에서는 **무료 플랜**을 선택합니다.
+### 4단계: 자격 증명 확인
 
-13. [[Complete sign up]]을 클릭합니다.
-14. 계정 활성화 이메일을 확인합니다 (최대 수 분 소요).
+22. **국가 또는 리전 코드**에서 `대한민국 (+82)`를 선택합니다.
+23. **휴대전화 번호**를 입력합니다.
+24. [[SMS 전송]]를 클릭합니다.
+25. 수신된 인증 코드를 입력합니다.
+
+### 5단계: 완료
+
+26. "축하합니다!" 화면이 표시되면 계정 생성이 완료된 것입니다.
+27. 계정 활성화 이메일을 확인합니다 (최대 수 분 소요).
+28. [[AWS Management Console로 이동]]을 클릭합니다.
 
 ✅ **태스크 완료**: AWS 계정이 생성되었습니다.
+
+## 태스크 1.5: 계정 별칭(Account Alias) 설정
+
+계정 별칭을 설정하면 IAM 사용자 로그인 URL이 기억하기 쉬워지고, MFA 앱에서도 별칭으로 표시되어 여러 계정을 구분하기 편합니다.
+
+29. Root 계정으로 AWS Management Console에 로그인합니다.
+30. 상단 검색창에 `IAM`을 입력하고 **IAM** 서비스를 선택합니다.
+31. IAM Dashboard 우측의 **AWS Account** 섹션에서 **Account Alias** 옆의 [[Create]]를 클릭합니다.
+32. 별칭을 입력합니다 (예: `my-aws-lab`, 영문 소문자/숫자/하이픈만 사용 가능).
+33. [[Save changes]]를 클릭합니다.
+
+> [!NOTE]
+> 설정 후 IAM 사용자 로그인 URL이 변경됩니다:
+>
+> - 변경 전: `https://123456789012.signin.aws.amazon.com/console`
+> - 변경 후: `https://my-aws-lab.signin.aws.amazon.com/console`
+
+> [!TIP]
+> 별칭은 전 세계적으로 고유해야 합니다. 이미 사용 중인 별칭이면 다른 이름을 시도하세요. MFA 앱에서 이 별칭이 계정 이름으로 표시되므로, 나중에 여러 AWS 계정을 구분할 때 유용합니다.
+
+✅ **태스크 완료**: 계정 별칭이 설정되었습니다.
 
 ## 태스크 2: Root 계정 MFA 설정
 
@@ -74,18 +142,21 @@ MFA(Multi-Factor Authentication)를 설정하면 비밀번호가 유출되어도
 > - Microsoft Authenticator (iOS/Android)
 > - Authy (iOS/Android/Desktop)
 
-15. Root 계정으로 AWS Management Console에 로그인합니다.
-16. 우측 상단의 **계정 이름**을 클릭하고 **Security credentials**를 선택합니다.
-17. **Multi-factor authentication (MFA)** 섹션에서 [[Assign MFA device]]를 클릭합니다.
-18. **Device name**에 `my-root-mfa`를 입력합니다.
-19. **MFA device type**에서 **Authenticator app**을 선택합니다.
-20. [[Next]]를 클릭합니다.
-21. **Set up the authenticator app** 페이지에서:
+> [!NOTE]
+> 태스크 1.5에서 이미 Root 계정으로 로그인한 상태라면 34번부터 진행하세요.
+
+34. Root 계정으로 AWS Management Console에 로그인합니다.
+35. 우측 상단의 **계정 이름**을 클릭하고 **Security credentials**를 선택합니다.
+36. **Multi-factor authentication (MFA)** 섹션에서 [[Assign MFA device]]를 클릭합니다.
+37. **Device name**에 `my-root-mfa`를 입력합니다.
+38. **MFA device type**에서 **Authenticator app**을 선택합니다.
+39. [[Next]]를 클릭합니다.
+40. **Set up the authenticator app** 페이지에서:
     - 스마트폰의 인증 앱(Google Authenticator 등)을 엽니다.
     - 앱에서 QR 코드를 스캔합니다.
     - 앱에 표시되는 6자리 코드를 **MFA code 1**에 입력합니다.
     - 30초 후 새로 표시되는 6자리 코드를 **MFA code 2**에 입력합니다.
-22. [[Add MFA]]를 클릭합니다.
+41. [[Add MFA]]를 클릭합니다.
 
 > [!OUTPUT]
 > "MFA device assigned successfully" 메시지가 표시됩니다.
@@ -111,26 +182,26 @@ Root 계정 대신 일상 작업에 사용할 IAM 사용자를 생성합니다.
 >
 > AWS는 Root 계정을 일상 작업에 사용하지 말 것을 강력히 권장합니다.
 
-23. 상단 검색창에 `IAM`을 입력하고 **IAM** 서비스를 선택합니다.
-24. 왼쪽 메뉴에서 **Users**를 클릭합니다.
-25. [[Create user]]를 클릭합니다.
-26. **User name**에 `admin-user`를 입력합니다.
-27. ✅ **Provide user access to the AWS Management Console** 체크합니다.
-28. **Console password** 섹션에서:
+42. 상단 검색창에 `IAM`을 입력하고 **IAM** 서비스를 선택합니다.
+43. 왼쪽 메뉴에서 **Users**를 클릭합니다.
+44. [[Create user]]를 클릭합니다.
+45. **User name**에 `admin-user`를 입력합니다.
+46. ✅ **Provide user access to the AWS Management Console** 체크합니다.
+47. **Console password** 섹션에서:
     - **Custom password**를 선택합니다.
     - 비밀번호를 입력합니다.
     - ☐ **Users must create a new password at next sign-in** 체크 해제 (본인이 사용할 것이므로)
-29. [[Next]]를 클릭합니다.
+48. [[Next]]를 클릭합니다.
 
 ### 권한 설정 (그룹 방식)
 
-30. **Set permissions** 페이지에서 **Add user to group**을 선택합니다.
-31. [[Create group]] 버튼을 클릭합니다.
-32. **User group name**에 `Administrators`를 입력합니다.
-33. 검색창에 `AdministratorAccess`를 입력합니다.
-34. ✅ **AdministratorAccess** 정책을 체크합니다.
-35. [[Create user group]]을 클릭합니다.
-36. 생성된 `Administrators` 그룹이 체크되어 있는지 확인합니다.
+49. **Set permissions** 페이지에서 **Add user to group**을 선택합니다.
+50. [[Create group]] 버튼을 클릭합니다.
+51. **User group name**에 `Administrators`를 입력합니다.
+52. 검색창에 `AdministratorAccess`를 입력합니다.
+53. ✅ **AdministratorAccess** 정책을 체크합니다.
+54. [[Create user group]]을 클릭합니다.
+55. 생성된 `Administrators` 그룹이 체크되어 있는지 확인합니다.
 
 > [!CONCEPT] 왜 사용자에게 직접 권한을 주지 않나요?
 > AWS 모범 사례는 **사용자에게 직접 정책을 붙이지 않고, 그룹에 정책을 연결한 뒤 사용자를 그룹에 추가**하는 것입니다.
@@ -143,11 +214,11 @@ Root 계정 대신 일상 작업에 사용할 IAM 사용자를 생성합니다.
 > [!NOTE]
 > `AdministratorAccess`는 Billing을 제외한 모든 AWS 서비스에 대한 전체 권한을 부여합니다. 학습 목적에서는 이 정책이 편리합니다. 실무에서는 필요한 최소 권한만 부여하는 것이 모범 사례입니다.
 
-37. [[Next]]를 클릭합니다.
-38. **Review and create** 페이지에서 설정을 확인합니다:
+56. [[Next]]를 클릭합니다.
+57. **Review and create** 페이지에서 설정을 확인합니다:
     - User name: `admin-user`
     - Groups: `Administrators`
-39. [[Create user]]를 클릭합니다.
+58. [[Create user]]를 클릭합니다.
 
 > [!OUTPUT]
 > 사용자가 생성되면 **Console sign-in URL**이 표시됩니다:
@@ -164,14 +235,14 @@ Root 계정 대신 일상 작업에 사용할 IAM 사용자를 생성합니다.
 
 IAM 사용자에도 MFA를 설정하여 보안을 강화합니다.
 
-40. IAM 콘솔 → **Users** → `admin-user`를 클릭합니다.
-41. **Security credentials** 탭을 선택합니다.
-42. **Multi-factor authentication (MFA)** 섹션에서 [[Assign MFA device]]를 클릭합니다.
-43. **Device name**에 `admin-user-mfa`를 입력합니다.
-44. **Authenticator app**을 선택하고 [[Next]]를 클릭합니다.
-45. 스마트폰 인증 앱에서 QR 코드를 스캔합니다.
-46. 연속된 두 개의 MFA 코드를 입력합니다.
-47. [[Add MFA]]를 클릭합니다.
+59. IAM 콘솔 → **Users** → `admin-user`를 클릭합니다.
+60. **Security credentials** 탭을 선택합니다.
+61. **Multi-factor authentication (MFA)** 섹션에서 [[Assign MFA device]]를 클릭합니다.
+62. **Device name**에 `admin-user-mfa`를 입력합니다.
+63. **Authenticator app**을 선택하고 [[Next]]를 클릭합니다.
+64. 스마트폰 인증 앱에서 QR 코드를 스캔합니다.
+65. 연속된 두 개의 MFA 코드를 입력합니다.
+66. [[Add MFA]]를 클릭합니다.
 
 > [!TIP]
 > Root 계정과 IAM 사용자의 MFA는 별도로 관리됩니다. 인증 앱에서 두 개의 항목이 표시되며, 각각 다른 코드를 생성합니다. 구분하기 쉽도록 앱에서 이름을 설정하세요 (예: "AWS Root", "AWS Admin").
@@ -180,12 +251,12 @@ IAM 사용자에도 MFA를 설정하여 보안을 강화합니다.
 
 ## 태스크 5: IAM 사용자로 로그인 테스트
 
-48. 현재 Root 계정에서 로그아웃합니다.
-49. IAM 사용자 로그인 URL로 접속합니다:
+67. 현재 Root 계정에서 로그아웃합니다.
+68. IAM 사용자 로그인 URL로 접속합니다:
     - `https://123456789012.signin.aws.amazon.com/console`
     - 또는 AWS 로그인 페이지에서 **IAM user** 선택 → Account ID 입력
 
-50. 다음 정보로 로그인합니다:
+69. 다음 정보로 로그인합니다:
     - **Account ID**: `123456789012` (본인 계정 ID)
     - **IAM user name**: `admin-user`
     - **Password**: 설정한 비밀번호
@@ -194,7 +265,7 @@ IAM 사용자에도 MFA를 설정하여 보안을 강화합니다.
 > [!OUTPUT]
 > 로그인 성공 시 AWS Management Console 홈 화면이 표시됩니다. 우측 상단에 `admin-user @ 123456789012`로 표시됩니다.
 
-51. 상단 검색창에 `EC2`를 입력하고 접속하여 권한이 정상 동작하는지 확인합니다.
+70. 상단 검색창에 `EC2`를 입력하고 접속하여 권한이 정상 동작하는지 확인합니다.
 
 > [!NOTE]
 > 이후 모든 실습은 이 IAM 사용자(`admin-user`)로 진행합니다. Root 계정은 Billing 설정 변경이나 계정 삭제 등 특수한 경우에만 사용합니다.
@@ -205,19 +276,19 @@ IAM 사용자에도 MFA를 설정하여 보안을 강화합니다.
 
 IAM 사용자가 Billing 정보를 볼 수 있도록 Root 계정에서 권한을 활성화합니다. (Step 0-2 Budget 설정에 필요)
 
-52. IAM 사용자에서 로그아웃합니다.
-53. **Root 계정**으로 다시 로그인합니다.
-54. 우측 상단 계정 이름 → **Account**를 클릭합니다.
-55. 페이지를 스크롤하여 **IAM User and Role Access to Billing Information** 섹션을 찾습니다.
-56. [[Edit]]를 클릭합니다.
-57. ✅ **Activate IAM Access**를 체크합니다.
-58. [[Update]]를 클릭합니다.
+71. IAM 사용자에서 로그아웃합니다.
+72. **Root 계정**으로 다시 로그인합니다.
+73. 우측 상단 계정 이름 → **Account**를 클릭합니다.
+74. 페이지를 스크롤하여 **IAM User and Role Access to Billing Information** 섹션을 찾습니다.
+75. [[Edit]]를 클릭합니다.
+76. ✅ **Activate IAM Access**를 체크합니다.
+77. [[Update]]를 클릭합니다.
 
 > [!NOTE]
 > 이 설정을 활성화하지 않으면 IAM 사용자가 AdministratorAccess 권한이 있어도 Billing 페이지에 접근할 수 없습니다.
 
-59. Root 계정에서 로그아웃합니다.
-60. IAM 사용자(`admin-user`)로 다시 로그인합니다.
+78. Root 계정에서 로그아웃합니다.
+79. IAM 사용자(`admin-user`)로 다시 로그인합니다.
 
 ✅ **태스크 완료**: IAM 사용자의 Billing 접근 권한이 활성화되었습니다.
 

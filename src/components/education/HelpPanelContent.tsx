@@ -458,15 +458,18 @@ export const HelpPanelContent: React.FC<HelpPanelContentProps> = ({
         '.awsui-app-layout__content-main',
       );
 
+      // 모바일 헤더 높이 고려 (모바일: 120px, 데스크톱: 80px)
+      const isMobile = window.innerWidth < 768;
+      const offset = isMobile ? 120 : 80;
+
       if (mainContent) {
         // 메인 콘텐츠 영역 내에서 스크롤
         const elementTop = element.offsetTop;
-        mainContent.scrollTo({ top: elementTop - 80, behavior: 'smooth' });
+        mainContent.scrollTo({ top: elementTop - offset, behavior: 'smooth' });
       } else {
         // 폴백: 전체 페이지 스크롤
-        const yOffset = -80;
         const y =
-          element.getBoundingClientRect().top + window.pageYOffset + yOffset;
+          element.getBoundingClientRect().top + window.pageYOffset - offset;
         window.scrollTo({ top: y, behavior: 'smooth' });
       }
     }
