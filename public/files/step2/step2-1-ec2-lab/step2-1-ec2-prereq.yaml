@@ -12,6 +12,12 @@ Resources:
       Tags:
         - Key: Name
           Value: my-vpc
+        - Key: CreatedBy
+          Value: cloudformation
+        - Key: Step
+          Value: step2
+        - Key: Session
+          Value: '2-1'
 
   # Internet Gateway
   InternetGateway:
@@ -20,6 +26,12 @@ Resources:
       Tags:
         - Key: Name
           Value: my-igw
+        - Key: CreatedBy
+          Value: cloudformation
+        - Key: Step
+          Value: step2
+        - Key: Session
+          Value: '2-1'
 
   AttachGateway:
     Type: AWS::EC2::VPCGatewayAttachment
@@ -38,6 +50,12 @@ Resources:
       Tags:
         - Key: Name
           Value: my-public-subnet-a
+        - Key: CreatedBy
+          Value: cloudformation
+        - Key: Step
+          Value: step2
+        - Key: Session
+          Value: '2-1'
 
   # Public Route Table
   PublicRouteTable:
@@ -47,6 +65,12 @@ Resources:
       Tags:
         - Key: Name
           Value: my-public-rt
+        - Key: CreatedBy
+          Value: cloudformation
+        - Key: Step
+          Value: step2
+        - Key: Session
+          Value: '2-1'
 
   PublicRoute:
     Type: AWS::EC2::Route
@@ -97,6 +121,12 @@ Resources:
       Tags:
         - Key: Name
           Value: my-ec2-sg
+        - Key: CreatedBy
+          Value: cloudformation
+        - Key: Step
+          Value: step2
+        - Key: Session
+          Value: '2-1'
 
 Outputs:
   VPCId:

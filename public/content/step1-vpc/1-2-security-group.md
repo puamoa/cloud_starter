@@ -19,20 +19,73 @@ estimatedCost: 무료 리소스 (Security Group은 항상 무료)
 이 실습에서는 EC2 인스턴스와 RDS 인스턴스에 적용할 Security Group을 생성합니다. Security Group은 인스턴스 레벨의 가상 방화벽으로, 인바운드/아웃바운드 트래픽을 제어합니다.
 
 > [!NOTE]
-> 이 실습은 VPC가 필요합니다. Step 1-1에서 생성한 VPC(`my-vpc`)를 사용하거나, 기존에 보유한 VPC를 사용합니다.
+> **실습 환경 구성 방식의 변화:**
+>
+> | Step    | 환경 구성 방식                 | 목적                                 |
+> | ------- | ------------------------------ | ------------------------------------ |
+> | 1-1     | 수동으로 하나씩 생성           | 각 구성 요소의 역할과 관계를 이해    |
+> | **1-2** | **VPC and more로 한번에 생성** | **콘솔 마법사 활용법 학습**          |
+> | 2-1~    | CloudFormation 템플릿 사용     | 인프라 자동화 체험, 실습 본론에 집중 |
+>
+> 이번 실습부터는 VPC 환경을 "VPC and more" 마법사로 빠르게 구성한 뒤, 본론인 Security Group 설정에 집중합니다.
 
-## 태스크 0: 선행 리소스 확인
+## 태스크 0: VPC and more로 실습 환경 구성
+
+Step 1-1에서는 VPC, 서브넷, IGW, Route Table을 하나씩 생성하며 원리를 학습했습니다.  
+이번에는 AWS 콘솔의 **"VPC and more"** 마법사를 사용하여 동일한 구성을 한번에 생성합니다.
+
+> [!NOTE]
+> Step 1-1에서 생성한 `my-vpc`가 이미 있다면 이 태스크를 건너뛰고 태스크 1로 이동합니다.
+
+### 상세 단계
 
 1. AWS Management Console에 로그인합니다.
 2. 리전을 **Asia Pacific (Seoul) ap-northeast-2**로 설정합니다.
 3. 상단 검색창에 `VPC`를 입력하고 VPC 서비스를 선택합니다.
-4. 왼쪽 메뉴에서 **Your VPCs**를 선택합니다.
-5. 사용할 VPC가 있는지 확인합니다.
+4. [[Create VPC]] 버튼을 클릭합니다.
+5. **Resources to create**에서 `VPC and more`를 선택합니다.
+6. 다음과 같이 설정합니다:
+   - **Name tag auto-generation**: `my` 입력 (리소스 이름이 `my-vpc`, `my-public-subnet-1` 등으로 자동 생성)
+   - **IPv4 CIDR block**: `10.0.0.0/16`
+   - **IPv6 CIDR block**: `No IPv6 CIDR block`
+   - **Tenancy**: `Default`
+   - **Number of Availability Zones**: `2`
+   - **Customize AZs**: `ap-northeast-2a`, `ap-northeast-2c`
+   - **Number of public subnets**: `2`
+   - **Number of private subnets**: `2`
+   - **NAT gateways**: `None` (NAT Gateway는 Step 3에서 별도로 다룹니다)
+   - **VPC endpoints**: `None`
+   - **DNS options**: 두 옵션 모두 체크 확인 (Enable DNS hostnames ✅, Enable DNS resolution ✅)
+
+7. 우측 **Preview** 패널에서 생성될 리소스를 확인합니다:
+   - VPC 1개
+   - Public Subnet 2개 (2a, 2c)
+   - Private Subnet 2개 (2a, 2c)
+   - Internet Gateway 1개
+   - Route Table 2개 (Public, Private)
+
+8. **Tags** 섹션에서 태그를 추가합니다:
+   - `CreatedBy` = `admin-user`
+   - `Step` = `step1`
+   - `Session` = `1-2`
+
+9. [[Create VPC]] 버튼을 클릭합니다.
+10. 생성 진행 화면에서 모든 리소스가 ✅ 표시될 때까지 기다립니다.
+
+> [!OUTPUT]
+> "VPC and more" 마법사가 VPC, 서브넷 4개, IGW, Route Table 2개를 한번에 생성합니다.  
+> Step 1-1에서 수동으로 진행한 모든 작업(VPC 생성 → 서브넷 생성 → IGW 생성/연결 → Route Table 생성/경로 추가/서브넷 연결)이 자동으로 완료됩니다.
 
 > [!TIP]
-> VPC가 없다면 Step 1-1을 먼저 진행하거나, VPC 콘솔에서 [[Create VPC]] → `VPC and more`를 선택하여 기본 구성을 빠르게 생성할 수 있습니다.
+> **VPC and more vs 수동 생성 비교:**
+>
+> - **수동 생성 (1-1)**: 각 단계의 의미를 이해하기 좋지만, 시간이 오래 걸리고 실수 가능성 있음.
+> - **VPC and more (1-2)**: 클릭 몇 번으로 완성. 실무에서 빠르게 환경을 구성할 때 유용.
+> - **CloudFormation (2-1~)**: YAML 파일로 정의하여 반복 생성/삭제 가능. 코드로 인프라를 관리하는 IaC(Infrastructure as Code) 방식.
+>
+> 다음 Step(2-1)부터는 CloudFormation 템플릿으로 환경을 자동 구성합니다. 실습의 본론(EC2, RDS 등)에 집중할 수 있도록 사전 환경을 코드로 빠르게 프로비저닝합니다.
 
-✅ **태스크 완료**: 선행 리소스가 확인되었습니다.
+✅ **태스크 완료**: VPC and more로 실습 환경이 구성되었습니다.
 
 ## 태스크 1: Security Group 개념 이해
 

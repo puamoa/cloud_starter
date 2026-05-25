@@ -26,7 +26,7 @@ estimatedCost: 크레딧 내 사용 가능 (비용 발생 가능)
 > [!DOWNLOAD]
 > [step4-1-rds-lab.zip](/files/step4/step4-1-rds-lab.zip)
 >
-> - `rds-lab-prereq.yaml` - AWS CloudFormation 템플릿 (태스크 0에서 VPC, 서브넷, IGW, Security Group 자동 생성)
+> - `step4-1-rds-prereq.yaml` - AWS CloudFormation 템플릿 (태스크 0에서 VPC, 서브넷, IGW, Security Group 자동 생성)
 
 이미 VPC, Private Subnet 2개, EC2용/RDS용 Security Group이 있다면 이 태스크를 건너뛰고 태스크 1로 이동합니다.
 
@@ -35,11 +35,11 @@ estimatedCost: 크레딧 내 사용 가능 (비용 발생 가능)
 3. 상단 검색창에 `CloudFormation`을 입력하고 선택합니다.
 4. [[Create stack]] → **With new resources (standard)**를 선택합니다.
 
-5. 다운로드한 `rds-lab-prereq.yaml` 파일을 확인합니다.
+5. 다운로드한 `step4-1-rds-prereq.yaml` 파일을 확인합니다.
 6. CloudFormation 콘솔에서 [[Create stack]] → **With new resources (standard)**를 선택합니다.
 7. **Upload a template file** → 다운로드한 YAML 파일을 업로드합니다.
 8. [[Next]] 버튼을 클릭합니다.
-9. **Stack name**에 `rds-lab-prereq`를 입력합니다.
+9. **Stack name**에 `step4-1-rds-prereq`를 입력합니다.
 10. [[Next]] → [[Next]] → [[Submit]] 버튼을 클릭합니다.
 11. 스택 상태가 `CREATE_COMPLETE`가 될 때까지 기다립니다.
 
@@ -349,7 +349,7 @@ RDS 접속 테스트를 위해 생성한 EC2 인스턴스를 종료합니다.
 태스크 0에서 CloudFormation으로 선행 리소스를 생성한 경우 스택을 삭제합니다.
 
 1. 상단 검색창에 `CloudFormation`을 입력하고 선택합니다.
-2. **Stacks** 목록에서 `rds-lab-prereq` 스택을 선택합니다.
+2. **Stacks** 목록에서 `step4-1-rds-prereq` 스택을 선택합니다.
 3. [[Delete]] 버튼을 클릭합니다.
 4. 확인 팝업에서 [[Delete stack]]을 클릭합니다.
 5. 스택 상태가 `DELETE_IN_PROGRESS` → `DELETE_COMPLETE`가 될 때까지 기다립니다 (약 2-3분).
@@ -366,7 +366,7 @@ RDS 접속 테스트를 위해 생성한 EC2 인스턴스를 종료합니다.
 1. RDS 콘솔 → **Databases**에서 `my-rds-mysql`이 목록에서 사라졌는지 확인합니다.
 2. RDS 콘솔 → **Subnet groups**에서 `my-db-subnet-group`이 삭제되었는지 확인합니다.
 3. EC2 콘솔에서 `my-ec2-app` 인스턴스가 `Terminated` 상태인지 확인합니다.
-4. CloudFormation 콘솔에서 `rds-lab-prereq` 스택이 목록에서 사라졌는지 확인합니다.
+4. CloudFormation 콘솔에서 `step4-1-rds-prereq` 스택이 목록에서 사라졌는지 확인합니다.
 
 > [!NOTE]
 > 삭제 직후에는 일부 리소스가 잠시 남아있을 수 있으나, 시간이 지나면 자동으로 사라집니다.

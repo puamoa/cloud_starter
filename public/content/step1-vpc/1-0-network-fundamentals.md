@@ -1199,6 +1199,115 @@ sg-db (RDS용):
 
 ---
 
+## 9. AWS 태그 (Tags)
+
+> [!CONCEPT] AWS 태그란
+> **태그(Tag)**는 AWS 리소스에 붙이는 **키-값(Key-Value) 쌍 라벨**입니다. 리소스의 동작에는 영향을 주지 않지만, 리소스 식별·비용 추적·접근 제어·자동화에 핵심적인 역할을 합니다.
+
+### 주요 용어
+
+| 용어                             | 설명                                                            |
+| -------------------------------- | --------------------------------------------------------------- |
+| **태그 (Tag)**                   | AWS 리소스에 붙이는 키-값 쌍 메타데이터                         |
+| **태그 키 (Tag Key)**            | 태그의 이름. 대소문자 구분, 최대 128자                          |
+| **태그 값 (Tag Value)**          | 태그의 값. 최대 256자, 빈 문자열 가능                           |
+| **Tag Editor**                   | AWS 콘솔에서 모든 리전의 리소스를 태그 기반으로 조회하는 도구   |
+| **태그 정책 (Tag Policy)**       | AWS Organizations에서 태그 규칙을 강제하는 정책                 |
+| **SCP (Service Control Policy)** | 특정 조건(태그 포함)을 만족하지 않으면 API 호출을 거부하는 정책 |
+
+### 태그를 사용하는 이유
+
+```
+태그가 없는 환경:
+
+  EC2 인스턴스 50개가 실행 중...
+  "이거 누가 만들었지?" "어떤 프로젝트용이지?" "삭제해도 되나?"
+  → 파악 불가, 비용 추적 불가, 정리 불가
+
+태그가 있는 환경:
+
+  CreatedBy: admin-user  → "아, 내가 만든 거구나"
+  Step: step3            → "3주차 NAT 실습용이구나"
+  Session: 3-1           → "3-1 세션에서 만든 거니까 실습 끝나면 삭제"
+  → 즉시 파악, 비용 추적, 정리 가능
+```
+
+### 이 실습에서 사용하는 태그 체계
+
+| 태그 키     | 값 예시          | 용도                                         |
+| ----------- | ---------------- | -------------------------------------------- |
+| `CreatedBy` | `admin-user`     | 누가 만들었는지 (수동 생성 시)               |
+| `CreatedBy` | `cloudformation` | CloudFormation으로 자동 생성된 리소스 구분   |
+| `Step`      | `step1`          | 주차별 묶음. Tag Editor에서 주차 단위로 조회 |
+| `Session`   | `1-1`            | 세션별 구분. 특정 세션 리소스만 필터링       |
+
+### 실무에서의 태그 활용
+
+```
+실무 태그 체계 예시:
+
+  Environment: production / staging / development
+  Team:        backend / frontend / devops / data
+  Service:     user-api / payment / notification
+  CostCenter:  CC-1234 (비용 부서 코드)
+  Owner:       john@company.com
+  ManagedBy:   terraform / cloudformation / manual
+```
+
+### 태그 기반 접근 제어 (실무)
+
+실무에서는 **특정 태그가 없으면 리소스를 생성할 수 없도록** IAM 정책이나 SCP로 강제합니다.
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Deny",
+      "Action": "ec2:RunInstances",
+      "Resource": "arn:aws:ec2:*:*:instance/*",
+      "Condition": {
+        "StringNotLike": {
+          "aws:RequestTag/Environment": ["production", "staging", "development"]
+        }
+      }
+    }
+  ]
+}
+```
+
+> 위 정책은 `Environment` 태그 없이 EC2 인스턴스를 생성하려고 하면 **거부**합니다.  
+> 이렇게 하면 모든 리소스에 태그가 강제되어 비용 추적과 관리가 가능해집니다.
+
+### 태그 기반 비용 추적
+
+AWS Cost Explorer에서 태그별로 비용을 분석할 수 있습니다:
+
+- **Step별 비용**: "step3(NAT 실습)에서 얼마나 썼지?" → `Step: step3`으로 필터링.
+- **생성자별 비용**: "내가 만든 리소스 비용은?" → `CreatedBy: admin-user`로 필터링.
+- **실무 예시**: "backend 팀의 production 환경 비용은?" → `Team: backend` + `Environment: production`.
+
+> [!NOTE]
+> Cost Explorer에서 태그별 비용을 보려면 **Billing → Cost Allocation Tags**에서 해당 태그를 활성화해야 합니다. 활성화 후 24시간 뒤부터 데이터가 표시됩니다.
+
+### Tag Editor로 리소스 관리
+
+[Tag Editor](https://console.aws.amazon.com/resource-groups/tag-editor)를 사용하면 모든 리전의 리소스를 태그 기반으로 한번에 조회할 수 있습니다.
+
+- `Step: step3`으로 검색 → 3주차에 만든 모든 리소스 목록.
+- `CreatedBy: cloudformation`으로 검색 → CloudFormation으로 만든 리소스만 조회.
+- 태그가 없는 리소스 검색 → 정리가 필요한 미관리 리소스 파악.
+
+> [!TIP]
+> **태그 모범 사례:**
+>
+> - 리소스 생성 시 태그를 **즉시** 붙이세요. 나중에 하려면 잊어버립니다.
+> - 태그 키는 팀 내에서 **일관된 규칙**을 정하세요. (`createdBy` vs `CreatedBy` vs `created_by`가 섞이면 필터링 불가)
+> - CloudFormation/Terraform으로 생성하면 태그가 자동으로 붙으므로 누락 걱정이 없습니다.
+> - 실습이 끝나면 Tag Editor에서 `Session` 태그로 검색하여 해당 세션의 리소스를 한번에 확인하고 정리하세요.
+
+---
+
 ## 📚 참고: 네트워크 진단 명령어
 
 실습이나 트러블슈팅 시 유용한 터미널 명령어입니다.

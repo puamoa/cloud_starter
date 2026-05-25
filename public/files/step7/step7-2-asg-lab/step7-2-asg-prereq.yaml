@@ -17,6 +17,12 @@ Resources:
       Tags:
         - Key: Name
           Value: asg-lab-vpc
+        - Key: CreatedBy
+          Value: cloudformation
+        - Key: Step
+          Value: step7
+        - Key: Session
+          Value: '7-2'
 
   # Internet Gateway
   InternetGateway:
@@ -25,6 +31,12 @@ Resources:
       Tags:
         - Key: Name
           Value: asg-lab-igw
+        - Key: CreatedBy
+          Value: cloudformation
+        - Key: Step
+          Value: step7
+        - Key: Session
+          Value: '7-2'
 
   AttachGateway:
     Type: AWS::EC2::VPCGatewayAttachment
@@ -43,6 +55,12 @@ Resources:
       Tags:
         - Key: Name
           Value: asg-lab-public-subnet-1
+        - Key: CreatedBy
+          Value: cloudformation
+        - Key: Step
+          Value: step7
+        - Key: Session
+          Value: '7-2'
 
   # Public Subnet 2 (AZ-c)
   PublicSubnet2:
@@ -55,6 +73,12 @@ Resources:
       Tags:
         - Key: Name
           Value: asg-lab-public-subnet-2
+        - Key: CreatedBy
+          Value: cloudformation
+        - Key: Step
+          Value: step7
+        - Key: Session
+          Value: '7-2'
 
   # Public Route Table
   PublicRouteTable:
@@ -64,6 +88,12 @@ Resources:
       Tags:
         - Key: Name
           Value: asg-lab-public-rt
+        - Key: CreatedBy
+          Value: cloudformation
+        - Key: Step
+          Value: step7
+        - Key: Session
+          Value: '7-2'
 
   PublicRoute:
     Type: AWS::EC2::Route
@@ -100,6 +130,12 @@ Resources:
       Tags:
         - Key: Name
           Value: asg-lab-alb-sg
+        - Key: CreatedBy
+          Value: cloudformation
+        - Key: Step
+          Value: step7
+        - Key: Session
+          Value: '7-2'
 
   # EC2 Security Group
   EC2SecurityGroup:
@@ -121,6 +157,12 @@ Resources:
       Tags:
         - Key: Name
           Value: asg-lab-ec2-sg
+        - Key: CreatedBy
+          Value: cloudformation
+        - Key: Step
+          Value: step7
+        - Key: Session
+          Value: '7-2'
 
   # Target Group
   TargetGroup:
@@ -140,6 +182,12 @@ Resources:
       Tags:
         - Key: Name
           Value: asg-lab-tg
+        - Key: CreatedBy
+          Value: cloudformation
+        - Key: Step
+          Value: step7
+        - Key: Session
+          Value: '7-2'
 
   # Application Load Balancer
   ALB:
@@ -156,6 +204,12 @@ Resources:
       Tags:
         - Key: Name
           Value: asg-lab-alb
+        - Key: CreatedBy
+          Value: cloudformation
+        - Key: Step
+          Value: step7
+        - Key: Session
+          Value: '7-2'
 
   # ALB Listener
   ALBListener:

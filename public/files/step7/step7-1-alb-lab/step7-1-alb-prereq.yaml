@@ -17,6 +17,12 @@ Resources:
       Tags:
         - Key: Name
           Value: alb-lab-vpc
+        - Key: CreatedBy
+          Value: cloudformation
+        - Key: Step
+          Value: step7
+        - Key: Session
+          Value: '7-1'
 
   # Internet Gateway
   InternetGateway:
@@ -25,6 +31,12 @@ Resources:
       Tags:
         - Key: Name
           Value: alb-lab-igw
+        - Key: CreatedBy
+          Value: cloudformation
+        - Key: Step
+          Value: step7
+        - Key: Session
+          Value: '7-1'
 
   AttachGateway:
     Type: AWS::EC2::VPCGatewayAttachment
@@ -43,6 +55,12 @@ Resources:
       Tags:
         - Key: Name
           Value: alb-lab-public-subnet-1
+        - Key: CreatedBy
+          Value: cloudformation
+        - Key: Step
+          Value: step7
+        - Key: Session
+          Value: '7-1'
 
   # Public Subnet 2 (AZ-c)
   PublicSubnet2:
@@ -55,6 +73,12 @@ Resources:
       Tags:
         - Key: Name
           Value: alb-lab-public-subnet-2
+        - Key: CreatedBy
+          Value: cloudformation
+        - Key: Step
+          Value: step7
+        - Key: Session
+          Value: '7-1'
 
   # Public Route Table
   PublicRouteTable:
@@ -64,6 +88,12 @@ Resources:
       Tags:
         - Key: Name
           Value: alb-lab-public-rt
+        - Key: CreatedBy
+          Value: cloudformation
+        - Key: Step
+          Value: step7
+        - Key: Session
+          Value: '7-1'
 
   PublicRoute:
     Type: AWS::EC2::Route
@@ -105,6 +135,12 @@ Resources:
       Tags:
         - Key: Name
           Value: alb-lab-ec2-sg
+        - Key: CreatedBy
+          Value: cloudformation
+        - Key: Step
+          Value: step7
+        - Key: Session
+          Value: '7-1'
 
   # EC2 Instance with Nginx
   EC2Instance:
@@ -130,6 +166,12 @@ Resources:
       Tags:
         - Key: Name
           Value: alb-lab-ec2
+        - Key: CreatedBy
+          Value: cloudformation
+        - Key: Step
+          Value: step7
+        - Key: Session
+          Value: '7-1'
 
 Outputs:
   VPCId:

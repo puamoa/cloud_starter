@@ -27,7 +27,7 @@ estimatedCost: 크레딧 내 사용 가능 (비용 발생 가능)
 > [!DOWNLOAD]
 > [step2-1-ec2-lab.zip](/files/step2/step2-1-ec2-lab.zip)
 >
-> - `ec2-prereq.yaml` - AWS CloudFormation 템플릿 (태스크 0에서 VPC, 서브넷, IGW, Security Group 자동 생성)
+> - `step2-1-ec2-prereq.yaml` - AWS CloudFormation 템플릿 (태스크 0에서 VPC, 서브넷, IGW, Security Group 자동 생성)
 
 이미 VPC, Public Subnet, IGW, Security Group이 있다면 이 태스크를 건너뛰고 태스크 1로 이동합니다.
 
@@ -37,9 +37,9 @@ estimatedCost: 크레딧 내 사용 가능 (비용 발생 가능)
 4. [[Create stack]] → **With new resources (standard)**를 선택합니다.
 5. **Specify template** 섹션에서 `Upload a template file`을 선택합니다.
 
-   > - 태스크 0: 실습 환경 구축 (ec2-prereq.yaml 사용)
+   > - 태스크 0: 실습 환경 구축 (step2-1-ec2-prereq.yaml 사용)
 
-6. 다운로드한 `ec2-prereq.yaml` 파일을 확인합니다.
+6. 다운로드한 `step2-1-ec2-prereq.yaml` 파일을 확인합니다.
 7. CloudFormation 콘솔에서 [[Create stack]] → **With new resources (standard)**를 선택합니다.
 8. **Upload a template file** → 다운로드한 YAML 파일을 업로드합니다.
 9. [[Next]] 버튼을 클릭합니다.

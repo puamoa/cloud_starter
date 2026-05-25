@@ -30,7 +30,7 @@ estimatedCost: NAT Gateway 시간당 과금 (크레딧 소진 주의)
 > [!DOWNLOAD]
 > [step3-1-nat-lab.zip](/files/step3/step3-1-nat-lab.zip)
 >
-> - `nat-lab-prereq.yaml` - AWS CloudFormation 템플릿 (태스크 0에서 VPC, 서브넷, IGW, Route Table, Security Group 자동 생성)
+> - `step3-1-nat-prereq.yaml` - AWS CloudFormation 템플릿 (태스크 0에서 VPC, 서브넷, IGW, Route Table, Security Group 자동 생성)
 
 이미 VPC, Public/Private Subnet, IGW가 있다면 이 태스크를 건너뛰고 태스크 1로 이동합니다.
 
@@ -39,11 +39,11 @@ estimatedCost: NAT Gateway 시간당 과금 (크레딧 소진 주의)
 3. 상단 검색창에 `CloudFormation`을 입력하고 선택합니다.
 4. [[Create stack]] → **With new resources (standard)**를 선택합니다.
 
-5. 다운로드한 `nat-lab-prereq.yaml` 파일을 확인합니다.
+5. 다운로드한 `step3-1-nat-prereq.yaml` 파일을 확인합니다.
 6. CloudFormation 콘솔에서 [[Create stack]] → **With new resources (standard)**를 선택합니다.
 7. **Upload a template file** → 다운로드한 YAML 파일을 업로드합니다.
 8. [[Next]] 버튼을 클릭합니다.
-9. **Stack name**에 `nat-lab-prereq`를 입력합니다.
+9. **Stack name**에 `step3-1-nat-prereq`를 입력합니다.
 10. [[Next]] → [[Next]] → [[Submit]] 버튼을 클릭합니다.
 11. 스택 상태가 `CREATE_COMPLETE`가 될 때까지 기다립니다.
 
@@ -394,7 +394,7 @@ NAT Gateway에 할당했던 Elastic IP를 해제합니다.
 태스크 0에서 CloudFormation으로 선행 리소스를 생성한 경우 스택을 삭제합니다.
 
 1. 상단 검색창에 `CloudFormation`을 입력하고 선택합니다.
-2. **Stacks** 목록에서 `nat-lab-prereq` 스택을 선택합니다.
+2. **Stacks** 목록에서 `step3-1-nat-prereq` 스택을 선택합니다.
 3. [[Delete]] 버튼을 클릭합니다.
 4. 확인 팝업에서 [[Delete stack]]을 클릭합니다.
 5. 스택 상태가 `DELETE_IN_PROGRESS` → `DELETE_COMPLETE`가 될 때까지 기다립니다 (약 2-3분).
@@ -411,7 +411,7 @@ NAT Gateway에 할당했던 Elastic IP를 해제합니다.
 1. EC2 콘솔에서 `my-nat-instance`, `my-private-ec2`, `my-bastion` 인스턴스가 모두 `Terminated` 상태인지 확인합니다.
 2. VPC 콘솔 → **NAT gateways**에서 `my-nat-gateway`가 `Deleted` 상태인지 확인합니다.
 3. VPC 콘솔 → **Elastic IPs**에서 할당한 IP가 목록에서 사라졌는지 확인합니다.
-4. CloudFormation 콘솔에서 `nat-lab-prereq` 스택이 목록에서 사라졌는지 확인합니다.
+4. CloudFormation 콘솔에서 `step3-1-nat-prereq` 스택이 목록에서 사라졌는지 확인합니다.
 
 > [!NOTE]
 > 삭제 직후에는 일부 리소스가 잠시 남아있을 수 있으나, 시간이 지나면 자동으로 사라집니다.

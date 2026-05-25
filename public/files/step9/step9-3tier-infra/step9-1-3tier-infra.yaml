@@ -46,6 +46,12 @@ Resources:
       Tags:
         - Key: Name
           Value: !Sub '${ProjectName}-vpc'
+        - Key: CreatedBy
+          Value: cloudformation
+        - Key: Step
+          Value: step9
+        - Key: Session
+          Value: '9-1'
 
   # ============================================================
   # Internet Gateway
@@ -56,6 +62,12 @@ Resources:
       Tags:
         - Key: Name
           Value: !Sub '${ProjectName}-igw'
+        - Key: CreatedBy
+          Value: cloudformation
+        - Key: Step
+          Value: step9
+        - Key: Session
+          Value: '9-1'
 
   VPCGatewayAttachment:
     Type: AWS::EC2::VPCGatewayAttachment
@@ -76,17 +88,29 @@ Resources:
       Tags:
         - Key: Name
           Value: !Sub '${ProjectName}-public-subnet-1'
+        - Key: CreatedBy
+          Value: cloudformation
+        - Key: Step
+          Value: step9
+        - Key: Session
+          Value: '9-1'
 
   PublicSubnet2:
     Type: AWS::EC2::Subnet
     Properties:
       VpcId: !Ref VPC
       CidrBlock: 10.0.2.0/24
-      AvailabilityZone: !Select [1, !GetAZs '']
+      AvailabilityZone: !Select [2, !GetAZs '']
       MapPublicIpOnLaunch: true
       Tags:
         - Key: Name
           Value: !Sub '${ProjectName}-public-subnet-2'
+        - Key: CreatedBy
+          Value: cloudformation
+        - Key: Step
+          Value: step9
+        - Key: Session
+          Value: '9-1'
 
   # ============================================================
   # Private Subnets (2 AZs)
@@ -100,16 +124,28 @@ Resources:
       Tags:
         - Key: Name
           Value: !Sub '${ProjectName}-private-subnet-1'
+        - Key: CreatedBy
+          Value: cloudformation
+        - Key: Step
+          Value: step9
+        - Key: Session
+          Value: '9-1'
 
   PrivateSubnet2:
     Type: AWS::EC2::Subnet
     Properties:
       VpcId: !Ref VPC
       CidrBlock: 10.0.12.0/24
-      AvailabilityZone: !Select [1, !GetAZs '']
+      AvailabilityZone: !Select [2, !GetAZs '']
       Tags:
         - Key: Name
           Value: !Sub '${ProjectName}-private-subnet-2'
+        - Key: CreatedBy
+          Value: cloudformation
+        - Key: Step
+          Value: step9
+        - Key: Session
+          Value: '9-1'
 
   # ============================================================
   # NAT Gateway (Public Subnet 1)
@@ -122,6 +158,12 @@ Resources:
       Tags:
         - Key: Name
           Value: !Sub '${ProjectName}-nat-eip'
+        - Key: CreatedBy
+          Value: cloudformation
+        - Key: Step
+          Value: step9
+        - Key: Session
+          Value: '9-1'
 
   NATGateway:
     Type: AWS::EC2::NatGateway
@@ -131,6 +173,12 @@ Resources:
       Tags:
         - Key: Name
           Value: !Sub '${ProjectName}-nat-gw'
+        - Key: CreatedBy
+          Value: cloudformation
+        - Key: Step
+          Value: step9
+        - Key: Session
+          Value: '9-1'
 
   # ============================================================
   # Route Tables
@@ -142,6 +190,12 @@ Resources:
       Tags:
         - Key: Name
           Value: !Sub '${ProjectName}-public-rt'
+        - Key: CreatedBy
+          Value: cloudformation
+        - Key: Step
+          Value: step9
+        - Key: Session
+          Value: '9-1'
 
   PublicRoute:
     Type: AWS::EC2::Route
@@ -170,6 +224,12 @@ Resources:
       Tags:
         - Key: Name
           Value: !Sub '${ProjectName}-private-rt'
+        - Key: CreatedBy
+          Value: cloudformation
+        - Key: Step
+          Value: step9
+        - Key: Session
+          Value: '9-1'
 
   PrivateRoute:
     Type: AWS::EC2::Route
@@ -210,6 +270,12 @@ Resources:
       Tags:
         - Key: Name
           Value: !Sub '${ProjectName}-alb-sg'
+        - Key: CreatedBy
+          Value: cloudformation
+        - Key: Step
+          Value: step9
+        - Key: Session
+          Value: '9-1'
 
   EC2SecurityGroup:
     Type: AWS::EC2::SecurityGroup
@@ -224,6 +290,12 @@ Resources:
       Tags:
         - Key: Name
           Value: !Sub '${ProjectName}-ec2-sg'
+        - Key: CreatedBy
+          Value: cloudformation
+        - Key: Step
+          Value: step9
+        - Key: Session
+          Value: '9-1'
 
   RDSSecurityGroup:
     Type: AWS::EC2::SecurityGroup
@@ -238,6 +310,12 @@ Resources:
       Tags:
         - Key: Name
           Value: !Sub '${ProjectName}-rds-sg'
+        - Key: CreatedBy
+          Value: cloudformation
+        - Key: Step
+          Value: step9
+        - Key: Session
+          Value: '9-1'
 
   # ============================================================
   # RDS MySQL
@@ -252,6 +330,12 @@ Resources:
       Tags:
         - Key: Name
           Value: !Sub '${ProjectName}-db-subnet-group'
+        - Key: CreatedBy
+          Value: cloudformation
+        - Key: Step
+          Value: step9
+        - Key: Session
+          Value: '9-1'
 
   RDSInstance:
     Type: AWS::RDS::DBInstance
@@ -275,6 +359,12 @@ Resources:
       Tags:
         - Key: Name
           Value: !Sub '${ProjectName}-rds'
+        - Key: CreatedBy
+          Value: cloudformation
+        - Key: Step
+          Value: step9
+        - Key: Session
+          Value: '9-1'
 
   # ============================================================
   # S3 Bucket (Frontend Hosting)
@@ -294,6 +384,12 @@ Resources:
       Tags:
         - Key: Name
           Value: !Sub '${ProjectName}-frontend-bucket'
+        - Key: CreatedBy
+          Value: cloudformation
+        - Key: Step
+          Value: step9
+        - Key: Session
+          Value: '9-1'
 
   FrontendBucketPolicy:
     Type: AWS::S3::BucketPolicy
@@ -325,6 +421,12 @@ Resources:
       Tags:
         - Key: Name
           Value: !Sub '${ProjectName}-alb'
+        - Key: CreatedBy
+          Value: cloudformation
+        - Key: Step
+          Value: step9
+        - Key: Session
+          Value: '9-1'
 
   ALBTargetGroup:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
@@ -342,6 +444,12 @@ Resources:
       Tags:
         - Key: Name
           Value: !Sub '${ProjectName}-target-group'
+        - Key: CreatedBy
+          Value: cloudformation
+        - Key: Step
+          Value: step9
+        - Key: Session
+          Value: '9-1'
 
   ALBListener:
     Type: AWS::ElasticLoadBalancingV2::Listener
