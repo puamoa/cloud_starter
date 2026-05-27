@@ -805,8 +805,26 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
           );
         }
 
-        // 코드 블록이 없으면 일반 텍스트로 표시 (폴백)
-        const cleanContent = content.replace(/\[!OUTPUT\]/, '').trim();
+        // 코드 블록이 없으면 일반 콘텐츠로 표시 (테이블 등 포함)
+        const removeOutputMarker = (node: MdNode): MdNode => {
+          if (typeof node === 'string') {
+            return node.replace(/\[!OUTPUT\]\s*/g, '');
+          }
+          if (Array.isArray(node)) {
+            return node.map(removeOutputMarker);
+          }
+          if (node?.props?.children) {
+            return {
+              ...node,
+              props: {
+                ...node.props,
+                children: removeOutputMarker(node.props.children),
+              },
+            };
+          }
+          return node;
+        };
+        const cleanedOutputChildren = removeOutputMarker(children);
         return (
           <div className={`info-box info-box--${boxType}`} role="note">
             <div className="info-box-icon">
@@ -814,11 +832,9 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
             </div>
             <div className="info-box-content">
               <strong>{label}</strong>
-              <Box margin={{ top: 's' }}>
-                <pre className="output-fallback-pre">
-                  <code>{cleanContent}</code>
-                </pre>
-              </Box>
+              <div className="alert-content-wrapper">
+                {cleanedOutputChildren}
+              </div>
             </div>
           </div>
         );

@@ -16,7 +16,8 @@ prerequisites:
 estimatedCost: 무료 리소스 (Security Group은 항상 무료)
 ---
 
-이 실습에서는 EC2 인스턴스와 RDS 인스턴스에 적용할 Security Group을 생성합니다. Security Group은 인스턴스 레벨의 가상 방화벽으로, 인바운드/아웃바운드 트래픽을 제어합니다.
+이 실습에서는 EC2 인스턴스와 RDS 인스턴스에 적용할 Security Group을 생성합니다.  
+Security Group은 인스턴스 레벨의 가상 방화벽으로, 인바운드/아웃바운드 트래픽을 제어합니다.
 
 > [!NOTE]
 > **실습 환경 구성 방식의 변화:**
@@ -50,24 +51,51 @@ Step 1-1에서는 VPC, 서브넷, IGW, Route Table을 하나씩 생성하며 원
    - **IPv6 CIDR block**: `No IPv6 CIDR block`
    - **Tenancy**: `Default`
    - **Number of Availability Zones**: `2`
-   - **Customize AZs**: `ap-northeast-2a`, `ap-northeast-2c`
+   - **Customize AZs**: 토글을 펼쳐서 `ap-northeast-2a`, `ap-northeast-2c`를 선택합니다.
    - **Number of public subnets**: `2`
    - **Number of private subnets**: `2`
-   - **NAT gateways**: `None` (NAT Gateway는 Step 3에서 별도로 다룹니다)
+   - **Customize subnets CIDR blocks**: 토글을 펼쳐서 다음과 같이 수정합니다.
+
+     | 서브넷                                 | 기본값          | 변경값         |
+     | -------------------------------------- | --------------- | -------------- |
+     | Public subnet CIDR in ap-northeast-2a  | `10.0.0.0/20`   | `10.0.1.0/24`  |
+     | Public subnet CIDR in ap-northeast-2c  | `10.0.16.0/20`  | `10.0.2.0/24`  |
+     | Private subnet CIDR in ap-northeast-2a | `10.0.128.0/20` | `10.0.11.0/24` |
+     | Private subnet CIDR in ap-northeast-2c | `10.0.144.0/20` | `10.0.12.0/24` |
+
+   - **NAT gateways**: `None` (반드시 None 확인)
    - **VPC endpoints**: `None`
    - **DNS options**: 두 옵션 모두 체크 확인 (Enable DNS hostnames ✅, Enable DNS resolution ✅)
 
-7. 우측 **Preview** 패널에서 생성될 리소스를 확인합니다:
+> [!WARNING]
+> **NAT gateways 옵션이 반드시 `None`인지 확인하세요.**  
+> `In 1 AZ` 또는 `1 per AZ`를 선택하면 NAT Gateway가 생성되며, 시간당 약 $0.059 + 데이터 처리 비용이 즉시 발생합니다.  
+> (서울 리전 기준 월 약 $43~$86, 리전마다 비용이 다릅니다.)  
+> 실수로 생성하면 크레딧이 빠르게 소진됩니다. NAT Gateway는 Step 3에서 별도로 학습합니다.
+
+> [!NOTE]
+> **Customize subnets CIDR blocks** 토글은 기본적으로 접혀 있습니다.  
+> 펼치지 않으면 기본값(/20 대역)이 적용됩니다.  
+> 기본값은 서브넷당 4,096개 IP로 학습용에는 과하고, Step 1-1에서 설계한 CIDR(/24, 251개)과 일치시키기 위해 수동으로 변경합니다.  
+> 이후 실습에서 동일한 서브넷 CIDR을 참조하므로, 반드시 위 값으로 수정하세요.
+
+7. **Additional tags** 토글을 펼쳐서 태그를 추가합니다:
+   - [[Add new tag]]를 클릭하여 다음 3개 태그를 입력합니다.
+   - `CreatedBy` = `admin-user`
+   - `Step` = `step1`
+   - `Session` = `1-2`
+
+> [!NOTE]
+> **Additional tags**는 화면 하단에 접혀 있습니다.  
+> 토글(▶)을 클릭하면 펼쳐지며, 여기서 추가한 태그는 VPC와 함께 생성되는 모든 리소스(서브넷, IGW, Route Table 등)에 자동으로 적용됩니다.  
+> Name 태그는 상단의 Name tag auto-generation에서 설정하므로 여기서는 입력하지 않습니다.
+
+8. 우측 **Preview** 패널에서 생성될 리소스를 확인합니다:
    - VPC 1개
    - Public Subnet 2개 (2a, 2c)
    - Private Subnet 2개 (2a, 2c)
    - Internet Gateway 1개
    - Route Table 2개 (Public, Private)
-
-8. **Tags** 섹션에서 태그를 추가합니다:
-   - `CreatedBy` = `admin-user`
-   - `Step` = `step1`
-   - `Session` = `1-2`
 
 9. [[Create VPC]] 버튼을 클릭합니다.
 10. 생성 진행 화면에서 모든 리소스가 ✅ 표시될 때까지 기다립니다.
@@ -81,9 +109,10 @@ Step 1-1에서는 VPC, 서브넷, IGW, Route Table을 하나씩 생성하며 원
 >
 > - **수동 생성 (1-1)**: 각 단계의 의미를 이해하기 좋지만, 시간이 오래 걸리고 실수 가능성 있음.
 > - **VPC and more (1-2)**: 클릭 몇 번으로 완성. 실무에서 빠르게 환경을 구성할 때 유용.
-> - **CloudFormation (2-1~)**: YAML 파일로 정의하여 반복 생성/삭제 가능. 코드로 인프라를 관리하는 IaC(Infrastructure as Code) 방식.
+> - **AWS CloudFormation (2-1~)**: YAML 파일로 정의하여 반복 생성/삭제 가능. 코드로 인프라를 관리하는 IaC(Infrastructure as Code) 방식.
 >
-> 다음 Step(2-1)부터는 CloudFormation 템플릿으로 환경을 자동 구성합니다. 실습의 본론(EC2, RDS 등)에 집중할 수 있도록 사전 환경을 코드로 빠르게 프로비저닝합니다.
+> 다음 Step(2-1)부터는 AWS CloudFormation 템플릿으로 환경을 자동 구성합니다.  
+> 실습의 본론(Amazon EC2, Amazon RDS 등)에 집중할 수 있도록 사전 환경을 코드로 빠르게 프로비저닝합니다.
 
 ✅ **태스크 완료**: VPC and more로 실습 환경이 구성되었습니다.
 
@@ -111,7 +140,8 @@ Step 1-1에서는 VPC, 서브넷, IGW, Route Table을 하나씩 생성하며 원
 | 권장 사용            | 사용하지 않는 것을 권장 | 용도별로 생성하여 사용 |
 
 > [!WARNING]
-> 기본 Security Group은 수정은 가능하지만 삭제할 수 없습니다. 실무에서는 기본 SG를 사용하지 않고, 용도별로 커스텀 SG를 생성하는 것이 보안 모범 사례입니다.
+> 기본 Security Group은 수정은 가능하지만 삭제할 수 없습니다.  
+> 실무에서는 기본 SG를 사용하지 않고, 용도별로 커스텀 SG를 생성하는 것이 보안 모범 사례입니다.
 
 ✅ **태스크 완료**: Security Group의 개념과 특성을 이해했습니다.
 
@@ -119,50 +149,93 @@ Step 1-1에서는 VPC, 서브넷, IGW, Route Table을 하나씩 생성하며 원
 
 웹 서버(EC2)에 적용할 Security Group을 생성합니다. SSH, HTTP, HTTPS, Spring Boot(8080) 포트를 허용합니다.
 
-6. 왼쪽 메뉴에서 **Security groups**를 선택합니다.
-7. [[Create security group]] 버튼을 클릭합니다.
-8. **Basic details** 섹션을 설정합니다:
-   - **Security group name**: `my-ec2-sg`
-   - **Description**: `Security group for web server EC2 instances`
-   - **VPC**: `my-vpc` 선택
+11. 왼쪽 메뉴에서 **Security groups**를 선택합니다.
+12. [[Create security group]] 버튼을 클릭합니다.
+13. **Basic details** 섹션을 설정합니다:
+    - **Security group name**: `my-ec2-sg`
+    - **Description**: `Security group for web server EC2 instances`
+    - **VPC**: `my-vpc` 선택
 
-9. **Inbound rules** 섹션에서 [[Add rule]] 버튼을 클릭합니다.
-10. 첫 번째 규칙(SSH)을 설정합니다:
+14. **Inbound rules** 섹션에서 [[Add rule]] 버튼을 클릭합니다.
+15. 첫 번째 규칙(SSH)을 설정합니다:
     - **Type**: `SSH`
     - **Port range**: `22` (자동 입력)
     - **Source**: `My IP` 선택
 
 > [!WARNING]
-> SSH Source를 `0.0.0.0/0`(Anywhere)으로 설정하면 전 세계에서 SSH 접속을 시도할 수 있습니다. 반드시 `My IP`를 선택하여 본인의 IP만 허용하세요. IP가 변경되면 규칙을 업데이트해야 합니다.
+> SSH Source를 `0.0.0.0/0`(Anywhere)으로 설정하면 전 세계에서 SSH 접속을 시도할 수 있습니다.  
+> 반드시 `My IP`를 선택하여 본인의 IP만 허용하세요.
+>
+> **`My IP`를 선택했는데 나중에 SSH 접속이 안 되는 경우:**
+>
+> - 카페, 학교, 집 등 네트워크를 이동하면 공인 IP가 변경됩니다.
+> - 모바일 핫스팟, VPN 사용 시에도 IP가 달라집니다.
+> - 이 경우 Security Group의 SSH 규칙을 편집하여 현재 IP로 업데이트하면 됩니다.  
+>   (Security groups → `my-ec2-sg` → Inbound rules → Edit → SSH 규칙의 Source를 `My IP`로 다시 선택 → Save)
+>
+> **실무에서는 SSH 포트를 아예 열지 않는 방법도 있습니다:**
+>
+> - **AWS Systems Manager Session Manager (SSM)**: SSH 포트 없이 브라우저/CLI에서 인스턴스에 접속. Security Group에 22번 포트를 열 필요가 없어 보안상 가장 안전합니다.
+> - **EC2 Instance Connect**: 콘솔에서 임시 SSH 키를 주입하여 접속. 포트 22는 필요하지만 키 관리가 간편합니다.
+>
+> 이 실습에서는 학습 목적으로 SSH(22)를 `My IP`로 열어두지만, 실무에서는 SSM 사용을 권장합니다.
 
-11. [[Add rule]] 버튼을 클릭하여 두 번째 규칙(HTTP)을 추가합니다:
+> [!TIP]
+> **EC2에 SSH 접속이 안 될 때 체크리스트:**
+>
+> 1. **Security Group 확인**: SSH(22) 인바운드 규칙의 Source IP가 현재 내 공인 IP와 일치하는지 확인합니다. ([ifconfig.me](https://ifconfig.me)에서 현재 IP 확인 가능)
+> 2. **Public IP 확인**: EC2 인스턴스에 Public IP가 할당되어 있는지 확인합니다. (Public Subnet + Auto-assign Public IP 활성화 필요)
+> 3. **Route Table 확인**: 서브넷의 Route Table에 `0.0.0.0/0 → IGW` 경로가 있는지 확인합니다.
+> 4. **인스턴스 상태 확인**: EC2 인스턴스가 `running` 상태인지 확인합니다.
+> 5. **Key Pair 확인**: SSH 접속 시 사용하는 키 파일(.pem)이 인스턴스 생성 시 지정한 Key Pair와 일치하는지 확인합니다.
+> 6. **NACL 확인**: 서브넷의 Network ACL에서 SSH(22) 인바운드와 Ephemeral Port(1024-65535) 아웃바운드가 허용되어 있는지 확인합니다. (기본 NACL은 모두 허용)
+>
+> 대부분의 경우 **1번(IP 변경)**이 원인입니다. Security Group에서 SSH 규칙의 Source를 `My IP`로 다시 선택하면 해결됩니다.
+>
+> **그래도 해결이 안 되는 경우 (최후의 수단):**  
+> SSH 규칙의 Source를 임시로 `0.0.0.0/0`(Anywhere)으로 변경하여 접속을 시도합니다.  
+> 접속이 되면 네트워크/IP 문제였던 것이고, 접속이 안 되면 다른 원인(2~6번)을 확인합니다.  
+> 문제 해결 후 반드시 Source를 `My IP`로 되돌리세요. `0.0.0.0/0` 상태로 방치하면 보안 위험이 있습니다.
+
+16. [[Add rule]] 버튼을 클릭하여 두 번째 규칙(HTTP)을 추가합니다:
     - **Type**: `HTTP`
     - **Port range**: `80` (자동 입력)
     - **Source**: `Anywhere-IPv4` (0.0.0.0/0)
 
-12. [[Add rule]] 버튼을 클릭하여 세 번째 규칙(HTTPS)을 추가합니다:
+17. [[Add rule]] 버튼을 클릭하여 세 번째 규칙(HTTPS)을 추가합니다:
     - **Type**: `HTTPS`
     - **Port range**: `443` (자동 입력)
     - **Source**: `Anywhere-IPv4` (0.0.0.0/0)
 
-13. [[Add rule]] 버튼을 클릭하여 네 번째 규칙(Spring Boot)을 추가합니다:
+18. [[Add rule]] 버튼을 클릭하여 네 번째 규칙(Spring Boot)을 추가합니다:
     - **Type**: `Custom TCP`
     - **Port range**: `8080`
     - **Source**: `Anywhere-IPv4` (0.0.0.0/0)
 
 > [!NOTE]
-> 포트 8080은 Spring Boot의 기본 포트입니다. 개발/테스트 환경에서는 직접 접근을 허용하지만, 운영 환경에서는 ALB(Application Load Balancer)를 통해 80/443으로만 접근하도록 구성합니다.
+> 포트 8080은 Spring Boot의 기본 포트입니다.  
+> 개발/테스트 환경에서는 직접 접근을 허용하지만, 운영 환경에서는 ALB(Application Load Balancer)를 통해 80/443으로만 접근하도록 구성합니다.
 
-14. **Outbound rules**는 기본값(All traffic, 0.0.0.0/0)을 유지합니다.
-15. [[Create security group]] 버튼을 클릭합니다.
+19. **Outbound rules**는 기본값(All traffic, 0.0.0.0/0)을 유지합니다.
+
+20. 하단의 **Tags** 섹션에서 [[Add new tag]]를 클릭하여 태그를 추가합니다:
+    - `Name` = `my-ec2-sg`
+    - `CreatedBy` = `admin-user`
+    - `Step` = `step1`
+    - `Session` = `1-2`
+
+> [!NOTE]
+> Security Group은 VPC와 달리 Name tag 전용 입력 필드가 없습니다.  
+> Tags 섹션에서 `Name` 키를 직접 추가해야 콘솔 목록에서 이름이 표시됩니다.
+
+21. [[Create security group]] 버튼을 클릭합니다.
 
 > [!OUTPUT]
-> Security Group이 생성되면 상세 페이지로 이동합니다. Inbound rules 탭에서 4개의 규칙이 표시되는지 확인합니다:
->
-> - SSH (22) - My IP
-> - HTTP (80) - 0.0.0.0/0
-> - HTTPS (443) - 0.0.0.0/0
-> - Custom TCP (8080) - 0.0.0.0/0
+> Security Group이 생성되면 상세 페이지로 이동합니다. Inbound rules 탭에서 4개의 규칙이 표시되는지 확인합니다:  
+> SSH (22) - My IP
+> HTTP (80) - 0.0.0.0/0
+> HTTPS (443) - 0.0.0.0/0
+> Custom TCP (8080) - 0.0.0.0/0
 
 ✅ **태스크 완료**: EC2용 Security Group(`my-ec2-sg`)이 생성되었습니다.
 
@@ -179,15 +252,15 @@ Step 1-1에서는 VPC, 서브넷, IGW, Route Table을 하나씩 생성하며 원
 >
 > 즉, "my-ec2-sg가 적용된 모든 인스턴스에서 3306 포트 접근 허용"이라는 의미입니다.
 
-16. 왼쪽 메뉴에서 **Security groups**를 선택합니다.
-17. [[Create security group]] 버튼을 클릭합니다.
-18. **Basic details** 섹션을 설정합니다:
+22. 왼쪽 메뉴에서 **Security groups**를 선택합니다.
+23. [[Create security group]] 버튼을 클릭합니다.
+24. **Basic details** 섹션을 설정합니다:
     - **Security group name**: `my-rds-sg`
     - **Description**: `Security group for RDS MySQL instances`
     - **VPC**: `my-vpc` 선택
 
-19. **Inbound rules** 섹션에서 [[Add rule]] 버튼을 클릭합니다.
-20. MySQL 접근 규칙을 설정합니다:
+25. **Inbound rules** 섹션에서 [[Add rule]] 버튼을 클릭합니다.
+26. MySQL 접근 규칙을 설정합니다:
     - **Type**: `MYSQL/Aurora`
     - **Port range**: `3306` (자동 입력)
     - **Source**: `Custom` 선택 → 검색창에 `my-ec2-sg` 입력 → 해당 Security Group 선택
@@ -195,11 +268,18 @@ Step 1-1에서는 VPC, 서브넷, IGW, Route Table을 하나씩 생성하며 원
 > [!TIP]
 > Source 검색창에 Security Group 이름을 입력하면 자동완성됩니다. `sg-` 로 시작하는 ID가 표시되면 올바르게 선택된 것입니다.
 
-21. **Outbound rules**는 기본값(All traffic, 0.0.0.0/0)을 유지합니다.
-22. [[Create security group]] 버튼을 클릭합니다.
+27. **Outbound rules**는 기본값(All traffic, 0.0.0.0/0)을 유지합니다.
+
+28. 하단의 **Tags** 섹션에서 [[Add new tag]]를 클릭하여 태그를 추가합니다:
+    - `Name` = `my-rds-sg`
+    - `CreatedBy` = `admin-user`
+    - `Step` = `step1`
+    - `Session` = `1-2`
+
+29. [[Create security group]] 버튼을 클릭합니다.
 
 > [!OUTPUT]
-> RDS Security Group이 생성됩니다.
+> RDS Security Group이 생성됩니다.  
 > Inbound rules에서 Source가 sg-xxxxxxxx (my-ec2-sg의 ID)로 표시되는지 확인합니다.
 
 ✅ **태스크 완료**: RDS용 Security Group(`my-rds-sg`)이 생성되었습니다.
@@ -208,22 +288,53 @@ Step 1-1에서는 VPC, 서브넷, IGW, Route Table을 하나씩 생성하며 원
 
 생성된 Security Group의 규칙을 최종 확인합니다.
 
-23. Security groups 목록에서 `my-ec2-sg`를 선택합니다.
-24. **Inbound rules** 탭에서 4개의 규칙이 올바른지 확인합니다.
-25. **Outbound rules** 탭에서 All traffic이 허용되어 있는지 확인합니다.
-26. Security groups 목록으로 돌아가서 `my-rds-sg`를 선택합니다.
-27. **Inbound rules** 탭에서 MySQL/Aurora(3306) 규칙의 Source가 `my-ec2-sg`의 SG ID인지 확인합니다.
+30. Security groups 목록에서 `my-ec2-sg`를 선택합니다.
+31. **Inbound rules** 탭에서 4개의 규칙이 올바른지 확인합니다.
+32. **Outbound rules** 탭에서 All traffic이 허용되어 있는지 확인합니다.
+33. Security groups 목록으로 돌아가서 `my-rds-sg`를 선택합니다.
+34. **Inbound rules** 탭에서 MySQL/Aurora(3306) 규칙의 Source가 `my-ec2-sg`의 SG ID인지 확인합니다.
 
 > [!CONCEPT] Stateful 동작 확인
-> Security Group은 Stateful이므로:
+> Security Group은 **Stateful**(상태를 기억함)이므로, 한쪽 방향을 허용하면 그 응답은 반대쪽 규칙과 무관하게 자동 허용됩니다.
 >
-> 1. EC2에서 외부 API를 호출할 때 (아웃바운드 허용)
-> 2. 그 응답이 돌아올 때 (인바운드에 규칙이 없어도 자동 허용)
+> **예시 1: EC2가 외부 API를 호출하는 경우**
 >
-> 반대로:
+> ```
+> EC2 → 외부 API (아웃바운드)
+>   → 아웃바운드 규칙: All traffic 허용 → 통과 ✓
+>   → SG가 이 연결을 기억함
 >
-> 1. 외부에서 EC2의 80 포트로 요청할 때 (인바운드 허용)
-> 2. EC2가 응답을 보낼 때 (아웃바운드에 80 규칙이 없어도 자동 허용)
+> 외부 API → EC2 (응답, 인바운드)
+>   → 인바운드에 해당 포트 규칙이 없음
+>   → 하지만 SG가 "이건 아까 나간 요청의 응답이다"라고 기억 → 자동 허용 ✓
+> ```
+>
+> **예시 2: 클라이언트가 EC2 웹서버에 접속하는 경우**
+>
+> ```
+> 클라이언트 → EC2 포트 80 (인바운드)
+>   → 인바운드 규칙: HTTP(80) 0.0.0.0/0 허용 → 통과 ✓
+>   → SG가 이 연결을 기억함
+>
+> EC2 → 클라이언트 (응답, 아웃바운드)
+>   → 아웃바운드에 포트 80 규칙을 별도로 만들지 않았음
+>   → 하지만 SG가 "이건 아까 들어온 요청의 응답이다"라고 기억 → 자동 허용 ✓
+> ```
+>
+> **예시 3: EC2 → RDS 접속 (SG 체이닝)**
+>
+> ```
+> EC2 (my-ec2-sg) → RDS 포트 3306 (아웃바운드)
+>   → EC2의 SG 아웃바운드: All traffic 허용 → 통과 ✓
+>   → RDS의 SG 인바운드: 3306 from my-ec2-sg 허용 → 통과 ✓
+>   → 양쪽 SG가 이 연결을 기억함
+>
+> RDS → EC2 (쿼리 결과 응답)
+>   → RDS의 SG: Stateful이므로 응답 자동 허용 ✓
+>   → EC2의 SG: Stateful이므로 응답 자동 허용 ✓
+> ```
+>
+> **핵심**: Stateful 덕분에 아웃바운드 규칙을 세밀하게 설정하지 않아도 정상 통신이 됩니다. 기본 아웃바운드(All traffic 허용)를 그대로 두는 이유이기도 합니다.
 
 ### 최종 구성 요약
 
@@ -249,35 +360,91 @@ Step 1-1에서는 VPC, 서브넷, IGW, Route Table을 하나씩 생성하며 원
 # 🗑️ 리소스 정리
 
 > [!NOTE]
-> 이 실습에서 생성한 리소스는 모두 무료이므로 삭제하지 않아도 비용이 발생하지 않습니다.
+> 이 실습에서 생성한 리소스(Security Group, VPC)는 모두 **항상 무료**입니다.  
+> 다음 실습(Step 2: EC2)을 바로 이어서 진행하는 경우 삭제하지 않고 유지합니다.  
+> 실습을 중단하거나 처음부터 다시 하고 싶은 경우에만 삭제하세요.
 
 ---
 
-### 단계 1: 리소스 유지 권장
+### 옵션 A: 다음 실습을 이어서 진행하는 경우 (권장)
 
-Security Group은 이후 실습(EC2, RDS)에서 계속 사용합니다. **유지하는 것을 권장합니다.**
+Security Group과 VPC는 이후 실습(Step 2: EC2, Step 3: NAT, Step 4: RDS)에서 계속 사용합니다.  
+**삭제하지 않고 그대로 유지합니다.**
+
+> [!TIP]
+> Security Group과 VPC는 항상 무료이므로 유지해도 비용이 발생하지 않습니다.  
+> 다음 실습에서 이 리소스를 그대로 활용합니다.
+
+---
+
+### 옵션 B: 리소스를 삭제하는 경우
+
+실습을 중단하거나 환경을 초기화하고 싶은 경우, 아래 순서대로 삭제합니다.
+
+> [!WARNING]
+> Security Group은 다른 리소스가 참조하고 있으면 삭제할 수 없습니다.  
+> 반드시 **의존 관계 역순**으로 삭제해야 합니다.
+>
+> ```
+> 삭제 순서: RDS SG → EC2 SG → VPC
+> (my-rds-sg가 my-ec2-sg를 참조하므로 rds-sg를 먼저 삭제)
+> ```
+
+**단계 1: Tag Editor로 생성된 리소스 확인**
+
+1. AWS Management Console 상단 검색창에 `Resource Groups & Tag Editor`를 입력하고 선택합니다.
+2. 왼쪽 메뉴에서 **Tag Editor**를 선택합니다.
+3. 다음과 같이 설정합니다:
+   - **Regions**: `ap-northeast-2`
+   - **Resource types**: `All supported resource types`
+   - **Tags**: Tag key = `Session`, Tag value = `1-2`
+4. [[Search resources]] 버튼을 클릭합니다.
+5. 이 실습에서 생성한 리소스(VPC, Subnet, IGW, Route Table, Security Group 2개)가 표시되는지 확인합니다.
+
+**단계 2: RDS용 Security Group 삭제**
+
+6. 상단 검색창에 `VPC`를 입력하고 VPC 서비스를 선택합니다.
+7. 왼쪽 메뉴에서 **Security groups**를 선택합니다.
+8. 상단 필터에서 `my-vpc`로 필터링합니다.
+9. `my-rds-sg`를 선택합니다.
+10. **Actions** → [[Delete security groups]]를 선택합니다.
+11. 확인 팝업에서 [[Delete]]를 클릭합니다.
 
 > [!NOTE]
-> Security Group은 프리티어와 무관하게 **항상 무료**인 리소스입니다. VPC당 최대 2,500개까지 생성할 수 있으므로 학습용으로 유지해도 문제 없습니다.
+> `my-rds-sg`는 인바운드 규칙에서 `my-ec2-sg`를 Source로 참조하고 있습니다.  
+> `my-ec2-sg`를 먼저 삭제하려고 하면 "resource has a dependent object" 오류가 발생합니다.  
+> 반드시 `my-rds-sg`를 먼저 삭제하세요.
 
----
+**단계 3: EC2용 Security Group 삭제**
 
-### 단계 2: 삭제 방법 (모든 실습 완료 후)
-
-Security Group은 다른 리소스가 참조하고 있으면 삭제할 수 없습니다. 반드시 의존 관계를 먼저 해제하세요.
-
-1. Security Group을 사용하는 리소스(EC2, RDS 등)를 먼저 삭제합니다.
-2. VPC 콘솔 → **Security groups** → `my-rds-sg` 선택 → **Actions** → [[Delete security groups]] → 확인
+12. `my-ec2-sg`를 선택합니다.
+13. **Actions** → [[Delete security groups]]를 선택합니다.
+14. 확인 팝업에서 [[Delete]]를 클릭합니다.
 
 > [!NOTE]
-> `my-rds-sg`는 Source로 `my-ec2-sg`를 참조하고 있으므로, `my-ec2-sg`보다 먼저 삭제해야 합니다.
+> EC2 인스턴스가 이 Security Group을 사용 중이면 삭제가 실패합니다.  
+> 해당 인스턴스를 먼저 Terminate하거나, 인스턴스의 Security Group을 다른 것으로 변경한 뒤 삭제하세요.
 
-3. `my-ec2-sg` 선택 → **Actions** → [[Delete security groups]] → 확인
+**단계 4: VPC 삭제 (선택)**
 
----
+VPC와 서브넷, IGW, Route Table까지 모두 정리하려면 VPC를 삭제합니다.
 
-### 단계 3: 삭제 확인
+15. 왼쪽 메뉴에서 **Your VPCs**를 선택합니다.
+16. `my-vpc`를 선택합니다.
+17. **Actions** → [[Delete VPC]]를 선택합니다.
+18. 확인 팝업에서 `delete`를 입력하고 [[Delete]]를 클릭합니다.
 
-1. Security groups 목록에서 `my-ec2-sg`와 `my-rds-sg`가 없는지 확인합니다.
+> [!NOTE]
+> VPC 삭제 시 서브넷, Route Table, IGW, 기본 Security Group, 기본 NACL이 함께 삭제됩니다.  
+> 커스텀 Security Group(`my-ec2-sg`, `my-rds-sg`)은 위 단계에서 이미 삭제했으므로 문제 없습니다.
+
+**단계 5: Tag Editor로 최종 확인**
+
+19. 다시 **Tag Editor**로 이동합니다.
+20. `Session: 1-2`로 검색합니다.
+21. 검색 결과에 리소스가 표시되지 않으면 모든 리소스가 성공적으로 삭제된 것입니다.
+
+> [!NOTE]
+> 삭제 직후에는 일부 리소스가 잠시 남아있을 수 있으나, 시간이 지나면 자동으로 사라집니다.
 
 ✅ **실습 종료**: 모든 리소스가 정리되었습니다.

@@ -739,6 +739,133 @@ export const EnvironmentSetup: React.FC = () => {
                 </SpaceBetween>
               ),
             },
+            {
+              id: 'console-tips',
+              label: '💡 콘솔 팁',
+              content: (
+                <SpaceBetween direction="vertical" size="m">
+                  <Box fontSize="body-m">
+                    AWS 콘솔을 효율적으로 사용하기 위한 팁입니다.
+                  </Box>
+                  <ColumnLayout columns={2}>
+                    <div className="column-card column-card--blue">
+                      <SpaceBetween direction="vertical" size="s">
+                        <Box>
+                          <SpaceBetween
+                            direction="horizontal"
+                            size="xs"
+                            alignItems="center"
+                          >
+                            <Icon name="star" variant="warning" />
+                            <Box variant="h4">
+                              자주 사용하는 서비스 즐겨찾기
+                            </Box>
+                          </SpaceBetween>
+                        </Box>
+                        <Box className="tab-content-text">
+                          상단 검색창에서 매번 서비스를 검색하는 대신,
+                          즐겨찾기에 등록하면 검색 사이드바의 Favourites에서
+                          바로 접근할 수 있습니다.
+                        </Box>
+                        <Box className="tab-content-text">
+                          <SpaceBetween direction="vertical" size="s">
+                            <Box className="tab-content-text">
+                              1. 상단 검색창을 클릭하거나 서비스 이름(예: VPC)을
+                              입력합니다.
+                            </Box>
+                            <Box className="tab-content-text">
+                              2. 검색 결과의 Services 섹션에서 서비스 이름
+                              오른쪽의 ☆(빈 별) 아이콘을 클릭합니다.
+                            </Box>
+                            <Box className="tab-content-text">
+                              3. ★(채워진 별)로 변경되면 즐겨찾기에 등록된
+                              것입니다.
+                            </Box>
+                            <Box className="tab-content-text">
+                              4. 검색창 클릭 시 왼쪽 사이드바의 Favourites
+                              메뉴에서 바로 접근할 수 있습니다.
+                            </Box>
+                          </SpaceBetween>
+                        </Box>
+                        <Box className="tab-content-text">
+                          <strong>
+                            이 실습에서 즐겨찾기 등록을 권장하는 서비스:
+                          </strong>
+                        </Box>
+                        <Box className="tab-content-text">
+                          <SpaceBetween direction="vertical" size="xs">
+                            <Bullet>
+                              VPC — Amazon Virtual Private Cloud (네트워크 구성)
+                            </Bullet>
+                            <Bullet>
+                              EC2 — Amazon Elastic Compute Cloud (서버 관리)
+                            </Bullet>
+                            <Bullet>
+                              RDS — Amazon Relational Database Service
+                              (데이터베이스)
+                            </Bullet>
+                            <Bullet>
+                              CloudFormation — AWS CloudFormation (인프라
+                              자동화)
+                            </Bullet>
+                            <Bullet>
+                              S3 — Amazon Simple Storage Service (스토리지)
+                            </Bullet>
+                            <Bullet>
+                              IAM — AWS Identity and Access Management (권한
+                              관리)
+                            </Bullet>
+                            <Bullet>
+                              CloudWatch — Amazon CloudWatch (모니터링)
+                            </Bullet>
+                            <Bullet>
+                              Billing and Cost Management (비용 확인)
+                            </Bullet>
+                          </SpaceBetween>
+                        </Box>
+                      </SpaceBetween>
+                    </div>
+                    <div className="column-card column-card--green">
+                      <SpaceBetween direction="vertical" size="s">
+                        <Box>
+                          <SpaceBetween
+                            direction="horizontal"
+                            size="xs"
+                            alignItems="center"
+                          >
+                            <Icon name="search" variant="normal" />
+                            <Box variant="h4">콘솔 단축키 및 검색 팁</Box>
+                          </SpaceBetween>
+                        </Box>
+                        <Box className="tab-content-text">
+                          <SpaceBetween direction="vertical" size="xs">
+                            <Bullet>
+                              Option + S (Mac) / Alt + S (Windows): 검색창으로
+                              바로 이동.
+                            </Bullet>
+                            <Bullet>
+                              검색창에서 서비스명 일부만 입력해도
+                              자동완성됩니다. (예: &quot;cloud&quot; →
+                              CloudFormation, CloudWatch, CloudFront)
+                            </Bullet>
+                            <Bullet>
+                              최근 방문한 서비스는 검색창 왼쪽의 격자
+                              아이콘(⋮⋮⋮)을 클릭하면 &quot;Recently
+                              visited&quot;에 표시됩니다.
+                            </Bullet>
+                            <Bullet>
+                              리전 선택 드롭다운 옆의 CloudShell 아이콘(터미널
+                              모양)을 클릭하면 브라우저에서 바로 AWS CLI를
+                              사용할 수 있습니다.
+                            </Bullet>
+                          </SpaceBetween>
+                        </Box>
+                      </SpaceBetween>
+                    </div>
+                  </ColumnLayout>
+                </SpaceBetween>
+              ),
+            },
           ]}
         />
       </Container>

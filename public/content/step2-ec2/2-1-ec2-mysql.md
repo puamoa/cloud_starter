@@ -364,6 +364,96 @@ mysql -h <EC2-Public-IP> -u appuser -p appdb
 - 애플리케이션용 데이터베이스(`appdb`)와 사용자(`appuser`)를 생성했습니다.
 - 외부 접속을 위한 bind-address 설정을 완료했습니다.
 
+---
+
+## 📚 옵션 태스크: NACL 동작 테스트 (Step 1-3 복습)
+
+> [!NOTE]
+> 이 태스크는 **선택 사항**입니다. Step 1-3에서 학습한 NACL의 실제 동작을 EC2로 확인하고 싶은 경우에만 진행합니다.  
+> 테스트 후 반드시 기본 NACL로 복원하여 이후 실습에 영향이 없도록 합니다.
+
+### 사전 조건
+
+- 위 실습에서 생성한 EC2 인스턴스가 `running` 상태이고, 브라우저에서 Public IP로 접속 가능한 상태.
+
+### 경로 A: Step 1-3에서 커스텀 NACL을 이미 만든 경우
+
+Step 1-3을 완료하여 `my-public-nacl`이 이미 존재하는 경우입니다.
+
+1. VPC 콘솔 → **Network ACLs**에서 `my-public-nacl`을 선택합니다.
+2. **Inbound rules** 탭에서 [[Edit inbound rules]]를 클릭합니다.
+3. [[Add new rule]]을 클릭하고 다음 규칙을 추가합니다:
+   - **Rule number**: `50`
+   - **Type**: `HTTP (80)`
+   - **Source**: `0.0.0.0/0`
+   - **Allow/Deny**: `Deny`
+4. [[Save changes]]를 클릭합니다.
+5. 브라우저에서 EC2 Public IP로 접속을 시도합니다.
+
+> [!OUTPUT]
+> 접속이 **차단**됩니다. Rule 50(DENY)이 Rule 100(ALLOW)보다 번호가 낮으므로 먼저 평가되어 HTTP 트래픽이 거부됩니다.
+
+6. 다시 **Inbound rules** → [[Edit inbound rules]]에서 Rule 50을 삭제합니다.
+7. [[Save changes]]를 클릭합니다.
+8. 브라우저에서 다시 접속을 시도합니다.
+
+> [!OUTPUT]
+> 접속이 **복구**됩니다. DENY 규칙이 제거되어 Rule 100(ALLOW)이 적용됩니다.
+
+### 경로 B: CloudFormation으로 환경을 구성한 경우 (커스텀 NACL 없음)
+
+2-1을 CloudFormation으로 시작하여 커스텀 NACL이 없는 경우, 직접 생성하여 테스트합니다.
+
+1. VPC 콘솔 → **Network ACLs** → [[Create network ACL]]을 클릭합니다.
+2. 다음과 같이 설정합니다:
+   - **Name**: `test-nacl`
+   - **VPC**: EC2가 있는 VPC 선택
+3. [[Create network ACL]]을 클릭합니다.
+
+> [!NOTE]
+> 새로 생성한 NACL은 기본적으로 모든 인바운드/아웃바운드를 **DENY**합니다. (기본 NACL과 반대)
+
+4. 생성된 `test-nacl`을 선택하고 **Subnet associations** 탭 → [[Edit subnet associations]]를 클릭합니다.
+5. EC2가 있는 Public Subnet을 체크하고 [[Save changes]]를 클릭합니다.
+6. 브라우저에서 EC2 Public IP로 접속을 시도합니다.
+
+> [!OUTPUT]
+> 접속이 **차단**됩니다. 커스텀 NACL은 기본적으로 모든 트래픽을 거부하므로, 허용 규칙을 추가하지 않으면 아무것도 통과하지 못합니다.
+
+7. **Inbound rules** → [[Edit inbound rules]]에서 다음 규칙을 추가합니다:
+   - Rule 100: HTTP (80), 0.0.0.0/0, ALLOW
+8. **Outbound rules** → [[Edit outbound rules]]에서 다음 규칙을 추가합니다:
+   - Rule 100: Custom TCP (1024-65535), 0.0.0.0/0, ALLOW
+
+> [!NOTE]
+> NACL은 **Stateless**이므로 아웃바운드에 Ephemeral Port(1024-65535)를 허용해야 응답이 돌아갑니다. Security Group(Stateful)과의 핵심 차이입니다.
+
+9. 브라우저에서 다시 접속을 시도합니다.
+
+> [!OUTPUT]
+> 접속이 **복구**됩니다. 인바운드 HTTP 허용 + 아웃바운드 Ephemeral Port 허용으로 정상 통신됩니다.
+
+### 테스트 후 정리 (필수)
+
+> [!WARNING]
+> 테스트가 끝나면 반드시 기본 NACL로 복원하세요. 커스텀 NACL이 연결된 상태로 방치하면 이후 실습에서 통신 문제가 발생할 수 있습니다.
+
+**경로 A (기존 커스텀 NACL 사용):**
+
+1. `my-public-nacl` → **Subnet associations** → [[Edit subnet associations]] → 모든 서브넷 체크 해제 → [[Save changes]]
+2. 서브넷이 자동으로 기본 NACL에 연결됩니다.
+
+**경로 B (test-nacl 생성):**
+
+1. `test-nacl` → **Subnet associations** → [[Edit subnet associations]] → 모든 서브넷 체크 해제 → [[Save changes]]
+2. 서브넷이 자동으로 기본 NACL에 연결됩니다.
+3. `test-nacl` 선택 → **Actions** → [[Delete network ACL]] → 확인
+
+> [!NOTE]
+> 서브넷은 항상 하나의 NACL에 연결되어 있어야 합니다. 커스텀 NACL에서 서브넷 연결을 해제하면 자동으로 VPC의 기본 NACL(모든 트래픽 허용)에 연결됩니다.
+
+✅ **옵션 태스크 완료**: NACL의 Stateless 동작과 규칙 번호 우선순위를 실제 트래픽으로 확인했습니다.
+
 # 🗑️ 리소스 정리
 
 > [!WARNING]
