@@ -229,6 +229,11 @@ AWS 콘솔에서 DynamoDB 테이블을 생성합니다.
 > 테이블 이름은 대소문자를 구분합니다. `Items`와 `items`는 다른 테이블입니다.
 > 이후 실습(9-2)에서 이 테이블을 사용하므로 정확히 `Items`로 생성하세요.
 
+> [!NOTE]
+> 초보자 실수 주의: Partition key 타입을 **String**으로 설정하세요.
+> Number로 설정하면 이후 실습의 Lambda 코드에서 `{"S": "item-001"}` 형식이 동작하지 않습니다.
+> 타입은 테이블 생성 후 변경할 수 없으므로 처음에 정확히 설정해야 합니다.
+
 ### 테이블 상세 정보 확인
 
 11. 생성된 `Items` 테이블을 클릭합니다.
@@ -254,10 +259,10 @@ AWS 콘솔에서 DynamoDB 테이블을 생성합니다.
 
 ### 항목 생성 (Create)
 
-1. `Items` 테이블 상세 페이지에서 **Explore table items**를 클릭합니다.
-2. [[Create item]]을 클릭합니다.
-3. **JSON view**를 활성화합니다.
-4. 다음 JSON을 입력합니다:
+13. `Items` 테이블 상세 페이지에서 **Explore table items**를 클릭합니다.
+14. [[Create item]]을 클릭합니다.
+15. **JSON view**를 활성화합니다.
+16. 다음 JSON을 입력합니다:
 
 ```json
 {
@@ -279,7 +284,7 @@ AWS 콘솔에서 DynamoDB 테이블을 생성합니다.
 }
 ```
 
-5. [[Create item]]을 클릭합니다.
+17. [[Create item]]을 클릭합니다.
 
 > [!CONCEPT] DynamoDB 데이터 타입
 >
@@ -294,7 +299,7 @@ AWS 콘솔에서 DynamoDB 테이블을 생성합니다.
 >
 > 주의: 숫자(N)도 JSON에서는 문자열로 감싸서 전달합니다.
 
-6. 같은 방법으로 추가 항목을 생성합니다:
+18. 같은 방법으로 추가 항목을 생성합니다:
 
 ```json
 {
@@ -323,8 +328,8 @@ AWS 콘솔에서 DynamoDB 테이블을 생성합니다.
 
 ### 항목 조회 (Scan)
 
-7. **Explore table items** 페이지에서 [[Run]]을 클릭합니다 (기본 Scan).
-8. 3개의 항목이 표시됩니다.
+19. **Explore table items** 페이지에서 [[Run]]을 클릭합니다 (기본 Scan).
+20. 3개의 항목이 표시됩니다.
 
 > [!OUTPUT]
 >
@@ -341,18 +346,18 @@ AWS 콘솔에서 DynamoDB 테이블을 생성합니다.
 
 ### 특정 항목 조회 (Query)
 
-9. **Scan or query items** 섹션에서 **Query**를 선택합니다.
-10. **Partition key (id)**: `item-001` 입력
-11. [[Run]]을 클릭합니다.
+21. **Scan or query items** 섹션에서 **Query**를 선택합니다.
+22. **Partition key (id)**: `item-001` 입력
+23. [[Run]]을 클릭합니다.
 
 > [!OUTPUT]
 > id가 "item-001"인 항목 1개만 반환됩니다.
 
 ### 항목 수정 (Update)
 
-12. 항목 목록에서 `item-001`을 클릭합니다.
-13. `price` 속성의 값을 `1100000`으로 변경합니다.
-14. [[Save and close]]를 클릭합니다.
+24. 항목 목록에서 `item-001`을 클릭합니다.
+25. `price` 속성의 값을 `1100000`으로 변경합니다.
+26. [[Save and close]]를 클릭합니다.
 
 > [!TIP]
 > 콘솔에서 속성을 추가하려면 [[Add new attribute]]를 클릭하세요.
@@ -360,9 +365,9 @@ AWS 콘솔에서 DynamoDB 테이블을 생성합니다.
 
 ### 항목 삭제 (Delete)
 
-15. 항목 목록에서 `item-003`을 체크박스로 선택합니다.
-16. **Actions** → [[Delete items]]를 클릭합니다.
-17. 확인 대화상자에서 [[Delete]]를 클릭합니다.
+27. 항목 목록에서 `item-003`을 체크박스로 선택합니다.
+28. **Actions** → [[Delete items]]를 클릭합니다.
+29. 확인 대화상자에서 [[Delete]]를 클릭합니다.
 
 > [!OUTPUT]
 > "1 item(s) deleted" 메시지가 표시됩니다.
@@ -533,6 +538,15 @@ aws dynamodb delete-item \
 
 ✅ **태스크 완료** — AWS CLI로 DynamoDB 항목의 CRUD 작업을 수행했습니다.
 
+> [!TROUBLESHOOTING]
+> | 증상 | 원인 | 해결 방법 |
+> |------|------|-----------|
+> | `ResourceNotFoundException` | 테이블 이름 오타 또는 리전 불일치 | `--table-name`과 `--region` 확인 |
+> | `ValidationException: The provided key element does not match the schema` | Key 형식 오류 (타입 불일치) | PK 타입이 String이면 `{"S": "값"}` 사용 |
+> | `SerializationException` | JSON 형식 오류 (따옴표, 쉼표) | JSON 유효성 검사 후 재시도 |
+> | `ConditionalCheckFailedException` | 조건부 쓰기 실패 | 조건식 확인 또는 조건 제거 |
+> | `#n` 없이 `name` 사용 시 에러 | `name`은 DynamoDB 예약어 | `--expression-attribute-names '{"#n": "name"}'` 추가 |
+
 ---
 
 ## 태스크 6: 정렬 키(Sort Key) 활용
@@ -542,14 +556,16 @@ aws dynamodb delete-item \
 
 ### Orders 테이블 생성
 
-1. DynamoDB 콘솔에서 [[Create table]]을 클릭합니다.
-2. 다음을 설정합니다:
-   - **Table name**: `Orders`
-   - **Partition key**: `userId` (타입: **String**)
-   - **Sort key**: `createdAt` (타입: **String**)
-3. **Table settings**: Customize settings
-4. **Capacity mode**: **On-demand**
-5. [[Create table]]을 클릭합니다.
+30. DynamoDB 콘솔에서 [[Create table]]을 클릭합니다.
+31. 다음을 설정합니다:
+
+- **Table name**: `Orders`
+- **Partition key**: `userId` (타입: **String**)
+- **Sort key**: `createdAt` (타입: **String**)
+
+32. **Table settings**: Customize settings
+33. **Capacity mode**: **On-demand**
+34. [[Create table]]을 클릭합니다.
 
 > [!OUTPUT]
 >
@@ -792,26 +808,33 @@ PK: deviceId (고유한 디바이스 ID)
 
 > [!NOTE]
 > DynamoDB는 항상 무료 티어가 매우 넉넉합니다 (25GB 저장 + 월 2억 5천만 읽기/쓰기). 학습용 테이블은 삭제하지 않아도 비용이 발생하지 않습니다.
+>
+> | 리소스                    | 월 비용 | 비고                    |
+> | ------------------------- | ------- | ----------------------- |
+> | Items 테이블 (On-demand)  | $0      | 무료 티어 내 (25GB까지) |
+> | Orders 테이블 (On-demand) | $0      | 무료 티어 내            |
+> | 저장된 데이터 (수 KB)     | $0      | 25GB 무료               |
 
----
+### 옵션 A: 리소스 유지 (권장)
 
-### 단계 1: Items 테이블 유지 (권장)
+`Items` 테이블은 다음 실습(Step 10-2: Lambda + API Gateway + DynamoDB)에서 사용합니다.
+**삭제하지 않고 유지하는 것을 권장합니다.** 비용이 $0이므로 유지해도 문제없습니다.
 
-`Items` 테이블은 다음 실습(Step 10-2: Lambda + API Gateway + DynamoDB)에서 사용합니다. **삭제하지 않고 유지하는 것을 권장합니다.**
-
----
-
-### 단계 2: Orders 테이블 삭제 (선택)
+### 옵션 B: Orders 테이블만 삭제
 
 `Orders` 테이블은 정렬 키 학습용으로 생성한 것이므로 삭제해도 됩니다.
 
+---
+
+### 단계 1 (옵션 B): Orders 테이블 삭제
+
 **콘솔에서 삭제:**
 
-1. DynamoDB 콘솔 → **Tables** → `Orders` 선택
-2. [[Delete]]를 클릭합니다.
-3. 확인 입력란에 `delete`를 입력합니다.
-4. ☐ **Create a backup of this table before deleting it** 체크 해제
-5. [[Delete table]]을 클릭합니다.
+35. DynamoDB 콘솔 → **Tables** → `Orders` 선택
+36. [[Delete]]를 클릭합니다.
+37. 확인 입력란에 `delete`를 입력합니다.
+38. ☐ **Create a backup of this table before deleting it** 체크 해제
+39. [[Delete table]]을 클릭합니다.
 
 **CLI로 삭제:**
 
@@ -823,7 +846,7 @@ aws dynamodb delete-table \
 
 ---
 
-### 단계 3: 삭제 확인
+### 단계 2 (옵션 B): 삭제 확인
 
 ```bash
 aws dynamodb list-tables --region ap-northeast-2

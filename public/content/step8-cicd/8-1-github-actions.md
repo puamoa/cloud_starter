@@ -85,6 +85,11 @@ Workflow (워크플로우)
 3. 왼쪽 메뉴에서 **Secrets and variables** → **Actions**를 클릭합니다.
 4. [[New repository secret]]을 클릭합니다.
 
+> [!OUTPUT]
+> "New repository secret" 페이지가 표시됩니다.
+> **Name** 필드와 **Secret** 필드가 보입니다.
+> Name에 Secret 이름을, Secret에 값을 입력하고 [[Add secret]]을 클릭합니다.
+
 ### 필요한 Secrets 목록
 
 다음 Secrets를 하나씩 추가합니다:
@@ -125,6 +130,18 @@ cat ~/.ssh/my-key.pem
 > Elastic IP 없이 사용하면 인스턴스 재시작 시 IP가 바뀌어 Secret을 업데이트해야 합니다.
 
 나머지 Secrets(`EC2_USER`, `DB_URL`, `DB_PASSWORD`)도 같은 방식으로 추가합니다.
+
+> [!TROUBLESHOOTING]
+> | 증상 | 원인 | 해결 방법 |
+> |------|------|-----------|
+> | Secret 저장 후 워크플로우에서 빈 값 | Secret Name 오타 (대소문자 구분) | `EC2_KEY`와 `${{ secrets.EC2_KEY }}` 이름이 정확히 일치하는지 확인 |
+> | `.pem` 키 붙여넣기 후 SSH 실패 | 키 앞뒤에 공백/빈줄 포함 | 메모장에서 복사하지 말고 `cat` 출력을 직접 복사 |
+> | Settings에 Secrets 메뉴가 안 보임 | 리포지토리 권한 부족 (Collaborator) | 리포지토리 Owner 또는 Admin 권한 필요 |
+> | EC2_HOST에 도메인 입력 후 접속 실패 | DNS 미전파 또는 HTTPS 포트 사용 | IP 주소를 직접 입력하거나 `ping` 으로 확인 |
+
+> [!NOTE]
+> GitHub Secrets는 한 번 저장하면 다시 볼 수 없습니다 (수정만 가능).
+> 값을 잘못 입력했다면 Secret을 삭제하고 다시 생성하세요.
 
 ✅ **태스크 완료** — GitHub Secrets에 배포에 필요한 민감 정보를 저장했습니다.
 
@@ -264,6 +281,24 @@ sudo systemctl daemon-reload
 sudo systemctl enable spring-app
 ```
 
+> [!TROUBLESHOOTING]
+> | 증상 | 원인 | 해결 방법 |
+> |------|------|-----------|
+> | `Error: Process completed with exit code 1` (빌드 단계) | Gradle 빌드 실패 | 로컬에서 `./gradlew clean bootJar` 실행하여 에러 확인 |
+> | YAML 파싱 에러 (`Invalid workflow file`) | 들여쓰기 오류 또는 탭 문자 사용 | YAML은 **스페이스만** 사용, 2칸 들여쓰기 확인 |
+> | `Host key verification failed` | EC2 호스트 키 미등록 | `appleboy/ssh-action`은 자동 처리하므로 action 버전 확인 |
+> | `Permission denied` (SCP 단계) | EC2 대상 디렉토리 권한 부족 | EC2에서 `mkdir -p /home/ec2-user/app && chmod 755 /home/ec2-user/app` 실행 |
+> | 워크플로우가 트리거되지 않음 | `paths` 필터에 변경 파일 미포함 | 변경한 파일 경로가 `paths` 목록에 포함되는지 확인 |
+
+> [!WARNING]
+> YAML 파일에서 가장 흔한 실수:
+>
+> - **탭(Tab) 문자 사용** → 반드시 스페이스(Space)만 사용하세요
+> - **콜론(:) 뒤 공백 누락** → `key: value` (콜론 뒤 공백 필수)
+> - **하이픈(-) 뒤 공백 누락** → `- item` (하이픈 뒤 공백 필수)
+>
+> VS Code에서 YAML 확장 프로그램을 설치하면 문법 오류를 실시간으로 확인할 수 있습니다.
+
 ✅ **태스크 완료** — Spring Boot 자동 배포 워크플로우를 작성했습니다.
 
 ---
@@ -360,9 +395,21 @@ jobs:
 
 Vue.js 빌드 시 API URL 등의 환경 변수를 주입할 수 있습니다:
 
-1. GitHub Secrets에 `API_URL` 추가: `https://api.yourdomain.com`
-2. 워크플로우에서 `env`로 전달: `VITE_API_URL: ${{ secrets.API_URL }}`
-3. Vue.js 코드에서 사용: `import.meta.env.VITE_API_URL`
+10. GitHub Secrets에 `API_URL` 추가: `https://api.yourdomain.com`
+11. 워크플로우에서 `env`로 전달: `VITE_API_URL: ${{ secrets.API_URL }}`
+12. Vue.js 코드에서 사용: `import.meta.env.VITE_API_URL`
+
+> [!TROUBLESHOOTING]
+> | 증상 | 원인 | 해결 방법 |
+> |------|------|-----------|
+> | `npm ci` 실패 (`package-lock.json` 관련) | `package-lock.json` 미커밋 | 로컬에서 `npm install` 후 `package-lock.json`을 git에 포함 |
+> | 빌드 성공했지만 페이지 빈 화면 | `VITE_API_URL` 환경변수 미설정 | GitHub Secrets에 `API_URL` 추가 확인 |
+> | Nginx reload 실패 | Nginx 설정 파일 문법 오류 | EC2에서 `sudo nginx -t`로 설정 검증 |
+> | `cache-dependency-path` 에러 | 경로가 실제 파일과 불일치 | `frontend/package-lock.json` 경로가 정확한지 확인 |
+
+> [!NOTE]
+> `working-directory: frontend`는 모노레포(하나의 리포에 프론트/백엔드 모두 있는 경우)에서 사용합니다.
+> 프론트엔드 전용 리포지토리라면 `working-directory`를 제거하고 루트에서 실행하세요.
 
 ✅ **태스크 완료** — Vue.js 프론트엔드 자동 배포 워크플로우를 작성했습니다.
 
@@ -374,8 +421,8 @@ Vue.js 빌드 시 API URL 등의 환경 변수를 주입할 수 있습니다:
 
 ### 배포 트리거
 
-1. 코드를 수정합니다 (예: API 응답 메시지 변경).
-2. Git에 커밋하고 push합니다:
+13. 코드를 수정합니다 (예: API 응답 메시지 변경).
+14. Git에 커밋하고 push합니다:
 
 ```bash
 git add .
@@ -385,12 +432,13 @@ git push origin main
 
 ### GitHub Actions 실행 확인
 
-3. GitHub 리포지토리 페이지에서 **Actions** 탭을 클릭합니다.
-4. 방금 트리거된 워크플로우를 클릭합니다.
-5. 각 스텝의 실행 상태를 확인합니다:
-   - ✅ 녹색 체크: 성공
-   - ❌ 빨간 X: 실패 (로그 확인 필요)
-   - 🟡 노란 원: 실행 중
+15. GitHub 리포지토리 페이지에서 **Actions** 탭을 클릭합니다.
+16. 방금 트리거된 워크플로우를 클릭합니다.
+17. 각 스텝의 실행 상태를 확인합니다:
+
+- ✅ 녹색 체크: 성공
+- ❌ 빨간 X: 실패 (로그 확인 필요)
+- 🟡 노란 원: 실행 중
 
 > [!OUTPUT]
 > 모든 스텝이 성공하면 워크플로우 옆에 ✅ 녹색 체크가 표시됩니다.
@@ -398,7 +446,7 @@ git push origin main
 
 ### 배포 결과 확인
 
-6. 브라우저에서 서비스에 접속하여 변경사항이 반영되었는지 확인합니다:
+18. 브라우저에서 서비스에 접속하여 변경사항이 반영되었는지 확인합니다:
 
 ```bash
 # Spring Boot API 확인
@@ -418,9 +466,9 @@ curl https://api.yourdomain.com/actuator/health
 
 워크플로우가 실패한 경우:
 
-1. Actions 탭에서 실패한 워크플로우를 클릭합니다.
-2. 실패한 스텝을 클릭하여 로그를 확인합니다.
-3. 일반적인 실패 원인:
+19. Actions 탭에서 실패한 워크플로우를 클릭합니다.
+20. 실패한 스텝을 클릭하여 로그를 확인합니다.
+21. 일반적인 실패 원인:
 
 | 에러                            | 원인                       | 해결                        |
 | ------------------------------- | -------------------------- | --------------------------- |
@@ -430,6 +478,14 @@ curl https://api.yourdomain.com/actuator/health
 | `Health check failed`           | 앱 시작 실패               | EC2에서 로그 확인           |
 
 ✅ **태스크 완료** — 배포를 트리거하고 결과를 확인했습니다.
+
+> [!TROUBLESHOOTING]
+> | 증상 | 원인 | 해결 방법 |
+> |------|------|-----------|
+> | Actions 탭에 워크플로우 미표시 | YAML 파일이 default 브랜치에 없음 | `main` 브랜치에 `.github/workflows/` 파일이 있는지 확인 |
+> | push 했는데 워크플로우 미실행 | `on.push.branches`에 현재 브랜치 미포함 | `branches: [main]`과 push 대상 브랜치 일치 확인 |
+> | 모든 스텝 성공인데 앱 미동작 | Health Check가 앱 시작 전에 실행됨 | `sleep` 시간을 늘리거나 retry 로직 추가 |
+> | `Error: Timeout` (SSH 단계) | EC2 Security Group에서 22번 포트 미허용 | SG Inbound에 SSH(22) 규칙 추가 |
 
 ---
 
@@ -531,15 +587,19 @@ on:
 
 ### GitHub Environments 설정
 
-1. GitHub 리포지토리 → **Settings** → **Environments**
-2. [[New environment]]를 클릭합니다.
-3. **Name**: `production`을 입력하고 [[Configure environment]]를 클릭합니다.
-4. **Environment protection rules**:
-   - ✅ **Required reviewers**: 프로덕션 배포 전 승인 필요 (선택)
-   - ✅ **Wait timer**: 배포 전 대기 시간 설정 (선택)
-5. **Environment secrets**에 프로덕션 전용 Secrets를 추가합니다:
-   - `EC2_HOST`: 프로덕션 EC2 IP
-6. 같은 방식으로 `development` 환경도 생성합니다.
+22. GitHub 리포지토리 → **Settings** → **Environments**
+23. [[New environment]]를 클릭합니다.
+24. **Name**: `production`을 입력하고 [[Configure environment]]를 클릭합니다.
+25. **Environment protection rules**:
+
+- ✅ **Required reviewers**: 프로덕션 배포 전 승인 필요 (선택)
+- ✅ **Wait timer**: 배포 전 대기 시간 설정 (선택)
+
+26. **Environment secrets**에 프로덕션 전용 Secrets를 추가합니다:
+
+- `EC2_HOST`: 프로덕션 EC2 IP
+
+27. 같은 방식으로 `development` 환경도 생성합니다.
 
 ### 브랜치별 배포 워크플로우
 
@@ -627,6 +687,28 @@ feature/xxx (기능 개발)
 > [!NOTE]
 > GitHub Actions는 Public 리포지토리에서 완전 무료이며, Private 리포지토리도 월 2,000분 무료입니다. 별도 비용이 발생하지 않습니다.
 
+> [!WARNING]
+> **GitHub Actions 비용 (Private 리포지토리만 해당)**
+>
+> | 항목                         | 무료 한도  | 초과 시 비용 |
+> | ---------------------------- | ---------- | ------------ |
+> | 실행 시간 (Linux)            | 월 2,000분 | $0.008/분    |
+> | 실행 시간 (macOS)            | 월 200분   | $0.08/분     |
+> | Storage (Artifacts/Packages) | 500MB      | $0.25/GB     |
+>
+> Public 리포지토리는 완전 무료입니다. 비용이 걱정된다면 리포를 Public으로 유지하세요.
+
+### 삭제 순서 (의존 관계)
+
+```
+1. 워크플로우 비활성화/삭제 ← 자동 배포 중단 (먼저!)
+2. GitHub Secrets 삭제      ← 민감 정보 제거 (보안)
+3. EC2 systemd 서비스 삭제  ← 배포된 앱 제거
+```
+
+> [!TIP]
+> 워크플로우를 먼저 비활성화하지 않으면, Secrets를 삭제한 후에도 push 시 워크플로우가 실행되어 에러가 발생합니다.
+
 ---
 
 ### 단계 1: 워크플로우 비활성화/삭제
@@ -635,9 +717,9 @@ feature/xxx (기능 개발)
 
 **비활성화 (워크플로우 유지, 실행만 중단):**
 
-1. GitHub 리포지토리 → **Actions** 탭
-2. 왼쪽에서 비활성화할 워크플로우를 선택합니다.
-3. 우측 상단 `...` → [[Disable workflow]]
+28. GitHub 리포지토리 → **Actions** 탭
+29. 왼쪽에서 비활성화할 워크플로우를 선택합니다.
+30. 우측 상단 `...` → [[Disable workflow]]
 
 **파일 삭제 (완전 제거):**
 
@@ -653,8 +735,8 @@ git push origin main
 
 ### 단계 2: GitHub Secrets 삭제 (선택)
 
-1. GitHub 리포지토리 → **Settings** → **Secrets and variables** → **Actions**
-2. 각 Secret(`EC2_HOST`, `EC2_USER`, `EC2_KEY`, `DB_URL`, `DB_PASSWORD`) 옆의 🗑️ 아이콘을 클릭하여 삭제합니다.
+31. GitHub 리포지토리 → **Settings** → **Secrets and variables** → **Actions**
+32. 각 Secret(`EC2_HOST`, `EC2_USER`, `EC2_KEY`, `DB_URL`, `DB_PASSWORD`) 옆의 🗑️ 아이콘을 클릭하여 삭제합니다.
 
 > [!NOTE]
 > Secrets는 무료이므로 유지해도 비용이 발생하지 않습니다. 보안상 더 이상 사용하지 않는 SSH 키는 삭제하는 것이 좋습니다.
@@ -680,7 +762,7 @@ rm -rf /home/ec2-user/app
 
 ### 단계 4: 삭제 확인
 
-1. GitHub Actions 탭에서 워크플로우가 비활성화/삭제되었는지 확인합니다.
-2. EC2에서 `sudo systemctl status spring-app` 실행 시 "not found" 메시지가 표시되는지 확인합니다.
+33. GitHub Actions 탭에서 워크플로우가 비활성화/삭제되었는지 확인합니다.
+34. EC2에서 `sudo systemctl status spring-app` 실행 시 "not found" 메시지가 표시되는지 확인합니다.
 
 ✅ **실습 종료**: 모든 리소스가 정리되었습니다.

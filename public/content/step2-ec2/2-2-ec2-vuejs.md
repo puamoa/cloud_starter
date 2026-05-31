@@ -21,6 +21,9 @@ estimatedCost: 크레딧 내 사용 가능 (비용 발생 가능)
 > [!NOTE]
 > 이 실습은 EC2 인스턴스가 필요합니다. Step 2-1에서 생성한 EC2(`my-ec2-mysql`)를 사용하거나, 새로운 EC2 인스턴스를 생성합니다. Security Group에 HTTP(80) 포트가 열려 있어야 합니다.
 
+> [!WARNING]
+> Step 2-1에서 EC2를 Stop한 경우, 먼저 Start하고 새로운 Public IP를 확인한 후 진행하세요.
+
 ## 태스크 0: EC2 인스턴스 확인 및 접속
 
 1. AWS Management Console에 로그인합니다.
@@ -35,6 +38,15 @@ ssh -i ~/Downloads/my-keypair.pem ec2-user@<Public-IP>
 
 > [!TIP]
 > EC2 인스턴스가 없다면 Step 2-1의 태스크 0(CloudFormation)과 태스크 1(EC2 생성)을 먼저 진행하세요.
+
+> [!NOTE]
+> **Security Group에 HTTP(80) 포트가 열려 있는지 확인:**
+>
+> 1. EC2 콘솔 → 인스턴스 선택 → **Security** 탭 → Security Group 링크 클릭
+> 2. **Inbound rules**에서 HTTP(80) 규칙이 있는지 확인
+> 3. 없으면 [[Edit inbound rules]] → [[Add rule]] → Type: `HTTP`, Source: `0.0.0.0/0` → [[Save rules]]
+>
+> CloudFormation 템플릿으로 생성한 `my-ec2-sg`에는 HTTP(80)이 이미 포함되어 있습니다.
 
 ✅ **태스크 완료**: EC2 인스턴스에 접속했습니다.
 
@@ -63,6 +75,12 @@ npm --version
 
 > [!NOTE]
 > Amazon Linux 2023에서는 `dnf module` 명령으로 Node.js 버전을 선택할 수 있습니다. 20 LTS는 장기 지원 버전으로 안정적입니다.
+
+> [!TROUBLESHOOTING]
+> **Node.js 설치 실패 시:**
+>
+> - `No match for argument: nodejs` → `sudo dnf module list nodejs`로 사용 가능한 버전 확인
+> - 이미 다른 버전이 설치된 경우 → `sudo dnf module reset nodejs -y` 후 재시도
 
 ✅ **태스크 완료**: Node.js 20 LTS가 설치되었습니다.
 
@@ -165,6 +183,15 @@ sudo systemctl status nginx
 > [!WARNING]
 > 페이지가 표시되지 않으면 Security Group에 HTTP(80) 포트가 열려 있는지 확인하세요.
 
+> [!TROUBLESHOOTING]
+> **Nginx 기본 페이지가 표시되지 않는 경우:**
+>
+> | 증상           | 원인                            | 해결 방법                                                                 |
+> | -------------- | ------------------------------- | ------------------------------------------------------------------------- |
+> | 연결 시간 초과 | Security Group에 80 포트 미허용 | EC2 콘솔 → Security Group → Inbound rules에 HTTP(80) 추가                 |
+> | 연결 거부      | Nginx 미실행                    | `sudo systemctl status nginx`로 상태 확인 후 `sudo systemctl start nginx` |
+> | 403 Forbidden  | 파일 권한 문제                  | `sudo chmod -R 755 /usr/share/nginx/html/`                                |
+
 ✅ **태스크 완료**: Nginx가 설치되고 실행 중입니다.
 
 ## 태스크 4: Vue 빌드 파일 배포
@@ -187,10 +214,20 @@ sudo cp -r ~/my-vue-app/dist/* /usr/share/nginx/html/
 sudo chown -R nginx:nginx /usr/share/nginx/html/
 ```
 
+> [!NOTE]
+> Nginx 프로세스는 `nginx` 사용자로 실행됩니다. 파일 소유자를 `nginx`로 변경해야 정상적으로 파일을 읽을 수 있습니다.
+
 21. 브라우저에서 `http://<Public-IP>`로 접속하여 Vue 앱이 표시되는지 확인합니다.
 
 > [!OUTPUT]
 > Vue 3의 기본 Welcome 페이지가 표시됩니다. "You did it!" 메시지와 Vue 로고가 보이면 성공입니다.
+
+> [!TROUBLESHOOTING]
+> **Vue 앱이 표시되지 않는 경우:**
+>
+> - **Nginx 기본 페이지가 계속 보임**: 브라우저 캐시를 삭제(Ctrl+Shift+R)하거나, `sudo ls /usr/share/nginx/html/`로 파일이 복사되었는지 확인
+> - **403 Forbidden**: `sudo chown -R nginx:nginx /usr/share/nginx/html/` 재실행
+> - **빈 페이지**: 브라우저 개발자 도구(F12) → Console 탭에서 에러 확인. JS/CSS 파일 경로 문제일 수 있음
 
 ✅ **태스크 완료**: Vue 빌드 파일이 Nginx에 배포되었습니다.
 
@@ -334,11 +371,12 @@ sudo tail -f /var/log/nginx/access.log
 # 🗑️ 리소스 정리
 
 > [!NOTE]
-> 이 실습에서 추가로 생성한 리소스는 EC2 내부의 소프트웨어(Node.js, Vue 프로젝트, Nginx)뿐입니다. EC2 인스턴스 자체의 비용은 Step 2-1을 참조하세요.
+> 이 실습에서 추가로 생성한 리소스는 EC2 내부의 소프트웨어(Node.js, Vue 프로젝트, Nginx)뿐입니다.  
+> EC2 내부 소프트웨어는 추가 AWS 비용이 발생하지 않습니다. EC2 인스턴스 자체의 비용 관리는 Step 2-1의 리소스 정리를 참조하세요.
 
 ---
 
-### 단계 1: EC2 내부 소프트웨어 삭제 (선택)
+### 옵션 A: EC2 유지 (소프트웨어만 정리)
 
 EC2 인스턴스를 계속 사용하지만 Vue.js/Nginx 환경을 정리하려면 다음 명령을 실행합니다.
 
@@ -358,13 +396,13 @@ sudo dnf remove nginx -y
 sudo dnf remove nodejs -y
 ```
 
-> [!NOTE]
-> EC2 인스턴스를 계속 사용할 예정이라면 Nginx와 Vue 앱을 그대로 유지해도 됩니다. EC2 내부 소프트웨어는 추가 비용이 발생하지 않습니다.
+> [!TIP]
+> Step 2-3(Spring Boot)을 이어서 진행할 예정이라면 Nginx를 유지해도 됩니다. Spring Boot 앱의 리버스 프록시로 활용할 수 있습니다.
 
 ---
 
-### 단계 2: EC2 인스턴스 정리
+### 옵션 B: EC2 인스턴스 포함 전체 삭제
 
-EC2 인스턴스 자체를 삭제하려면 **Step 2-1의 리소스 정리** 섹션을 참조하세요.
+EC2 인스턴스 자체를 삭제하려면 **Step 2-1의 리소스 정리 → 옵션 B** 섹션을 참조하세요.
 
 ✅ **실습 종료**: 모든 리소스가 정리되었습니다.

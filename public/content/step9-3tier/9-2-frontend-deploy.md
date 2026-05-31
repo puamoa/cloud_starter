@@ -373,6 +373,12 @@ CloudFormation에서 이미 S3 버킷과 정적 웹 호스팅을 설정했습니
 7. **Properties** 탭 → **Static website hosting** 섹션에서 **Bucket website endpoint**를 복사합니다.
 8. 브라우저에서 접속하면 아직 파일이 없으므로 404 에러가 표시됩니다 (정상).
 
+> [!OUTPUT]
+> S3 웹사이트 엔드포인트 형식:
+> `http://my-3tier-app-frontend-123456789012.s3-website.ap-northeast-2.amazonaws.com`
+>
+> 접속 시 `404 Not Found` 페이지가 표시됩니다 (아직 파일을 업로드하지 않았으므로 정상).
+
 > [!TIP]
 > S3 정적 웹 호스팅 엔드포인트 형식:
 > `http://BUCKET-NAME.s3-website.REGION.amazonaws.com`
@@ -428,6 +434,15 @@ aws s3 sync dist/ s3://$BUCKET_NAME --delete
 aws s3 ls s3://$BUCKET_NAME --recursive
 ```
 
+> [!OUTPUT]
+>
+> ```
+> 2025-01-20 10:30:01        450 index.html
+> 2025-01-20 10:30:01      48720 assets/index-a1b2c3.js
+> 2025-01-20 10:30:01       1230 assets/index-d4e5f6.css
+> 2025-01-20 10:30:01       4286 favicon.ico
+> ```
+
 ### 4-4. 브라우저에서 확인
 
 S3 웹사이트 엔드포인트로 접속합니다:
@@ -442,6 +457,14 @@ http://my-3tier-app-frontend-123456789012.s3-website.ap-northeast-2.amazonaws.co
 
 ✅ **태스크 완료** — Vue.js를 빌드하고 S3에 업로드하여 정적 웹사이트를 확인했습니다.
 
+> [!TROUBLESHOOTING]
+> | 증상 | 원인 | 해결 방법 |
+> |------|------|-----------|
+> | `npm run build` 실패 | 코드 문법 에러 또는 의존성 미설치 | `npm install` 후 에러 메시지 확인 |
+> | `aws s3 sync` 실패 (`AccessDenied`) | AWS CLI 자격 증명 미설정 | `aws configure`로 Access Key 설정 |
+> | S3 업로드 성공했지만 웹사이트 접속 불가 | 정적 웹 호스팅 미활성화 | S3 Properties → Static website hosting 확인 |
+> | 페이지 로드 시 빈 화면 (흰 화면) | `vite.config.js`의 `base` 경로 문제 | `base: '/'` 설정 확인 |
+
 ---
 
 ## 태스크 5: CloudFront 배포 생성
@@ -450,12 +473,12 @@ S3 앞에 CloudFront를 배치하여 CDN + HTTPS를 적용합니다.
 
 ### 5-1. CloudFront 배포 생성
 
-1. AWS Console → **CloudFront** 서비스로 이동합니다.
-2. [[Create distribution]]을 클릭합니다.
+9. AWS Console → **CloudFront** 서비스로 이동합니다.
+10. [[Create distribution]]을 클릭합니다.
 
 ### 5-2. Origin 설정
 
-3. **Origin domain**: S3 버킷의 **웹사이트 엔드포인트**를 입력합니다.
+11. **Origin domain**: S3 버킷의 **웹사이트 엔드포인트**를 입력합니다.
 
 > [!WARNING]
 > Origin 선택 시 주의사항:
@@ -467,23 +490,23 @@ S3 앞에 CloudFront를 배치하여 CDN + HTTPS를 적용합니다.
 >
 > REST API 엔드포인트를 사용하면 SPA 라우팅이 동작하지 않습니다.
 
-4. **Protocol**: `HTTP only` (S3 웹사이트 엔드포인트는 HTTPS 미지원)
+12. **Protocol**: `HTTP only` (S3 웹사이트 엔드포인트는 HTTPS 미지원)
 
 ### 5-3. 캐시 동작 설정
 
-5. **Viewer protocol policy**: `Redirect HTTP to HTTPS`
-6. **Allowed HTTP methods**: `GET, HEAD`
-7. **Cache policy**: `CachingOptimized` (권장)
+13. **Viewer protocol policy**: `Redirect HTTP to HTTPS`
+14. **Allowed HTTP methods**: `GET, HEAD`
+15. **Cache policy**: `CachingOptimized` (권장)
 
 ### 5-4. 기본 설정
 
-8. **Default root object**: `index.html`
-9. **Price class**: `Use only North America and Europe` (비용 절약) 또는 `Use all edge locations`
+16. **Default root object**: `index.html`
+17. **Price class**: `Use only North America and Europe` (비용 절약) 또는 `Use all edge locations`
 
 ### 5-5. 에러 페이지 설정 (SPA 라우팅)
 
-10. **Error pages** 탭에서 [[Create custom error response]]를 클릭합니다.
-11. 다음과 같이 설정합니다:
+18. **Error pages** 탭에서 [[Create custom error response]]를 클릭합니다.
+19. 다음과 같이 설정합니다:
 
 | 설정                     | 값            |
 | ------------------------ | ------------- |
@@ -492,7 +515,7 @@ S3 앞에 CloudFront를 배치하여 CDN + HTTPS를 적용합니다.
 | Response page path       | `/index.html` |
 | HTTP response code       | `200`         |
 
-12. 같은 방식으로 `404` 에러도 추가합니다:
+20. 같은 방식으로 `404` 에러도 추가합니다:
 
 | 설정                     | 값            |
 | ------------------------ | ------------- |
@@ -512,10 +535,18 @@ S3 앞에 CloudFront를 배치하여 CDN + HTTPS를 적용합니다.
 
 ### 5-6. 배포 생성 완료
 
-13. [[Create distribution]]을 클릭합니다.
-14. 배포 생성에 약 **5~10분** 소요됩니다.
-15. Status가 `Enabled`로 변경되면 완료입니다.
-16. **Distribution domain name**을 복사합니다 (예: `d1234abcdef.cloudfront.net`).
+21. [[Create distribution]]을 클릭합니다.
+22. 배포 생성에 약 **5~10분** 소요됩니다.
+23. Status가 `Enabled`로 변경되면 완료입니다.
+24. **Distribution domain name**을 복사합니다 (예: `d1234abcdef.cloudfront.net`).
+
+> [!OUTPUT]
+> CloudFront 배포가 생성되었습니다:
+>
+> - **Distribution ID**: `E1A2B3C4D5E6F7` (메모해 두세요, GitHub Secrets에 사용)
+> - **Distribution domain name**: `d1234abcdef.cloudfront.net`
+> - **Status**: `Enabled`
+> - **Origin**: `my-3tier-app-frontend-xxx.s3-website.ap-northeast-2.amazonaws.com`
 
 ### 5-7. CloudFront URL로 접속 확인
 
@@ -531,6 +562,15 @@ https://d1234abcdef.cloudfront.net
 
 ✅ **태스크 완료** — CloudFront 배포를 생성하여 CDN + HTTPS를 적용했습니다.
 
+> [!TROUBLESHOOTING]
+> | 증상 | 원인 | 해결 방법 |
+> |------|------|-----------|
+> | CloudFront URL 접속 시 `AccessDenied` | S3 버킷 정책 미설정 또는 Origin 설정 오류 | S3 웹사이트 엔드포인트를 Origin으로 사용했는지 확인 |
+> | `/items` 직접 접속 시 403/404 에러 | 에러 페이지 설정 누락 | Custom Error Response에 403, 404 → `/index.html` (200) 추가 |
+> | HTTPS 접속 불가 (ERR_SSL_PROTOCOL_ERROR) | Viewer Protocol Policy 설정 오류 | `Redirect HTTP to HTTPS` 선택 확인 |
+> | 배포 생성 후 10분 이상 `InProgress` | 정상 동작 (전 세계 엣지 배포 중) | 최대 15분 대기, Status가 `Enabled`로 변경되면 완료 |
+> | 이전 버전이 계속 표시됨 | CloudFront 캐시 | `Invalidation` 생성: `/*` 경로로 캐시 무효화 |
+
 ---
 
 ## 태스크 6: GitHub Actions 자동 배포
@@ -539,15 +579,17 @@ https://d1234abcdef.cloudfront.net
 
 ### 6-1. AWS IAM 사용자 생성 (GitHub Actions용)
 
-1. AWS Console → **IAM** → **Users** → [[Create user]]
-2. **User name**: `github-actions-frontend`
-3. [[Next]] → **Attach policies directly** 선택
-4. 다음 정책을 검색하여 추가합니다:
-   - `AmazonS3FullAccess`
-   - `CloudFrontFullAccess`
-5. [[Create user]] → 사용자 클릭 → **Security credentials** 탭
-6. [[Create access key]] → **Third-party service** 선택 → [[Create access key]]
-7. **Access key ID**와 **Secret access key**를 복사합니다.
+25. AWS Console → **IAM** → **Users** → [[Create user]]
+26. **User name**: `github-actions-frontend`
+27. [[Next]] → **Attach policies directly** 선택
+28. 다음 정책을 검색하여 추가합니다:
+
+- `AmazonS3FullAccess`
+- `CloudFrontFullAccess`
+
+29. [[Create user]] → 사용자 클릭 → **Security credentials** 탭
+30. [[Create access key]] → **Third-party service** 선택 → [[Create access key]]
+31. **Access key ID**와 **Secret access key**를 복사합니다.
 
 > [!WARNING]
 > Secret access key는 이 화면에서만 확인할 수 있습니다.
@@ -555,8 +597,8 @@ https://d1234abcdef.cloudfront.net
 
 ### 6-2. GitHub Secrets 설정
 
-8. GitHub → `my-frontend` 리포지토리 → **Settings** → **Secrets and variables** → **Actions**
-9. 다음 Secrets를 추가합니다:
+32. GitHub → `my-frontend` 리포지토리 → **Settings** → **Secrets and variables** → **Actions**
+33. 다음 Secrets를 추가합니다:
 
 | Secret Name                  | 값                                                                     |
 | ---------------------------- | ---------------------------------------------------------------------- |
@@ -663,14 +705,44 @@ git commit -m "feat: initial frontend with CI/CD"
 git push origin main
 ```
 
-10. GitHub → **Actions** 탭에서 워크플로우 실행을 확인합니다.
-11. 모든 스텝이 ✅ 성공하면 CloudFront URL에서 최신 버전을 확인합니다.
+34. GitHub → **Actions** 탭에서 워크플로우 실행을 확인합니다.
+35. 모든 스텝이 ✅ 성공하면 CloudFront URL에서 최신 버전을 확인합니다.
+
+> [!OUTPUT]
+> GitHub Actions 워크플로우 실행 결과:
+>
+> ```
+> ✅ Checkout source code          (2s)
+> ✅ Setup Node.js                  (5s)
+> ✅ Install dependencies           (15s)
+> ✅ Build for production           (8s)
+> ✅ Configure AWS credentials      (1s)
+> ✅ Deploy to S3                   (5s)
+> ✅ Invalidate CloudFront cache    (2s)
+> ✅ Deployment complete            (1s)
+> ```
+>
+> 전체 실행 시간: 약 40초~1분
 
 > [!TIP]
 > CloudFront 캐시 무효화 후 전파에 1~2분 소요될 수 있습니다.
 > 브라우저에서 강력 새로고침(Ctrl+Shift+R)을 시도하세요.
 
 ✅ **태스크 완료** — GitHub Actions로 프론트엔드 자동 배포 파이프라인을 구축했습니다.
+
+> [!TROUBLESHOOTING]
+> | 증상 | 원인 | 해결 방법 |
+> |------|------|-----------|
+> | `AccessDenied` (S3 sync 단계) | IAM 사용자에 S3 권한 없음 | `AmazonS3FullAccess` 정책 연결 확인 |
+> | `AccessDenied` (CloudFront invalidation) | IAM 사용자에 CloudFront 권한 없음 | `CloudFrontFullAccess` 정책 연결 확인 |
+> | `InvalidArgument: Distribution ID` | `CLOUDFRONT_DISTRIBUTION_ID` Secret 값 오류 | CloudFront 콘솔에서 ID 재확인 (예: `E1A2B3C4D5E6F7`) |
+> | 배포 성공했지만 변경 미반영 | CloudFront 캐시 전파 지연 | 1~2분 대기 후 브라우저 강력 새로고침 (Ctrl+Shift+R) |
+> | `npm ci` 실패 | `package-lock.json` 미커밋 | `git add package-lock.json && git commit` 후 재push |
+
+> [!NOTE]
+> GitHub Actions에서 사용하는 IAM Access Key는 **최소 권한 원칙**을 적용하는 것이 좋습니다.
+> 실습에서는 편의상 FullAccess를 사용하지만, 프로덕션에서는 필요한 S3 버킷과 CloudFront 배포에만
+> 접근 가능한 커스텀 정책을 생성하세요.
 
 ---
 
@@ -683,14 +755,15 @@ git push origin main
 
 ### 이 세션에서 생성한 리소스 목록
 
-| 리소스                  | 이름/식별자                  | 비용                  |
-| ----------------------- | ---------------------------- | --------------------- |
-| CloudFront Distribution | `d1234abcdef.cloudfront.net` | 요청 기반 (소량 무료) |
-| IAM User                | `github-actions-frontend`    | 무료                  |
-| GitHub Secrets          | 6개                          | 무료                  |
+| 리소스                  | 이름/식별자                  | 시간당 비용 | 월 비용 추정         |
+| ----------------------- | ---------------------------- | ----------- | -------------------- |
+| CloudFront Distribution | `d1234abcdef.cloudfront.net` | 요청 기반   | ~$1 미만 (실습 수준) |
+| IAM User                | `github-actions-frontend`    | 무료        | 무료                 |
+| GitHub Secrets          | 6개                          | 무료        | 무료                 |
 
 > [!NOTE]
-> CloudFront는 월 1,000만 요청까지 프리티어에 포함됩니다.
+> CloudFront는 월 1,000만 요청 + 1TB 전송까지 프리티어에 포함됩니다.
 > 실습 수준의 트래픽에서는 비용이 거의 발생하지 않습니다.
+> 단, CloudFront를 삭제하려면 먼저 **Disable** 후 **Delete** 순서를 지켜야 합니다.
 
 ✅ **실습 종료**: Step 9-3에서 Spring Boot 백엔드를 배포합니다.

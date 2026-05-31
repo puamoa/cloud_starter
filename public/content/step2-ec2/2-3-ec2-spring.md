@@ -22,6 +22,9 @@ estimatedCost: 크레딧 내 사용 가능 (비용 발생 가능)
 > [!NOTE]
 > 이 실습은 EC2 인스턴스가 필요합니다. Step 2-1에서 생성한 EC2를 사용하거나, 새로운 EC2 인스턴스를 생성합니다. Security Group에 8080 포트가 열려 있어야 합니다.
 
+> [!WARNING]
+> Step 2-1에서 EC2를 Stop한 경우, 먼저 Start하고 새로운 Public IP를 확인한 후 진행하세요.
+
 ## 태스크 0: EC2 인스턴스 확인 및 접속
 
 1. AWS Management Console에 로그인합니다.
@@ -36,6 +39,15 @@ ssh -i ~/Downloads/my-keypair.pem ec2-user@<Public-IP>
 
 > [!TIP]
 > EC2 인스턴스가 없다면 Step 2-1의 태스크 0(CloudFormation)과 태스크 1(EC2 생성)을 먼저 진행하세요.
+
+> [!NOTE]
+> **Security Group에 8080 포트가 열려 있는지 확인:**
+>
+> 1. EC2 콘솔 → 인스턴스 선택 → **Security** 탭 → Security Group 링크 클릭
+> 2. **Inbound rules**에서 Custom TCP 8080 규칙이 있는지 확인
+> 3. 없으면 [[Edit inbound rules]] → [[Add rule]] → Type: `Custom TCP`, Port: `8080`, Source: `0.0.0.0/0` → [[Save rules]]
+>
+> CloudFormation 템플릿으로 생성한 `my-ec2-sg`에는 8080이 이미 포함되어 있습니다.
 
 ✅ **태스크 완료**: EC2 인스턴스에 접속했습니다.
 
@@ -170,6 +182,14 @@ scp -i ~/Downloads/my-keypair.pem build/libs/demo-0.0.1-SNAPSHOT.jar ec2-user@<P
 > [!TIP]
 > 파일이 큰 경우 전송 시간이 오래 걸릴 수 있습니다. Spring Boot JAR은 보통 20-50MB 정도입니다.
 
+> [!TROUBLESHOOTING]
+> **SCP 전송 실패 시:**
+>
+> - `Permission denied (publickey)`: SSH 접속과 동일한 키 파일을 사용하고 있는지 확인
+> - `Connection timed out`: Security Group에 SSH(22) 포트가 열려 있는지 확인
+> - `No such file or directory`: 로컬의 JAR 파일 경로가 정확한지 확인 (`ls build/libs/`)
+> - 경로에 공백이 있는 경우: 경로를 따옴표로 감싸세요
+
 18. EC2에 SSH로 접속하여 파일이 전송되었는지 확인합니다:
 
 ```bash
@@ -237,6 +257,9 @@ curl http://localhost:8080/health
 > [!WARNING]
 > 직접 실행(`java -jar`)은 터미널을 닫으면 애플리케이션도 종료됩니다. 운영 환경에서는 반드시 systemd 서비스로 등록해야 합니다.
 
+> [!TIP]
+> `nohup java -jar /opt/app/app.jar &`로 백그라운드 실행도 가능하지만, 서버 재부팅 시 자동 시작되지 않고 로그 관리도 어렵습니다. 다음 태스크에서 systemd를 사용하는 것이 정석입니다.
+
 ✅ **태스크 완료**: JAR 파일이 정상 실행됨을 확인했습니다.
 
 ## 태스크 5: systemd 서비스 등록
@@ -248,6 +271,8 @@ curl http://localhost:8080/health
 > - 비정상 종료 시 자동 재시작
 > - 로그 관리 (journalctl)
 > - 서비스 상태 모니터링
+>
+> 프로덕션 환경에서 Java 애플리케이션을 운영하는 표준 방법입니다.
 
 24. systemd 서비스 파일을 생성합니다:
 
@@ -283,12 +308,44 @@ WantedBy=multi-user.target
 ```
 
 > [!NOTE]
-> 주요 설정 설명:
+> **주요 설정 설명:**
 >
-> - `After=network.target`: 네트워크가 준비된 후 시작
-> - `Restart=on-failure`: 비정상 종료 시 자동 재시작
-> - `RestartSec=10`: 재시작 전 10초 대기
-> - `SyslogIdentifier`: journalctl에서 로그 필터링에 사용
+> | 설정                         | 값           | 설명                                      |
+> | ---------------------------- | ------------ | ----------------------------------------- |
+> | `After=network.target`       | -            | 네트워크가 준비된 후 시작                 |
+> | `User=ec2-user`              | -            | 이 사용자 권한으로 실행 (root 아님)       |
+> | `Restart=on-failure`         | -            | 비정상 종료(exit code ≠ 0) 시 자동 재시작 |
+> | `RestartSec=10`              | -            | 재시작 전 10초 대기                       |
+> | `SyslogIdentifier`           | `spring-app` | journalctl에서 로그 필터링에 사용         |
+> | `WantedBy=multi-user.target` | -            | 서버 부팅 시 자동 시작 대상에 포함        |
+
+> [!TIP]
+> vi가 익숙하지 않다면 다음 명령으로 파일을 생성할 수 있습니다:
+>
+> ```bash
+> sudo tee /etc/systemd/system/spring-app.service << 'EOF'
+> [Unit]
+> Description=Spring Boot Application
+> After=network.target
+>
+> [Service]
+> Type=simple
+> User=ec2-user
+> Group=ec2-user
+> ExecStart=/usr/bin/java -jar /opt/app/app.jar --server.port=8080
+> WorkingDirectory=/opt/app
+> Restart=on-failure
+> RestartSec=10
+> StandardOutput=journal
+> StandardError=journal
+> SyslogIdentifier=spring-app
+> Environment=SPRING_PROFILES_ACTIVE=prod
+> Environment=JAVA_OPTS=-Xms256m -Xmx512m
+>
+> [Install]
+> WantedBy=multi-user.target
+> EOF
+> ```
 
 26. systemd 데몬을 리로드합니다:
 
@@ -336,6 +393,21 @@ curl http://localhost:8080
 > ```
 > Hello from Spring Boot on EC2!
 > ```
+
+> [!TROUBLESHOOTING]
+> **서비스가 시작되지 않는 경우:**
+>
+> ```bash
+> # 상세 에러 로그 확인
+> sudo journalctl -u spring-app -n 50 --no-pager
+> ```
+>
+> | 증상                      | 원인               | 해결 방법                                                   |
+> | ------------------------- | ------------------ | ----------------------------------------------------------- |
+> | `Active: failed`          | JAR 파일 경로 오류 | `ls -la /opt/app/app.jar`로 파일 존재 확인                  |
+> | `Permission denied`       | 파일 권한 문제     | `sudo chown ec2-user:ec2-user /opt/app/app.jar`             |
+> | `Address already in use`  | 8080 포트 사용 중  | `sudo ss -tlnp \| grep 8080`으로 확인 후 해당 프로세스 종료 |
+> | `java: command not found` | Java 경로 문제     | `which java`로 경로 확인 후 ExecStart 수정                  |
 
 ✅ **태스크 완료**: Spring Boot 애플리케이션이 systemd 서비스로 등록되었습니다.
 
@@ -445,13 +517,14 @@ curl http://localhost:8080
 # 🗑️ 리소스 정리
 
 > [!NOTE]
-> 이 실습에서 추가로 생성한 리소스는 EC2 내부의 소프트웨어(Java, JAR, systemd 서비스)뿐입니다. EC2 인스턴스 자체의 비용은 Step 2-1을 참조하세요.
+> 이 실습에서 추가로 생성한 리소스는 EC2 내부의 소프트웨어(Java, JAR, systemd 서비스)뿐입니다.  
+> EC2 내부 소프트웨어는 추가 AWS 비용이 발생하지 않습니다. EC2 인스턴스 자체의 비용 관리는 Step 2-1의 리소스 정리를 참조하세요.
 
 ---
 
-### 단계 1: systemd 서비스 삭제
+### 옵션 A: EC2 유지 (서비스만 정리)
 
-Spring Boot 서비스를 중지하고 등록을 해제합니다.
+EC2 인스턴스를 계속 사용하지만 Spring Boot 서비스를 정리하려면 다음 명령을 실행합니다.
 
 ```bash
 # 서비스 중지 및 자동 시작 비활성화
@@ -461,24 +534,21 @@ sudo systemctl disable spring-app
 # 서비스 파일 삭제
 sudo rm /etc/systemd/system/spring-app.service
 sudo systemctl daemon-reload
-```
 
----
-
-### 단계 2: 애플리케이션 파일 삭제
-
-```bash
 # JAR 파일 및 애플리케이션 디렉토리 삭제
 sudo rm -rf /opt/app
 ```
 
-> [!NOTE]
-> EC2 인스턴스를 계속 사용할 예정이라면 서비스를 그대로 유지해도 됩니다. EC2 내부 소프트웨어는 추가 비용이 발생하지 않습니다.
+> [!TIP]
+> Java(Amazon Corretto)는 삭제하지 않아도 됩니다. 다른 Java 애플리케이션에서 재사용할 수 있으며, 설치된 상태로 비용이 발생하지 않습니다.
 
 ---
 
-### 단계 3: EC2 인스턴스 정리
+### 옵션 B: EC2 인스턴스 포함 전체 삭제
 
-EC2 인스턴스 자체를 삭제하려면 **Step 2-1의 리소스 정리** 섹션을 참조하세요.
+EC2 인스턴스 자체를 삭제하려면 **Step 2-1의 리소스 정리 → 옵션 B** 섹션을 참조하세요.
+
+> [!WARNING]
+> EC2를 Terminate하면 내부의 모든 소프트웨어와 데이터가 함께 삭제됩니다. 별도로 서비스를 정리할 필요 없이 인스턴스만 Terminate하면 됩니다.
 
 ✅ **실습 종료**: 모든 리소스가 정리되었습니다.

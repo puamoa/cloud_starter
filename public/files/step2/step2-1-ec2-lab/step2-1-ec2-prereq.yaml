@@ -1,140 +1,549 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: 'EC2 Lab Prerequisites - VPC, Public Subnet, IGW, Security Group'
+Description: >
+  Step 2-1 EC2 Lab Prerequisites.
+  Creates VPC, Public/Private Subnets (2 AZs), IGW, Route Tables, Security Groups.
+  Equivalent to the manual setup from Step 1-1 through 1-3.
 
+# =============================================================================
+# Metadata - CloudFormation 콘솔에서 파라미터 입력 화면의 그룹과 순서를 지정
+# ParameterGroups: 파라미터를 논리적 그룹으로 묶어 콘솔에 표시
+# ParameterLabels: 각 파라미터에 사람이 읽기 쉬운 라벨을 부여
+# =============================================================================
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: 'Required Settings (Check Before Create)'
+        Parameters:
+          - ProjectName
+          - SSHAccessCidr
+      - Label:
+          default: 'Network CIDR (Keep Default)'
+        Parameters:
+          - VpcCidr
+          - PublicSubnetACidr
+          - PublicSubnetCCidr
+          - PrivateSubnetACidr
+          - PrivateSubnetCCidr
+      - Label:
+          default: 'Security Group Access Control (Default: Allow All)'
+        Parameters:
+          - HTTPAccessCidr
+          - HTTPSAccessCidr
+          - AppPortAccessCidr
+      - Label:
+          default: 'Tags (Keep Default)'
+        Parameters:
+          - CreatedByTag
+          - StepTag
+          - SessionTag
+    ParameterLabels:
+      ProjectName:
+        default: 'Project Name (Resource Prefix)'
+      SSHAccessCidr:
+        default: 'SSH Access IP (Use Your IP recommended)'
+      VpcCidr:
+        default: 'VPC CIDR'
+      PublicSubnetACidr:
+        default: 'Public Subnet A CIDR'
+      PublicSubnetCCidr:
+        default: 'Public Subnet C CIDR'
+      PrivateSubnetACidr:
+        default: 'Private Subnet A CIDR'
+      PrivateSubnetCCidr:
+        default: 'Private Subnet C CIDR'
+      HTTPAccessCidr:
+        default: 'HTTP (80) Access IP'
+      HTTPSAccessCidr:
+        default: 'HTTPS (443) Access IP'
+      AppPortAccessCidr:
+        default: 'Spring Boot (8080) Access IP'
+      CreatedByTag:
+        default: 'CreatedBy Tag'
+      StepTag:
+        default: 'Step Tag'
+      SessionTag:
+        default: 'Session Tag'
+
+# =============================================================================
+# Parameters - 스택 생성 시 사용자가 입력하는 값
+# CloudFormation 콘솔에서 입력 폼으로 표시됩니다.
+# =============================================================================
+Parameters:
+  # ---------------------------------------------------------------------------
+  # 프로젝트 이름 (모든 리소스의 접두사로 사용)
+  # 예: 'my' → my-vpc, my-public-subnet-a, my-ec2-sg 등
+  # ---------------------------------------------------------------------------
+  ProjectName:
+    Type: String # 데이터 타입: 문자열
+    Default: my # 기본값: 사용자가 비워두면 'my'가 적용됨
+    Description: >
+      Prefix for all resource names.
+      Example: 'my' creates 'my-vpc', 'my-public-subnet-a', etc.
+    AllowedPattern: '[a-zA-Z][a-zA-Z0-9-]*' # 정규식으로 입력값 검증
+    ConstraintDescription: Must start with a letter. Only letters, numbers, and hyphens allowed.
+    MinLength: 1 # 최소 1글자
+    MaxLength: 20 # 최대 20글자
+
+  # ---------------------------------------------------------------------------
+  # VPC CIDR - VPC의 전체 IP 주소 범위
+  # /16 = 65,536개 IP (10.0.0.0 ~ 10.0.255.255)
+  # ---------------------------------------------------------------------------
+  VpcCidr:
+    Type: String
+    Default: 10.0.0.0/16
+    Description: IPv4 CIDR block for the VPC
+    AllowedPattern: '(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})/(\d{1,2})'
+
+  # ---------------------------------------------------------------------------
+  # 서브넷 CIDR - 각 서브넷의 IP 주소 범위
+  # /24 = 251개 사용 가능 IP (AWS가 5개 예약)
+  # ---------------------------------------------------------------------------
+  PublicSubnetACidr:
+    Type: String
+    Default: 10.0.1.0/24
+    Description: CIDR block for Public Subnet A (ap-northeast-2a)
+
+  PublicSubnetCCidr:
+    Type: String
+    Default: 10.0.2.0/24
+    Description: CIDR block for Public Subnet C (ap-northeast-2c)
+
+  PrivateSubnetACidr:
+    Type: String
+    Default: 10.0.11.0/24
+    Description: CIDR block for Private Subnet A (ap-northeast-2a)
+
+  PrivateSubnetCCidr:
+    Type: String
+    Default: 10.0.12.0/24
+    Description: CIDR block for Private Subnet C (ap-northeast-2c)
+
+  # ---------------------------------------------------------------------------
+  # SSH 접근 허용 IP
+  # 기본값 0.0.0.0/0은 모든 IP에서 접근 허용 (보안 취약)
+  # 본인 IP로 제한하려면: 예) 203.0.113.50/32 (단일 IP는 /32)
+  # ---------------------------------------------------------------------------
+  SSHAccessCidr:
+    Type: String
+    Default: 0.0.0.0/0
+    Description: >
+      IP range allowed for SSH access (port 22).
+      Use 'x.x.x.x/32' for a single IP. Default 0.0.0.0/0 allows all (change after creation recommended).
+    AllowedPattern: '(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})/(\d{1,2})'
+
+  # ---------------------------------------------------------------------------
+  # HTTP 접근 허용 IP
+  # 웹 서비스이므로 기본값 0.0.0.0/0 (모든 IP 허용)이 일반적
+  # ---------------------------------------------------------------------------
+  HTTPAccessCidr:
+    Type: String
+    Default: 0.0.0.0/0
+    Description: >
+      IP range allowed for HTTP access (port 80).
+      Default 0.0.0.0/0 allows all - typical for public web servers.
+    AllowedPattern: '(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})/(\d{1,2})'
+
+  # ---------------------------------------------------------------------------
+  # HTTPS 접근 허용 IP
+  # ---------------------------------------------------------------------------
+  HTTPSAccessCidr:
+    Type: String
+    Default: 0.0.0.0/0
+    Description: >
+      IP range allowed for HTTPS access (port 443).
+      Default 0.0.0.0/0 allows all - typical for public web servers.
+    AllowedPattern: '(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})/(\d{1,2})'
+
+  # ---------------------------------------------------------------------------
+  # Spring Boot (8080) 접근 허용 IP
+  # 개발/테스트 환경에서는 0.0.0.0/0, 운영에서는 ALB IP로 제한
+  # ---------------------------------------------------------------------------
+  AppPortAccessCidr:
+    Type: String
+    Default: 0.0.0.0/0
+    Description: >
+      IP range allowed for application port (8080) access.
+      Default 0.0.0.0/0 allows all - restrict in production.
+    AllowedPattern: '(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})/(\d{1,2})'
+
+  # ---------------------------------------------------------------------------
+  # 태그 설정
+  # 모든 리소스에 공통으로 적용되는 태그 값
+  # Tag Editor에서 이 값으로 검색하면 이 스택에서 생성한 리소스를 한번에 조회 가능
+  # ---------------------------------------------------------------------------
+  CreatedByTag:
+    Type: String
+    Default: cloudformation
+    Description: Value for the CreatedBy tag applied to all resources
+
+  StepTag:
+    Type: String
+    Default: step2
+    Description: Value for the Step tag (used for grouping resources by step)
+
+  SessionTag:
+    Type: String
+    Default: '2-1'
+    Description: Value for the Session tag (used for grouping resources by session)
+
+# =============================================================================
+# Resources - 실제 생성할 AWS 리소스 정의
+# 각 리소스는 논리적 이름(Logical ID)을 가지며, !Ref로 참조할 수 있습니다.
+# =============================================================================
 Resources:
-  # VPC
+  # ---------------------------------------------------------------------------
+  # VPC (Virtual Private Cloud)
+  # 모든 리소스가 속하는 가상 네트워크. 이 VPC 안에 서브넷, IGW 등을 배치합니다.
+  # Type: 생성할 AWS 리소스 종류
+  # Properties: 리소스의 설정값
+  # !Ref VpcCidr → Parameters에서 정의한 VpcCidr의 값을 가져옴 (기본: 10.0.0.0/16)
+  # ---------------------------------------------------------------------------
   VPC:
     Type: AWS::EC2::VPC
     Properties:
-      CidrBlock: 10.0.0.0/16
-      EnableDnsSupport: true
-      EnableDnsHostnames: true
-      Tags:
+      CidrBlock: !Ref VpcCidr # 파라미터 참조: VPC의 IP 범위
+      EnableDnsSupport: true # VPC 내 DNS 확인 활성화
+      EnableDnsHostnames: true # 인스턴스에 DNS 호스트명 부여
+      Tags: # 리소스에 붙이는 키-값 라벨
         - Key: Name
-          Value: my-vpc
+          Value: !Sub '${ProjectName}-vpc' # !Sub: 문자열 치환. 'my' → 'my-vpc'
         - Key: CreatedBy
-          Value: cloudformation
+          Value: !Ref CreatedByTag
         - Key: Step
-          Value: step2
+          Value: !Ref StepTag
         - Key: Session
-          Value: '2-1'
+          Value: !Ref SessionTag
 
-  # Internet Gateway
+  # ---------------------------------------------------------------------------
+  # Internet Gateway (IGW)
+  # VPC와 인터넷 간의 통신을 가능하게 하는 게이트웨이
+  # IGW 자체를 생성한 후, VPCGatewayAttachment로 VPC에 연결해야 동작합니다.
+  # ---------------------------------------------------------------------------
   InternetGateway:
     Type: AWS::EC2::InternetGateway
     Properties:
       Tags:
         - Key: Name
-          Value: my-igw
+          Value: !Sub '${ProjectName}-igw'
         - Key: CreatedBy
-          Value: cloudformation
+          Value: !Ref CreatedByTag
         - Key: Step
-          Value: step2
+          Value: !Ref StepTag
         - Key: Session
-          Value: '2-1'
+          Value: !Ref SessionTag
 
+  # IGW를 VPC에 연결 (Attach)
+  # 콘솔에서 Actions → Attach to VPC 하는 것과 동일
   AttachGateway:
     Type: AWS::EC2::VPCGatewayAttachment
     Properties:
-      VpcId: !Ref VPC
-      InternetGatewayId: !Ref InternetGateway
+      VpcId: !Ref VPC # !Ref VPC → 위에서 생성한 VPC의 ID
+      InternetGatewayId: !Ref InternetGateway # !Ref → 위에서 생성한 IGW의 ID
 
-  # Public Subnet
+  # ---------------------------------------------------------------------------
+  # Public Subnets
+  # 인터넷과 직접 통신 가능한 서브넷 (Route Table에 IGW 경로가 있음)
+  # MapPublicIpOnLaunch: true → 이 서브넷에 생성되는 인스턴스에 자동으로 Public IP 할당
+  # ---------------------------------------------------------------------------
   PublicSubnetA:
     Type: AWS::EC2::Subnet
     Properties:
       VpcId: !Ref VPC
-      CidrBlock: 10.0.1.0/24
-      AvailabilityZone: !Select [0, !GetAZs '']
+      CidrBlock: !Ref PublicSubnetACidr # 파라미터 참조: 10.0.1.0/24
+      AvailabilityZone: ap-northeast-2a # 가용 영역 지정 (서울 리전 AZ-a)
+      MapPublicIpOnLaunch: true # Auto-assign Public IP 활성화
+      Tags:
+        - Key: Name
+          Value: !Sub '${ProjectName}-public-subnet-a'
+        - Key: CreatedBy
+          Value: !Ref CreatedByTag
+        - Key: Step
+          Value: !Ref StepTag
+        - Key: Session
+          Value: !Ref SessionTag
+
+  PublicSubnetC:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: !Ref PublicSubnetCCidr # 파라미터 참조: 10.0.2.0/24
+      AvailabilityZone: ap-northeast-2c # 가용 영역 지정 (서울 리전 AZ-c)
       MapPublicIpOnLaunch: true
       Tags:
         - Key: Name
-          Value: my-public-subnet-a
+          Value: !Sub '${ProjectName}-public-subnet-c'
         - Key: CreatedBy
-          Value: cloudformation
+          Value: !Ref CreatedByTag
         - Key: Step
-          Value: step2
+          Value: !Ref StepTag
         - Key: Session
-          Value: '2-1'
+          Value: !Ref SessionTag
 
+  # ---------------------------------------------------------------------------
+  # Private Subnets
+  # 인터넷과 직접 통신 불가 (IGW 경로 없음). NAT Gateway를 통해서만 외부 접근 가능.
+  # MapPublicIpOnLaunch: false → Public IP를 할당하지 않음
+  # ---------------------------------------------------------------------------
+  PrivateSubnetA:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: !Ref PrivateSubnetACidr # 파라미터 참조: 10.0.11.0/24
+      AvailabilityZone: ap-northeast-2a
+      MapPublicIpOnLaunch: false # Private이므로 Public IP 불필요
+      Tags:
+        - Key: Name
+          Value: !Sub '${ProjectName}-private-subnet-a'
+        - Key: CreatedBy
+          Value: !Ref CreatedByTag
+        - Key: Step
+          Value: !Ref StepTag
+        - Key: Session
+          Value: !Ref SessionTag
+
+  PrivateSubnetC:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: !Ref PrivateSubnetCCidr # 파라미터 참조: 10.0.12.0/24
+      AvailabilityZone: ap-northeast-2c
+      MapPublicIpOnLaunch: false
+      Tags:
+        - Key: Name
+          Value: !Sub '${ProjectName}-private-subnet-c'
+        - Key: CreatedBy
+          Value: !Ref CreatedByTag
+        - Key: Step
+          Value: !Ref StepTag
+        - Key: Session
+          Value: !Ref SessionTag
+
+  # ---------------------------------------------------------------------------
   # Public Route Table
+  # 0.0.0.0/0 → IGW 경로를 추가하여 인터넷 통신을 가능하게 합니다.
+  # Public Subnet A, C를 이 Route Table에 연결(Associate)합니다.
+  # ---------------------------------------------------------------------------
   PublicRouteTable:
     Type: AWS::EC2::RouteTable
     Properties:
       VpcId: !Ref VPC
       Tags:
         - Key: Name
-          Value: my-public-rt
+          Value: !Sub '${ProjectName}-public-rt'
         - Key: CreatedBy
-          Value: cloudformation
+          Value: !Ref CreatedByTag
         - Key: Step
-          Value: step2
+          Value: !Ref StepTag
         - Key: Session
-          Value: '2-1'
+          Value: !Ref SessionTag
 
+  # Route Table에 인터넷 경로 추가
+  # DependsOn: IGW가 VPC에 연결(Attach)된 후에야 IGW를 대상으로 라우트 생성 가능
   PublicRoute:
     Type: AWS::EC2::Route
-    DependsOn: AttachGateway
+    DependsOn: AttachGateway # 명시적 의존: AttachGateway 완료 후 생성
     Properties:
       RouteTableId: !Ref PublicRouteTable
-      DestinationCidrBlock: 0.0.0.0/0
-      GatewayId: !Ref InternetGateway
+      DestinationCidrBlock: 0.0.0.0/0 # 모든 외부 트래픽
+      GatewayId: !Ref InternetGateway # → IGW로 보냄
 
+  # 서브넷을 Route Table에 연결 (Associate)
+  # 연결하지 않으면 VPC의 Main Route Table이 적용됨 (IGW 경로 없음 = Private처럼 동작)
   PublicSubnetARouteTableAssociation:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
       SubnetId: !Ref PublicSubnetA
       RouteTableId: !Ref PublicRouteTable
 
-  # EC2 Security Group
+  PublicSubnetCRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnetC
+      RouteTableId: !Ref PublicRouteTable
+
+  # ---------------------------------------------------------------------------
+  # Private Route Tables (AZ별 분리)
+  # IGW 경로가 없으므로 인터넷 직접 통신 불가.
+  # AZ별로 분리하는 이유: 이후 NAT Gateway를 AZ별로 연결하기 위함 (고가용성)
+  # ---------------------------------------------------------------------------
+  PrivateRouteTableA:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Sub '${ProjectName}-private-rt-a'
+        - Key: CreatedBy
+          Value: !Ref CreatedByTag
+        - Key: Step
+          Value: !Ref StepTag
+        - Key: Session
+          Value: !Ref SessionTag
+
+  PrivateSubnetARouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PrivateSubnetA
+      RouteTableId: !Ref PrivateRouteTableA
+
+  PrivateRouteTableC:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Sub '${ProjectName}-private-rt-c'
+        - Key: CreatedBy
+          Value: !Ref CreatedByTag
+        - Key: Step
+          Value: !Ref StepTag
+        - Key: Session
+          Value: !Ref SessionTag
+
+  PrivateSubnetCRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PrivateSubnetC
+      RouteTableId: !Ref PrivateRouteTableC
+
+  # ---------------------------------------------------------------------------
+  # Security Group - EC2 (웹 서버용)
+  # 인스턴스 레벨 방화벽. Stateful이므로 인바운드 허용 시 응답은 자동 허용.
+  # SecurityGroupIngress: 인바운드 규칙 목록
+  # 각 규칙에 IpProtocol, FromPort, ToPort, CidrIp(또는 SourceSecurityGroupId) 지정
+  # ---------------------------------------------------------------------------
   EC2SecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupDescription: Security group for EC2 instances
+      GroupName: !Sub '${ProjectName}-ec2-sg'
+      GroupDescription: !Sub 'Security group for ${ProjectName} EC2 web server instances'
       VpcId: !Ref VPC
       SecurityGroupIngress:
-        - IpProtocol: tcp
-          FromPort: 22
-          ToPort: 22
-          CidrIp: 0.0.0.0/0
-          Description: SSH
+        # SSH (22번 포트) - 관리자 원격 접속용
+        - IpProtocol: tcp # 프로토콜: tcp, udp, icmp, 또는 -1(전체)
+          FromPort: 22 # 시작 포트
+          ToPort: 22 # 끝 포트 (단일 포트면 From=To)
+          CidrIp: !Ref SSHAccessCidr # 파라미터 참조: 허용할 IP 범위
+          Description: SSH access
+        # HTTP (80번 포트) - 웹 서비스
         - IpProtocol: tcp
           FromPort: 80
           ToPort: 80
-          CidrIp: 0.0.0.0/0
-          Description: HTTP
+          CidrIp: !Ref HTTPAccessCidr
+          Description: HTTP access
+        # HTTPS (443번 포트) - 암호화된 웹 서비스
         - IpProtocol: tcp
           FromPort: 443
           ToPort: 443
-          CidrIp: 0.0.0.0/0
-          Description: HTTPS
+          CidrIp: !Ref HTTPSAccessCidr
+          Description: HTTPS access
+        # Spring Boot (8080번 포트) - 애플리케이션 서버
         - IpProtocol: tcp
           FromPort: 8080
           ToPort: 8080
-          CidrIp: 0.0.0.0/0
-          Description: Spring Boot
+          CidrIp: !Ref AppPortAccessCidr
+          Description: Spring Boot application port
+      # 아웃바운드 규칙을 명시하지 않으면 기본값 적용: 모든 트래픽 허용 (All, 0.0.0.0/0)
+      Tags:
+        - Key: Name
+          Value: !Sub '${ProjectName}-ec2-sg'
+        - Key: CreatedBy
+          Value: !Ref CreatedByTag
+        - Key: Step
+          Value: !Ref StepTag
+        - Key: Session
+          Value: !Ref SessionTag
+
+  # ---------------------------------------------------------------------------
+  # Security Group - RDS (데이터베이스용)
+  # Source를 IP가 아닌 다른 Security Group으로 지정 (SG 체이닝)
+  # → EC2 SG가 적용된 인스턴스에서만 3306 접근 허용
+  # SourceSecurityGroupId: IP 대신 SG ID를 Source로 사용
+  # ---------------------------------------------------------------------------
+  RDSSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: !Sub '${ProjectName}-rds-sg'
+      GroupDescription: !Sub 'Security group for ${ProjectName} RDS MySQL instances'
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        # MySQL (3306번 포트) - EC2 Security Group에서만 접근 허용
         - IpProtocol: tcp
           FromPort: 3306
           ToPort: 3306
-          CidrIp: 0.0.0.0/0
-          Description: MySQL
+          SourceSecurityGroupId: !Ref EC2SecurityGroup # IP 대신 SG 참조
+          Description: MySQL from EC2 Security Group only
       Tags:
         - Key: Name
-          Value: my-ec2-sg
+          Value: !Sub '${ProjectName}-rds-sg'
         - Key: CreatedBy
-          Value: cloudformation
+          Value: !Ref CreatedByTag
         - Key: Step
-          Value: step2
+          Value: !Ref StepTag
         - Key: Session
-          Value: '2-1'
+          Value: !Ref SessionTag
 
+# =============================================================================
+# Outputs - 스택 생성 결과를 외부에 노출
+# 콘솔의 Outputs 탭에서 확인 가능. Export로 다른 스택에서 참조 가능.
+# Value에 !Ref를 사용하면 해당 리소스의 물리적 ID(vpc-xxx, subnet-xxx 등)가 출력됨.
+# =============================================================================
 Outputs:
   VPCId:
     Description: VPC ID
     Value: !Ref VPC
+    Export:
+      Name: !Sub '${AWS::StackName}-VPCId' # 다른 스택에서 !ImportValue로 참조 가능
+
+  VPCCidr:
+    Description: VPC CIDR Block
+    Value: !Ref VpcCidr
+
   PublicSubnetAId:
-    Description: Public Subnet A ID
+    Description: Public Subnet A ID (ap-northeast-2a)
     Value: !Ref PublicSubnetA
+    Export:
+      Name: !Sub '${AWS::StackName}-PublicSubnetAId'
+
+  PublicSubnetCId:
+    Description: Public Subnet C ID (ap-northeast-2c)
+    Value: !Ref PublicSubnetC
+    Export:
+      Name: !Sub '${AWS::StackName}-PublicSubnetCId'
+
+  PrivateSubnetAId:
+    Description: Private Subnet A ID (ap-northeast-2a)
+    Value: !Ref PrivateSubnetA
+    Export:
+      Name: !Sub '${AWS::StackName}-PrivateSubnetAId'
+
+  PrivateSubnetCId:
+    Description: Private Subnet C ID (ap-northeast-2c)
+    Value: !Ref PrivateSubnetC
+    Export:
+      Name: !Sub '${AWS::StackName}-PrivateSubnetCId'
+
   EC2SecurityGroupId:
     Description: EC2 Security Group ID
     Value: !Ref EC2SecurityGroup
+    Export:
+      Name: !Sub '${AWS::StackName}-EC2SecurityGroupId'
+
+  RDSSecurityGroupId:
+    Description: RDS Security Group ID
+    Value: !Ref RDSSecurityGroup
+    Export:
+      Name: !Sub '${AWS::StackName}-RDSSecurityGroupId'
+
+  PublicRouteTableId:
+    Description: Public Route Table ID
+    Value: !Ref PublicRouteTable
+
+  PrivateRouteTableAId:
+    Description: Private Route Table A ID
+    Value: !Ref PrivateRouteTableA
+
+  PrivateRouteTableCId:
+    Description: Private Route Table C ID
+    Value: !Ref PrivateRouteTableC

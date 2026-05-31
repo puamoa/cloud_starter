@@ -507,7 +507,7 @@ export const curriculum: WeekCurriculum[] = [
         type: 'lab',
         title: 'Amazon DynamoDB 테이블 생성 및 핵심 개념',
         hasContent: true,
-        markdownPath: '/content/step10-serverless/9-1-dynamodb-basics.md',
+        markdownPath: '/content/step10-serverless/10-1-dynamodb-basics.md',
         description:
           'DynamoDB 개념(파티션 키, 정렬 키), 테이블 생성, 항목 CRUD, 콘솔 조작',
         awsServices: ['Amazon DynamoDB'],
@@ -518,7 +518,7 @@ export const curriculum: WeekCurriculum[] = [
         type: 'lab',
         title: 'Lambda + API Gateway + DynamoDB 서버리스 API',
         hasContent: true,
-        markdownPath: '/content/step10-serverless/9-2-lambda-api-dynamodb.md',
+        markdownPath: '/content/step10-serverless/10-2-lambda-api-dynamodb.md',
         description:
           'Lambda에서 DynamoDB CRUD, API Gateway 연동, 서버리스 REST API 완성',
         awsServices: ['AWS Lambda', 'Amazon API Gateway', 'Amazon DynamoDB'],
@@ -549,7 +549,7 @@ export const curriculum: WeekCurriculum[] = [
         type: 'lab',
         title: 'Bedrock Playground 프롬프트 엔지니어링',
         hasContent: true,
-        markdownPath: '/content/step11-bedrock/10-1-bedrock-playground.md',
+        markdownPath: '/content/step11-bedrock/11-1-bedrock-playground.md',
         description:
           'Claude 모델 사용, Zero-shot/Few-shot/CoT 프롬프팅, 파라미터 조정',
         awsServices: ['Amazon Bedrock'],

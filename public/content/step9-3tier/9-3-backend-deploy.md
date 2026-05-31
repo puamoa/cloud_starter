@@ -192,6 +192,18 @@ management:
 
 ✅ **태스크 완료** — RDS 연동 설정을 완료하고 SSM Parameter Store에 비밀값을 저장했습니다.
 
+> [!TROUBLESHOOTING]
+> | 증상 | 원인 | 해결 방법 |
+> |------|------|-----------|
+> | `ParameterAlreadyExists` 에러 | 동일 이름의 파라미터 이미 존재 | `--overwrite` 플래그 추가하여 재실행 |
+> | EC2에서 RDS 접속 실패 (`Can't connect`) | Security Group 미허용 또는 RDS 미생성 | RDS-SG에서 EC2-SG의 3306 포트 허용 확인 |
+> | `Access denied for user 'admin'` | 비밀번호 오류 | SSM에 저장한 비밀번호와 RDS 생성 시 설정한 비밀번호 일치 확인 |
+> | `Unknown database 'myapp'` | 데이터베이스 미생성 | EC2에서 RDS 접속 후 `CREATE DATABASE myapp` 실행 |
+
+> [!NOTE]
+> SSM Parameter Store의 Standard 파라미터는 무료입니다 (리전당 10,000개까지).
+> SecureString은 KMS 기본 키(`aws/ssm`)를 사용하면 추가 비용이 없습니다.
+
 ---
 
 ## 태스크 3: 간단한 REST API 작성
@@ -392,14 +404,26 @@ app:
 
 ✅ **태스크 완료** — CloudFront 도메인에서 API 호출을 허용하는 CORS를 설정했습니다.
 
+> [!TROUBLESHOOTING]
+> | 증상 | 원인 | 해결 방법 |
+> |------|------|-----------|
+> | 브라우저에서 CORS 에러 | `allowed-origins`에 프론트엔드 도메인 미포함 | CloudFront 도메인을 `https://` 포함하여 정확히 추가 |
+> | `localhost`에서 CORS 에러 | `http://localhost:5173` 미추가 | 개발 환경 URL도 `allowed-origins`에 포함 |
+> | OPTIONS 요청 실패 (Preflight) | `allowedMethods`에 `OPTIONS` 미포함 | `"GET", "POST", "PUT", "DELETE", "OPTIONS"` 모두 포함 확인 |
+> | 배포 후 CORS 에러 (로컬은 정상) | `application.yml`의 CORS 설정이 환경변수로 주입 안 됨 | EC2의 환경변수 또는 `application.yml` 직접 수정 |
+
+> [!NOTE]
+> CORS 에러는 **브라우저에서만** 발생합니다. `curl`로 테스트하면 CORS 에러가 나타나지 않습니다.
+> 브라우저 개발자 도구(F12) → Console 탭에서 CORS 에러 메시지를 확인하세요.
+
 ---
 
 ## 태스크 5: EC2 배포 + ALB Target Group 등록
 
 ### 5-1. EC2 인스턴스 생성
 
-1. AWS Console → **EC2** → [[Launch instances]]
-2. 다음과 같이 설정합니다:
+5. AWS Console → **EC2** → [[Launch instances]]
+6. 다음과 같이 설정합니다:
 
 | 설정                  | 값                                      |
 | --------------------- | --------------------------------------- |
@@ -412,11 +436,20 @@ app:
 | Auto-assign public IP | Disable                                 |
 | Security group        | `my-3tier-app-ec2-sg` (기존 선택)       |
 
-3. **Advanced details** → **IAM instance profile**:
+7. **Advanced details** → **IAM instance profile**:
    - SSM Session Manager + Parameter Store 읽기 권한이 있는 IAM Role 선택
    - 필요 정책: `AmazonSSMManagedInstanceCore` + `AmazonSSMReadOnlyAccess`
 
-4. [[Launch instance]]를 클릭합니다.
+8. [[Launch instance]]를 클릭합니다.
+
+> [!OUTPUT]
+> "Successfully initiated launch of instance (i-0abc123def456)" 메시지가 표시됩니다.
+> EC2 콘솔 → Instances에서 `my-3tier-app-server`가 `Running` 상태로 변경됩니다 (약 1분 소요).
+
+> [!WARNING]
+> **Auto-assign public IP**를 반드시 `Disable`로 설정하세요.
+> Private Subnet에 배치하므로 Public IP가 필요 없습니다.
+> SSM Session Manager로 접속하므로 SSH Key Pair도 불필요합니다.
 
 ### 5-2. EC2 초기 설정
 
@@ -514,12 +547,22 @@ sudo journalctl -u spring-app -f
 
 ### 5-7. ALB Target Group에 EC2 등록
 
-5. AWS Console → **EC2** → **Target Groups**로 이동합니다.
-6. `my-3tier-app-tg`를 클릭합니다.
-7. **Targets** 탭 → [[Register targets]]를 클릭합니다.
-8. 방금 생성한 EC2 인스턴스를 선택합니다.
-9. **Port**: `8080`
-10. [[Include as pending below]] → [[Register pending targets]]
+9. AWS Console → **EC2** → **Target Groups**로 이동합니다.
+10. `my-3tier-app-tg`를 클릭합니다.
+11. **Targets** 탭 → [[Register targets]]를 클릭합니다.
+12. 방금 생성한 EC2 인스턴스를 선택합니다.
+13. **Port**: `8080`
+14. [[Include as pending below]] → [[Register pending targets]]
+
+> [!OUTPUT]
+> Target Group의 Targets 탭에서 등록된 인스턴스를 확인합니다:
+>
+> | Instance ID     | Port | Health Status | Status Details                  |
+> | --------------- | ---- | ------------- | ------------------------------- |
+> | i-0abc123def456 | 8080 | initial       | Target registration in progress |
+>
+> 약 30초~1분 후 `healthy`로 변경됩니다.
+> `unhealthy`가 표시되면 아래 TROUBLESHOOTING을 참고하세요.
 
 > [!NOTE]
 > Target Group에 등록 후 Health Check가 통과하면 Status가 `healthy`로 변경됩니다.
@@ -527,6 +570,24 @@ sudo journalctl -u spring-app -f
 > 약 30초~1분 후 상태를 확인하세요.
 
 ✅ **태스크 완료** — EC2에 Spring Boot를 배포하고 ALB Target Group에 등록했습니다.
+
+> [!TROUBLESHOOTING]
+> | 증상 | 원인 | 해결 방법 |
+> |------|------|-----------|
+> | Target Group Status: `unhealthy` | 앱 미시작 또는 Health Check 경로 불일치 | EC2에서 `curl http://localhost:8080/actuator/health` 확인 |
+> | `systemctl start spring-app` 실패 | Java 미설치 또는 JAR 경로 오류 | `java -version` 확인, `/home/ec2-user/app/app.jar` 존재 확인 |
+> | SSM Session Manager 접속 불가 | IAM Role 미연결 또는 VPC 엔드포인트 없음 | EC2에 `AmazonSSMManagedInstanceCore` 정책 연결 확인 |
+> | `start.sh`에서 SSM 값 못 가져옴 | EC2 IAM Role에 SSM 읽기 권한 없음 | `AmazonSSMReadOnlyAccess` 정책 추가 |
+> | ALB Health Check 경로 불일치 | Target Group의 Health Check 경로 설정 오류 | Target Group → Health checks → `/actuator/health` 확인 |
+
+> [!TIP]
+> EC2에서 앱 로그를 실시간으로 확인하려면:
+>
+> ```bash
+> sudo journalctl -u spring-app -f
+> ```
+>
+> 이 명령으로 Spring Boot 시작 에러, DB 연결 실패 등을 즉시 확인할 수 있습니다.
 
 ---
 
@@ -661,17 +722,47 @@ GitHub → **Actions** 탭에서 워크플로우 실행을 확인합니다.
 
 ✅ **태스크 완료** — GitHub Actions로 백엔드 자동 배포 파이프라인을 구축했습니다.
 
+> [!TROUBLESHOOTING]
+> | 증상 | 원인 | 해결 방법 |
+> |------|------|-----------|
+> | `Upload failed: NoSuchBucket` | S3 버킷명 Secret 오류 | `S3_DEPLOY_BUCKET` Secret 값이 실제 버킷명과 일치하는지 확인 |
+> | `SSM SendCommand failed` | EC2 인스턴스 ID 오류 또는 IAM 권한 부족 | `EC2_INSTANCE_ID` 확인, GitHub Actions IAM에 `ssm:SendCommand` 권한 추가 |
+> | `CommandInvocationStatus: Failed` | EC2에서 명령 실행 실패 | EC2에서 수동으로 같은 명령 실행하여 에러 확인 |
+> | `aws ssm wait` 타임아웃 | SSM Agent 미설치 또는 EC2 미실행 | EC2 상태 확인, Amazon Linux 2023은 SSM Agent 기본 설치됨 |
+> | Gradle 빌드 실패 (GitHub Actions) | Java 버전 불일치 | `setup-java`의 `java-version`이 프로젝트와 일치하는지 확인 |
+
+> [!NOTE]
+> Private Subnet의 EC2에 SSM Run Command를 사용하려면 EC2가 SSM 서비스에 접근할 수 있어야 합니다.
+> NAT Gateway가 있으면 자동으로 가능하고, 없다면 VPC Endpoint(ssm, ssmmessages, ec2messages)가 필요합니다.
+
 ---
 
 ## 태스크 7: ALB Health Check 확인 + API 테스트
 
 ### 7-1. ALB Target Group Health Check 확인
 
-1. AWS Console → **EC2** → **Target Groups** → `my-3tier-app-tg`
-2. **Targets** 탭에서 등록된 인스턴스의 Status를 확인합니다:
-   - `healthy`: 정상 (Health Check 통과)
-   - `unhealthy`: 비정상 (로그 확인 필요)
-   - `initial`: 초기 Health Check 진행 중
+15. AWS Console → **EC2** → **Target Groups** → `my-3tier-app-tg`
+16. **Targets** 탭에서 등록된 인스턴스의 Status를 확인합니다:
+
+- `healthy`: 정상 (Health Check 통과)
+- `unhealthy`: 비정상 (로그 확인 필요)
+- `initial`: 초기 Health Check 진행 중
+
+> [!OUTPUT]
+> Status가 `healthy`이면 ALB DNS Name으로 접속할 수 있습니다:
+>
+> ```bash
+> curl http://my-3tier-app-alb-xxx.ap-northeast-2.elb.amazonaws.com/actuator/health
+> ```
+>
+> 예상 응답:
+>
+> ```json
+> {
+>   "status": "UP",
+>   "components": { "db": { "status": "UP" }, "diskSpace": { "status": "UP" } }
+> }
+> ```
 
 > [!WARNING]
 > Status가 `unhealthy`인 경우 확인사항:
@@ -764,10 +855,14 @@ EXIT;
 
 ### 이 세션에서 추가 생성한 리소스
 
-| 리소스         | 이름/식별자           | 비용              |
-| -------------- | --------------------- | ----------------- |
-| EC2 Instance   | `my-3tier-app-server` | t2.micro 프리티어 |
-| SSM Parameters | 4개                   | 무료 (Standard)   |
-| IAM Role       | EC2용 SSM 읽기 역할   | 무료              |
+| 리소스         | 이름/식별자           | 시간당 비용 | 월 비용 추정 | 비고                           |
+| -------------- | --------------------- | ----------- | ------------ | ------------------------------ |
+| EC2 Instance   | `my-3tier-app-server` | $0.0116     | $8.35        | t2.micro 프리티어 해당 시 무료 |
+| SSM Parameters | 4개                   | 무료        | 무료         | Standard 타입                  |
+| IAM Role       | EC2용 SSM 읽기 역할   | 무료        | 무료         | -                              |
+
+> [!TIP]
+> EC2 인스턴스가 프리티어 대상(계정 생성 12개월 이내)이라면 t2.micro는 월 750시간 무료입니다.
+> 프리티어가 만료된 경우 EC2도 시간당 비용이 발생하므로 실습 후 빠르게 정리하세요.
 
 ✅ **실습 종료**: Step 9-4에서 전체 연동을 확인하고 리소스를 정리합니다.
