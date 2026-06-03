@@ -509,146 +509,36 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
         const titleMatch = content.match(/\[!CONCEPT\]\s+(.+?)(?:\n|$)/);
         const conceptTitle = titleMatch ? titleMatch[1].trim() : '개념 설명';
 
-        // CONCEPT Alert 전용 내용 포맷팅 함수 - 첫 번째 줄(제목) 제거
-        const formatConceptContent = () => {
-          const result: JSX.Element[] = [];
-          let key = 0;
-          let isFirstLine = true;
-
-          const processNode = (node: MdNode): void => {
-            if (!node) return;
-
-            if (Array.isArray(node)) {
-              node.forEach(processNode);
-              return;
-            }
-
-            // p 태그 처리
-            if (node?.type === 'p' || node?.props?.node?.tagName === 'p') {
-              const children = node.props?.children;
-
-              // 첫 번째 p 태그에서 제목 줄 제거
-              if (isFirstLine && Array.isArray(children)) {
-                isFirstLine = false;
-                // 첫 번째 문자열에서 [!CONCEPT] 제목 부분 제거
-                const processedChildren = children
-                  .map((child: MdNode, index: number) => {
-                    if (typeof child === 'string' && index === 0) {
-                      // [!CONCEPT] 제목 전체 줄 제거
-                      return child
-                        .replace(/\[!CONCEPT\]\s+.+?(?:\n|$)/, '')
-                        .trim();
-                    }
-                    return child;
-                  })
-                  .filter((child: MdNode) => child !== '');
-
-                if (processedChildren.length > 0) {
-                  result.push(
-                    <div key={`text-${key++}`} className="alert-content-text">
-                      {processedChildren}
-                    </div>,
-                  );
-                }
-                return;
-              } else if (isFirstLine && typeof children === 'string') {
-                isFirstLine = false;
-                // 문자열에서 [!CONCEPT] 제목 부분 제거
-                const cleaned = children
-                  .replace(/\[!CONCEPT\]\s+.+?(?:\n|$)/, '')
-                  .trim();
-                if (cleaned) {
-                  result.push(
-                    <div key={`text-${key++}`} className="alert-content-text">
-                      {cleaned}
-                    </div>,
-                  );
-                }
-                return;
-              }
-
-              // 이후 p 태그는 일반 처리
-              if (children) {
-                result.push(
-                  <div key={`text-${key++}`} className="alert-content-text">
-                    {children}
-                  </div>,
-                );
-              }
-              return;
-            }
-
-            // ul/ol 리스트 처리
-            if (
-              node?.type === 'ul' ||
-              node?.type === 'ol' ||
-              node?.props?.node?.tagName === 'ul' ||
-              node?.props?.node?.tagName === 'ol'
-            ) {
-              const items = Array.isArray(node.props?.children)
-                ? node.props.children
-                : [node.props?.children];
-              const listItems: JSX.Element[] = [];
-
-              items.forEach((item: MdNode, idx: number) => {
-                if (
-                  item?.type === 'li' ||
-                  item?.props?.node?.tagName === 'li'
-                ) {
-                  // children을 그대로 렌더링 (strong 태그 등 유지)
-                  listItems.push(
-                    <li key={`li-${idx}`} className="alert-content-list-item">
-                      {item.props?.children}
-                    </li>,
-                  );
-                }
-              });
-
-              result.push(
-                <ul key={`list-${key++}`} className="alert-content-list">
-                  {listItems}
-                </ul>,
-              );
-              return;
-            }
-
-            // strong 태그 처리
-            if (
-              node?.type === 'strong' ||
-              node?.props?.node?.tagName === 'strong'
-            ) {
-              const text = extractText(node.props?.children);
-              result.push(
-                <div key={`strong-${key++}`} className="alert-content-strong">
-                  {text}
-                </div>,
-              );
-              return;
-            }
-
-            // pre 태그 (코드 블록) 처리
-            if (node?.type === 'pre' || node?.props?.node?.tagName === 'pre') {
-              // pre 태그를 그대로 렌더링 (syntax highlighting 포함)
-              result.push(
-                <div key={`code-${key++}`} className="markdown-code-block">
-                  {node}
-                </div>,
-              );
-              return;
-            }
-          };
-
-          if (Array.isArray(children)) {
-            children.forEach(processNode);
-          } else {
-            processNode(children);
+        // [!CONCEPT] 마커와 제목을 제거하고 나머지 children을 그대로 렌더링
+        const removeConceptTitle = (node: MdNode): MdNode => {
+          if (typeof node === 'string') {
+            return node
+              .replace(/\[!CONCEPT\]\s+.+?(?:\n|$)/, '')
+              .replace(/^\s+/, '');
           }
-
-          return result.length > 0 ? result : null;
+          if (Array.isArray(node)) {
+            return node
+              .map(removeConceptTitle)
+              .filter((n: MdNode) => n !== '' && n != null);
+          }
+          if (node?.props?.children) {
+            const newChildren = removeConceptTitle(node.props.children);
+            // 자식이 빈 배열이거나 빈 문자열이면 null 반환
+            if (Array.isArray(newChildren) && newChildren.length === 0)
+              return null;
+            if (newChildren === '') return null;
+            return {
+              ...node,
+              props: {
+                ...node.props,
+                children: newChildren,
+              },
+            };
+          }
+          return node;
         };
 
-        // CONCEPT 전용 포맷팅 함수 사용
-        const formattedContent = formatConceptContent();
+        const cleanedChildren = removeConceptTitle(children);
 
         return (
           <Box margin={{ vertical: 'm' }}>
@@ -657,7 +547,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
                 <Icon name="status-info" variant="normal" />
                 <span>{conceptTitle}</span>
               </div>
-              <div className="concept-box-content">{formattedContent}</div>
+              <div className="concept-box-content">{cleanedChildren}</div>
             </div>
           </Box>
         );
@@ -995,7 +885,16 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
         );
       }
 
-      // 일반 링크
+      // 내부 링크 (/week/... 등 같은 앱 내 경로) - 새 탭에서 열기
+      if (href?.startsWith('/') && !href?.startsWith('//')) {
+        return (
+          <a href={href} target="_blank" rel="noopener noreferrer">
+            {children}
+          </a>
+        );
+      }
+
+      // 외부 링크
       return (
         <a href={href} target="_blank" rel="noopener noreferrer">
           {children}

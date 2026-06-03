@@ -139,11 +139,11 @@ export const curriculum: WeekCurriculum[] = [
       {
         session: 1,
         type: 'lab',
-        title: 'Amazon EC2에 MySQL 8.0 직접 설치 및 설정',
+        title: 'Amazon EC2에 MySQL 8.4 LTS 직접 설치 및 설정',
         hasContent: true,
         markdownPath: '/content/step2-ec2/2-1-ec2-mysql.md',
         description:
-          'EC2 인스턴스 생성, MySQL 8.0 설치, 보안 초기화, 사용자 및 DB 생성',
+          'EC2 인스턴스 생성, MySQL 8.4 LTS 설치, 보안 초기화, 사용자 및 DB 생성',
         awsServices: ['Amazon EC2'],
         estimatedCost: '프리티어',
       },

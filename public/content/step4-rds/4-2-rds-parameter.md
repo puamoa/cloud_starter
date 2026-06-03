@@ -30,9 +30,9 @@ estimatedCost: 무료 (Parameter Group 변경은 비용 없음)
 >
 > **핵심 규칙:**
 >
-> - **기본 Parameter Group은 수정 불가**: AWS가 제공하는 기본 그룹(`default.mysql8.0`)은 읽기 전용
+> - **기본 Parameter Group은 수정 불가**: AWS가 제공하는 기본 그룹(`default.mysql8.4`)은 읽기 전용
 > - **커스텀 Parameter Group 필요**: 설정을 변경하려면 반드시 커스텀 그룹을 생성해야 함
-> - **버전별 관리**: MySQL 8.0용, 8.4용 등 엔진 버전별로 별도 관리됨
+> - **버전별 관리**: MySQL 8.4용, 8.4용 등 엔진 버전별로 별도 관리됨
 
 > [!CONCEPT] Dynamic vs Static 파라미터
 > Parameter Group의 파라미터는 적용 방식에 따라 두 종류로 나뉩니다:
@@ -60,7 +60,7 @@ estimatedCost: 무료 (Parameter Group 변경은 비용 없음)
 2. 우측 상단에서 리전을 **Asia Pacific (Seoul) ap-northeast-2**로 설정합니다.
 3. 상단 검색창에 `RDS`를 입력하고 **RDS** 서비스를 선택합니다.
 4. 왼쪽 메뉴에서 **Parameter groups**를 선택합니다.
-5. 목록에서 `default.mysql8.0` 그룹 이름을 클릭합니다.
+5. 목록에서 `default.mysql8.4` 그룹 이름을 클릭합니다.
 6. 파라미터 목록이 표시됩니다. 상단의 검색창에 `time_zone`을 입력합니다.
 7. `time_zone` 파라미터가 표시되지만, **Values** 열이 `engine-default`로 되어 있고 수정할 수 없는 것을 확인합니다.
 
@@ -72,8 +72,8 @@ estimatedCost: 무료 (Parameter Group 변경은 비용 없음)
 8. 왼쪽 메뉴에서 **Parameter groups**를 클릭하여 목록으로 돌아갑니다.
 
 > [!OUTPUT]
-> Parameter groups 목록에 `default.mysql8.0`이 표시됩니다.
-> Type 열에 `DB Parameter Group`으로 표시되며, Description에 `Default parameter group for mysql8.0`이라고 되어 있습니다.
+> Parameter groups 목록에 `default.mysql8.4`이 표시됩니다.
+> Type 열에 `DB Parameter Group`으로 표시되며, Description에 `Default parameter group for mysql8.4`이라고 되어 있습니다.
 
 ✅ **태스크 완료**: 기본 Parameter Group이 읽기 전용임을 확인했습니다.
 
@@ -86,17 +86,17 @@ estimatedCost: 무료 (Parameter Group 변경은 비용 없음)
 > **네이밍 규칙 권장:**
 >
 > - `{프로젝트}-{엔진}{버전}-{환경}` 형식
-> - 예: `myapp-mysql80-prod`, `myapp-mysql80-dev`
-> - 이 실습에서는 `my-mysql80-params`를 사용합니다.
+> - 예: `myapp-mysql84-prod`, `myapp-mysql84-dev`
+> - 이 실습에서는 `my-mysql84-params`를 사용합니다.
 
 ### 상세 단계
 
 9. Parameter groups 목록 화면에서 [[Create parameter group]] 버튼을 클릭합니다.
-10. **Parameter group family** 드롭다운에서 `mysql8.0`을 선택합니다.
+10. **Parameter group family** 드롭다운에서 `mysql8.4`을 선택합니다.
 
 > [!WARNING]
 > Parameter group family는 RDS 인스턴스의 엔진 버전과 반드시 일치해야 합니다.
-> Step 4-1에서 MySQL 8.0으로 생성했다면 `mysql8.0`을 선택합니다.
+> Step 4-1에서 MySQL 8.4으로 생성했다면 `mysql8.4`을 선택합니다.
 > 버전이 다르면 나중에 RDS에 적용할 때 드롭다운에 표시되지 않습니다.
 
 11. **Type**에서 `DB Parameter Group`을 선택합니다.
@@ -109,8 +109,8 @@ estimatedCost: 무료 (Parameter Group 변경은 비용 없음)
 >
 > Step 4-1에서 생성한 것이 단일 RDS 인스턴스이므로 `DB Parameter Group`을 선택합니다.
 
-12. **Group name**에 `my-mysql80-params`를 입력합니다.
-13. **Description**에 `Custom parameter group for MySQL 8.0 - timezone, charset, connections`를 입력합니다.
+12. **Group name**에 `my-mysql84-params`를 입력합니다.
+13. **Description**에 `Custom parameter group for MySQL 8.4 - timezone, charset, connections`를 입력합니다.
 14. **Tags** 섹션에서 [[Add tag]]를 클릭하여 다음 태그를 추가합니다:
 
 | Key         | Value        |
@@ -122,14 +122,14 @@ estimatedCost: 무료 (Parameter Group 변경은 비용 없음)
 15. [[Create]] 버튼을 클릭합니다.
 
 > [!OUTPUT]
-> "Parameter group my-mysql80-params was created successfully" 메시지가 표시됩니다.
-> Parameter groups 목록에 `my-mysql80-params`가 추가된 것을 확인할 수 있습니다.
+> "Parameter group my-mysql84-params was created successfully" 메시지가 표시됩니다.
+> Parameter groups 목록에 `my-mysql84-params`가 추가된 것을 확인할 수 있습니다.
 
 > [!TIP]
 > Parameter Group 자체는 비용이 발생하지 않습니다. 여러 개를 생성해도 무료이므로,
 > 환경별(dev/staging/prod)로 분리하여 관리하는 것이 좋습니다.
 
-✅ **태스크 완료**: 커스텀 Parameter Group `my-mysql80-params`가 생성되었습니다.
+✅ **태스크 완료**: 커스텀 Parameter Group `my-mysql84-params`가 생성되었습니다.
 
 ## 태스크 3: 시간대 설정 (time_zone = Asia/Seoul)
 
@@ -147,7 +147,7 @@ estimatedCost: 무료 (Parameter Group 변경은 비용 없음)
 
 ### 상세 단계
 
-16. Parameter groups 목록에서 `my-mysql80-params` 이름을 클릭합니다.
+16. Parameter groups 목록에서 `my-mysql84-params` 이름을 클릭합니다.
 17. 파라미터 목록이 표시됩니다. 상단 검색창에 `time_zone`을 입력합니다.
 18. `time_zone` 파라미터가 필터링되어 표시됩니다. **Apply type** 열이 `Dynamic`인 것을 확인합니다.
 19. [[Edit parameters]] 버튼을 클릭합니다.
@@ -161,7 +161,7 @@ estimatedCost: 무료 (Parameter Group 변경은 비용 없음)
 22. [[Save changes]] 버튼을 클릭합니다.
 
 > [!OUTPUT]
-> "Parameter group my-mysql80-params was modified successfully" 메시지가 표시됩니다.
+> "Parameter group my-mysql84-params was modified successfully" 메시지가 표시됩니다.
 > `time_zone` 파라미터의 Values 열이 `Asia/Seoul`로 변경된 것을 확인할 수 있습니다.
 
 > [!NOTE]
@@ -193,7 +193,7 @@ estimatedCost: 무료 (Parameter Group 변경은 비용 없음)
 > | -------------------- | --------------------------- | ----------------------- |
 > | `utf8mb4_general_ci` | 빠르지만 정렬 정확도 낮음   | 레거시 호환             |
 > | `utf8mb4_unicode_ci` | 유니코드 표준 정렬, 범용적  | 대부분의 프로젝트       |
-> | `utf8mb4_0900_ai_ci` | MySQL 8.0 기본값, 가장 정확 | MySQL 8.0 신규 프로젝트 |
+> | `utf8mb4_0900_ai_ci` | MySQL 8.4 기본값, 가장 정확 | MySQL 8.4 신규 프로젝트 |
 >
 > - `ci` = Case Insensitive (대소문자 구분 안 함)
 > - `ai` = Accent Insensitive (악센트 구분 안 함)
@@ -214,7 +214,7 @@ estimatedCost: 무료 (Parameter Group 변경은 비용 없음)
 
 ### 상세 단계
 
-23. `my-mysql80-params` 파라미터 목록 화면에서 [[Edit parameters]] 버튼을 클릭합니다.
+23. `my-mysql84-params` 파라미터 목록 화면에서 [[Edit parameters]] 버튼을 클릭합니다.
 24. 상단 검색창에 `character_set`을 입력합니다.
 25. `character_set_client` 행의 **Values** 열 드롭다운을 클릭하고 `utf8mb4`를 선택합니다.
 26. `character_set_connection` 행의 **Values** 열 드롭다운을 클릭하고 `utf8mb4`를 선택합니다.
@@ -236,7 +236,7 @@ estimatedCost: 무료 (Parameter Group 변경은 비용 없음)
 33. [[Save changes]] 버튼을 클릭합니다.
 
 > [!OUTPUT]
-> "Parameter group my-mysql80-params was modified successfully" 메시지가 표시됩니다.
+> "Parameter group my-mysql84-params was modified successfully" 메시지가 표시됩니다.
 > 검색창에 `character_set`을 입력하면 5개 파라미터 모두 `utf8mb4`로 변경된 것을 확인할 수 있습니다.
 
 > [!WARNING]
@@ -292,7 +292,7 @@ estimatedCost: 무료 (Parameter Group 변경은 비용 없음)
 
 ### 상세 단계
 
-34. `my-mysql80-params` 파라미터 목록 화면에서 [[Edit parameters]] 버튼을 클릭합니다.
+34. `my-mysql84-params` 파라미터 목록 화면에서 [[Edit parameters]] 버튼을 클릭합니다.
 35. 상단 검색창에 `max_connections`를 입력합니다.
 36. `max_connections` 파라미터가 표시됩니다. 현재 값이 `{DBInstanceClassMemory/12582880}` (수식)인 것을 확인합니다.
 37. `max_connections` 행의 **Values** 열 입력란을 클릭합니다.
@@ -308,7 +308,7 @@ estimatedCost: 무료 (Parameter Group 변경은 비용 없음)
 39. [[Save changes]] 버튼을 클릭합니다.
 
 > [!OUTPUT]
-> "Parameter group my-mysql80-params was modified successfully" 메시지가 표시됩니다.
+> "Parameter group my-mysql84-params was modified successfully" 메시지가 표시됩니다.
 > `max_connections` 파라미터의 Values 열이 `100`으로 변경된 것을 확인할 수 있습니다.
 
 ✅ **태스크 완료**: max_connections가 100으로 설정되었습니다.
@@ -334,18 +334,18 @@ estimatedCost: 무료 (Parameter Group 변경은 비용 없음)
 42. 우측 상단의 [[Modify]] 버튼을 클릭합니다.
 43. **Modify DB instance** 페이지가 열립니다. 아래로 스크롤하여 **Additional configuration** 섹션을 찾습니다.
 44. **DB parameter group** 드롭다운을 클릭합니다.
-45. 드롭다운에서 `my-mysql80-params`를 선택합니다.
+45. 드롭다운에서 `my-mysql84-params`를 선택합니다.
 
 > [!WARNING]
-> 드롭다운에 `my-mysql80-params`가 표시되지 않는 경우:
+> 드롭다운에 `my-mysql84-params`가 표시되지 않는 경우:
 >
 > - Parameter Group의 family가 RDS 엔진 버전과 일치하는지 확인하세요.
-> - 예: RDS가 MySQL 8.0이면 Parameter Group family도 `mysql8.0`이어야 합니다.
+> - 예: RDS가 MySQL 8.4이면 Parameter Group family도 `mysql8.4`이어야 합니다.
 > - Parameter Group 생성 시 family를 잘못 선택했다면, 삭제 후 올바른 family로 다시 생성하세요.
 
 46. 다른 설정은 변경하지 않고 페이지 최하단의 [[Continue]] 버튼을 클릭합니다.
 47. **Summary of modifications** 페이지가 표시됩니다. 변경 사항을 확인합니다:
-    - DB parameter group: `default.mysql8.0` → `my-mysql80-params`
+    - DB parameter group: `default.mysql8.4` → `my-mysql84-params`
 48. **Schedule of modifications** 섹션에서 `Apply immediately`를 선택합니다.
 
 > [!NOTE]
@@ -383,7 +383,7 @@ estimatedCost: 무료 (Parameter Group 변경은 비용 없음)
 
 > [!TIP]
 > 재부팅 완료 후, `my-rds-mysql`을 클릭하여 상세 페이지로 이동합니다.
-> **Configuration** 탭에서 **DB instance parameter group** 항목이 `my-mysql80-params`로 표시되고,
+> **Configuration** 탭에서 **DB instance parameter group** 항목이 `my-mysql84-params`로 표시되고,
 > 상태가 `in-sync`인지 확인합니다.
 >
 > - `in-sync`: 모든 파라미터가 정상 적용됨
@@ -721,7 +721,7 @@ spring:
 다음을 성공적으로 수행했습니다:
 
 - 기본 Parameter Group이 읽기 전용인 이유와 Dynamic/Static 파라미터의 차이를 이해했습니다.
-- 커스텀 Parameter Group(`my-mysql80-params`)을 생성했습니다.
+- 커스텀 Parameter Group(`my-mysql84-params`)을 생성했습니다.
 - `time_zone`을 `Asia/Seoul`로 설정하여 한국 시간대를 적용했습니다.
 - `character_set_*` 5개와 `collation_*` 2개를 `utf8mb4`/`utf8mb4_unicode_ci`로 통일했습니다.
 - `max_connections`를 100으로 설정하고 계산 공식을 이해했습니다.
@@ -751,7 +751,7 @@ spring:
 3. `my-rds-mysql`의 라디오 버튼을 선택합니다.
 4. [[Modify]] 버튼을 클릭합니다.
 5. 아래로 스크롤하여 **Additional configuration** 섹션을 찾습니다.
-6. **DB parameter group** 드롭다운에서 `default.mysql8.0`을 선택합니다.
+6. **DB parameter group** 드롭다운에서 `default.mysql8.4`을 선택합니다.
 7. 페이지 최하단의 [[Continue]] 버튼을 클릭합니다.
 8. **Schedule of modifications**에서 `Apply immediately`를 선택합니다.
 9. [[Modify DB instance]] 버튼을 클릭합니다.
@@ -774,7 +774,7 @@ spring:
 ### 단계 3: 커스텀 Parameter Group 삭제
 
 15. 왼쪽 메뉴에서 **Parameter groups**를 선택합니다.
-16. `my-mysql80-params` 왼쪽의 라디오 버튼을 선택합니다.
+16. `my-mysql84-params` 왼쪽의 라디오 버튼을 선택합니다.
 17. **Actions** 드롭다운을 클릭합니다.
 18. [[Delete]]를 선택합니다.
 19. 확인 팝업에서 [[Delete]]를 클릭합니다.
@@ -785,15 +785,15 @@ spring:
 > | 증상                                          | 원인                        | 해결 방법                                        |
 > | --------------------------------------------- | --------------------------- | ------------------------------------------------ |
 > | "Cannot delete, parameter group is in use"    | RDS가 아직 이 PG를 사용 중  | RDS Modify에서 default PG로 변경 후 재시도       |
-> | Delete 메뉴가 비활성화                        | 기본 Parameter Group 선택함 | 커스텀 PG(`my-mysql80-params`)를 선택했는지 확인 |
+> | Delete 메뉴가 비활성화                        | 기본 Parameter Group 선택함 | 커스텀 PG(`my-mysql84-params`)를 선택했는지 확인 |
 > | "Parameter group is associated with instance" | Modify 후 Reboot 미실행     | RDS Reboot 실행 후 재시도                        |
 
 ---
 
 ### 단계 4: 삭제 확인
 
-20. Parameter groups 목록에서 `my-mysql80-params`가 사라졌는지 확인합니다.
-21. `default.mysql8.0`만 남아있으면 정리 완료입니다.
+20. Parameter groups 목록에서 `my-mysql84-params`가 사라졌는지 확인합니다.
+21. `default.mysql8.4`만 남아있으면 정리 완료입니다.
 
 > [!TIP]
 > 커스텀 Parameter Group은 팀 표준 설정으로 유지하면 편리합니다.

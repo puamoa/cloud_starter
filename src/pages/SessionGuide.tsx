@@ -241,6 +241,48 @@ export const SessionGuide: React.FC = () => {
     loadContent();
   }, [week, session, sessionData]);
 
+  // 콘텐츠 로드 + 렌더링 완료 후 해시 앵커 스크롤
+  useEffect(() => {
+    if (!isLoading && window.location.hash) {
+      const rawHash = window.location.hash.slice(1);
+      const targetId = decodeURIComponent(rawHash);
+
+      const scrollToTarget = () => {
+        const element =
+          document.getElementById(targetId) || document.getElementById(rawHash);
+        if (element) {
+          const headerOffset = 100;
+          const elementPosition = element.getBoundingClientRect().top;
+          const offsetPosition =
+            elementPosition + window.pageYOffset - headerOffset;
+          window.scrollTo({ top: offsetPosition, behavior: 'smooth' });
+          return true;
+        }
+        return false;
+      };
+
+      // 여러 타이밍에 시도 — DOM이 준비될 때까지
+      const delays = [50, 200, 500, 1000, 2000, 3000];
+      let found = false;
+      const timers: ReturnType<typeof setTimeout>[] = [];
+
+      for (const delay of delays) {
+        if (found) break;
+        timers.push(
+          setTimeout(() => {
+            if (!found && scrollToTarget()) {
+              found = true;
+            }
+          }, delay),
+        );
+      }
+
+      return () => {
+        timers.forEach(clearTimeout);
+      };
+    }
+  }, [isLoading, markdownContent, cleanupContent]);
+
   if (!weekData || !sessionData) {
     return (
       <Container>

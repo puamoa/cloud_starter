@@ -69,7 +69,7 @@
 
 .info-box-content {
   flex: 1;
-  font-size: 14px !important;
+  font-size: 1rem;
   line-height: 1.8;
   color: var(--color-text-body-default);
   word-break: break-word;
@@ -88,12 +88,12 @@
   font-weight: 600;
   display: block;
   margin-bottom: 8px;
-  font-size: 14px;
+  font-size: 1rem;
 }
 
 /* info-box 내부 모든 하위 요소 폰트 크기 강제 */
 .info-box-content * {
-  font-size: 14px;
+  font-size: 1rem;
   line-height: 1.8;
 }
 
@@ -152,7 +152,7 @@
 /* Alert 내부 인라인 코드 스타일 */
 .info-box-content code {
   font-weight: 700; /* 더 진하게 */
-  font-size: 14px !important;
+  font-size: 0.9em !important;
 }
 
 /* Alert 내부 코드 블록 td 패딩 줄이기 */
@@ -461,6 +461,54 @@
 .concept-box-content strong {
   font-weight: 600;
   color: #0f1b2a;
+}
+
+/* CONCEPT 내부 테이블 스타일 */
+.concept-box-content table,
+.alert-content-table table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 12px 0;
+  font-size: 0.9rem;
+}
+
+.concept-box-content table th,
+.alert-content-table table th {
+  background-color: #f2f8fd;
+  border: 1px solid #d1d5db;
+  padding: 8px 12px;
+  text-align: left;
+  font-weight: 600;
+}
+
+.concept-box-content table td,
+.alert-content-table table td {
+  border: 1px solid #d1d5db;
+  padding: 8px 12px;
+  line-height: 1.5;
+}
+
+.concept-box-content table tr:nth-child(even) td,
+.alert-content-table table tr:nth-child(even) td {
+  background-color: #f9fafb;
+}
+
+[data-awsui-theme='dark'] .concept-box-content table th,
+[data-awsui-theme='dark'] .alert-content-table table th {
+  background-color: #1a2332;
+  border-color: #414d5c;
+  color: #e9ebed;
+}
+
+[data-awsui-theme='dark'] .concept-box-content table td,
+[data-awsui-theme='dark'] .alert-content-table table td {
+  border-color: #414d5c;
+  color: #d1d5db;
+}
+
+[data-awsui-theme='dark'] .concept-box-content table tr:nth-child(even) td,
+[data-awsui-theme='dark'] .alert-content-table table tr:nth-child(even) td {
+  background-color: #192534;
 }
 
 /* 다크모드 지원 */

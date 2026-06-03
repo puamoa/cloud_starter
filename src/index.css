@@ -79,18 +79,27 @@ h6 {
 
 h1 {
   font-size: 2rem;
+  scroll-margin-top: 100px;
 }
 
 h2 {
   font-size: 1.5rem;
+  scroll-margin-top: 100px;
 }
 
 h3 {
   font-size: 1.25rem;
+  scroll-margin-top: 100px;
 }
 
 h4 {
   font-size: 1.125rem;
+  scroll-margin-top: 100px;
+}
+
+/* 앵커 타겟 요소에 스크롤 마진 적용 (고정 헤더 보정) */
+[id] {
+  scroll-margin-top: 100px;
 }
 
 /* 단락 간격 */

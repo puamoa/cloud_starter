@@ -336,7 +336,7 @@ CloudFormation이 생성한 리소스를 확인합니다.
 >
 > - **DB identifier**: `my-3tier-app-db`
 > - **Status**: Available (녹색 원)
-> - **Engine**: MySQL 8.0.x
+> - **Engine**: MySQL 8.4.x
 > - **Endpoint**: `my-3tier-app-db.xxxx.ap-northeast-2.rds.amazonaws.com`
 > - **Port**: 3306
 

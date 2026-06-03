@@ -29,17 +29,8 @@ function AppContent() {
   // 페이지 이동 시 스크롤 처리
   useEffect(() => {
     if (location.hash) {
-      // 해시 앵커가 있으면 해당 요소로 스크롤 (고정 헤더 높이 보정)
-      setTimeout(() => {
-        const element = document.getElementById(location.hash.slice(1));
-        if (element) {
-          const headerOffset = 80;
-          const elementPosition = element.getBoundingClientRect().top;
-          const offsetPosition =
-            elementPosition + window.pageYOffset - headerOffset;
-          window.scrollTo({ top: offsetPosition, behavior: 'smooth' });
-        }
-      }, 100);
+      // 해시 앵커 스크롤은 SessionGuide 컴포넌트에서 콘텐츠 로드 완료 후 처리
+      // App 레벨에서는 상단으로 스크롤하지 않음 (해시 위치 유지)
     } else {
       window.scrollTo(0, 0);
     }
