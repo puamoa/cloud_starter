@@ -7,14 +7,14 @@ awsServices:
 learningObjectives:
   - SSM Parameter Store의 String/SecureString 타입 차이를 이해할 수 있습니다.
   - AWS 콘솔과 CLI로 파라미터를 생성할 수 있습니다.
-  - Spring Boot에서 Parameter Store 값을 조회하여 사용할 수 있습니다.
+  - Spring 프로젝트(Boot/MVC)에서 Parameter Store 값을 조회하여 사용할 수 있습니다.
   - EC2 IAM Role을 설정하여 Parameter Store에 접근할 수 있습니다.
 prerequisites:
   - AWS 계정 생성 완료
 estimatedCost: 무료 (Standard 파라미터 10,000개까지 항상 무료)
 ---
 
-이 실습에서는 데이터베이스 비밀번호, API 키 등 민감한 설정값을 AWS Systems Manager Parameter Store에 안전하게 저장하고, Spring Boot 애플리케이션에서 조회하여 사용하는 방법을 학습합니다.
+이 실습에서는 데이터베이스 비밀번호, API 키 등 민감한 설정값을 AWS Systems Manager Parameter Store에 안전하게 저장하고, Spring 애플리케이션(Boot 또는 MVC)에서 조회하여 사용하는 방법을 학습합니다.
 
 > [!NOTE]
 > 이 실습은 독립적으로 진행할 수 있습니다. AWS 계정만 있으면 바로 시작할 수 있습니다.
@@ -458,11 +458,15 @@ aws ssm delete-parameter \
 
 ---
 
-## 태스크 5: Spring Boot에서 Parameter Store 조회
+## 태스크 5: Spring에서 Parameter Store 조회
 
-Spring Boot 애플리케이션에서 AWS SDK를 사용하여 Parameter Store 값을 조회하고, DataSource 설정에 활용합니다.
+Spring 애플리케이션에서 AWS SDK를 사용하여 Parameter Store 값을 조회하고, DataSource 설정에 활용합니다.
+
+**Spring Boot와 기존 MVC 프로젝트 모두** 동일한 AWS SDK 코드를 사용합니다. 의존성 추가 방법만 다릅니다.
 
 ### 의존성 추가
+
+**방법 A: Spring Boot 프로젝트**
 
 58. `build.gradle` 파일을 열고 다음 의존성을 추가합니다:
 
@@ -480,6 +484,20 @@ dependencies {
 }
 ```
 
+**방법 B: 기존 Spring MVC 프로젝트**
+
+58. `build.gradle` 파일을 열고 다음 의존성을 추가합니다:
+
+```groovy
+dependencies {
+    // 기존 의존성들...
+
+    // AWS SDK v2 - SSM (Parameter Store)
+    implementation platform('software.amazon.awssdk:bom:2.25.60')
+    implementation 'software.amazon.awssdk:ssm'
+}
+```
+
 > [!NOTE]
 > AWS SDK BOM(Bill of Materials)을 사용하면 AWS SDK 모듈 간 버전 충돌을 방지할 수 있습니다.
 > `ssm` 모듈만 추가하면 Parameter Store API를 사용할 수 있습니다.
@@ -492,7 +510,7 @@ dependencies {
 ```java
 package com.example.demo.config;
 
-import jakarta.annotation.PostConstruct;
+import javax.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import software.amazon.awssdk.regions.Region;
@@ -508,6 +526,16 @@ import java.util.Map;
 @Slf4j
 @Component
 public class ParameterStoreService {
+```
+
+> [!NOTE]
+> **import 차이:**
+>
+> - Spring Boot 3.x (Jakarta EE): `import jakarta.annotation.PostConstruct;`
+> - Spring MVC 5.x / Boot 2.x (Java EE): `import javax.annotation.PostConstruct;`
+>
+> 본인 프로젝트의 Spring 버전에 맞게 import를 변경하세요.
+> 기존 MVC 프로젝트에서는 패키지도 `org.scoula.config`로 변경합니다.
 
     private final SsmClient ssmClient;
     private final Map<String, String> parameters = new HashMap<>();
@@ -541,6 +569,7 @@ public class ParameterStoreService {
 
         log.info("총 {}개 파라미터 로드 완료", parameters.size());
     }
+
 ```
 
     /**
@@ -590,7 +619,8 @@ public class ParameterStoreService {
 > - **캐싱**: `Map<String, String>`에 로드한 값을 저장하여, 이후 조회 시 AWS API를 다시 호출하지 않습니다.
 >   API 호출 횟수를 줄이고 응답 속도를 높입니다.
 > - `withDecryption(true)`: SecureString 타입도 자동으로 복호화하여 평문으로 반환합니다.
-```
+
+````
 
 ### DataSource 설정에 활용
 
@@ -623,7 +653,7 @@ public class DataSourceConfig {
         return dataSource;
     }
 }
-```
+````
 
 > [!TIP]
 > 이 방식을 사용하면 `application.yml`에 DB 비밀번호를 작성할 필요가 없습니다.
@@ -653,6 +683,35 @@ public class DataSourceConfig {
 > EC2에서는 IAM Role로 자동 인증됩니다 (태스크 6에서 설정).
 
 ✅ **태스크 완료** — Spring Boot에서 Parameter Store 값을 조회하여 DataSource를 설정했습니다.
+
+> [!NOTE]
+> **기존 Spring MVC 프로젝트에서의 적용:**
+>
+> 기존 MVC 프로젝트에서는 `RootConfig.java`에 이미 HikariCP DataSource가 설정되어 있을 수 있습니다.
+> 기존 `application.properties`의 DB 정보를 Parameter Store에서 가져오도록 수정합니다:
+>
+> ```java
+> // RootConfig.java에서 기존 DataSource 설정을 수정
+> @Configuration
+> @ComponentScan(basePackages = {"org.scoula.config"})
+> public class RootConfig {
+>
+>     @Autowired
+>     private ParameterStoreService parameterStoreService;
+>
+>     @Bean
+>     public DataSource dataSource() {
+>         HikariDataSource ds = new HikariDataSource();
+>         ds.setDriverClassName("net.sf.log4jdbc.sql.jdbcapi.DriverSpy");
+>         ds.setJdbcUrl(parameterStoreService.getDbUrl());
+>         ds.setUsername(parameterStoreService.getDbUsername());
+>         ds.setPassword(parameterStoreService.getDbPassword());
+>         return ds;
+>     }
+> }
+> ```
+>
+> 이렇게 하면 `application.properties`에서 DB 비밀번호를 완전히 제거할 수 있습니다.
 
 ---
 
@@ -901,7 +960,7 @@ aws secretsmanager get-secret-value \
 - Parameter Store의 String/SecureString 타입과 계층 구조를 학습했습니다.
 - AWS 콘솔에서 4개의 파라미터(String 3개, SecureString 1개)를 생성했습니다.
 - AWS CLI로 파라미터를 생성, 조회, 업데이트, 삭제하는 방법을 실습했습니다.
-- Spring Boot에서 AWS SDK를 사용하여 Parameter Store 값을 조회하고 DataSource에 활용했습니다.
+- Spring 프로젝트(Boot/MVC)에서 AWS SDK를 사용하여 Parameter Store 값을 조회하고 DataSource에 활용했습니다.
 - EC2 IAM Role을 생성하고 Parameter Store 접근 권한을 설정했습니다.
 - Parameter Store와 Secrets Manager의 차이를 이해했습니다.
 

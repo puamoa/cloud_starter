@@ -8,7 +8,7 @@ learningObjectives:
   - Secrets Manager에 비밀을 생성하고 조회할 수 있습니다.
   - Parameter Store와 Secrets Manager의 차이를 비교할 수 있습니다.
   - RDS 비밀번호 자동 로테이션을 설정할 수 있습니다.
-  - Spring Boot에서 Secrets Manager 값을 조회하여 사용할 수 있습니다.
+  - Spring 프로젝트(Boot/MVC)에서 Secrets Manager 값을 조회하여 사용할 수 있습니다.
 prerequisites:
   - AWS 계정 생성 완료
   - RDS MySQL 인스턴스 (자동 로테이션 실습 시 필요, 선택)
@@ -353,13 +353,13 @@ aws secretsmanager list-secrets \
 
 ---
 
-## 태스크 4: Spring Boot에서 Secrets Manager 조회
+## 태스크 4: Spring에서 Secrets Manager 조회
 
-> [!CONCEPT] Spring Boot + Secrets Manager 연동 흐름
+> [!CONCEPT] Spring + Secrets Manager 연동 흐름
 >
 > ```
 > ┌─────────────────────────────────────────────────────────────┐
-> │         Spring Boot ↔ Secrets Manager 연동                   │
+> │         Spring ↔ Secrets Manager 연동                        │
 > │                                                             │
 > │  [애플리케이션 시작]                                        │
 > │       │                                                     │
@@ -380,10 +380,12 @@ aws secretsmanager list-secrets \
 > └─────────────────────────────────────────────────────────────┘
 > ```
 >
-> **장점**: application.yml에 비밀번호를 하드코딩하지 않아도 됩니다.
+> **장점**: application.yml/properties에 비밀번호를 하드코딩하지 않아도 됩니다.
 > **주의**: EC2/ECS에 적절한 IAM Role이 있어야 Secrets Manager API를 호출할 수 있습니다.
 
 ### 의존성 추가
+
+**방법 A: Spring Boot 프로젝트**
 
 26. `build.gradle` 파일에 AWS SDK 의존성을 추가합니다:
 
@@ -400,8 +402,22 @@ dependencies {
 }
 ```
 
+**방법 B: 기존 Spring MVC 프로젝트**
+
+26. `build.gradle` 파일에 AWS SDK 의존성을 추가합니다:
+
+```groovy
+dependencies {
+    // 기존 의존성들...
+
+    // AWS SDK v2 - Secrets Manager
+    implementation platform('software.amazon.awssdk:bom:2.25.60')
+    implementation 'software.amazon.awssdk:secretsmanager'
+}
+```
+
 > [!TIP]
-> `dependencyManagement`의 BOM(Bill of Materials)을 사용하면 AWS SDK 모듈 간 버전 충돌을 방지할 수 있습니다.
+> BOM을 사용하면 AWS SDK 모듈 간 버전 충돌을 방지할 수 있습니다.
 > 개별 모듈에 버전을 명시하지 않아도 BOM에서 호환되는 버전을 자동으로 관리합니다.
 
 27. Gradle을 새로고침합니다:
@@ -565,7 +581,7 @@ java -jar build/libs/demo-0.0.1-SNAPSHOT.jar
 > 로컬에서 실행할 때는 AWS CLI 자격 증명(`~/.aws/credentials`)이 설정되어 있어야 합니다.
 > EC2에서 실행할 때는 인스턴스에 연결된 IAM Role에 `secretsmanager:GetSecretValue` 권한이 필요합니다.
 
-✅ **태스크 완료**: Spring Boot에서 Secrets Manager 값을 조회하여 DataSource를 설정했습니다.
+✅ **태스크 완료**: Spring에서 Secrets Manager 값을 조회하여 DataSource를 설정했습니다.
 
 ---
 
@@ -710,7 +726,7 @@ java -jar build/libs/demo-0.0.1-SNAPSHOT.jar
 - Secrets Manager와 Parameter Store의 차이를 비교했습니다.
 - Secrets Manager에 DB 자격 증명을 콘솔에서 저장하고 조회했습니다.
 - AWS CLI로 비밀을 생성, 조회, 업데이트했습니다.
-- Spring Boot에서 Secrets Manager 값을 조회하여 DataSource를 설정했습니다.
+- Spring 프로젝트(Boot/MVC)에서 Secrets Manager 값을 조회하여 DataSource를 설정했습니다.
 - RDS 비밀번호 자동 로테이션을 설정했습니다 (선택).
 
 ---

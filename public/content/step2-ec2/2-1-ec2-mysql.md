@@ -394,10 +394,10 @@ EC2 생성 시 연결할 IAM Role을 먼저 만듭니다.
 > | Public IPv4 address | 3.35.xxx.xxx       |
 > | Private IPv4        | 10.0.1.xxx         |
 > | Instance state      | Running            |
-> | Status check        | 2/2 checks passed  |
+> | Status check        | 3/3 checks passed  |
 
 > [!TIP]
-> **Status check**가 "2/2 checks passed"가 될 때까지 기다린 후 SSH 접속을 시도하세요.  
+> **Status check**가 "3/3 checks passed"가 될 때까지 기다린 후 SSH 접속을 시도하세요.  
 > "Initializing"인 상태에서는 접속이 실패할 수 있습니다.
 
 > [!TROUBLESHOOTING]
@@ -513,7 +513,7 @@ ssh -i ~/Downloads/my-keypair.pem ec2-user@<Public-IP>
 > | `Connection timed out`                   | Security Group에 SSH(22) 미허용, 또는 Public IP 없음 | EC2 콘솔 → Security Group → Inbound rules에 SSH(22) 규칙 확인. Public IP 할당 여부 확인 |
 > | `Permission denied (publickey)`          | 키 파일이 잘못되었거나, 사용자명 오류                | 올바른 .pem 파일인지 확인. 사용자명은 `ec2-user` (Amazon Linux)                         |
 > | `WARNING: UNPROTECTED PRIVATE KEY FILE!` | 키 파일 권한이 너무 열려 있음                        | `chmod 400 my-keypair.pem` 실행                                                         |
-> | `Connection refused`                     | SSH 서비스 미실행 또는 인스턴스 미준비               | Status check가 "2/2 checks passed"인지 확인. 1-2분 대기 후 재시도                       |
+> | `Connection refused`                     | SSH 서비스 미실행 또는 인스턴스 미준비               | Status check가 "3/3 checks passed"인지 확인. 1-2분 대기 후 재시도                       |
 > | `Host key verification failed`           | 이전에 같은 IP로 다른 서버에 접속한 기록             | `ssh-keygen -R <Public-IP>` 실행 후 재시도                                              |
 >
 > **그래도 안 되면 EC2 Instance Connect 사용:**

@@ -132,7 +132,7 @@ export const curriculum: WeekCurriculum[] = [
         hasContent: true,
         markdownPath: '/content/step2-ec2/2-0-compute-fundamentals.md',
         description:
-          '가상화, 하이퍼바이저, 인스턴스 타입, AMI, EBS, 키 페어, 수명 주기',
+          '가상화, 하이퍼바이저, 인스턴스 타입, AMI, EBS, 키 페어, 수명 주기, 배포 아키텍처, SPA 라우팅',
         awsServices: [],
         estimatedCost: '무료 (이론)',
       },
@@ -154,18 +154,18 @@ export const curriculum: WeekCurriculum[] = [
         hasContent: true,
         markdownPath: '/content/step2-ec2/2-2-ec2-vuejs.md',
         description:
-          'Node.js 설치, Vue 3 프로젝트 빌드, Nginx 웹서버 설정 및 배포',
+          'Node.js 설치, Vue 3 프로젝트 빌드, Nginx 설정, SPA 라우팅, 배포 아키텍처 이해',
         awsServices: ['Amazon EC2'],
         estimatedCost: '프리티어',
       },
       {
         session: 3,
         type: 'lab',
-        title: 'EC2에 Spring Boot 배포 및 서비스 등록',
+        title: 'EC2에 Spring 애플리케이션 배포 (Boot JAR / MVC WAR)',
         hasContent: true,
         markdownPath: '/content/step2-ec2/2-3-ec2-spring.md',
         description:
-          'Java 17 설치, JAR 빌드 및 전송, systemd 서비스 등록으로 안정 운영',
+          'Java 17 설치, JAR/WAR 빌드 및 전송, Tomcat 배포, systemd 서비스 등록, Nginx 리버스 프록시',
         awsServices: ['Amazon EC2'],
         estimatedCost: '프리티어',
       },
@@ -249,7 +249,7 @@ export const curriculum: WeekCurriculum[] = [
     week: 5,
     title: 'Amazon S3 스토리지 활용',
     description:
-      '오브젝트 스토리지의 핵심 설정을 이해하고, Spring Boot 연동과 정적 웹 호스팅까지 S3의 주요 사용법을 모두 학습합니다.',
+      '오브젝트 스토리지의 핵심 설정을 이해하고, Spring(Boot/MVC) 연동과 정적 웹 호스팅까지 S3의 주요 사용법을 모두 학습합니다.',
     sessions: [
       {
         session: 0,
@@ -276,10 +276,11 @@ export const curriculum: WeekCurriculum[] = [
       {
         session: 2,
         type: 'lab',
-        title: 'Spring Boot S3 파일 업로드 구현',
+        title: 'Spring S3 파일 업로드 구현',
         hasContent: true,
         markdownPath: '/content/step5-s3/5-2-spring-s3-integration.md',
-        description: 'AWS SDK 설정, MultipartFile 업로드, Presigned URL 생성',
+        description:
+          'AWS SDK 설정 (Boot/MVC), MultipartFile 업로드, Presigned URL 생성',
         awsServices: ['Amazon S3'],
         estimatedCost: '크레딧 내 사용 가능 (비용 매우 저렴)',
       },
@@ -321,7 +322,7 @@ export const curriculum: WeekCurriculum[] = [
         hasContent: true,
         markdownPath: '/content/step6-secrets/6-1-ssm-parameter-store.md',
         description:
-          'SecureString 저장, Spring Boot에서 조회, EC2 IAM Role 설정',
+          'SecureString 저장, Spring(Boot/MVC)에서 조회, EC2 IAM Role 설정',
         awsServices: ['AWS Systems Manager Parameter Store'],
         estimatedCost: '무료 (Standard 파라미터 10,000개까지 항상 무료)',
       },
@@ -332,7 +333,7 @@ export const curriculum: WeekCurriculum[] = [
         hasContent: true,
         markdownPath: '/content/step6-secrets/6-2-secrets-manager.md',
         description:
-          'Secrets Manager에 비밀 저장, RDS 비밀번호 자동 로테이션, Spring Boot 연동',
+          'Secrets Manager에 비밀 저장, RDS 비밀번호 자동 로테이션, Spring(Boot/MVC) 연동',
         awsServices: ['AWS Secrets Manager'],
         estimatedCost: '크레딧 내 사용 가능 (비밀당 월 $0.40)',
       },
@@ -395,7 +396,7 @@ export const curriculum: WeekCurriculum[] = [
     week: 8,
     title: 'GitHub Actions 자동 배포',
     description:
-      '수동 배포를 자동화하여 코드 push만으로 EC2에 배포되는 파이프라인을 구축합니다.',
+      '프론트엔드와 백엔드를 각각 별도 GitHub 리포지토리로 운영하고, push만으로 EC2에 자동 배포되는 파이프라인을 구축합니다.',
     sessions: [
       {
         session: 0,
@@ -410,11 +411,11 @@ export const curriculum: WeekCurriculum[] = [
       {
         session: 1,
         type: 'lab',
-        title: 'GitHub Actions로 Amazon EC2 자동 배포 구축',
+        title: 'GitHub Actions로 프론트엔드/백엔드 자동 배포',
         hasContent: true,
         markdownPath: '/content/step8-cicd/8-1-github-actions.md',
         description:
-          'GitHub Secrets 설정, SSH 배포 워크플로우, 빌드→테스트→배포 파이프라인',
+          '프론트/백엔드 별도 레포 구성, GitHub Secrets 설정, 각각의 빌드→배포 워크플로우',
         awsServices: ['Amazon EC2', 'Amazon RDS'],
         estimatedCost: '프리티어',
       },
@@ -425,7 +426,7 @@ export const curriculum: WeekCurriculum[] = [
     week: 9,
     title: '3-Tier 아키텍처 통합 배포',
     description:
-      'Step 0~8에서 배운 모든 것을 통합하여 Vue.js + Spring Boot + RDS 3-Tier 서비스를 완성합니다.',
+      'Step 0~8에서 배운 모든 것을 통합하여 Vue.js + Spring Boot + RDS 3-Tier 서비스를 완성합니다. 프론트엔드와 백엔드를 별도 리포지토리로 운영하며 각각 독립 배포합니다.',
     sessions: [
       {
         session: 0,
@@ -445,18 +446,18 @@ export const curriculum: WeekCurriculum[] = [
         hasContent: true,
         markdownPath: '/content/step9-3tier/9-1-architecture-infra.md',
         description:
-          '3-Tier 아키텍처 설계, CloudFormation으로 VPC/RDS/S3 환경 한 번에 구축',
+          '3-Tier 아키텍처 설계, 프론트/백엔드 별도 레포 생성, CloudFormation으로 VPC/RDS/S3 환경 구축',
         awsServices: ['Amazon VPC', 'Amazon RDS', 'Amazon S3'],
         estimatedCost: '크레딧 내 사용 가능 (비용 발생 가능)',
       },
       {
         session: 2,
         type: 'lab',
-        title: 'Vue.js 프론트엔드 배포 (S3 + CloudFront)',
+        title: 'Vue.js 프론트엔드 배포 (S3 + CloudFront + CI/CD)',
         hasContent: true,
         markdownPath: '/content/step9-3tier/9-2-frontend-deploy.md',
         description:
-          'Vue.js 리포지토리 생성, 빌드, S3 정적 호스팅, CloudFront CDN 연결',
+          '프론트엔드 레포에서 빌드, S3 정적 호스팅, CloudFront CDN, GitHub Actions 자동 배포',
         awsServices: ['Amazon S3', 'Amazon CloudFront'],
         estimatedCost: '크레딧 내 사용 가능 (비용 발생 가능)',
       },
@@ -467,7 +468,7 @@ export const curriculum: WeekCurriculum[] = [
         hasContent: true,
         markdownPath: '/content/step9-3tier/9-3-backend-deploy.md',
         description:
-          'Spring Boot 리포지토리, EC2 배포, ALB 연결, GitHub Actions CI/CD',
+          '백엔드 레포에서 빌드, EC2 배포, ALB 연결, GitHub Actions 자동 배포',
         awsServices: ['Amazon EC2', 'Elastic Load Balancing'],
         estimatedCost: '크레딧 내 사용 가능 (비용 발생 가능)',
       },

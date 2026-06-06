@@ -1,5 +1,5 @@
 ---
-title: 'GitHub Actions로 Amazon EC2 자동 배포 구축'
+title: 'GitHub Actions로 프론트엔드/백엔드 자동 배포'
 week: 8
 session: 1
 awsServices:
@@ -9,20 +9,21 @@ learningObjectives:
   - GitHub Actions 워크플로우 YAML을 작성할 수 있습니다.
   - GitHub Secrets에 민감 정보를 안전하게 저장할 수 있습니다.
   - SSH를 통한 EC2 자동 배포 파이프라인을 구축할 수 있습니다.
-  - Spring Boot + Vue.js 프로젝트의 CI/CD를 구성할 수 있습니다.
+  - 프론트엔드와 백엔드를 별도 리포지토리로 운영하고 각각 CI/CD를 구성할 수 있습니다.
 prerequisites:
-  - GitHub 계정 및 리포지토리
+  - GitHub 계정 및 리포지토리 2개 (프론트엔드/백엔드)
   - EC2 인스턴스 실행 중 (SSH 접속 가능)
-  - Spring Boot 또는 Vue.js 프로젝트
+  - Spring Boot 또는 Spring MVC 프로젝트
+  - Vue.js 프로젝트
 estimatedCost: 프리티어 (GitHub Actions Public 리포 무료, Private 월 2000분 무료)
 ---
 
 이 실습에서는 GitHub Actions를 사용하여 코드를 push하면 자동으로 빌드하고
-EC2에 배포하는 CI/CD 파이프라인을 구축합니다. Spring Boot 백엔드와 Vue.js
-프론트엔드 각각의 배포 워크플로우를 작성합니다.
+EC2에 배포하는 CI/CD 파이프라인을 구축합니다. 프론트엔드(Vue.js)와 백엔드(Spring)를
+**별도 리포지토리**로 운영하며 각각의 배포 워크플로우를 작성합니다.
 
 > [!NOTE]
-> 이 실습에는 EC2 인스턴스(SSH 접속 가능)와 GitHub 리포지토리가 필요합니다.
+> 이 실습에는 EC2 인스턴스(SSH 접속 가능)와 GitHub 리포지토리 2개가 필요합니다.
 > EC2가 없다면 Step 2를 참조하여 인스턴스를 먼저 생성하세요.
 
 ---
@@ -59,16 +60,38 @@ Workflow (워크플로우)
 
 ### 워크플로우 파일 위치
 
+이 실습에서는 프론트엔드와 백엔드를 **별도 리포지토리**로 운영합니다.
+
 ```
-프로젝트 루트/
+my-frontend/              ← 프론트엔드 전용 리포지토리
 ├── .github/
 │   └── workflows/
-│       ├── deploy-backend.yml    ← Spring Boot 배포
-│       └── deploy-frontend.yml   ← Vue.js 배포
+│       └── deploy.yml    ← Vue.js 빌드 + 배포
+├── src/
+├── package.json
+└── vite.config.js
+
+my-backend/               ← 백엔드 전용 리포지토리
+├── .github/
+│   └── workflows/
+│       └── deploy.yml    ← Spring 빌드 + 배포
 ├── src/
 ├── build.gradle
-└── ...
+└── settings.gradle
 ```
+
+> [!CONCEPT] 모노레포 vs 별도 레포
+>
+> | 항목         | 모노레포 (Monorepo)                   | 별도 레포 (Multi-repo)      |
+> | ------------ | ------------------------------------- | --------------------------- |
+> | 구조         | 하나의 레포에 `frontend/`, `backend/` | 각각 독립된 레포            |
+> | 배포 트리거  | `paths` 필터로 변경된 디렉토리만 배포 | push하면 해당 레포만 배포   |
+> | CI/CD 복잡도 | 경로 필터 설정 필요                   | 단순 (레포 = 배포 단위)     |
+> | 팀 협업      | PR 충돌 가능성 높음                   | 각 팀 독립적 운영           |
+> | 버전 관리    | 프론트/백엔드 버전이 함께 움직임      | 각각 독립적으로 버전 관리   |
+> | 적합한 상황  | 소규모 팀, 프론트/백엔드 동시 개발    | 중대규모 팀, 독립 배포 필요 |
+>
+> 이 실습에서는 **별도 레포**를 사용합니다. 프론트엔드와 백엔드를 독립적으로 배포할 수 있고, 각 팀이 자율적으로 CI/CD를 관리합니다.
 
 ✅ **태스크 완료** — GitHub Actions의 핵심 개념(워크플로우, 잡, 스텝, 트리거)을 이해했습니다.
 
@@ -76,11 +99,12 @@ Workflow (워크플로우)
 
 ## 태스크 2: GitHub Secrets 설정
 
-배포에 필요한 민감 정보(SSH 키, 비밀번호 등)를 GitHub Secrets에 저장합니다.
+배포에 필요한 민감 정보(SSH 키, 비밀번호 등)를 GitHub Secrets에 저장합니다.  
+**프론트엔드 레포와 백엔드 레포 각각에** 동일한 Secrets를 등록합니다.
 
 ### Secrets 설정 단계
 
-1. GitHub에서 리포지토리 페이지로 이동합니다.
+1. GitHub에서 **백엔드 리포지토리** 페이지로 이동합니다.
 2. **Settings** 탭을 클릭합니다.
 3. 왼쪽 메뉴에서 **Secrets and variables** → **Actions**를 클릭합니다.
 4. [[New repository secret]]을 클릭합니다.
@@ -145,18 +169,29 @@ cat ~/.ssh/my-key.pem
 
 ✅ **태스크 완료** — GitHub Secrets에 배포에 필요한 민감 정보를 저장했습니다.
 
+> [!NOTE]
+> **프론트엔드 레포에도 동일한 Secrets를 등록하세요.**  
+> `EC2_HOST`, `EC2_USER`, `EC2_KEY`는 프론트/백엔드 모두 같은 EC2에 배포하므로 동일한 값을 사용합니다.
+
 ---
 
-## 태스크 3: Spring Boot 배포 워크플로우 작성
+## 태스크 3: 백엔드 배포 워크플로우 작성
 
-`main` 브랜치에 push하면 자동으로 빌드하고 EC2에 배포하는 워크플로우를 작성합니다.
+**백엔드 리포지토리**에서 `main` 브랜치에 push하면 자동으로 빌드하고 EC2에 배포하는 워크플로우를 작성합니다.
 
-### 워크플로우 파일 생성
+본인 프로젝트에 맞는 방법을 선택하세요:
 
-프로젝트 루트에 `.github/workflows/deploy-backend.yml` 파일을 생성합니다:
+- **방법 A**: Spring Boot (JAR) — `java -jar`로 실행
+- **방법 B**: Spring MVC (WAR) — Tomcat에 배포
+
+---
+
+### 방법 A: Spring Boot (JAR) 배포 워크플로우
+
+백엔드 리포지토리 루트에 `.github/workflows/deploy.yml` 파일을 생성합니다:
 
 ```yaml
-# .github/workflows/deploy-backend.yml
+# .github/workflows/deploy.yml (백엔드 리포지토리)
 name: Deploy Spring Boot to EC2
 
 on:
@@ -166,7 +201,7 @@ on:
       - 'src/**'
       - 'build.gradle'
       - 'settings.gradle'
-      - '.github/workflows/deploy-backend.yml'
+      - '.github/workflows/deploy.yml'
 
 jobs:
   build-and-deploy:
@@ -281,6 +316,106 @@ sudo systemctl daemon-reload
 sudo systemctl enable spring-app
 ```
 
+---
+
+### 방법 B: Spring MVC (WAR + Tomcat) 배포 워크플로우
+
+기존 Spring MVC 프로젝트(WAR 패키징)를 사용하는 경우입니다.
+
+백엔드 리포지토리 루트에 `.github/workflows/deploy.yml` 파일을 생성합니다:
+
+```yaml
+# .github/workflows/deploy.yml (백엔드 리포지토리 - WAR)
+name: Deploy Spring MVC WAR to EC2
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'build.gradle'
+      - '.github/workflows/deploy.yml'
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. 소스 코드 체크아웃
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      # 2. JDK 17 설정
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'corretto'
+
+      # 3. Gradle 캐시
+      - name: Cache Gradle packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      # 4. WAR 빌드 (테스트 제외)
+      - name: Build WAR
+        run: |
+          chmod +x ./gradlew
+          ./gradlew build -x test
+
+      # 5. WAR 파일을 EC2로 전송
+      - name: Copy WAR to EC2
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_KEY }}
+          source: 'build/libs/*.war'
+          target: '/home/ec2-user/'
+          strip_components: 2
+
+      # 6. Tomcat에 WAR 배포 및 재시작
+      - name: Deploy WAR to Tomcat
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_KEY }}
+          script: |
+            echo "=== WAR 배포 시작: $(date) ==="
+
+            # Tomcat 중지
+            sudo systemctl stop tomcat || true
+            sleep 3
+
+            # 기존 배포 제거 및 새 WAR 배포
+            rm -rf /opt/tomcat/webapps/ROOT
+            rm -f /opt/tomcat/webapps/ROOT.war
+            cp /home/ec2-user/*.war /opt/tomcat/webapps/ROOT.war
+
+            # Tomcat 시작
+            sudo systemctl start tomcat
+            sleep 15
+
+            # Health Check
+            echo "=== Health Check ==="
+            curl -f http://localhost:8080/ || echo "⚠️ 앱 시작 중..."
+            echo ""
+            echo "=== WAR 배포 완료: $(date) ==="
+```
+
+> [!NOTE]
+> WAR 배포는 Tomcat이 WAR를 자동으로 풀어서(explode) 배포합니다.  
+> Tomcat 시작 후 WAR 파일이 풀리는 데 약 10~15초가 소요됩니다.
+
+---
+
 > [!TROUBLESHOOTING]
 > | 증상 | 원인 | 해결 방법 |
 > |------|------|-----------|
@@ -305,22 +440,24 @@ sudo systemctl enable spring-app
 
 ## 태스크 4: Vue.js 배포 워크플로우 작성
 
-Vue.js 프론트엔드를 빌드하고 EC2의 Nginx 디렉토리에 배포합니다.
+**프론트엔드 리포지토리**에서 Vue.js를 빌드하고 EC2의 Nginx 디렉토리에 배포합니다.
 
 ### 워크플로우 파일 생성
 
-`.github/workflows/deploy-frontend.yml` 파일을 생성합니다:
+프론트엔드 리포지토리 루트에 `.github/workflows/deploy.yml` 파일을 생성합니다:
 
 ```yaml
-# .github/workflows/deploy-frontend.yml
+# .github/workflows/deploy.yml (프론트엔드 리포지토리)
 name: Deploy Vue.js to EC2
 
 on:
   push:
     branches: [main]
     paths:
-      - 'frontend/**'
-      - '.github/workflows/deploy-frontend.yml'
+      - 'src/**'
+      - 'package.json'
+      - 'vite.config.*'
+      - '.github/workflows/deploy.yml'
 
 jobs:
   build-and-deploy:
@@ -335,21 +472,16 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
-          cache-dependency-path: frontend/package-lock.json
 
       # 3. 의존성 설치
       - name: Install dependencies
-        working-directory: frontend
         run: npm ci
 
       # 4. 프로덕션 빌드
       - name: Build for production
-        working-directory: frontend
         run: npm run build
-        env:
-          VITE_API_URL: ${{ secrets.API_URL }}
 
       # 5. 빌드 결과물을 EC2로 전송
       - name: Deploy to EC2
@@ -358,9 +490,9 @@ jobs:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_KEY }}
-          source: 'frontend/dist/*'
+          source: 'dist/*'
           target: '/home/ec2-user/frontend-deploy/'
-          strip_components: 2
+          strip_components: 1
 
       # 6. Nginx 디렉토리에 복사 및 재시작
       - name: Update Nginx and restart
@@ -372,16 +504,16 @@ jobs:
           script: |
             echo "=== 프론트엔드 배포 시작: $(date) ==="
 
-            # 기존 파일 백업
-            sudo rm -rf /var/www/my-app/backup
-            sudo cp -r /var/www/my-app/html /var/www/my-app/backup 2>/dev/null || true
-
             # 새 빌드 파일 복사
-            sudo rm -rf /var/www/my-app/html/*
-            sudo cp -r /home/ec2-user/frontend-deploy/* /var/www/my-app/html/
+            sudo rm -rf /usr/share/nginx/html/*
+            sudo cp -r /home/ec2-user/frontend-deploy/* /usr/share/nginx/html/
+            sudo chown -R nginx:nginx /usr/share/nginx/html/
 
-            # Nginx 설정 테스트 및 재시작
+            # Nginx 설정 테스트 및 재로드
             sudo nginx -t && sudo systemctl reload nginx
+
+            # 정리
+            rm -rf /home/ec2-user/frontend-deploy
 
             echo "=== 프론트엔드 배포 완료: $(date) ==="
 ```
@@ -391,25 +523,34 @@ jobs:
 > 설치합니다. CI/CD 환경에서는 항상 `npm ci`를 사용하세요.
 > 빌드 결과물의 일관성을 보장합니다.
 
-### 환경 변수 주입
+> [!NOTE]
+> 별도 레포이므로 `working-directory`가 필요 없습니다. 프로젝트 루트에서 바로 `npm ci`, `npm run build`를 실행합니다.
+
+### 환경 변수 주입 (선택)
 
 Vue.js 빌드 시 API URL 등의 환경 변수를 주입할 수 있습니다:
 
-10. GitHub Secrets에 `API_URL` 추가: `https://api.yourdomain.com`
-11. 워크플로우에서 `env`로 전달: `VITE_API_URL: ${{ secrets.API_URL }}`
+10. GitHub Secrets에 `API_URL` 추가: `http://<EC2-IP>` 또는 도메인
+11. 워크플로우 빌드 단계에 `env` 추가:
+
+```yaml
+- name: Build for production
+  run: npm run build
+  env:
+    VITE_API_URL: ${{ secrets.API_URL }}
+```
+
 12. Vue.js 코드에서 사용: `import.meta.env.VITE_API_URL`
 
 > [!TROUBLESHOOTING]
 > | 증상 | 원인 | 해결 방법 |
 > |------|------|-----------|
 > | `npm ci` 실패 (`package-lock.json` 관련) | `package-lock.json` 미커밋 | 로컬에서 `npm install` 후 `package-lock.json`을 git에 포함 |
-> | 빌드 성공했지만 페이지 빈 화면 | `VITE_API_URL` 환경변수 미설정 | GitHub Secrets에 `API_URL` 추가 확인 |
+> | 빌드 성공했지만 페이지 빈 화면 | API URL 미설정 또는 잘못된 값 | Nginx 리버스 프록시 설정 확인 (Step 2-3 태스크 7) |
 > | Nginx reload 실패 | Nginx 설정 파일 문법 오류 | EC2에서 `sudo nginx -t`로 설정 검증 |
-> | `cache-dependency-path` 에러 | 경로가 실제 파일과 불일치 | `frontend/package-lock.json` 경로가 정확한지 확인 |
 
 > [!NOTE]
-> `working-directory: frontend`는 모노레포(하나의 리포에 프론트/백엔드 모두 있는 경우)에서 사용합니다.
-> 프론트엔드 전용 리포지토리라면 `working-directory`를 제거하고 루트에서 실행하세요.
+> 별도 레포에서는 `cache-dependency-path`를 지정하지 않아도 됩니다. `package-lock.json`이 루트에 있으므로 자동으로 캐시됩니다.
 
 ✅ **태스크 완료** — Vue.js 프론트엔드 자동 배포 워크플로우를 작성했습니다.
 
@@ -724,10 +865,10 @@ feature/xxx (기능 개발)
 **파일 삭제 (완전 제거):**
 
 ```bash
-rm .github/workflows/deploy-backend.yml
-rm .github/workflows/deploy-frontend.yml
+# 각 레포에서 실행
+rm .github/workflows/deploy.yml
 git add .
-git commit -m "chore: remove deployment workflows"
+git commit -m "chore: remove deployment workflow"
 git push origin main
 ```
 

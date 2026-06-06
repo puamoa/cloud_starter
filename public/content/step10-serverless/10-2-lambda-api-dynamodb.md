@@ -143,7 +143,7 @@ DynamoDB와 연동할 Lambda 함수를 생성합니다.
 14. 다음을 설정합니다:
 
 - **Function name**: `starter-dynamodb-api`
-- **Runtime**: **Node.js 20.x**
+- **Runtime**: **Node.js 22.x**
 - **Architecture**: x86_64
 
 15. **Permissions** 섹션을 펼칩니다:
@@ -201,7 +201,7 @@ Lambda가 DynamoDB에 접근하려면 IAM 권한이 필요합니다.
 AWS SDK v3의 `@aws-sdk/client-dynamodb`를 사용하여 DynamoDB CRUD API를 구현합니다.
 
 > [!CONCEPT] AWS SDK v3 in Lambda
-> Lambda Node.js 20.x 런타임에는 AWS SDK v3가 기본 포함되어 있습니다.
+> Lambda Node.js 22.x 런타임에는 AWS SDK v3가 기본 포함되어 있습니다.
 > 별도의 npm install 없이 바로 `import`하여 사용할 수 있습니다.
 >
 > - `@aws-sdk/client-dynamodb`: 저수준 DynamoDB 클라이언트

@@ -1,24 +1,26 @@
 ---
-title: 'Spring Boot에서 Amazon S3 파일 업로드 구현'
+title: 'Spring에서 Amazon S3 파일 업로드 구현'
 week: 5
 session: 2
 awsServices:
   - Amazon S3
 learningObjectives:
-  - Spring Boot에서 AWS SDK v2를 설정할 수 있습니다.
+  - Spring 프로젝트에서 AWS SDK v2를 설정할 수 있습니다.
   - MultipartFile을 S3에 업로드하는 서비스를 구현할 수 있습니다.
   - Presigned URL을 생성하여 클라이언트 직접 업로드를 구현할 수 있습니다.
   - S3 객체를 삭제하고 목록을 조회할 수 있습니다.
 prerequisites:
   - AWS 계정 생성 완료
   - S3 버킷 생성 완료 (Step 5-1 참조)
-  - Spring Boot 프로젝트 (로컬 또는 EC2)
+  - Spring Boot 또는 Spring MVC 프로젝트 (로컬 또는 EC2)
   - IAM 사용자 또는 EC2 IAM Role (S3 접근 권한)
 estimatedCost: 크레딧 내 사용 가능 (비용 매우 저렴)
 ---
 
-이 실습에서는 Spring Boot 애플리케이션에서 AWS SDK v2를 사용하여 S3에 파일을 업로드, 다운로드, 조회하는 기능을 구현합니다.
+이 실습에서는 Spring 애플리케이션에서 AWS SDK v2를 사용하여 S3에 파일을 업로드, 다운로드, 조회하는 기능을 구현합니다.
 EC2 인스턴스에 IAM Role을 연결하여 Access Key 없이 안전하게 S3에 접근하는 방식을 사용하며, Presigned URL을 활용한 클라이언트 직접 업로드 방식도 학습합니다.
+
+**Spring Boot(새 프로젝트)** 또는 **기존 Spring MVC 프로젝트** 모두에서 동일한 AWS SDK를 사용하며, 의존성 추가와 설정 방법만 다릅니다.
 
 > [!NOTE]
 > 이 실습은 EC2에서 IAM Role을 통해 S3에 접근하는 **AWS 권장 방식**을 사용합니다.
@@ -266,6 +268,12 @@ aws s3 ls s3://my-starter-app-123456789012/
 
 ## 태스크 3: Spring Boot 프로젝트에 AWS SDK 의존성 추가
 
+본인 프로젝트에 맞는 방법을 선택합니다.
+
+---
+
+### 방법 A: Spring Boot 프로젝트
+
 > [!CONCEPT] AWS SDK v2 BOM (Bill of Materials)
 > BOM을 사용하면 AWS SDK 모듈들의 버전을 일일이 지정하지 않아도 됩니다.
 > `bom:2.25.60`을 선언하면 `s3`, `sts`, `s3-presigner` 등 모든 모듈이 동일한 호환 버전으로 자동 설정됩니다.
@@ -382,7 +390,50 @@ spring:
 
 59. 파일을 저장합니다 (`Ctrl+S`).
 
-### S3Config 클래스 작성
+방법 A를 완료했다면 **S3Config 클래스 작성**으로 이동하세요.
+
+---
+
+### 방법 B: 기존 Spring MVC 프로젝트 (Boot가 아닌 경우)
+
+기존 Spring MVC 프로젝트(WAR 패키징, XML/Java Config)에서 AWS SDK를 사용하는 방법입니다.
+
+**build.gradle에 의존성 추가:**
+
+```groovy
+dependencies {
+    // 기존 의존성들...
+
+    // AWS SDK v2 - S3
+    implementation platform('software.amazon.awssdk:bom:2.25.60')
+    implementation 'software.amazon.awssdk:s3'
+    implementation 'software.amazon.awssdk:s3-presigner'
+}
+```
+
+> [!NOTE]
+> Spring Boot가 아닌 프로젝트에서는 `dependencyManagement` 블록 대신 `platform()`을 사용하여 BOM을 가져옵니다.
+> 동작은 동일합니다 — AWS SDK 모듈의 버전을 BOM이 관리합니다.
+
+**application.properties에 S3 설정 추가:**
+
+```properties
+# application.properties에 추가
+cloud.aws.region=ap-northeast-2
+cloud.aws.s3.bucket=my-starter-app-123456789012
+```
+
+> [!WARNING]
+> `bucket` 값을 **본인의 실제 S3 버킷 이름**으로 변경하세요.
+
+**파일 업로드 크기 제한:**
+
+기존 MVC 프로젝트에서는 `WebConfig.java`의 `MultipartConfigElement`에서 이미 파일 크기를 설정하고 있습니다.
+현재 10MB로 설정되어 있으므로 추가 변경이 필요 없습니다.
+
+---
+
+### S3Config 클래스 작성 (공통)
 
 60. IntelliJ에서 `src/main/java/com/example/demo/config/` 디렉토리를 우클릭합니다.
 61. **New** → **Java Class**를 선택합니다.
@@ -407,9 +458,6 @@ public class S3Config {
 
     @Bean
     public S3Client s3Client() {
-        // credentialsProvider를 지정하지 않으면
-        // SDK가 Default Credential Provider Chain을 사용합니다.
-        // EC2: IAM Role → 로컬: ~/.aws/credentials 또는 환경 변수
         return S3Client.builder()
                 .region(Region.of(region))
                 .build();
@@ -423,6 +471,30 @@ public class S3Config {
     }
 }
 ```
+
+> [!NOTE]
+> **기존 MVC 프로젝트에서의 패키지 위치:**
+>
+> - Boot 프로젝트: `com.example.demo.config.S3Config`
+> - 기존 MVC 프로젝트: `org.scoula.config.S3Config` (또는 본인 프로젝트의 config 패키지)
+>
+> 기존 MVC 프로젝트에서 `@Value`가 동작하려면 `RootConfig`나 `ServletConfig`에서 **PropertyPlaceholder**가 설정되어 있어야 합니다:
+>
+> ```java
+> // RootConfig.java에 추가 (이미 있을 수 있음)
+> @PropertySource("classpath:application.properties")
+> ```
+>
+> 또는 S3Config에서 직접 값을 하드코딩하고 나중에 환경변수로 전환할 수 있습니다:
+>
+> ```java
+> @Bean
+> public S3Client s3Client() {
+>     return S3Client.builder()
+>             .region(Region.AP_NORTHEAST_2)
+>             .build();
+> }
+> ```
 
 64. 파일을 저장합니다 (`Ctrl+S`).
 
@@ -913,11 +985,24 @@ public ResponseEntity<Map<String, String>> getPresignedDownloadUrl(
 
 84. 터미널(또는 IntelliJ Terminal)을 엽니다.
 85. 프로젝트 루트 디렉토리로 이동합니다.
-86. 다음 명령어를 입력하여 JAR 파일을 빌드합니다:
+86. 다음 명령어를 입력하여 빌드합니다:
+
+**방법 A (Boot — JAR 빌드):**
 
 ```bash
 ./gradlew clean build -x test
 ```
+
+> 빌드된 JAR 파일 위치: `build/libs/demo-0.0.1-SNAPSHOT.jar`
+
+**방법 B (MVC — WAR 빌드):**
+
+```bash
+chmod +x gradlew
+./gradlew build -x test
+```
+
+> 빌드된 WAR 파일 위치: `build/libs/backend-1.0-SNAPSHOT.war`
 
 > [!OUTPUT]
 >
@@ -940,12 +1025,22 @@ ls -la build/libs/demo-0.0.1-SNAPSHOT.jar
 
 ### EC2로 JAR 파일 전송
 
-88. 새 터미널을 열고 다음 명령어로 JAR 파일을 EC2에 전송합니다:
+88. 새 터미널을 열고 다음 명령어로 빌드 결과물을 EC2에 전송합니다:
+
+**방법 A (Boot):**
 
 ```bash
 scp -i my-key.pem \
   build/libs/demo-0.0.1-SNAPSHOT.jar \
   ec2-user@{EC2-Public-IP}:~/app.jar
+```
+
+**방법 B (MVC):**
+
+```bash
+scp -i my-key.pem \
+  build/libs/backend-1.0-SNAPSHOT.war \
+  ec2-user@{EC2-Public-IP}:~/app.war
 ```
 
 > [!TIP]
@@ -979,12 +1074,30 @@ ps aux | grep 'java -jar'
 pkill -f 'java -jar' || true
 ```
 
+**방법 A (Boot — JAR 직접 실행):**
+
 92. 새 JAR 파일을 백그라운드로 실행합니다:
 
 ```bash
 nohup java -jar ~/app.jar \
   --server.port=8080 \
   > ~/app.log 2>&1 &
+```
+
+**방법 B (MVC — Tomcat에 WAR 배포):**
+
+92. Tomcat에 WAR를 배포합니다:
+
+```bash
+# Tomcat 중지
+sudo systemctl stop tomcat
+
+# 기존 배포 제거 및 새 WAR 배포
+rm -rf /opt/tomcat/webapps/ROOT
+cp ~/app.war /opt/tomcat/webapps/ROOT.war
+
+# Tomcat 시작
+sudo systemctl start tomcat
 ```
 
 93. 애플리케이션이 정상 시작되었는지 로그를 확인합니다:
@@ -1191,7 +1304,7 @@ curl -X POST http://{EC2-Public-IP}:8080/api/files/upload \
 
 - S3 접근용 IAM 커스텀 정책을 생성하고 최소 권한 원칙을 적용했습니다.
 - EC2에 IAM Role을 연결하여 Access Key 없이 S3에 접근하는 방식을 구현했습니다.
-- Spring Boot에 AWS SDK v2를 설정하고 S3Client Bean을 구성했습니다.
+- Spring 프로젝트(Boot 또는 MVC)에 AWS SDK v2를 설정하고 S3Client Bean을 구성했습니다.
 - MultipartFile을 S3에 업로드하는 API를 구현했습니다.
 - S3 객체 목록 조회, 다운로드, 삭제 API를 구현했습니다.
 - Presigned URL을 활용한 클라이언트 직접 업로드/다운로드 방식을 구현했습니다.
