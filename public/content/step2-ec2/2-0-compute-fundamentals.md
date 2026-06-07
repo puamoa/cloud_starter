@@ -180,6 +180,8 @@ Type 1 (Bare-Metal):              Type 2 (Hosted):
 | `t3.large`    | 2    | 8 GB   | 30%        | ~$0.0832    | ~$59.90        | 메모리 필요한 Java 앱      |
 | `t3.xlarge`   | 4    | 16 GB  | 40%        | ~$0.1664    | ~$119.81       | 중규모 프로덕션            |
 
+※ 위 금액은 작성 시점 기준 참고 값이며, 실제 요금은 리전, 환율, AWS 정책 변경에 따라 상이할 수 있습니다.
+
 > [!TIP]
 > **인스턴스 타입 선택 가이드:**
 >
@@ -207,6 +209,17 @@ CPU 사용률
 
 t3.micro: 기준선 10%, 크레딧 축적 → 필요 시 100% 버스트
 ```
+
+> [!WARNING]
+> **t3 패밀리 무제한(Unlimited) 모드 주의**
+>
+> t3 인스턴스는 AWS 콘솔에서 생성 시 기본적으로 **무제한 모드(Unlimited)**가 활성화되어 있습니다.
+> 이 모드에서는 CPU 크레딧이 고갈되어도 성능이 제한되지 않는 대신, 기준선을 초과한 사용량에 대해 **추가 요금**이 청구됩니다.
+>
+> 학습 환경에서 장시간 고부하 작업(빌드, DB 마이그레이션 등)을 실행할 때 의도치 않은 비용이 발생할 수 있으므로:
+>
+> - CloudWatch에서 `CPUCreditBalance` 지표를 모니터링하거나
+> - 상시 높은 CPU가 필요하면 m 또는 c 패밀리로 전환하세요
 
 ---
 
@@ -1625,11 +1638,11 @@ Spring MVC (외부 Tomcat):
 
 ### Spring 버전과 Tomcat 호환성
 
-| Spring 버전           | Servlet API           | Tomcat 버전 | 패키지            |
-| --------------------- | --------------------- | ----------- | ----------------- |
-| Spring 5.x            | javax.servlet (4.0)   | Tomcat 9    | `javax.servlet`   |
-| Spring 6.x / Boot 3.x | jakarta.servlet (6.0) | Tomcat 10+  | `jakarta.servlet` |
-| Spring 7.x / Boot 4.x | jakarta.servlet (6.1) | Tomcat 10+  | `jakarta.servlet` |
+| Spring 버전           | Servlet API           | Tomcat 버전 | 최소 Java 버전   | 패키지            |
+| --------------------- | --------------------- | ----------- | ---------------- | ----------------- |
+| Spring 5.x / Boot 2.x | javax.servlet (4.0)   | Tomcat 9    | Java 8 / 11      | `javax.servlet`   |
+| Spring 6.x / Boot 3.x | jakarta.servlet (6.0) | Tomcat 10+  | **Java 17 필수** | `jakarta.servlet` |
+| Spring 7.x / Boot 4.x | jakarta.servlet (6.1) | Tomcat 10+  | **Java 21 필수** | `jakarta.servlet` |
 
 > [!WARNING]
 > Spring 5.x 프로젝트에 Tomcat 10을 사용하면 `ClassNotFoundException: javax.servlet`이 발생합니다.  
@@ -1690,6 +1703,7 @@ ExecStart=/usr/bin/java -jar /opt/app/app.jar   # 실행 명령
 WorkingDirectory=/opt/app     # 작업 디렉토리
 Restart=on-failure            # 실패 시 자동 재시작
 RestartSec=10                 # 재시작 대기 시간 (초)
+SuccessExitStatus=143         # Java SIGTERM 정상 종료 코드를 성공으로 인정
 Environment=KEY=VALUE         # 환경변수 설정
 
 [Install]

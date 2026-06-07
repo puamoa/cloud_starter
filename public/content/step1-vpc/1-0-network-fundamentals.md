@@ -1363,7 +1363,8 @@ AWS Cost Explorer에서 태그별로 비용을 분석할 수 있습니다:
 >
 > 일부 명령어는 기본 설치되어 있지 않을 수 있습니다:
 >
-> - **Amazon Linux / Ubuntu**: `sudo yum install -y nc traceroute` 또는 `sudo apt install -y netcat traceroute`
+> - **Amazon Linux 2023**: `sudo dnf install -y nc traceroute`
+> - **Ubuntu**: `sudo apt install -y netcat traceroute`
 > - **macOS**: `brew install nmap` (nc는 기본 포함)
 > - **Windows**: `nslookup`, `tracert`, `ping`은 기본 포함. `curl`은 Windows 10 이상 기본 포함, `Test-NetConnection`은 PowerShell에서 사용
 
@@ -1402,6 +1403,8 @@ AWS Cost Explorer에서 태그별로 비용을 분석할 수 있습니다:
 > - **Public IP Insights**: VPC 콘솔의 "IP Addresses > Public IPv4" 메뉴에서 현재 사용 중인 공인 IP를 모니터링할 수 있습니다.
 >
 > 참고: [AWS 공식 블로그 - New AWS Public IPv4 Address Charge](https://aws.amazon.com/blogs/aws/new-aws-public-ipv4-address-charge-public-ip-insights/)
+>
+> ※ 위 금액은 작성 시점 기준 참고 값이며, 실제 요금은 리전, 환율, AWS 정책 변경에 따라 상이할 수 있습니다.
 
 ---
 
