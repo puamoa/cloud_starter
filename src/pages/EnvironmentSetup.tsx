@@ -61,8 +61,8 @@ export const EnvironmentSetup: React.FC = () => {
                 <br />
                 💰 크레딧이나 무료 플랜을 사용하지 않는 경우 실제 비용이
                 발생합니다.
-                <br />
-                ⏰ 무료 플랜은 가입 후 6개월간 유효하며, 크레딧 소진 시 종료됩니다.
+                <br />⏰ 무료 플랜은 가입 후 6개월간 유효하며, 크레딧 소진 시
+                종료됩니다.
               </div>
             </div>
           </div>
@@ -264,6 +264,34 @@ export const EnvironmentSetup: React.FC = () => {
                       </ColumnLayout>
                     </SpaceBetween>
                   </Box>
+                  <div className="info-box info-box--note">
+                    <div className="info-box-icon">
+                      <Icon name="status-warning" variant="warning" />
+                    </div>
+                    <div className="info-box-content">
+                      <strong>크레딧 주의사항</strong>
+                      <div style={{ marginTop: '0.25rem' }}>
+                        • AWS Organization에 참여하면 무료 플랜 크레딧이{' '}
+                        <strong>즉시 소멸</strong>됩니다.
+                        <br />
+                        • 무료 플랜은 가입 후 6개월 또는 크레딧 소진 시
+                        종료됩니다.
+                        <br />
+                        • 크레딧은 다른 계정으로 양도할 수 없습니다.
+                        <br />
+                        • 기존 계정(2025.07.15 이전 가입)은 프리 티어 한도 초과
+                        시 비용이 청구됩니다.
+                        <br />
+                        <Link
+                          href="https://aws.amazon.com/ko/free/free-tier-faqs/"
+                          external
+                          fontSize="body-s"
+                        >
+                          AWS 프리 티어 FAQ 전체 보기
+                        </Link>
+                      </div>
+                    </div>
+                  </div>
                 </SpaceBetween>
               ),
             },
