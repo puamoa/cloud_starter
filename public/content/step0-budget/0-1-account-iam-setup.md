@@ -31,16 +31,26 @@ estimatedCost: 무료
 
 1. 브라우저에서 [https://aws.amazon.com](https://aws.amazon.com)에 접속합니다.
 2. 오른쪽 상단의 [[계정 생성]] 또는 [[Create account]] 버튼을 클릭합니다.
+
+    <img src="/images/step0/0-1-step2-create-account.png" alt="AWS 계정 생성 버튼" class="guide-img-sm" />
+
 3. **Root user email address**에 본인 이메일을 입력합니다.
 4. **AWS account name**에 계정 이름을 입력합니다 (예: `my-aws-account`).
 5. [[Verify email address]]를 클릭합니다.
+
+    <img src="/images/step0/0-1-step5-verify-email.png" alt="Verify email address 클릭" class="guide-img-md" />
+
 6. 이메일로 전송된 인증 코드를 입력하고 [[Verify]] 버튼을 클릭합니다.
+
+    <img src="/images/step0/0-1-step6-verify-code.png" alt="인증 코드 입력 후 Verify" class="guide-img-md" />
 
 ### 1단계: 비밀번호 생성
 
 7. **Root user password**에 비밀번호를 입력합니다.
 8. **Confirm root user password**에 동일한 비밀번호를 다시 입력합니다.
 9. "Matches"가 표시되면 [[Continue]]를 클릭합니다.
+
+    <img src="/images/step0/0-1-step9-password.png" alt="비밀번호 설정 후 Continue" class="guide-img-md" />
 
 > [!WARNING]
 > Root 비밀번호는 최소 12자 이상, 대문자/소문자/숫자/특수문자를 포함하여 강력하게 설정하세요. 이 비밀번호는 계정의 최종 방어선입니다.
@@ -61,6 +71,24 @@ estimatedCost: 무료
 
 11. [[무료 플랜 선택]]을 클릭합니다.
 
+    <img src="/images/step0/0-1-step11-plan-select.png" alt="무료 플랜 선택" class="guide-img-md" />
+
+플랜을 선택하면 연락처 정보 입력 화면(2/5단계)이 표시됩니다.
+
+12. **전체 이름**을 입력합니다.
+13. **조직 이름**(선택 사항)은 비워두거나 입력합니다.
+14. **국가 코드**에서 `🇰🇷 +82`를 선택하고, **전화 번호**를 입력합니다.
+15. **국가 또는 리전**에서 `대한민국`을 선택합니다.
+16. **주소 라인 1**에 도로명 주소를 입력합니다.
+17. **주소 라인 2**(선택 사항)에 상세 주소를 입력합니다 (아파트, 동, 호수 등).
+18. **시**를 입력합니다.
+19. **시, 도 또는 리전**을 선택합니다.
+20. **우편 번호**를 입력합니다.
+21. **AWS 이용계약**을 읽었으며 이에 동의합니다 체크박스를 선택합니다.
+22. [[동의 후 계속(2/5단계)]]을 클릭합니다.
+
+    <img src="/images/step0/0-1-step22-contact-info.png" alt="연락처 정보 입력 완료" class="guide-img-md" />
+
 > [!TIP]
 > **기존 계정 (2025.07.15 이전 가입자)**: 플랜 선택 화면이 표시되지 않습니다.  
 > 기존 계정은 "Legacy AWS Free Tier" 프로그램이 적용되어 가입일로부터 12개월간 서비스별 무료 한도가 제공됩니다.(예: EC2 t2.micro 750시간/월)  
@@ -79,34 +107,45 @@ estimatedCost: 무료
 
 ### 3단계: 결제 정보
 
-12. **청구 국가**에서 `대한민국`을 선택합니다.
-13. **신용카드 번호**를 입력합니다.
-14. **만료 날짜**를 선택합니다.
-15. **카드 소유자 이름**을 입력합니다.
-16. **청구지 주소**에서 `내 연락처 주소 사용`을 선택합니다.
-17. **이메일 주소**를 확인합니다.
-18. [[계속]]를 클릭합니다.
+23. **청구 국가**에서 `대한민국`을 선택합니다.
+24. **신용카드 번호**를 입력합니다.
+25. **만료 날짜**에서 월/년을 선택합니다.
+26. **보안 코드(CVV/CVC)**는 현재 입력하지 않아도 됩니다 ("지금은 보안 코드가 필요하지 않습니다" 표시).
+27. **카드 소유자 이름**을 입력합니다.
+28. **청구지 주소**에서 `내 연락처 주소 사용`을 선택합니다 (2단계에서 입력한 주소가 자동 표시됨).
+29. **이메일 주소**를 확인합니다 (AWS와의 거래를 위한 VAT 영수증 발송용).
+30. [[계속(3/5단계)]]를 클릭합니다.
+
+    <img src="/images/step0/0-1-step30-payment-info.png" alt="결제 정보 입력 완료" class="guide-img-md" />
 
 > [!NOTE]
-> 카드 인증 팝업이 나타납니다. AWS 인증 프로세스는 1 USD(또는 그에 상당하는 금액)를 3~5일간 예치하여 계정을 인증합니다.  
+> AWS 인증 프로세스는 1 USD(또는 그에 상당하는 금액)를 3~5일간 예치하여 계정을 인증하고 사기 행위를 방지합니다.  
 > 무료 플랜을 선택했으므로 유료 플랜으로 업그레이드할 때까지 요금이 발생하지 않습니다.
 
-19. 카드 정보 입력 팝업에서 카드번호, 비밀번호, 생년월일을 입력합니다.
-20. **서비스 이용에 대한 전체동의**를 체크합니다.
-21. [[다음]]을 클릭하여 카드 인증을 완료합니다.
+31. 카드사 인증 팝업이 나타나면 카드번호, 비밀번호, 생년월일을 입력합니다.
+32. **서비스 이용에 대한 전체동의**를 체크합니다.
+33. [[다음]]을 클릭하여 카드 인증을 완료합니다.
+
+    <img src="/images/step0/0-1-step33-card-auth.png" alt="카드 인증 완료" class="guide-img-md" />
 
 ### 4단계: 자격 증명 확인
 
-22. **국가 또는 리전 코드**에서 `대한민국 (+82)`를 선택합니다.
-23. **휴대전화 번호**를 입력합니다.
-24. [[SMS 전송]]를 클릭합니다.
-25. 수신된 인증 코드를 입력합니다.
+34. **국가 또는 리전 코드**에서 `대한민국 (+82)`를 선택합니다.
+35. **휴대전화 번호**를 입력합니다.
+36. [[SMS 전송]]를 클릭합니다.
+
+    <img src="/images/step0/0-1-step36-sms-verify.png" alt="SMS 인증 코드 전송" class="guide-img-md" />
+
+37. 수신된 인증 코드를 입력합니다.
 
 ### 5단계: 완료
 
-26. "축하합니다!" 화면이 표시되면 계정 생성이 완료된 것입니다.
-27. 계정 활성화 이메일을 확인합니다 (최대 수 분 소요).
-28. [[AWS Management Console로 이동]]을 클릭합니다.
+38. "축하합니다!" 화면이 표시되면 계정 생성이 완료된 것입니다.
+
+    <img src="/images/step0/0-1-step38-complete.png" alt="계정 생성 완료" class="guide-img-md" />
+
+39. 계정 활성화 이메일을 확인합니다 (최대 수 분 소요).
+40. [[AWS Management Console로 이동]]을 클릭합니다.
 
 ✅ **태스크 완료**: AWS 계정이 생성되었습니다.
 
@@ -114,10 +153,27 @@ estimatedCost: 무료
 
 계정 별칭을 설정하면 IAM 사용자 로그인 URL이 기억하기 쉬워지고, MFA 앱에서도 별칭으로 표시되어 여러 계정을 구분하기 편합니다.
 
-29. Root 계정으로 AWS Management Console에 로그인합니다.
-30. 상단 검색창에 `IAM`을 입력하고 **IAM** 서비스를 선택합니다.
-31. IAM Dashboard 우측의 **AWS Account** 섹션에서 **Account Alias** 옆의 [[Create]]를 클릭합니다.
-32. **Create alias for AWS account** 팝업에서 **Preferred alias**에 별칭을 입력합니다 (예: `my-aws-lab`).
+41. [https://aws.amazon.com](https://aws.amazon.com)에 접속합니다.
+42. 오른쪽 상단의 [[콘솔에 로그인]] 버튼을 클릭합니다.
+43. **Root user**를 선택하고, 계정 생성 시 사용한 **이메일 주소**를 입력합니다.
+44. [[Next]]를 클릭합니다.
+
+    <img src="/images/step0/0-1-step44-root-login.png" alt="Root user 이메일 입력" class="guide-img-md" />
+
+45. **보안 확인**(CAPTCHA)이 표시되면 지시에 따라 완료합니다.
+46. **Password**에 Root 비밀번호를 입력하고 [[Sign in]]을 클릭합니다.
+
+    <img src="/images/step0/0-1-step46-root-password.png" alt="Root 비밀번호 입력" class="guide-img-md" />
+
+47. AWS Management Console 홈 화면이 표시되면 로그인 성공입니다.
+48. 상단 검색창에 `IAM`을 입력하고 **IAM** 서비스를 선택합니다.
+
+    <img src="/images/step0/0-1-step48-iam-dashboard.png" alt="IAM 서비스 검색" class="guide-img-md" />
+
+49. IAM Dashboard 우측의 **AWS Account** 섹션에서 **Account Alias** 옆의 [[Create]]를 클릭합니다.
+
+    <img src="/images/step0/0-1-step49-create-alias.png" alt="Account Alias Create 클릭" class="guide-img-md" />
+50. **Create alias for AWS account** 팝업에서 **Preferred alias**에 별칭을 입력합니다 (예: `my-aws-lab`).
 
 > [!NOTE]
 >
@@ -125,7 +181,9 @@ estimatedCost: 무료
 > - 전 세계적으로 고유해야 합니다 (이미 사용 중이면 다른 이름 시도)
 > - 입력하면 아래에 **New sign-in URL**이 미리보기로 표시됩니다
 
-33. [[Create alias]]를 클릭합니다.
+51. [[Create alias]]를 클릭합니다.
+
+    <img src="/images/step0/0-1-step51-alias-created.png" alt="Alias 생성 완료" class="guide-img-sm" />
 
 > [!NOTE]
 > "Alias [별칭] created for this account." 성공 메시지가 표시됩니다.  
@@ -152,21 +210,34 @@ MFA(Multi-Factor Authentication)를 설정하면 비밀번호가 유출되어도
 > - Authy (iOS/Android/Desktop)
 
 > [!NOTE]
-> 태스크 1.5에서 이미 Root 계정으로 로그인한 상태라면 35번부터 진행하세요.
+> 태스크 1.5에서 이미 Root 계정으로 로그인한 상태라면 53번부터 진행하세요.
 
-34. Root 계정으로 AWS Management Console에 로그인합니다.
-35. 우측 상단의 **계정 이름**을 클릭하고 **Security credentials**를 선택합니다.
-36. **Multi-factor authentication (MFA)** 섹션에서 [[Assign MFA device]]를 클릭합니다.
-37. **Device name**에 `my-root-mfa`를 입력합니다.
-38. **MFA device type**에서 **Authenticator app**을 선택합니다.
-39. [[Next]]를 클릭합니다.
-40. **Set up the authenticator app** 페이지에서:
+52. 우측 상단의 **계정 이름**을 클릭하고 **Security credentials**를 선택합니다.
+
+    <img src="/images/step0/0-1-step52-security-credentials.png" alt="Security credentials 선택" class="guide-img-md" />
+
+53. **Multi-factor authentication (MFA)** 섹션에서 [[Assign MFA device]]를 클릭합니다.
+
+    <img src="/images/step0/0-1-step53-assign-mfa.png" alt="Assign MFA device 클릭" class="guide-img-md" />
+
+54. **Device name**에 `my-root-mfa`를 입력합니다.
+55. **MFA device type**에서 **Authenticator app**을 선택합니다.
+56. [[Next]]를 클릭합니다.
+
+    <img src="/images/step0/0-1-step56-mfa-next.png" alt="MFA device 설정" class="guide-img-md" />
+
+57. **Set up the authenticator app** 페이지에서:
     - [[Show QR code]]를 클릭하여 QR 코드를 표시합니다.
     - 스마트폰의 인증 앱(Google Authenticator 등)을 엽니다.
     - 앱에서 QR 코드를 스캔합니다.
     - 앱에 표시되는 6자리 코드를 **MFA code 1**에 입력합니다.
     - 30초 후 새로 표시되는 6자리 코드를 **MFA code 2**에 입력합니다.
-41. [[Add MFA]]를 클릭합니다.
+
+    <img src="/images/step0/0-1-step57-qr-code.png" alt="QR 코드 표시" class="guide-img-sm" />
+
+    <img src="/images/step0/0-1-step57-mfa-codes.png" alt="MFA 코드 입력" class="guide-img-md" />
+
+58. [[Add MFA]]를 클릭합니다.
 
 > [!OUTPUT]
 > "MFA device assigned successfully" 메시지가 표시됩니다.
@@ -193,12 +264,15 @@ Root 계정 대신 일상 작업에 사용할 IAM 사용자를 생성합니다.
 >
 > AWS는 Root 계정을 일상 작업에 사용하지 말 것을 강력히 권장합니다.
 
-42. 상단 검색창에 `IAM`을 입력하고 **IAM** 서비스를 선택합니다.
-43. 왼쪽 메뉴에서 **IAM Users**를 클릭합니다.
-44. [[Create user]]를 클릭합니다.
-45. **User name**에 `admin-user`를 입력합니다.
-46. ✅ **Provide user access to the AWS Management Console** 체크합니다.
-47. **Console password** 섹션에서:
+59. 상단 검색창에 `IAM`을 입력하고 **IAM** 서비스를 선택합니다.
+60. 왼쪽 메뉴에서 **IAM Users**를 클릭합니다.
+61. [[Create user]]를 클릭합니다.
+
+    <img src="/images/step0/0-1-step61-create-user.png" alt="Create user 클릭" class="guide-img-md" />
+
+62. **User name**에 `admin-user`를 입력합니다.
+63. ✅ **Provide user access to the AWS Management Console** 체크합니다.
+64. **Console password** 섹션에서:
     - **Custom password**를 선택합니다.
     - 비밀번호를 입력합니다.
     - ☐ **Users must create a new password at next sign-in** 체크 해제 (본인이 사용할 것이므로)
@@ -207,17 +281,24 @@ Root 계정 대신 일상 작업에 사용할 IAM 사용자를 생성합니다.
 > 실무에서 다른 팀원에게 IAM 사용자를 만들어줄 때는 이 옵션을 체크하세요.  
 >  첫 로그인 시 임시 비밀번호를 본인만 아는 비밀번호로 변경하도록 강제하여 보안을 유지할 수 있습니다.
 
-48. [[Next]]를 클릭합니다.
+65. [[Next]]를 클릭합니다.
+
+    <img src="/images/step0/0-1-step65-user-details.png" alt="User details 설정 완료" class="guide-img-md" />
 
 ### 권한 설정 (그룹 방식)
 
-49. **Set permissions** 페이지에서 **Add user to group**을 선택합니다.
-50. [[Create group]] 버튼을 클릭합니다.
-51. 팝업 창의 **User group name**에 `Administrators`를 입력합니다.
-52. 검색창에 `AdministratorAccess`를 입력합니다.
-53. ✅ **AdministratorAccess** 정책을 체크합니다.
-54. [[Create user group]]을 클릭합니다.
-55. 생성된 `Administrators` 그룹이 체크되어 있는지 확인합니다. 체크되어 있지 않으면 생성된 그룹을 체크합니다.
+66. **Set permissions** 페이지에서 **Add user to group**을 선택합니다.
+67. [[Create group]] 버튼을 클릭합니다.
+68. 팝업 창의 **User group name**에 `Administrators`를 입력합니다.
+69. 검색창에 `AdministratorAccess`를 입력합니다.
+70. ✅ **AdministratorAccess** 정책을 체크합니다.
+71. [[Create user group]]을 클릭합니다.
+
+    <img src="/images/step0/0-1-step71-create-group.png" alt="Create user group" class="guide-img-sm" />
+
+    <img src="/images/step0/0-1-step71-group-checked.png" alt="그룹 체크 확인" class="guide-img-sm" />
+
+72. 생성된 `Administrators` 그룹이 체크되어 있는지 확인합니다. 체크되어 있지 않으면 생성된 그룹을 체크합니다.
 
 > [!CONCEPT] 왜 사용자에게 직접 권한을 주지 않나요?
 > AWS 모범 사례는 **사용자에게 직접 정책을 붙이지 않고, 그룹에 정책을 연결한 뒤 사용자를 그룹에 추가**하는 것입니다.
@@ -232,11 +313,19 @@ Root 계정 대신 일상 작업에 사용할 IAM 사용자를 생성합니다.
 > `AdministratorAccess`는 Billing을 제외한 모든 AWS 서비스에 대한 전체 권한을 부여합니다.  
 > 학습 목적에서는 이 정책이 편리합니다. 실무에서는 필요한 최소 권한만 부여하는 것이 모범 사례입니다.
 
-56. [[Next]]를 클릭합니다.
-57. **Review and create** 페이지에서 설정을 확인합니다:
+73. [[Next]]를 클릭합니다.
+
+    <img src="/images/step0/0-1-step73-next-permissions.png" alt="권한 설정 완료 후 Next" class="guide-img-md" />
+
+74. **Review and create** 페이지에서 설정을 확인합니다:
     - User name: `admin-user`
     - Groups: `Administrators`
-58. [[Create user]]를 클릭합니다.
+
+    <img src="/images/step0/0-1-step74-review-create.png" alt="Review and create 확인" class="guide-img-md" />
+
+75. [[Create user]]를 클릭합니다.
+
+    <img src="/images/step0/0-1-step75-user-created.png" alt="User 생성 완료" class="guide-img-md" />
 
 > [!NOTE]
 > "User created successfully" 메시지와 함께 **Retrieve password** 페이지가 표시됩니다.  
@@ -260,37 +349,50 @@ Root 계정 대신 일상 작업에 사용할 IAM 사용자를 생성합니다.
 
 Root 계정에서 로그아웃하고, 생성한 IAM 사용자로 로그인한 뒤 본인이 직접 MFA를 설정합니다.
 
-59. **시크릿 창**(Chrome: Ctrl+Shift+N / Safari: Cmd+Shift+N) 또는 **다른 브라우저**를 열어 IAM 사용자로 로그인합니다.
+76. **시크릿 창**(Chrome: Ctrl+Shift+N / Safari: Cmd+Shift+N) 또는 **다른 브라우저**를 열어 IAM 사용자로 로그인합니다.
 
 > [!TIP]
 > Root 계정은 태스크 5(Billing 접근 권한 활성화)에서 다시 사용하므로,  
 > 기존 브라우저의 Root 세션을 유지한 채 별도 창에서 IAM 사용자로 로그인하면 편리합니다.
 
-60. IAM 사용자 로그인 URL로 접속합니다:
+77. IAM 사용자 로그인 URL로 접속합니다:
     - `https://[별칭].signin.aws.amazon.com/console`
     - 또는 AWS 로그인 페이지에서 **IAM user** 선택 → Account ID 또는 별칭 입력
 
-61. 다음 정보로 로그인합니다:
+78. 다음 정보로 로그인합니다:
     - **Account ID**: 계정 별칭 또는 12자리 계정 ID
     - **IAM user name**: `admin-user`
     - **Password**: 태스크 3에서 설정한 비밀번호
 
-62. 로그인 후 우측 상단의 **계정 이름**을 클릭하고 **Security credentials**를 선택합니다.
-63. **Multi-factor authentication (MFA)** 섹션에서 [[Assign MFA device]]를 클릭합니다.
-64. **Device name**에 `admin-user-mfa`를 입력합니다.
-65. **Authenticator app**을 선택하고 [[Next]]를 클릭합니다.
-66. [[Show QR code]]를 클릭하여 QR 코드를 표시합니다.
-67. 스마트폰 인증 앱에서 QR 코드를 스캔합니다.
-68. 앱에 표시되는 6자리 코드를 **MFA code 1**에 입력합니다.
-69. 30초 후 새로 표시되는 6자리 코드를 **MFA code 2**에 입력합니다.
-70. [[Add MFA]]를 클릭합니다.
+    <img src="/images/step0/0-1-step78-iam-login.png" alt="IAM 사용자 로그인" class="guide-img-md" />
+
+79. 로그인 후 우측 상단의 **계정 이름**을 클릭하고 **Security credentials**를 선택합니다.
+
+    <img src="/images/step0/0-1-step79-security-creds.png" alt="Security credentials 선택" class="guide-img-md" />
+
+80. **Multi-factor authentication (MFA)** 섹션에서 [[Assign MFA device]]를 클릭합니다.
+
+    <img src="/images/step0/0-1-step80-assign-mfa-iam.png" alt="Assign MFA device" class="guide-img-md" />
+
+81. **Device name**에 `admin-user-mfa`를 입력합니다.
+82. **Authenticator app**을 선택하고 [[Next]]를 클릭합니다.
+83. [[Show QR code]]를 클릭하여 QR 코드를 표시합니다.
+84. 스마트폰 인증 앱에서 QR 코드를 스캔합니다.
+85. 앱에 표시되는 6자리 코드를 **MFA code 1**에 입력합니다.
+86. 30초 후 새로 표시되는 6자리 코드를 **MFA code 2**에 입력합니다.
+
+    <img src="/images/step0/0-1-step86-mfa-codes-iam.png" alt="MFA 코드 입력" class="guide-img-md" />
+
+87. [[Add MFA]]를 클릭합니다.
 
 > [!TIP]
 > Root 계정과 IAM 사용자의 MFA는 별도로 관리됩니다.  
 > 인증 앱에서 두 개의 항목이 표시되며, 각각 다른 코드를 생성합니다.  
 > 계정 별칭을 설정했으므로 앱에서 별칭으로 구분할 수 있습니다.
 
-71. 상단 검색창에 `EC2`를 입력하고 접속하여 권한이 정상 동작하는지 확인합니다.
+88. 상단 검색창에 `EC2`를 입력하고 접속하여 권한이 정상 동작하는지 확인합니다.
+
+    <img src="/images/step0/0-1-step88-ec2-check.png" alt="EC2 접속 권한 확인" class="guide-img-md" />
 
 > [!NOTE]
 > 이후 모든 실습은 이 IAM 사용자(`admin-user`)로 진행합니다.  
@@ -305,11 +407,22 @@ IAM 사용자가 Billing 정보를 볼 수 있도록 Root 계정에서 권한을
 > [!NOTE]
 > 태스크 4에서 시크릿 창/다른 브라우저를 사용했다면, Root 계정이 로그인된 기존 브라우저에서 진행하세요.
 
-72. Root 계정이 로그인된 브라우저에서 우측 상단 계정 이름 → **Account**를 클릭합니다.
-73. 페이지를 스크롤하여 **IAM user and role access to Billing information** 섹션을 찾습니다.
-74. [[Edit]]를 클릭합니다.
-75. ✅ **Activate IAM Access**를 체크합니다.
-76. [[Update]]를 클릭한 후 **Activated** 상태인지 확인합니다.
+89. Root 계정이 로그인된 브라우저에서 우측 상단 계정 이름 → **Account**를 클릭합니다.
+
+    <img src="/images/step0/0-1-step89-account-menu.png" alt="Account 메뉴 클릭" class="guide-img-sm" />
+
+90. 페이지를 스크롤하여 **IAM user and role access to Billing information** 섹션을 찾습니다.
+91. [[Edit]]를 클릭합니다.
+
+    <img src="/images/step0/0-1-step91-billing-edit.png" alt="Billing 접근 Edit 클릭" class="guide-img-md" />
+
+92. ✅ **Activate IAM Access**를 체크합니다.
+
+    <img src="/images/step0/0-1-step92-activate-iam.png" alt="Activate IAM Access 체크" class="guide-img-md" />
+
+93. [[Update]]를 클릭한 후 **Activated** 상태인지 확인합니다.
+
+    <img src="/images/step0/0-1-step93-activated.png" alt="Activated 상태 확인" class="guide-img-md" />
 
 > [!NOTE]
 > 이 설정을 활성화하지 않으면 IAM 사용자가 AdministratorAccess 권한이 있어도 Billing 페이지에 접근할 수 없습니다.
@@ -320,9 +433,12 @@ IAM 사용자가 Billing 정보를 볼 수 있도록 Root 계정에서 권한을
 
 IAM 사용자로 Billing 페이지에 접근할 수 있는지 확인합니다.
 
-77. IAM 사용자(`admin-user`)로 로그인된 브라우저에서 상단 검색창에 `Billing`을 입력합니다.
-78. **Billing and Cost Management**를 선택합니다.
-79. Billing 대시보드가 정상적으로 표시되는지 확인합니다.
+94. IAM 사용자(`admin-user`)로 로그인된 브라우저에서 상단 검색창에 `Billing`을 입력합니다.
+95. **Billing and Cost Management**를 선택합니다.
+
+    <img src="/images/step0/0-1-step95-billing-dashboard.png" alt="Billing 대시보드" class="guide-img-md" />
+
+96. Billing 대시보드가 정상적으로 표시되는지 확인합니다.
 
 > [!TIP]
 > **Billing and Cost Management 주요 메뉴:**
