@@ -55,6 +55,15 @@ export const EnvironmentSetup: React.FC = () => {
                 데이터를 입력하지 마세요. 실습 종료 후 생성한 모든 리소스를
                 반드시 삭제해야 합니다.
               </div>
+              <div style={{ marginTop: '0.5rem' }}>
+                ⚠️ 이 실습은 AWS 크레딧 또는 무료 플랜(Free Plan) 사용을 전제로
+                합니다.
+                <br />
+                💰 크레딧이나 무료 플랜을 사용하지 않는 경우 실제 비용이
+                발생합니다.
+                <br />
+                ⏰ 무료 플랜은 가입 후 6개월간 유효하며, 크레딧 소진 시 종료됩니다.
+              </div>
             </div>
           </div>
         </SpaceBetween>

@@ -144,6 +144,20 @@ export const Dashboard: React.FC = () => {
                   각 단계를 클릭하여 실습 가이드를 확인하세요. 각 실습은
                   독립적으로 진행할 수 있으며, 순서대로 하지 않아도 됩니다.
                 </div>
+                <div
+                  style={{
+                    marginTop: '0.5rem',
+                    color: 'var(--color-text-body-secondary)',
+                  }}
+                >
+                  ⚠️ 이 실습은 AWS 크레딧 또는 무료 플랜(Free Plan) 사용을
+                  전제로 합니다.
+                  <br />
+                  💰 크레딧이나 무료 플랜을 사용하지 않는 경우 실제 비용이
+                  발생합니다.
+                  <br />⏰ 무료 플랜은 가입 후 6개월간 유효하며, 크레딧 소진 시
+                  종료됩니다.
+                </div>
               </div>
             </div>
           </SpaceBetween>

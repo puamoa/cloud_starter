@@ -123,6 +123,8 @@ AWS는 사용한 만큼 과금되는 종량제 모델입니다.
 1. AWS Management Console에 로그인합니다.
 2. 상단 검색창에 `Billing`을 입력하고 **Billing and Cost Management**를 선택합니다.
 
+    <img src="/images/step0/0-2-step2-billing-search.png" alt="Billing 검색" class="guide-img-md" />
+
 > [!NOTE]
 > IAM 사용자로 로그인한 경우 Billing 접근 권한이 없을 수 있습니다.  
 > Root 계정으로 로그인하거나, Root 계정에서 IAM 사용자의 Billing 접근을 활성화해야 합니다.
@@ -133,6 +135,9 @@ AWS는 사용한 만큼 과금되는 종량제 모델입니다.
 3. 왼쪽 메뉴에서 **Budgets**를 선택합니다.
 4. [[Create a budget]] 버튼을 클릭합니다.
 
+    <img src="/images/step0/0-2-step4-budgets-menu.png" alt="Budgets 메뉴 선택" class="guide-img-md" />
+
+    <img src="/images/step0/0-2-step4-budgets.png" alt="Create budget 클릭" class="guide-img-md" />
 > [!NOTE]
 > AWS Budgets는 월 2개까지 무료로 생성할 수 있습니다. 3개부터는 예산당 월 $0.02가 부과됩니다.
 
@@ -144,6 +149,9 @@ AWS는 사용한 만큼 과금되는 종량제 모델입니다.
 > `Use a template (simplified)`를 선택하면 더 간단하게 설정할 수 있지만, 여기서는 각 옵션을 이해하기 위해 Customize를 선택합니다.
 
 6. [[Next]] 버튼을 클릭합니다.
+
+    <img src="/images/step0/0-2-step6-budget-setup.png" alt="Budget setup 완료" class="guide-img-md" />
+
 7. **Set budget amount** 섹션에서 다음을 설정합니다:
    - **Budget name**: `Monthly-Cost-Budget`
    - **Period**: `Monthly`
@@ -151,6 +159,8 @@ AWS는 사용한 만큼 과금되는 종량제 모델입니다.
    - **Start month**: 현재 월 선택
    - **Budgeting method**: `Fixed`
    - **Enter your budgeted amount ($)**: `10.00`
+
+    <img src="/images/step0/0-2-step7-budget-details.png" alt="Budget amount 설정" class="guide-img-md" />
 
 > [!NOTE]
 > **Budget scope** 섹션은 기본값을 유지합니다:
@@ -164,18 +174,27 @@ AWS는 사용한 만큼 과금되는 종량제 모델입니다.
 
 8. [[Next]] 버튼을 클릭합니다.
 9. **Configure alerts** 섹션에서 [[Add an alert threshold]] 버튼을 클릭합니다.
+
+    <img src="/images/step0/0-2-step9-alert-threshold.png" alt="Alert threshold 추가" class="guide-img-md" />
+
 10. 첫 번째 알림을 설정합니다:
     - **Threshold**: `50` (%)
     - **Trigger**: `Actual` (실제 사용량 기준)
     - **Email recipients**: 본인 이메일 주소 입력
 
 11. [[Add an alert threshold]] 버튼을 다시 클릭하여 두 번째 알림을 추가합니다.
+
+    <img src="/images/step0/0-2-step11-alert-email.png" alt="두 번째 알림 추가" class="guide-img-md" />
+
 12. 두 번째 알림을 설정합니다:
     - **Threshold**: `80` (%)
     - **Trigger**: `Actual`
     - **Email recipients**: 본인 이메일 주소 입력
 
 13. [[Add an alert threshold]] 버튼을 다시 클릭하여 세 번째 알림을 추가합니다.
+
+    <img src="/images/step0/0-2-step13-review.png" alt="세 번째 알림 추가" class="guide-img-md" />
+
 14. 세 번째 알림을 설정합니다:
     - **Threshold**: `100` (%)
     - **Trigger**: `Forecasted` (예측 기준)
@@ -189,7 +208,12 @@ AWS는 사용한 만큼 과금되는 종량제 모델입니다.
 > Forecasted를 100%에 설정하면 아직 실제로 초과하지 않았더라도 미리 경고를 받을 수 있습니다.
 
 15. [[Next]] 버튼을 클릭합니다.
+
+    <img src="/images/step0/0-2-step15-create-confirm.png" alt="Next 클릭" class="guide-img-md" />
+
 16. **Attach actions** 페이지에서 별도 액션 없이 [[Next]] 버튼을 클릭합니다.
+
+    <img src="/images/step0/0-2-step16-budget-created.png" alt="Budget 생성 완료" class="guide-img-md" />
 
 > [!NOTE]
 > Budget Actions를 설정하면 예산 초과 시 자동으로 EC2 인스턴스를 중지하거나 IAM 정책을 적용할 수 있습니다.  
@@ -204,11 +228,18 @@ AWS는 사용한 만큼 과금되는 종량제 모델입니다.
 
 18. [[Create budget]] 버튼을 클릭합니다.
 
+    <img src="/images/step0/0-2-step18-review-budget.png" alt="Create budget 클릭" class="guide-img-md" />
+
 > [!NOTE]
 > Budget이 생성되면 Budgets 목록 페이지로 이동합니다. 생성된 Budget을 클릭하면 현재 사용량과 예산 대비 비율을 확인할 수 있습니다.
 
 19. 생성된 `Monthly-Cost-Budget`을 클릭하여 상세 페이지를 확인합니다.
+
+    <img src="/images/step0/0-2-step19-budget-complete.png" alt="Budget 상세 페이지" class="guide-img-md" />
+
 20. **Current vs. budgeted** 그래프에서 현재 사용량이 표시되는지 확인합니다.
+
+    <img src="/images/step0/0-2-step20-zero-spend.png" alt="사용량 그래프 확인" class="guide-img-md" />
 
 > [!TIP]
 > 계정을 방금 생성했다면 사용량이 $0.00으로 표시됩니다. 이후 실습을 진행하면서 이 페이지를 주기적으로 확인하세요.
@@ -225,14 +256,19 @@ AWS는 사용한 만큼 과금되는 종량제 모델입니다.
 
 ### 상세 단계
 
-21. Budgets 페이지에서 [[Create a budget]] 버튼을 클릭합니다.
+21. Budgets 페이지에서 [[Create budget]] 버튼을 클릭합니다.
 22. **Budget setup** 섹션에서 다음을 설정합니다:
     - **Budget type**: `Use a template (simplified)` 선택
     - **Templates**: `Zero spend budget` 선택
 
 23. **Budget name**을 확인합니다: `My Zero-Spend Budget` (기본값 유지 또는 변경)
 24. **Email recipients**에 본인 이메일 주소를 입력합니다.
+
+    <img src="/images/step0/0-2-step24-zero-complete.png" alt="Zero spend budget 설정" class="guide-img-md" />
+
 25. [[Create budget]] 버튼을 클릭합니다.
+
+    <img src="/images/step0/0-2-step25-budgets-list.png" alt="Budgets 목록 확인" class="guide-img-md" />
 
 > [!NOTE]
 > Zero spend budget은 예산 금액이 $0.01로 설정되어, 크레딧으로 커버되지 않는 실제 비용이 발생하면 즉시 이메일 알림을 보냅니다.  
@@ -261,6 +297,9 @@ AWS는 사용한 만큼 과금되는 종량제 모델입니다.
     - **예측 비용**: 이번 달 예상 총 비용
 
 28. **Group by** 드롭다운에서 `Service`를 선택합니다.
+
+    <img src="/images/step0/0-2-step28-cost-explorer.png" alt="Cost Explorer 서비스별 비용" class="guide-img-md" />
+
 29. 서비스별 비용 분포를 확인합니다.
 
 > [!TIP]
@@ -272,6 +311,9 @@ AWS는 사용한 만큼 과금되는 종량제 모델입니다.
 > - **크레딧 잔액**: 남은 크레딧과 소진 속도 확인
 
 30. 왼쪽 메뉴에서 **Free Tier**를 선택합니다.
+
+    <img src="/images/step0/0-2-step30-free-tier.png" alt="Free Tier 사용량 확인" class="guide-img-md" />
+
 31. 프리티어 사용량 현황을 확인합니다.
 
 > [!NOTE]
@@ -287,9 +329,17 @@ AWS는 사용한 만큼 과금되는 종량제 모델입니다.
 
 32. Billing and Cost Management 왼쪽 메뉴에서 **Billing preferences**를 선택합니다.
 33. **Alert preferences** 섹션에서 [[Edit]]를 클릭합니다.
+
+    <img src="/images/step0/0-2-step33-billing-pref.png" alt="Alert preferences Edit" class="guide-img-md" />
+
 34. ✅ **Receive AWS Free Tier alerts**를 선택합니다.
 35. 이메일 주소를 입력합니다.
+
+    <img src="/images/step0/0-2-step35-billing-pref2.png" alt="Free Tier alerts 설정" class="guide-img-sm" />
+
 36. [[Update]]를 클릭합니다.
+
+    <img src="/images/step0/0-2-step36-billing-pref3.png" alt="Update 완료" class="guide-img-md" />
 
 > [!NOTE]
 > 이 설정을 활성화하면 프리티어/크레딧 한도의 85%에 도달할 때 자동으로 이메일 알림을 받습니다.  
@@ -305,7 +355,12 @@ AWS는 사용한 만큼 과금되는 종량제 모델입니다.
 37. Billing and Cost Management → **Billing preferences**를 선택합니다.
 38. **Alert preferences** 섹션에서 [[Edit]]를 클릭합니다.
 39. ✅ **Receive CloudWatch billing alerts**를 선택합니다 (태스크 4.1에서 이미 Edit 화면에 있었다면 함께 체크).
+
+    <img src="/images/step0/0-2-step39-billing-pref4.png" alt="CloudWatch billing alerts 체크" class="guide-img-sm" />
+
 40. [[Update]]를 클릭합니다.
+
+    <img src="/images/step0/0-2-step40-billing-pref5.png" alt="Update 완료" class="guide-img-md" />
 
 > [!WARNING]
 > 이 설정을 활성화하지 않으면 CloudWatch에서 **Billing** 네임스페이스가 표시되지 않습니다.  
@@ -320,25 +375,52 @@ AWS는 사용한 만큼 과금되는 종량제 모델입니다.
 > Billing and Cost Management 콘솔은 글로벌 서비스이지만, CloudWatch의 **Billing 메트릭 데이터**는 us-east-1 리전에만 저장됩니다.  
 > 따라서 Billing 알람은 반드시 us-east-1에서 생성해야 합니다.
 
-43. 왼쪽 메뉴에서 **Alarms** → **All alarms**를 선택합니다.
+43. 왼쪽 메뉴에서 **Alarms**를 선택합니다.
 44. [[Create alarm]] 버튼을 클릭합니다.
+
+    <img src="/images/step0/0-2-step44-cloudwatch.png" alt="Create alarm" class="guide-img-md" />
+
 45. [[Select metric]] 버튼을 클릭합니다.
+
+    <img src="/images/step0/0-2-step45-create-alarm.png" alt="Select metric" class="guide-img-md" />
+
 46. **Billing** → **Total Estimated Charge** → **USD** 선택 후 [[Select metric]]을 클릭합니다.
+
+    <img src="/images/step0/0-2-step46-metric.png" alt="Billing metric 선택" class="guide-img-md" />
+
 47. **Conditions** 섹션에서 다음을 설정합니다:
     - **Threshold type**: `Static` 선택
     - **Whenever EstimatedCharges is...**: `Greater` 선택
     - **than...**: `5` (USD) 입력
 48. [[Next]]를 클릭합니다.
+
+    <img src="/images/step0/0-2-step48-alarm-condition.png" alt="Alarm 조건 설정 완료" class="guide-img-md" />
 49. **Configure actions** 페이지의 **Notification** 섹션에서 다음을 설정합니다:
     - **Alarm state trigger**: `In alarm` 선택 (기본값)
     - **Send a notification to the following SNS topic**: `Create new topic` 선택
     - **Create a new topic...**: `Default_CloudWatch_Alarms_Topic` (기본값 유지)
     - **Email endpoints that will receive the notification...**: 본인 이메일 주소 입력
     - [[Create topic]]을 클릭합니다.
+
+    <img src="/images/step0/0-2-step49-notification.png" alt="Notification 설정" class="guide-img-md" />
+
 50. [[Next]]를 클릭합니다.
+
+    <img src="/images/step0/0-2-step50-next.png" alt="Next 클릭" class="guide-img-md" />
+
 51. **Add alarm details** 페이지에서 **Alarm name**: `Billing-Over-5USD` 입력
+
+    <img src="/images/step0/0-2-step51-alarm-name.png" alt="Alarm name 입력" class="guide-img-md" />
+
 52. [[Next]]를 클릭하여 **Preview and create** 페이지에서 설정을 확인합니다.
+
+    <img src="/images/step0/0-2-step52-preview.png" alt="Preview and create" class="guide-img-md" />
+
 53. [[Create alarm]] 버튼을 클릭합니다.
+
+    <img src="/images/step0/0-2-step53-alarm-created.png" alt="Alarm 생성 완료" class="guide-img-md" />
+
+    <img src="/images/step0/0-2-step53-alarm-list.png" alt="Alarm 목록 확인" class="guide-img-md" />
 
 > [!WARNING]
 > SNS 토픽을 새로 생성하면 입력한 이메일로 **구독 확인(Subscription Confirmation)** 메일이 전송됩니다.  
