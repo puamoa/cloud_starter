@@ -175,8 +175,138 @@ S3 버킷: my-app-bucket
 
 ---
 
-## 4. 파일 스토리지 (Amazon EFS)
+## 4. S3 보안과 접근 제어
 
+> [!CONCEPT] S3 접근 제어의 3가지 계층
+> S3의 접근 제어는 **Block Public Access**(버킷 레벨 차단), **버킷 정책**(JSON 정책 문서), **IAM 정책**(사용자/역할 레벨)의 3계층으로 구성됩니다.
+> 이 중 하나라도 "거부"하면 접근이 차단됩니다.
+
+### 주요 용어
+
+| 용어 | 설명 |
+| ---- | ---- |
+| **Block Public Access** | 버킷/계정 레벨에서 퍼블릭 접근을 일괄 차단하는 안전장치 |
+| **버킷 정책 (Bucket Policy)** | 버킷에 연결하는 JSON 기반 접근 제어 정책. "누가, 무엇을, 어떤 조건에서" 허용/거부 |
+| **ACL (Access Control List)** | 레거시 접근 제어 방식. 2023년 이후 기본 비활성화, 사용 비권장 |
+| **Presigned URL** | 일정 시간만 유효한 임시 접근 URL. 인증 없이 특정 객체에 접근 허용 |
+| **OAC (Origin Access Control)** | CloudFront에서 S3에 접근할 때 사용하는 인증 방식 |
+
+### 접근 제어 계층 구조
+
+```
+외부 요청 → [Block Public Access] → [버킷 정책] → [IAM 정책] → 허용/거부
+                    │                     │              │
+                    │ 전부 차단 설정이면   │              │
+                    └── ❌ 즉시 거부      │              │
+                                          │              │
+                              Principal, Action,    사용자/역할에
+                              Resource, Condition   부여된 권한 확인
+                              으로 세밀하게 제어
+```
+
+### Block Public Access
+
+버킷 생성 시 **기본 활성화**되며, 의도하지 않은 퍼블릭 노출을 방지합니다.
+
+| 설정 | 효과 |
+| ---- | ---- |
+| Block new ACLs | 새 ACL로 공개 설정하는 것을 차단 |
+| Block any ACLs | 기존 포함 모든 ACL 공개를 무시 |
+| Block new policies | 새 버킷 정책으로 공개 설정 차단 |
+| Block any policies | 모든 정책의 공개 설정 차단 |
+
+> [!WARNING]
+> 정적 웹 호스팅 등 의도적 공개가 필요한 경우에만 해제하세요. 해제 후에도 버킷 정책이 없으면 공개되지 않습니다.
+
+### 버킷 정책 vs ACL vs IAM 정책
+
+| 항목 | 버킷 정책 | ACL | IAM 정책 |
+| ---- | --------- | --- | -------- |
+| 형식 | JSON | 미리 정의된 권한 | JSON |
+| 적용 대상 | 버킷/객체 경로 | 개별 객체/버킷 | IAM 사용자/역할 |
+| 외부 접근 | ✅ (Principal: *) | ✅ | ❌ (내부만) |
+| 조건부 제어 | IP, 시간, VPC 등 | ❌ | 서비스, 리전 등 |
+| 권장 | ✅ AWS 권장 | ❌ 레거시 | ✅ 내부 사용자용 |
+
+---
+
+## 5. S3 버전 관리 (Versioning)
+
+> [!CONCEPT] 버전 관리란?
+> **버전 관리**를 활성화하면 같은 키(파일명)로 객체를 업로드할 때마다 새 버전이 생성되고, 이전 버전도 보존됩니다. 실수로 덮어쓰거나 삭제해도 이전 상태로 복원할 수 있습니다.
+
+### 주요 용어
+
+| 용어 | 설명 |
+| ---- | ---- |
+| **버전 ID (Version ID)** | 각 버전을 식별하는 고유 문자열. 버전 관리 활성화 전 객체는 `null` |
+| **Delete Marker** | 삭제 시 추가되는 표시. 실제 데이터는 남아있고 마커만 추가됨 |
+| **현재 버전 (Current)** | 가장 최근 업로드된 버전. Object URL로 접근 시 이 버전이 반환됨 |
+| **비현재 버전 (Noncurrent)** | 이전 버전들. Version ID를 지정해야 접근 가능 |
+
+### 버전 관리 상태
+
+| 상태 | 동작 |
+| ---- | ---- |
+| **비활성화 (Disabled)** | 덮어쓰면 이전 데이터 영구 삭제. 복원 불가 |
+| **활성화 (Enabled)** | 덮어쓰면 새 버전 생성, 이전 버전 보존 |
+| **일시 중지 (Suspended)** | 새 버전을 만들지 않지만 기존 버전은 유지 |
+
+### 동작 흐름
+
+```
+버전 관리 OFF:
+  upload v1 → upload v2 → v1 영구 삭제됨 (복원 불가)
+
+버전 관리 ON:
+  upload v1 → upload v2 → v1, v2 모두 보존
+                            │
+                            ├── GET /file → v2 반환 (현재 버전)
+                            └── GET /file?versionId=v1 → v1 반환
+
+삭제 시:
+  DELETE /file → Delete Marker 추가 (데이터 유지)
+                  │
+                  ├── GET /file → 404 (Delete Marker가 가림)
+                  └── Delete Marker 삭제 → v2 복원!
+```
+
+> [!NOTE]
+> 💸 모든 버전이 저장 용량에 포함되어 과금됩니다. 불필요한 이전 버전은 수명 주기 규칙으로 자동 삭제하여 비용을 관리합니다.
+
+---
+
+## 6. S3 암호화
+
+> [!CONCEPT] S3 서버 측 암호화 (Server-Side Encryption)
+> S3는 객체를 저장할 때 자동으로 암호화하고, 읽을 때 자동으로 복호화합니다. 2023년 1월부터 모든 새 객체에 **SSE-S3가 기본 적용**됩니다.
+
+### 암호화 방식 비교
+
+| 방식 | 키 관리 | 비용 | 적합한 경우 |
+| ---- | ------- | ---- | ----------- |
+| **SSE-S3** | AWS가 자동 관리 | 무료 | 대부분의 경우 (기본값) |
+| **SSE-KMS** | AWS KMS 키 사용 | KMS 요청당 과금 | 키 감사, 교차 계정 접근 제어 필요 시 |
+| **SSE-C** | 고객이 키 제공 | 무료 | 자체 키 관리 시스템이 있는 경우 |
+| **CSE** | 클라이언트에서 암호화 | 무료 | 업로드 전에 이미 암호화 필요 |
+
+### 암호화 동작
+
+```
+SSE-S3 (기본):
+  [클라이언트] → PUT 객체 → [S3] → 자동 암호화 후 저장
+  [클라이언트] ← GET 응답 ← [S3] ← 자동 복호화 후 반환
+
+  사용자가 신경 쓸 것: 없음 (완전 투명)
+```
+
+> [!TIP]
+> 대부분의 워크로드에서는 SSE-S3(기본값)로 충분합니다. 금융/의료 등 규정 준수가 필요하거나 키 감사 추적이 필요한 경우에만 SSE-KMS를 사용합니다.
+
+
+---
+
+## 7. 파일 스토리지 (Amazon EFS)
 > [!CONCEPT] 파일 스토리지와 EFS
 > **파일 스토리지**는 계층적 디렉토리 구조로 데이터를 저장하며, NFS 프로토콜을 통해 여러 인스턴스가 동시에 접근할 수 있습니다. 공유 파일 시스템이 필요한 워크로드에 적합합니다.
 
@@ -220,7 +350,7 @@ S3 버킷: my-app-bucket
 
 ---
 
-## 5. 내구성과 가용성
+## 8. 내구성과 가용성
 
 > [!CONCEPT] 내구성과 가용성의 차이
 > **내구성**(Durability)은 데이터가 손실되지 않을 확률이고, **가용성**(Availability)은 서비스에 접근할 수 있는 시간 비율입니다. 둘은 다른 개념이며, 높은 내구성이 높은 가용성을 보장하지 않습니다.
@@ -253,7 +383,7 @@ S3 버킷: my-app-bucket
 
 ---
 
-## 6. 스토리지 클래스 (Hot/Warm/Cold)
+## 9. 스토리지 클래스 (Hot/Warm/Cold)
 
 > [!CONCEPT] 스토리지 클래스와 데이터 온도
 > 데이터는 접근 빈도에 따라 **Hot**(자주 접근), **Warm**(가끔 접근), **Cold**(거의 접근 안 함)로 분류됩니다. 접근 빈도가 낮을수록 저렴한 스토리지 클래스를 사용하여 비용을 최적화합니다.
@@ -305,7 +435,7 @@ S3 버킷: my-app-bucket
 
 ---
 
-## 7. CDN (Content Delivery Network) 개념
+## 10. CDN (Content Delivery Network) 개념
 
 > [!CONCEPT] CDN의 동작 원리
 > **CDN**은 전 세계에 분산된 엣지 서버에 콘텐츠를 캐싱하여, 사용자와 가장 가까운 서버에서 콘텐츠를 제공하는 네트워크입니다. AWS CloudFront가 대표적인 CDN 서비스입니다.
@@ -364,7 +494,7 @@ CDN 사용:
 
 ---
 
-## 8. 캐싱 전략
+## 11. 캐싱 전략
 
 > [!CONCEPT] 캐싱 전략과 패턴
 > **캐싱**은 자주 접근하는 데이터를 빠른 저장소에 임시 보관하여 응답 속도를 높이는 전략입니다. 캐시 적중률(Hit Rate)을 높이는 것이 핵심이며, 데이터 일관성과의 트레이드오프를 고려해야 합니다.
@@ -417,17 +547,139 @@ CDN 사용:
 
 ---
 
+## 12. CORS (Cross-Origin Resource Sharing)
+
+> [!CONCEPT] CORS란?
+> **CORS**는 웹 브라우저가 현재 페이지의 도메인(Origin)과 다른 도메인으로 요청을 보낼 때 적용되는 보안 메커니즘입니다.
+> 브라우저의 **Same-Origin Policy**(동일 출처 정책)에 의해 기본적으로 교차 도메인 요청이 차단되며, 서버가 CORS 헤더를 통해 특정 도메인의 접근을 명시적으로 허용해야 통신이 가능합니다.
+
+### Origin이란?
+
+Origin(출처)은 **프로토콜 + 도메인 + 포트**의 조합입니다. 하나라도 다르면 다른 Origin으로 간주됩니다.
+
+| URL | Origin |
+| --- | ------ |
+| `http://localhost:5173` | http + localhost + 5173 |
+| `http://localhost:3000` | http + localhost + 3000 (**포트 다름 → 다른 Origin**) |
+| `https://my-bucket.s3.amazonaws.com` | https + s3.amazonaws.com + 443 |
+| `https://www.mydomain.com` | https + www.mydomain.com + 443 |
+
+### 왜 CORS가 필요한가?
+
+```
+CORS가 없다면:
+
+  [악성 웹사이트] evil.com
+       │
+       │ JavaScript로 사용자의 브라우저를 이용
+       ▼
+  [은행 API] bank.com/api/transfer
+       │
+       └── 사용자 모르게 송금 요청 → 💀 보안 사고
+
+CORS가 있으면:
+
+  [악성 웹사이트] evil.com
+       │
+       │ JavaScript로 요청 시도
+       ▼
+  [은행 API] bank.com
+       │
+       └── CORS 헤더에 evil.com이 없음 → ❌ 브라우저가 차단
+```
+
+Same-Origin Policy는 이런 공격을 원천 차단합니다. 하지만 정상적인 교차 도메인 통신(예: 프론트엔드에서 S3로 파일 업로드)도 차단하므로, 서버에서 CORS 설정으로 허용할 도메인을 명시합니다.
+
+### CORS 동작 방식: Preflight 요청
+
+브라우저는 실제 요청을 보내기 전에 **Preflight(사전 확인)** 요청을 먼저 보냅니다.
+
+```
+1. [브라우저] → OPTIONS /upload (Preflight 요청)
+   "PUT 메서드를 써도 되나요? Origin은 localhost:5173입니다"
+
+2. [S3 서버] ← 200 OK + CORS 응답 헤더
+   "Access-Control-Allow-Origin: http://localhost:5173"
+   "Access-Control-Allow-Methods: GET, PUT, POST"
+
+3. [브라우저] 허용 확인 → 실제 PUT 요청 전송
+   (Preflight 결과는 MaxAgeSeconds 동안 캐시하여 매번 보내지 않음)
+```
+
+> [!NOTE]
+> 단순 GET 요청(Simple Request)은 Preflight 없이 바로 전송됩니다. PUT, DELETE, 또는 커스텀 헤더가 포함된 요청만 Preflight가 발생합니다.
+
+### S3 CORS 설정의 주요 항목
+
+| 항목 | 설명 | 예시 |
+| ---- | ---- | ---- |
+| **AllowedOrigins** | 허용할 도메인 목록. `*`는 전체 허용 (프로덕션 비권장) | `["http://localhost:5173", "https://www.mydomain.com"]` |
+| **AllowedMethods** | 허용할 HTTP 메서드 | `["GET", "PUT", "POST", "DELETE"]` |
+| **AllowedHeaders** | 허용할 요청 헤더. `*`는 전체 허용 | `["*"]` 또는 `["Content-Type", "Authorization"]` |
+| **ExposeHeaders** | 브라우저에서 읽을 수 있도록 노출할 응답 헤더 | `["ETag", "x-amz-request-id"]` |
+| **MaxAgeSeconds** | Preflight 결과 캐시 시간 (초) | `3600` (1시간) |
+
+### 실무 CORS 설정 패턴
+
+**개발 환경 (로컬):**
+
+```json
+[
+  {
+    "AllowedHeaders": ["*"],
+    "AllowedMethods": ["GET", "PUT", "POST", "DELETE"],
+    "AllowedOrigins": ["http://localhost:5173", "http://localhost:3000"],
+    "ExposeHeaders": ["ETag"],
+    "MaxAgeSeconds": 3600
+  }
+]
+```
+
+**프로덕션 환경:**
+
+```json
+[
+  {
+    "AllowedHeaders": ["Content-Type", "Authorization", "x-amz-content-sha256"],
+    "AllowedMethods": ["GET", "PUT"],
+    "AllowedOrigins": ["https://www.mydomain.com"],
+    "ExposeHeaders": ["ETag"],
+    "MaxAgeSeconds": 86400
+  }
+]
+```
+
+> [!WARNING]
+> `AllowedOrigins: ["*"]`는 모든 도메인에서 접근을 허용합니다. 개발 테스트에서는 편리하지만, 프로덕션에서는 반드시 실제 도메인만 명시하세요.
+
+### CORS 에러 트러블슈팅
+
+브라우저 콘솔에 다음과 같은 에러가 나타나면 CORS 설정을 확인하세요:
+
+| 에러 메시지 | 원인 | 해결 |
+| ----------- | ---- | ---- |
+| `Access to XMLHttpRequest has been blocked by CORS policy` | S3에 CORS 미설정 또는 Origin 미등록 | AllowedOrigins에 프론트엔드 도메인 추가 |
+| `Method PUT is not allowed by Access-Control-Allow-Methods` | AllowedMethods에 PUT 미포함 | AllowedMethods에 필요한 메서드 추가 |
+| `Request header field authorization is not allowed` | AllowedHeaders에 해당 헤더 미포함 | AllowedHeaders에 `"*"` 또는 해당 헤더 추가 |
+| CORS 설정 변경 후에도 에러 지속 | 브라우저 Preflight 캐시 | 브라우저 캐시 삭제 또는 시크릿 창에서 테스트 |
+
+---
+
 ## 핵심 정리
 
 | 개념              | 한 줄 요약                             |
 | ----------------- | -------------------------------------- |
 | 블록 스토리지     | 고성능 I/O, 단일 인스턴스 연결 (EBS)   |
 | 오브젝트 스토리지 | 무제한 확장, HTTP API 접근 (S3)        |
+| S3 접근 제어      | Block Public Access + 버킷 정책 + IAM  |
+| S3 버전 관리      | 덮어쓰기/삭제 시 이전 버전 자동 보존   |
+| S3 암호화         | SSE-S3 기본 적용, 저장 시 자동 암호화  |
 | 파일 스토리지     | 공유 파일 시스템, 다중 접근 (EFS)      |
 | 내구성 vs 가용성  | 데이터 손실 확률 vs 접근 가능 시간     |
 | 스토리지 클래스   | 접근 빈도에 따른 비용 최적화 계층      |
 | CDN               | 엣지 캐싱으로 지연 시간 최소화         |
 | 캐싱 전략         | 빠른 응답을 위한 데이터 임시 보관 패턴 |
+| CORS              | 브라우저 교차 도메인 요청 허용 설정    |
 
 ---
 
