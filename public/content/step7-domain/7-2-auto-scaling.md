@@ -664,6 +664,8 @@ aws autoscaling describe-scaling-activities \
 > | CloudWatch 알람 × 2    | $0.10/알람/월  | $0.20          | ASG 삭제 시 자동 삭제   |
 > | Launch Template        | $0             | $0             | 무료                    |
 >
+> ※ 위 금액은 작성 시점 기준 참고 값이며, 실제 요금은 리전, 환율, AWS 정책 변경에 따라 상이할 수 있습니다.
+>
 > **ASG + ALB를 삭제하지 않으면 EC2 인스턴스가 계속 실행되어 비용이 발생합니다.**
 
 > [!NOTE]

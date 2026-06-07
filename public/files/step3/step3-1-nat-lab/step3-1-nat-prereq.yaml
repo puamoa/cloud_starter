@@ -1,37 +1,178 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: 'NAT Lab Prerequisites - VPC, Public/Private Subnets, IGW, Route Tables, Security Groups'
+Description: >
+  Step 3-1 NAT Lab Prerequisites.
+  Creates VPC, Public/Private Subnets (2 AZs), IGW, Route Tables, Security Groups, IAM Role.
+  NAT Instance, NAT Gateway, Bastion, and Private EC2 are created manually during the lab.
 
+# =============================================================================
+# Metadata - CloudFormation 콘솔에서 파라미터 입력 화면의 그룹과 순서를 지정
+# =============================================================================
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: 'Required Settings (Check Before Create)'
+        Parameters:
+          - ProjectName
+          - SSHAccessCidr
+      - Label:
+          default: 'Network CIDR (Keep Default)'
+        Parameters:
+          - VpcCidr
+          - PublicSubnetACidr
+          - PublicSubnetCCidr
+          - PrivateSubnetACidr
+          - PrivateSubnetCCidr
+      - Label:
+          default: 'Tags (Keep Default)'
+        Parameters:
+          - CreatedByTag
+          - StepTag
+          - SessionTag
+    ParameterLabels:
+      ProjectName:
+        default: 'Project Name (Resource Prefix)'
+      SSHAccessCidr:
+        default: 'SSH Access IP (Use Your IP recommended)'
+      VpcCidr:
+        default: 'VPC CIDR'
+      PublicSubnetACidr:
+        default: 'Public Subnet A CIDR'
+      PublicSubnetCCidr:
+        default: 'Public Subnet C CIDR'
+      PrivateSubnetACidr:
+        default: 'Private Subnet A CIDR'
+      PrivateSubnetCCidr:
+        default: 'Private Subnet C CIDR'
+      CreatedByTag:
+        default: 'CreatedBy Tag'
+      StepTag:
+        default: 'Step Tag'
+      SessionTag:
+        default: 'Session Tag'
+
+# =============================================================================
+# Parameters - 스택 생성 시 사용자가 입력하는 값
+# =============================================================================
+Parameters:
+  # ---------------------------------------------------------------------------
+  # 프로젝트 이름 (모든 리소스의 접두사로 사용)
+  # 예: 'my' → my-vpc, my-public-subnet-a, my-public-sg 등
+  # ---------------------------------------------------------------------------
+  ProjectName:
+    Type: String
+    Default: my
+    Description: >
+      Prefix for all resource names.
+      Example: 'my' creates 'my-vpc', 'my-public-subnet-a', etc.
+    AllowedPattern: '[a-zA-Z][a-zA-Z0-9-]*'
+    ConstraintDescription: Must start with a letter. Only letters, numbers, and hyphens allowed.
+    MinLength: 1
+    MaxLength: 20
+
+  # ---------------------------------------------------------------------------
+  # VPC CIDR - VPC의 전체 IP 주소 범위
+  # ---------------------------------------------------------------------------
+  VpcCidr:
+    Type: String
+    Default: 10.0.0.0/16
+    Description: IPv4 CIDR block for the VPC
+    AllowedPattern: '(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})/(\d{1,2})'
+
+  # ---------------------------------------------------------------------------
+  # 서브넷 CIDR - 2개 AZ (고가용성 구성)
+  # ---------------------------------------------------------------------------
+  PublicSubnetACidr:
+    Type: String
+    Default: 10.0.1.0/24
+    Description: CIDR block for Public Subnet A (ap-northeast-2a)
+    AllowedPattern: '(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})/(\d{1,2})'
+
+  PublicSubnetCCidr:
+    Type: String
+    Default: 10.0.2.0/24
+    Description: CIDR block for Public Subnet C (ap-northeast-2c)
+    AllowedPattern: '(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})/(\d{1,2})'
+
+  PrivateSubnetACidr:
+    Type: String
+    Default: 10.0.11.0/24
+    Description: CIDR block for Private Subnet A (ap-northeast-2a)
+    AllowedPattern: '(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})/(\d{1,2})'
+
+  PrivateSubnetCCidr:
+    Type: String
+    Default: 10.0.12.0/24
+    Description: CIDR block for Private Subnet C (ap-northeast-2c)
+    AllowedPattern: '(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})/(\d{1,2})'
+
+  # ---------------------------------------------------------------------------
+  # SSH 접근 허용 IP
+  # ---------------------------------------------------------------------------
+  SSHAccessCidr:
+    Type: String
+    Default: 0.0.0.0/0
+    Description: >
+      IP range allowed for SSH access (port 22).
+      Use 'x.x.x.x/32' for a single IP. Default 0.0.0.0/0 allows all.
+    AllowedPattern: '(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})/(\d{1,2})'
+
+  # ---------------------------------------------------------------------------
+  # 태그 설정
+  # ---------------------------------------------------------------------------
+  CreatedByTag:
+    Type: String
+    Default: cloudformation
+    Description: Value for the CreatedBy tag applied to all resources
+
+  StepTag:
+    Type: String
+    Default: step3
+    Description: Value for the Step tag (used for grouping resources by step)
+
+  SessionTag:
+    Type: String
+    Default: '3-1'
+    Description: Value for the Session tag (used for grouping resources by session)
+
+# =============================================================================
+# Resources - 실제 생성할 AWS 리소스 정의
+# =============================================================================
 Resources:
+  # ---------------------------------------------------------------------------
   # VPC
+  # ---------------------------------------------------------------------------
   VPC:
     Type: AWS::EC2::VPC
     Properties:
-      CidrBlock: 10.0.0.0/16
+      CidrBlock: !Ref VpcCidr
       EnableDnsSupport: true
       EnableDnsHostnames: true
       Tags:
         - Key: Name
-          Value: my-vpc
+          Value: !Sub '${ProjectName}-vpc'
         - Key: CreatedBy
-          Value: cloudformation
+          Value: !Ref CreatedByTag
         - Key: Step
-          Value: step3
+          Value: !Ref StepTag
         - Key: Session
-          Value: '3-1'
+          Value: !Ref SessionTag
 
+  # ---------------------------------------------------------------------------
   # Internet Gateway
+  # ---------------------------------------------------------------------------
   InternetGateway:
     Type: AWS::EC2::InternetGateway
     Properties:
       Tags:
         - Key: Name
-          Value: my-igw
+          Value: !Sub '${ProjectName}-igw'
         - Key: CreatedBy
-          Value: cloudformation
+          Value: !Ref CreatedByTag
         - Key: Step
-          Value: step3
+          Value: !Ref StepTag
         - Key: Session
-          Value: '3-1'
+          Value: !Ref SessionTag
 
   AttachGateway:
     Type: AWS::EC2::VPCGatewayAttachment
@@ -39,55 +180,96 @@ Resources:
       VpcId: !Ref VPC
       InternetGatewayId: !Ref InternetGateway
 
-  # Public Subnet
+  # ---------------------------------------------------------------------------
+  # Public Subnets (2 AZs)
+  # ---------------------------------------------------------------------------
   PublicSubnetA:
     Type: AWS::EC2::Subnet
     Properties:
       VpcId: !Ref VPC
-      CidrBlock: 10.0.1.0/24
-      AvailabilityZone: !Select [0, !GetAZs '']
+      CidrBlock: !Ref PublicSubnetACidr
+      AvailabilityZone: ap-northeast-2a
       MapPublicIpOnLaunch: true
       Tags:
         - Key: Name
-          Value: my-public-subnet-a
+          Value: !Sub '${ProjectName}-public-subnet-a'
         - Key: CreatedBy
-          Value: cloudformation
+          Value: !Ref CreatedByTag
         - Key: Step
-          Value: step3
+          Value: !Ref StepTag
         - Key: Session
-          Value: '3-1'
+          Value: !Ref SessionTag
 
-  # Private Subnet
+  PublicSubnetC:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: !Ref PublicSubnetCCidr
+      AvailabilityZone: ap-northeast-2c
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: !Sub '${ProjectName}-public-subnet-c'
+        - Key: CreatedBy
+          Value: !Ref CreatedByTag
+        - Key: Step
+          Value: !Ref StepTag
+        - Key: Session
+          Value: !Ref SessionTag
+
+  # ---------------------------------------------------------------------------
+  # Private Subnets (2 AZs)
+  # ---------------------------------------------------------------------------
   PrivateSubnetA:
     Type: AWS::EC2::Subnet
     Properties:
       VpcId: !Ref VPC
-      CidrBlock: 10.0.11.0/24
-      AvailabilityZone: !Select [0, !GetAZs '']
+      CidrBlock: !Ref PrivateSubnetACidr
+      AvailabilityZone: ap-northeast-2a
+      MapPublicIpOnLaunch: false
       Tags:
         - Key: Name
-          Value: my-private-subnet-a
+          Value: !Sub '${ProjectName}-private-subnet-a'
         - Key: CreatedBy
-          Value: cloudformation
+          Value: !Ref CreatedByTag
         - Key: Step
-          Value: step3
+          Value: !Ref StepTag
         - Key: Session
-          Value: '3-1'
+          Value: !Ref SessionTag
 
-  # Public Route Table
+  PrivateSubnetC:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: !Ref PrivateSubnetCCidr
+      AvailabilityZone: ap-northeast-2c
+      MapPublicIpOnLaunch: false
+      Tags:
+        - Key: Name
+          Value: !Sub '${ProjectName}-private-subnet-c'
+        - Key: CreatedBy
+          Value: !Ref CreatedByTag
+        - Key: Step
+          Value: !Ref StepTag
+        - Key: Session
+          Value: !Ref SessionTag
+
+  # ---------------------------------------------------------------------------
+  # Public Route Table (공유 - 2개 Public Subnet 모두 연결)
+  # ---------------------------------------------------------------------------
   PublicRouteTable:
     Type: AWS::EC2::RouteTable
     Properties:
       VpcId: !Ref VPC
       Tags:
         - Key: Name
-          Value: my-public-rt
+          Value: !Sub '${ProjectName}-public-rt'
         - Key: CreatedBy
-          Value: cloudformation
+          Value: !Ref CreatedByTag
         - Key: Step
-          Value: step3
+          Value: !Ref StepTag
         - Key: Session
-          Value: '3-1'
+          Value: !Ref SessionTag
 
   PublicRoute:
     Type: AWS::EC2::Route
@@ -103,87 +285,207 @@ Resources:
       SubnetId: !Ref PublicSubnetA
       RouteTableId: !Ref PublicRouteTable
 
-  # Private Route Table
-  PrivateRouteTable:
+  PublicSubnetCRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnetC
+      RouteTableId: !Ref PublicRouteTable
+
+  # ---------------------------------------------------------------------------
+  # Private Route Tables (AZ별 분리 - 이후 NAT를 AZ별로 연결하기 위함)
+  # ---------------------------------------------------------------------------
+  PrivateRouteTableA:
     Type: AWS::EC2::RouteTable
     Properties:
       VpcId: !Ref VPC
       Tags:
         - Key: Name
-          Value: my-private-rt
+          Value: !Sub '${ProjectName}-private-rt-a'
         - Key: CreatedBy
-          Value: cloudformation
+          Value: !Ref CreatedByTag
         - Key: Step
-          Value: step3
+          Value: !Ref StepTag
         - Key: Session
-          Value: '3-1'
+          Value: !Ref SessionTag
 
   PrivateSubnetARouteTableAssociation:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
       SubnetId: !Ref PrivateSubnetA
-      RouteTableId: !Ref PrivateRouteTable
+      RouteTableId: !Ref PrivateRouteTableA
 
-  # Public Security Group
+  PrivateRouteTableC:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Sub '${ProjectName}-private-rt-c'
+        - Key: CreatedBy
+          Value: !Ref CreatedByTag
+        - Key: Step
+          Value: !Ref StepTag
+        - Key: Session
+          Value: !Ref SessionTag
+
+  PrivateSubnetCRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PrivateSubnetC
+      RouteTableId: !Ref PrivateRouteTableC
+
+  # ---------------------------------------------------------------------------
+  # Security Group - Public Instances (Bastion, NAT Instance)
+  # ---------------------------------------------------------------------------
   PublicSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupDescription: Security group for public instances
+      GroupName: !Sub '${ProjectName}-public-sg'
+      GroupDescription: !Sub 'Security group for ${ProjectName} public instances (Bastion, NAT Instance)'
       VpcId: !Ref VPC
       SecurityGroupIngress:
         - IpProtocol: tcp
           FromPort: 22
           ToPort: 22
-          CidrIp: 0.0.0.0/0
-          Description: SSH from anywhere
+          CidrIp: !Ref SSHAccessCidr
+          Description: SSH access from allowed IPs
         - IpProtocol: -1
-          CidrIp: 10.0.0.0/16
-          Description: All traffic from VPC
+          CidrIp: !Ref VpcCidr
+          Description: All traffic from VPC internal
       Tags:
         - Key: Name
-          Value: my-public-sg
+          Value: !Sub '${ProjectName}-public-sg'
         - Key: CreatedBy
-          Value: cloudformation
+          Value: !Ref CreatedByTag
         - Key: Step
-          Value: step3
+          Value: !Ref StepTag
         - Key: Session
-          Value: '3-1'
+          Value: !Ref SessionTag
 
-  # Private Security Group
+  # ---------------------------------------------------------------------------
+  # Security Group - Private Instances
+  # ---------------------------------------------------------------------------
   PrivateSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupDescription: Security group for private instances
+      GroupName: !Sub '${ProjectName}-private-sg'
+      GroupDescription: !Sub 'Security group for ${ProjectName} private instances'
       VpcId: !Ref VPC
       SecurityGroupIngress:
         - IpProtocol: tcp
           FromPort: 22
           ToPort: 22
-          CidrIp: 10.0.0.0/16
-          Description: SSH from VPC
+          CidrIp: !Ref VpcCidr
+          Description: SSH from VPC internal (via Bastion)
       Tags:
         - Key: Name
-          Value: my-private-sg
+          Value: !Sub '${ProjectName}-private-sg'
         - Key: CreatedBy
-          Value: cloudformation
+          Value: !Ref CreatedByTag
         - Key: Step
-          Value: step3
+          Value: !Ref StepTag
         - Key: Session
-          Value: '3-1'
+          Value: !Ref SessionTag
 
+  # ---------------------------------------------------------------------------
+  # IAM Role - EC2 SSM Role
+  # ---------------------------------------------------------------------------
+  EC2SSMRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub '${ProjectName}-ec2-ssm-role'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ec2.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+      Tags:
+        - Key: Name
+          Value: !Sub '${ProjectName}-ec2-ssm-role'
+        - Key: CreatedBy
+          Value: !Ref CreatedByTag
+        - Key: Step
+          Value: !Ref StepTag
+        - Key: Session
+          Value: !Ref SessionTag
+
+  EC2SSMInstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      InstanceProfileName: !Sub '${ProjectName}-ec2-ssm-role'
+      Roles:
+        - !Ref EC2SSMRole
+
+# =============================================================================
+# Outputs
+# =============================================================================
 Outputs:
   VPCId:
     Description: VPC ID
     Value: !Ref VPC
+    Export:
+      Name: !Sub '${AWS::StackName}-VPCId'
+
+  VPCCidr:
+    Description: VPC CIDR Block
+    Value: !Ref VpcCidr
+
   PublicSubnetAId:
-    Description: Public Subnet A ID
+    Description: Public Subnet A ID (ap-northeast-2a)
     Value: !Ref PublicSubnetA
+    Export:
+      Name: !Sub '${AWS::StackName}-PublicSubnetAId'
+
+  PublicSubnetCId:
+    Description: Public Subnet C ID (ap-northeast-2c)
+    Value: !Ref PublicSubnetC
+    Export:
+      Name: !Sub '${AWS::StackName}-PublicSubnetCId'
+
   PrivateSubnetAId:
-    Description: Private Subnet A ID
+    Description: Private Subnet A ID (ap-northeast-2a)
     Value: !Ref PrivateSubnetA
+    Export:
+      Name: !Sub '${AWS::StackName}-PrivateSubnetAId'
+
+  PrivateSubnetCId:
+    Description: Private Subnet C ID (ap-northeast-2c)
+    Value: !Ref PrivateSubnetC
+    Export:
+      Name: !Sub '${AWS::StackName}-PrivateSubnetCId'
+
   PublicSecurityGroupId:
-    Description: Public Security Group ID
+    Description: Public Security Group ID (for Bastion, NAT Instance)
     Value: !Ref PublicSecurityGroup
+    Export:
+      Name: !Sub '${AWS::StackName}-PublicSGId'
+
   PrivateSecurityGroupId:
-    Description: Private Security Group ID
+    Description: Private Security Group ID (for Private EC2)
     Value: !Ref PrivateSecurityGroup
+    Export:
+      Name: !Sub '${AWS::StackName}-PrivateSGId'
+
+  PublicRouteTableId:
+    Description: Public Route Table ID
+    Value: !Ref PublicRouteTable
+
+  PrivateRouteTableAId:
+    Description: Private Route Table A ID (ap-northeast-2a)
+    Value: !Ref PrivateRouteTableA
+
+  PrivateRouteTableCId:
+    Description: Private Route Table C ID (ap-northeast-2c)
+    Value: !Ref PrivateRouteTableC
+
+  EC2SSMRoleArn:
+    Description: IAM Role ARN for EC2 SSM access
+    Value: !GetAtt EC2SSMRole.Arn
+
+  EC2SSMInstanceProfileName:
+    Description: Instance Profile name to attach to EC2
+    Value: !Ref EC2SSMInstanceProfile

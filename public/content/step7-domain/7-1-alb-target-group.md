@@ -543,6 +543,8 @@ aws elbv2 describe-target-health \
 > | Target Group   | $0             | $0             | ALB 비용에 포함 |
 > | Security Group | $0             | $0             | 무료            |
 >
+> ※ 위 금액은 작성 시점 기준 참고 값이며, 실제 요금은 리전, 환율, AWS 정책 변경에 따라 상이할 수 있습니다.
+>
 > **ALB를 삭제하지 않으면 월 약 $16 이상 과금됩니다.**
 
 > [!NOTE]
