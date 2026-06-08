@@ -95,7 +95,12 @@ Security Group과의 차이를 이해하고, Stateless 특성에 따른 Ephemera
 
 3. 상단 검색창에 `VPC`를 입력하고 VPC 서비스를 선택합니다.
 4. 왼쪽 메뉴에서 **Network ACLs**를 선택합니다.
+
+    <img src="/images/step1/1-3-step4-network-acls.png" alt="Network ACLs 선택" class="guide-img-sm" />
+
 5. `my-vpc`에 연결된 기본 NACL을 선택합니다 (Default 열이 `Yes`인 것).
+
+    <img src="/images/step1/1-3-step5-default-nacl.png" alt="기본 NACL 선택" class="guide-img-sm" />
 6. **Inbound rules** 탭을 확인합니다.
 
 > [!OUTPUT]
@@ -108,6 +113,8 @@ Security Group과의 차이를 이해하고, Stateless 특성에 따른 Ephemera
 
 7. **Outbound rules** 탭을 확인합니다.
 
+    <img src="/images/step1/1-3-step7-outbound-rules.png" alt="Outbound rules 확인" class="guide-img-sm" />
+
 > [!OUTPUT]
 > 기본 NACL의 Outbound rules:
 >
@@ -117,6 +124,8 @@ Security Group과의 차이를 이해하고, Stateless 특성에 따른 Ephemera
 > | \*     | All traffic | All      | All        | 0.0.0.0/0   | DENY       |
 
 8. **Subnet associations** 탭에서 연결된 서브넷을 확인합니다.
+
+    <img src="/images/step1/1-3-step8-subnet-assoc.png" alt="Subnet associations 확인" class="guide-img-sm" />
 
 > [!NOTE]
 > 기본 NACL은 VPC의 모든 서브넷에 자동으로 연결됩니다. 서브넷을 커스텀 NACL에 연결하면 기본 NACL에서 분리됩니다.
@@ -192,6 +201,8 @@ Public Subnet에 적용할 커스텀 NACL을 생성합니다. 웹 트래픽(HTTP
       - `CreatedBy` = `admin-user`
       - `Step` = `step1`
       - `Session` = `1-3`
+
+    <img src="/images/step1/1-3-step11-create-nacl.png" alt="NACL 생성 설정" class="guide-img-sm" />
 12. [[Create network ACL]] 버튼을 클릭합니다.
 
 > [!WARNING]
@@ -200,8 +211,12 @@ Public Subnet에 적용할 커스텀 NACL을 생성합니다. 웹 트래픽(HTTP
 ### Inbound 규칙 추가
 
 13. 생성된 `my-public-nacl`을 선택합니다.
+
+    <img src="/images/step1/1-3-step13-nacl-created.png" alt="생성된 NACL 선택" class="guide-img-sm" />
 14. **Inbound rules** 탭을 선택합니다.
 15. [[Edit inbound rules]] 버튼을 클릭합니다.
+
+    <img src="/images/step1/1-3-step15-edit-inbound.png" alt="Edit inbound rules" class="guide-img-sm" />
 16. [[Add new rule]] 버튼을 클릭하고 첫 번째 규칙을 설정합니다:
     - **Rule number**: `100`
     - **Type**: `HTTP (80)`
@@ -238,16 +253,22 @@ Public Subnet에 적용할 커스텀 NACL을 생성합니다. 웹 트래픽(HTTP
     - **Source**: `0.0.0.0/0`
     - **Allow/Deny**: `Allow`
 
+    <img src="/images/step1/1-3-step20-inbound-rules.png" alt="Inbound rules 전체" class="guide-img-sm" />
+
 > [!NOTE]
 > Rule 140은 서버가 외부로 요청을 보낸 후 응답을 받기 위한 Ephemeral Port입니다.  
 > 예를 들어 EC2에서 `yum update`를 실행하면, 패키지 서버의 응답이 이 포트 범위로 돌아옵니다.
 
 21. [[Save changes]] 버튼을 클릭합니다.
 
+    <img src="/images/step1/1-3-step21-inbound-saved.png" alt="Inbound rules 저장 완료" class="guide-img-sm" />
+
 ### Outbound 규칙 추가
 
 22. **Outbound rules** 탭을 선택합니다.
 23. [[Edit outbound rules]] 버튼을 클릭합니다.
+
+    <img src="/images/step1/1-3-step23-edit-outbound.png" alt="Edit outbound rules" class="guide-img-sm" />
 24. [[Add new rule]] 버튼을 클릭하고 첫 번째 규칙을 설정합니다:
     - **Rule number**: `100`
     - **Type**: `HTTP (80)`
@@ -267,11 +288,15 @@ Public Subnet에 적용할 커스텀 NACL을 생성합니다. 웹 트래픽(HTTP
     - **Destination**: `0.0.0.0/0`
     - **Allow/Deny**: `Allow`
 
+    <img src="/images/step1/1-3-step26-outbound-rules.png" alt="Outbound rules 전체" class="guide-img-sm" />
+
 > [!CONCEPT] 아웃바운드 Ephemeral Port의 의미
 > 외부 클라이언트가 EC2의 80 포트로 요청을 보내면, EC2는 클라이언트의 임시 포트로 응답을 보내야 합니다.  
 > 이 응답 트래픽이 아웃바운드 Ephemeral Port 규칙에 의해 허용됩니다.
 
 27. [[Save changes]] 버튼을 클릭합니다.
+
+    <img src="/images/step1/1-3-step27-outbound-saved.png" alt="Outbound rules 저장 완료" class="guide-img-sm" />
 
 ✅ **태스크 완료**: 커스텀 NACL의 인바운드/아웃바운드 규칙이 설정되었습니다.
 
@@ -279,7 +304,11 @@ Public Subnet에 적용할 커스텀 NACL을 생성합니다. 웹 트래픽(HTTP
 
 28. `my-public-nacl`의 **Subnet associations** 탭을 선택합니다.
 29. [[Edit subnet associations]] 버튼을 클릭합니다.
+
+    <img src="/images/step1/1-3-step29-edit-subnet-assoc.png" alt="Edit subnet associations" class="guide-img-sm" />
 30. `my-public-subnet-a`와 `my-public-subnet-c`를 체크합니다.
+
+    <img src="/images/step1/1-3-step30-select-subnets.png" alt="Public Subnet 선택" class="guide-img-sm" />
 
 > [!NOTE]
 > 스크린샷에서 보이는 서브넷 이름은 "VPC and more"로 생성한 경우 `my-subnet-public1-ap-northeast-2a`처럼 자동 생성된 이름일 수 있습니다.  
@@ -288,6 +317,8 @@ Public Subnet에 적용할 커스텀 NACL을 생성합니다. 웹 트래픽(HTTP
 > Private Subnet(10.0.11.0/24, 10.0.12.0/24)은 체크하지 않습니다.
 
 31. [[Save changes]] 버튼을 클릭합니다.
+
+    <img src="/images/step1/1-3-step31-subnet-saved.png" alt="Subnet associations 저장 완료" class="guide-img-sm" />
 
 > [!OUTPUT]
 > Subnet associations 탭에서 2개의 Public Subnet이 연결된 것을 확인할 수 있습니다.  
@@ -375,6 +406,10 @@ Public Subnet에 적용할 커스텀 NACL을 생성합니다. 웹 트래픽(HTTP
     - **Source**: `203.0.113.0/24` (예시 IP 대역)
     - **Allow/Deny**: `Deny`
     - [[Save changes]] 클릭
+
+    <img src="/images/step1/1-3-step32-deny-rule1.png" alt="DENY 규칙 추가" class="guide-img-sm" />
+
+    <img src="/images/step1/1-3-step32-deny-rule2.png" alt="DENY 규칙 저장" class="guide-img-sm" />
 
 > [!NOTE]
 > Rule 50은 Rule 100보다 먼저 평가됩니다.  
@@ -491,6 +526,9 @@ NACL은 이후 실습(Step 2: EC2)에서 계속 사용합니다.
    - **Resource types**: `All supported resource types`
    - **Tags**: Tag key = `Session`, Tag value = `1-3`
 4. [[Search resources]] 버튼을 클릭합니다.
+
+    <img src="/images/step1/1-3-cleanup4-tag-editor.png" alt="Tag Editor 검색 결과" class="guide-img-sm" />
+
 5. 이 실습에서 생성한 리소스(`my-public-nacl`)가 표시되는지 확인합니다.
 
 **단계 2: NACL의 서브넷 연결 해제**
@@ -503,6 +541,8 @@ NACL을 삭제하려면 먼저 연결된 서브넷을 해제해야 합니다.
 9. **Subnet associations** 탭을 선택합니다.
 10. [[Edit subnet associations]] 버튼을 클릭합니다.
 11. 체크된 서브넷(`my-public-subnet-a`, `my-public-subnet-c`)을 모두 **해제**합니다.
+
+    <img src="/images/step1/1-3-cleanup11-edit-subnet-assoc.png" alt="서브넷 해제" class="guide-img-sm" />
 12. [[Save changes]] 버튼을 클릭합니다.
 
 > [!NOTE]
@@ -513,7 +553,11 @@ NACL을 삭제하려면 먼저 연결된 서브넷을 해제해야 합니다.
 
 13. Network ACLs 목록에서 `my-public-nacl`이 선택된 상태에서 **Actions** 버튼을 클릭합니다.
 14. [[Delete network ACL]]을 선택합니다.
+
+    <img src="/images/step1/1-3-cleanup14-delete-nacl.png" alt="Delete network ACL" class="guide-img-sm" />
 15. 확인 팝업에서 `delete`를 입력하고 [[Delete]]를 클릭합니다.
+
+    <img src="/images/step1/1-3-cleanup15-nacl-deleted.png" alt="NACL 삭제 완료" class="guide-img-sm" />
 
 > [!NOTE]
 > 서브넷이 연결된 상태에서 NACL을 삭제하려고 하면 오류가 발생합니다.  
@@ -540,6 +584,8 @@ NACL을 삭제하려면 먼저 연결된 서브넷을 해제해야 합니다.
 >
 > Tag Editor에서 Tag key = `Step`, Tag value = `step1`로 검색하면 Step 1-1, 1-2, 1-3에서 생성한 모든 리소스를 한번에 조회할 수 있습니다.  
 > 실습 환경을 완전히 초기화하고 싶을 때 유용합니다.
+>
+> <img src="/images/step1/1-3-cleanup-step1-all.png" alt="Step 1 전체 리소스 조회" class="guide-img-sm" />
 >
 > | 검색 조건                  | 조회 범위                         |
 > | -------------------------- | --------------------------------- |
