@@ -166,6 +166,30 @@ export const Dashboard: React.FC = () => {
                 </div>
               </div>
             </div>
+            <div className="info-box info-box--note">
+              <div className="info-box-icon">
+                <Icon name="status-info" variant="normal" />
+              </div>
+              <div className="info-box-content">
+                <strong>스크린샷 및 화면 공유 시 주의</strong>
+                <div style={{ marginTop: '0.25rem' }}>
+                  실습 중 캡처하거나 화면을 공유할 때 다음 정보가 노출되지
+                  않도록 주의하세요.
+                  <br />
+                  • AWS 계정 ID (12자리 숫자)
+                  <br />
+                  • Access Key / Secret Key
+                  <br />
+                  • 비밀번호, MFA 코드, 인증 토큰
+                  <br />
+                  • 이메일 주소, 전화번호 등 개인정보
+                  <br />
+                  <br />
+                  블로그나 SNS에 공유할 경우 반드시 민감한 정보를 모자이크
+                  처리하세요.
+                </div>
+              </div>
+            </div>
           </SpaceBetween>
         </Container>
       </div>
