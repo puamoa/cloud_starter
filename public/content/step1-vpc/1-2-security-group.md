@@ -50,7 +50,13 @@ Step 1-1에서는 VPC, 서브넷, IGW, Route Table을 하나씩 생성하며 원
     <img src="/images/step1/1-2-step3-vpc-search.png" alt="VPC 서비스 선택" class="guide-img-sm" />
 
 4. [[Create VPC]] 버튼을 클릭합니다.
+
+    <img src="/images/step1/1-2-step4-create-vpc.png" alt="Create VPC 클릭" class="guide-img-sm" />
+
 5. **Resources to create**에서 `VPC and more`를 선택합니다.
+
+    <img src="/images/step1/1-2-step5-vpc-and-more.png" alt="VPC and more 선택" class="guide-img-sm" />
+
 6. 다음과 같이 설정합니다:
    - **Name tag auto-generation**: `my` 입력 (리소스 이름이 `my-vpc`, `my-public-subnet-1` 등으로 자동 생성)
    - **IPv4 CIDR block**: `10.0.0.0/16`
@@ -73,6 +79,14 @@ Step 1-1에서는 VPC, 서브넷, IGW, Route Table을 하나씩 생성하며 원
    - **VPC endpoints**: `None`
    - **DNS options**: 두 옵션 모두 체크 확인 (Enable DNS hostnames ✅, Enable DNS resolution ✅)
 
+    <img src="/images/step1/1-2-step6-settings1.png" alt="VPC 설정 1" class="guide-img-sm" />
+
+    <img src="/images/step1/1-2-step6-settings2.png" alt="VPC 설정 2" class="guide-img-sm" />
+
+    <img src="/images/step1/1-2-step6-settings3.png" alt="VPC 설정 3" class="guide-img-sm" />
+
+    <img src="/images/step1/1-2-step6-settings4.png" alt="VPC 설정 4" class="guide-img-sm" />
+
 > [!WARNING]
 > **NAT gateways 옵션이 반드시 `None`인지 확인하세요.**  
 > `In 1 AZ` 또는 `1 per AZ`를 선택하면 NAT Gateway가 생성되며, 시간당 약 $0.059 + 데이터 처리 비용이 즉시 발생합니다.  
@@ -93,6 +107,8 @@ Step 1-1에서는 VPC, 서브넷, IGW, Route Table을 하나씩 생성하며 원
    - `Step` = `step1`
    - `Session` = `1-2`
 
+    <img src="/images/step1/1-2-step7-tags.png" alt="Additional tags 설정" class="guide-img-sm" />
+
 > [!NOTE]
 > **Additional tags**는 화면 하단에 접혀 있습니다.  
 > 토글(▶)을 클릭하면 펼쳐지며, 여기서 추가한 태그는 VPC와 함께 생성되는 모든 리소스(서브넷, IGW, Route Table 등)에 자동으로 적용됩니다.  
@@ -105,8 +121,25 @@ Step 1-1에서는 VPC, 서브넷, IGW, Route Table을 하나씩 생성하며 원
    - Internet Gateway 1개
    - Route Table 2개 (Public, Private)
 
+    <div class="guide-img-row">
+      <img src="/images/step1/1-2-step8-preview1.png" alt="Preview 패널 1" class="guide-img-sm" />
+      <img src="/images/step1/1-2-step8-preview2.png" alt="Preview 패널 2" class="guide-img-sm" />
+    </div>
+
+> [!TIP]
+> Preview 다이어그램에서 각 리소스를 클릭하면 연결 경로가 하이라이트됩니다.  
+> 서브넷 → Route Table → IGW 간의 연결이 올바른지 시각적으로 확인할 수 있습니다.
+>
+> <img src="/images/step1/1-2-step8-preview-route1.png" alt="연결 경로 확인 1" class="guide-img-sm" />
+> <img src="/images/step1/1-2-step8-preview-route2.png" alt="연결 경로 확인 2" class="guide-img-sm" />
+
 9. [[Create VPC]] 버튼을 클릭합니다.
+
+    <img src="/images/step1/1-2-step9-create-vpc.png" alt="Create VPC 클릭" class="guide-img-sm" />
+
 10. 생성 진행 화면에서 모든 리소스가 ✅ 표시될 때까지 기다립니다.
+
+    <img src="/images/step1/1-2-step10-vpc-created.png" alt="VPC 생성 완료" class="guide-img-sm" />
 
 > [!OUTPUT]
 > "VPC and more" 마법사가 VPC, 서브넷 4개, IGW, Route Table 2개를 한번에 생성합니다.  
@@ -158,17 +191,30 @@ Step 1-1에서는 VPC, 서브넷, IGW, Route Table을 하나씩 생성하며 원
 웹 서버(EC2)에 적용할 Security Group을 생성합니다. SSH, HTTP, HTTPS, Spring Boot(8080) 포트를 허용합니다.
 
 11. 왼쪽 메뉴에서 **Security groups**를 선택합니다.
+
+> [!TIP]
+> VPC 생성 완료 후 대시보드가 닫혔다면:
+> - 좌측 상단의 햄버거 메뉴(☰)를 클릭하면 왼쪽 네비게이션 패널이 열립니다.
+> - 또는 상단 검색창에 `VPC`를 입력하여 VPC 서비스로 이동한 뒤 왼쪽 메뉴에서 **Security groups**를 선택하세요.
+
 12. [[Create security group]] 버튼을 클릭합니다.
+
+    <img src="/images/step1/1-2-step12-create-sg.png" alt="Create security group 클릭" class="guide-img-sm" />
+
 13. **Basic details** 섹션을 설정합니다:
     - **Security group name**: `my-ec2-sg`
     - **Description**: `Security group for web server EC2 instances`
     - **VPC**: `my-vpc` 선택
+
+    <img src="/images/step1/1-2-step13-basic-details.png" alt="Basic details 설정" class="guide-img-sm" />
 
 14. **Inbound rules** 섹션에서 [[Add rule]] 버튼을 클릭합니다.
 15. 첫 번째 규칙(SSH)을 설정합니다:
     - **Type**: `SSH`
     - **Port range**: `22` (자동 입력)
     - **Source**: `My IP` 선택
+
+    <img src="/images/step1/1-2-step15-ssh-rule.png" alt="SSH 규칙 설정" class="guide-img-sm" />
 
 > [!WARNING]
 > SSH Source를 `0.0.0.0/0`(Anywhere)으로 설정하면 전 세계에서 SSH 접속을 시도할 수 있습니다.  
@@ -215,10 +261,14 @@ Step 1-1에서는 VPC, 서브넷, IGW, Route Table을 하나씩 생성하며 원
     - **Port range**: `443` (자동 입력)
     - **Source**: `Anywhere-IPv4` (0.0.0.0/0)
 
+    <img src="/images/step1/1-2-step17-https-rule.png" alt="HTTPS 규칙 설정" class="guide-img-sm" />
+
 18. [[Add rule]] 버튼을 클릭하여 네 번째 규칙(Spring Boot)을 추가합니다:
     - **Type**: `Custom TCP`
     - **Port range**: `8080`
     - **Source**: `Anywhere-IPv4` (0.0.0.0/0)
+
+    <img src="/images/step1/1-2-step18-springboot-rule.png" alt="Spring Boot 규칙 설정" class="guide-img-sm" />
 
 > [!NOTE]
 > 포트 8080은 Spring Boot의 기본 포트입니다.  
@@ -232,11 +282,15 @@ Step 1-1에서는 VPC, 서브넷, IGW, Route Table을 하나씩 생성하며 원
     - `Step` = `step1`
     - `Session` = `1-2`
 
+    <img src="/images/step1/1-2-step20-tags.png" alt="Tags 설정" class="guide-img-sm" />
+
 > [!NOTE]
 > Security Group은 VPC와 달리 Name tag 전용 입력 필드가 없습니다.  
 > Tags 섹션에서 `Name` 키를 직접 추가해야 콘솔 목록에서 이름이 표시됩니다.
 
 21. [[Create security group]] 버튼을 클릭합니다.
+
+    <img src="/images/step1/1-2-step21-sg-created.png" alt="Security Group 생성 완료" class="guide-img-sm" />
 
 > [!OUTPUT]
 > Security Group이 생성되면 상세 페이지로 이동합니다. Inbound rules 탭에서 4개의 규칙이 표시되는지 확인합니다:  
@@ -273,6 +327,8 @@ Step 1-1에서는 VPC, 서브넷, IGW, Route Table을 하나씩 생성하며 원
     - **Port range**: `3306` (자동 입력)
     - **Source**: `Custom` 선택 → 검색창에 `my-ec2-sg` 입력 → 해당 Security Group 선택
 
+    <img src="/images/step1/1-2-step26-rds-rule.png" alt="RDS MySQL 규칙 설정" class="guide-img-sm" />
+
 > [!TIP]
 > Source 검색창에 Security Group 이름을 입력하면 자동완성됩니다. `sg-` 로 시작하는 ID가 표시되면 올바르게 선택된 것입니다.
 
@@ -284,7 +340,11 @@ Step 1-1에서는 VPC, 서브넷, IGW, Route Table을 하나씩 생성하며 원
     - `Step` = `step1`
     - `Session` = `1-2`
 
+    <img src="/images/step1/1-2-step28-rds-tags.png" alt="RDS SG Tags 설정" class="guide-img-sm" />
+
 29. [[Create security group]] 버튼을 클릭합니다.
+
+    <img src="/images/step1/1-2-step29-rds-sg-created.png" alt="RDS Security Group 생성 완료" class="guide-img-sm" />
 
 > [!OUTPUT]
 > RDS Security Group이 생성됩니다.  
@@ -297,10 +357,18 @@ Step 1-1에서는 VPC, 서브넷, IGW, Route Table을 하나씩 생성하며 원
 생성된 Security Group의 규칙을 최종 확인합니다.
 
 30. Security groups 목록에서 `my-ec2-sg`를 선택합니다.
+
+    <img src="/images/step1/1-2-step30-sg-list.png" alt="Security Groups 목록" class="guide-img-sm" />
 31. **Inbound rules** 탭에서 4개의 규칙이 올바른지 확인합니다.
+
+    <img src="/images/step1/1-2-step21-sg-created.png" alt="EC2 SG Inbound rules 확인" class="guide-img-sm" />
 32. **Outbound rules** 탭에서 All traffic이 허용되어 있는지 확인합니다.
+
+    <img src="/images/step1/1-2-step32-outbound-rules.png" alt="Outbound rules 확인" class="guide-img-sm" />
 33. Security groups 목록으로 돌아가서 `my-rds-sg`를 선택합니다.
 34. **Inbound rules** 탭에서 MySQL/Aurora(3306) 규칙의 Source가 `my-ec2-sg`의 SG ID인지 확인합니다.
+
+    <img src="/images/step1/1-2-step34-rds-inbound.png" alt="RDS SG Inbound rules 확인" class="guide-img-sm" />
 
 > [!CONCEPT] Stateful 동작 확인
 > Security Group은 **Stateful**(상태를 기억함)이므로, 한쪽 방향을 허용하면 그 응답은 반대쪽 규칙과 무관하게 자동 허용됩니다.
@@ -407,6 +475,9 @@ Security Group과 VPC는 이후 실습(Step 2: EC2, Step 3: NAT, Step 4: RDS)에
    - **Resource types**: `All supported resource types`
    - **Tags**: Tag key = `Session`, Tag value = `1-2`
 4. [[Search resources]] 버튼을 클릭합니다.
+
+    <img src="/images/step1/1-2-cleanup4-tag-editor.png" alt="Tag Editor 검색 결과" class="guide-img-sm" />
+
 5. 이 실습에서 생성한 리소스(VPC, Subnet, IGW, Route Table, Security Group 2개)가 표시되는지 확인합니다.
 
 **단계 2: RDS용 Security Group 삭제**
@@ -416,7 +487,12 @@ Security Group과 VPC는 이후 실습(Step 2: EC2, Step 3: NAT, Step 4: RDS)에
 8. 상단 필터에서 `my-vpc`로 필터링합니다.
 9. `my-rds-sg`를 선택합니다.
 10. **Actions** → [[Delete security groups]]를 선택합니다.
+
+    <img src="/images/step1/1-2-cleanup10-delete-rds-sg.png" alt="Delete security groups 선택" class="guide-img-sm" />
+
 11. 확인 팝업에서 [[Delete]]를 클릭합니다.
+
+    <img src="/images/step1/1-2-cleanup11-confirm-delete.png" alt="삭제 확인" class="guide-img-sm" />
 
 > [!NOTE]
 > `my-rds-sg`는 인바운드 규칙에서 `my-ec2-sg`를 Source로 참조하고 있습니다.  
