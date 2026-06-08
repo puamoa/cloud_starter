@@ -116,6 +116,9 @@ S3 버킷에는 두 가지 네임스페이스 방식이 있습니다:
 
 1. AWS Management Console에 로그인합니다.
 2. 리전을 **Asia Pacific (Seoul) ap-northeast-2**로 설정합니다.
+
+    <img src="/images/common/region-check.png" alt="리전 확인" class="guide-img-sm" />
+
 3. 상단 검색창에 `S3`를 입력하고 선택합니다.
 4. [[Create bucket]]을 클릭합니다.
 5. **General configuration** 섹션을 설정합니다. 각 필드를 아래와 같이 입력합니다:

@@ -48,6 +48,9 @@ estimatedCost: 무료 리소스 (VPC, Subnet, IGW, Route Table은 항상 무료)
 
 1. AWS Management Console에 로그인합니다.
 2. 우측 상단에서 리전을 **Asia Pacific (Seoul) ap-northeast-2**로 설정합니다.
+
+    <img src="/images/common/region-check.png" alt="리전 확인" class="guide-img-sm" />
+
 3. 상단 검색창에 `VPC`를 입력하고 **VPC** 서비스를 선택합니다.
 
     <img src="/images/step1/1-1-step3-vpc-search.png" alt="VPC 서비스 선택" class="guide-img-sm" />

@@ -143,6 +143,9 @@ Target Group은 ALB가 트래픽을 전달할 대상(EC2 인스턴스)의 그룹
 
 1. AWS Management Console에 로그인합니다.
 2. 우측 상단에서 리전을 **Asia Pacific (Seoul) ap-northeast-2**로 설정합니다.
+
+    <img src="/images/common/region-check.png" alt="리전 확인" class="guide-img-sm" />
+
 3. 상단 검색창에 `EC2`를 입력하고 **EC2** 서비스를 선택합니다.
 4. 왼쪽 메뉴에서 **Load Balancing** → **Target Groups**를 클릭합니다.
 5. [[Create target group]] 버튼을 클릭합니다.

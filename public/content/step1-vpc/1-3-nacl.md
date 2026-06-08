@@ -90,6 +90,9 @@ Security Group과의 차이를 이해하고, Stateless 특성에 따른 Ephemera
 
 1. AWS Management Console에 로그인합니다.
 2. 리전을 **Asia Pacific (Seoul) ap-northeast-2**로 설정합니다.
+
+    <img src="/images/common/region-check.png" alt="리전 확인" class="guide-img-sm" />
+
 3. 상단 검색창에 `VPC`를 입력하고 VPC 서비스를 선택합니다.
 4. 왼쪽 메뉴에서 **Network ACLs**를 선택합니다.
 5. `my-vpc`에 연결된 기본 NACL을 선택합니다 (Default 열이 `Yes`인 것).

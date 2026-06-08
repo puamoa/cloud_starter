@@ -69,6 +69,9 @@ estimatedCost: 크레딧 내 사용 가능 (비용 발생 가능)
 
 2. AWS Management Console에 로그인합니다.
 3. 리전을 **Asia Pacific (Seoul) ap-northeast-2**로 설정합니다.
+
+    <img src="/images/common/region-check.png" alt="리전 확인" class="guide-img-sm" />
+
 4. 상단 검색창에 `CloudFormation`을 입력하고 선택합니다.
 
 > [!NOTE]

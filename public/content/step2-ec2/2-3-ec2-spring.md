@@ -81,6 +81,9 @@ estimatedCost: 크레딧 내 사용 가능 (비용 발생 가능)
 
 1. AWS Management Console에 로그인합니다.
 2. 리전을 **Asia Pacific (Seoul) ap-northeast-2**로 설정합니다.
+
+    <img src="/images/common/region-check.png" alt="리전 확인" class="guide-img-sm" />
+
 3. EC2 콘솔에서 사용할 인스턴스가 `Running` 상태인지 확인합니다.
 4. Public IPv4 address를 확인합니다.
 5. SSH로 접속합니다:

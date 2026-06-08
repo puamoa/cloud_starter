@@ -122,6 +122,9 @@ AWS Management Console에서 4개의 파라미터를 생성합니다.
 
 1. AWS Management Console에 로그인합니다.
 2. 우측 상단에서 리전을 **Asia Pacific (Seoul) ap-northeast-2**로 설정합니다.
+
+    <img src="/images/common/region-check.png" alt="리전 확인" class="guide-img-sm" />
+
 3. 상단 검색창에 `Systems Manager`를 입력합니다.
 4. 검색 결과에서 **Systems Manager** 서비스를 클릭합니다.
 5. 왼쪽 메뉴 스크롤을 내려 **Application Management** 섹션을 찾습니다.

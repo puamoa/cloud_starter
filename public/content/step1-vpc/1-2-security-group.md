@@ -42,7 +42,13 @@ Step 1-1에서는 VPC, 서브넷, IGW, Route Table을 하나씩 생성하며 원
 
 1. AWS Management Console에 로그인합니다.
 2. 리전을 **Asia Pacific (Seoul) ap-northeast-2**로 설정합니다.
+
+    <img src="/images/common/region-check.png" alt="리전 확인" class="guide-img-sm" />
+
 3. 상단 검색창에 `VPC`를 입력하고 VPC 서비스를 선택합니다.
+
+    <img src="/images/step1/1-2-step3-vpc-search.png" alt="VPC 서비스 선택" class="guide-img-sm" />
+
 4. [[Create VPC]] 버튼을 클릭합니다.
 5. **Resources to create**에서 `VPC and more`를 선택합니다.
 6. 다음과 같이 설정합니다:

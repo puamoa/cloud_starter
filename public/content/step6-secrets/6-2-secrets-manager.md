@@ -112,6 +112,9 @@ estimatedCost: 크레딧 내 사용 가능 (비밀당 월 $0.40 + API 호출 비
 
 1. AWS Management Console에 로그인합니다.
 2. 우측 상단에서 리전을 **Asia Pacific (Seoul) ap-northeast-2**로 설정합니다.
+
+    <img src="/images/common/region-check.png" alt="리전 확인" class="guide-img-sm" />
+
 3. 상단 검색창에 `Secrets Manager`를 입력합니다.
 4. 검색 결과에서 **Secrets Manager** 서비스를 클릭합니다.
 

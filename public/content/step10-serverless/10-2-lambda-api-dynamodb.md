@@ -33,6 +33,9 @@ API Gateway를 통해 외부에서 호출할 수 있는 CRUD API를 배포합니
 
 1. AWS Management Console에 로그인합니다.
 2. 리전을 **Asia Pacific (Seoul) ap-northeast-2**로 설정합니다.
+
+    <img src="/images/common/region-check.png" alt="리전 확인" class="guide-img-sm" />
+
 3. 상단 검색창에 `DynamoDB`를 입력하고 선택합니다.
 4. 왼쪽 메뉴에서 **Tables**를 클릭합니다.
 5. `Items` 테이블이 있는지 확인합니다.

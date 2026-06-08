@@ -58,6 +58,9 @@ estimatedCost: 무료 (Parameter Group 변경은 비용 없음)
 
 1. AWS Management Console에 로그인합니다.
 2. 우측 상단에서 리전을 **Asia Pacific (Seoul) ap-northeast-2**로 설정합니다.
+
+    <img src="/images/common/region-check.png" alt="리전 확인" class="guide-img-sm" />
+
 3. 상단 검색창에 `RDS`를 입력하고 **RDS** 서비스를 선택합니다.
 4. 왼쪽 메뉴에서 **Parameter groups**를 선택합니다.
 5. 목록에서 `default.mysql8.4` 그룹 이름을 클릭합니다.
