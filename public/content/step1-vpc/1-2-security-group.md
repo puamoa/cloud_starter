@@ -19,6 +19,12 @@ estimatedCost: 무료 리소스 (Security Group은 항상 무료)
 이 실습에서는 EC2 인스턴스와 RDS 인스턴스에 적용할 Security Group을 생성합니다.  
 Security Group은 인스턴스 레벨의 가상 방화벽으로, 인바운드/아웃바운드 트래픽을 제어합니다.
 
+<img src="/images/architecture/step1-2-sg-architecture.png" alt="Step 1-2 Security Group 아키텍처 구성도" class="guide-img-lg" />
+
+> [!WARNING]
+> 위 다이어그램은 최종 목표 구성을 보여주는 참고 자료입니다.  
+> Security Group은 생성만으로는 동작하지 않으며, 이후 Step 2에서 EC2 인스턴스, Step 4에서 RDS 인스턴스를 생성할 때 해당 SG를 연결해야 실제로 적용됩니다.
+
 > [!NOTE]
 > **실습 환경 구성 방식의 변화:**
 >
@@ -355,6 +361,8 @@ Step 1-1에서는 VPC, 서브넷, IGW, Route Table을 하나씩 생성하며 원
 ## 태스크 4: Security Group 규칙 확인 및 테스트
 
 생성된 Security Group의 규칙을 최종 확인합니다.
+
+<img src="/images/architecture/step1-2-sg-architecture.png" alt="Step 1-2 최종 Security Group 아키텍처" class="guide-img-lg" />
 
 30. Security groups 목록에서 `my-ec2-sg`를 선택합니다.
 

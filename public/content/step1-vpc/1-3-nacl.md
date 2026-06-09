@@ -19,6 +19,13 @@ estimatedCost: 무료 리소스 (NACL은 항상 무료)
 이 실습에서는 서브넷 레벨에서 동작하는 Network ACL(NACL)을 생성하고 규칙을 설정합니다.  
 Security Group과의 차이를 이해하고, Stateless 특성에 따른 Ephemeral Port 설정의 필요성을 학습합니다.
 
+<img src="/images/architecture/step1-3-nacl-architecture.png" alt="Step 1-3 NACL 아키텍처 구성도" class="guide-img-lg" />
+
+> [!WARNING]
+> 위 다이어그램은 최종 목표 구성을 보여주는 참고 자료입니다.  
+> NACL은 서브넷 단위로 적용되며, 서브넷에 연결해야 실제로 트래픽을 제어합니다.  
+> Public Subnet에는 커스텀 NACL(`my-public-nacl`)을, Private Subnet에는 기본 NACL(Default)을 사용합니다.
+
 > [!NOTE]
 > 이 실습은 VPC와 서브넷이 필요합니다.  
 > Step 1-1 또는 Step 1-2에서 생성한 VPC(`my-vpc`)와 서브넷을 사용하거나, 기존에 보유한 VPC를 사용합니다.
@@ -443,6 +450,8 @@ Public Subnet에 적용할 커스텀 NACL을 생성합니다. 웹 트래픽(HTTP
 ✅ **태스크 완료**: 규칙 번호 순서 평가 원리를 이해했습니다.
 
 ## 태스크 6: 최종 구성 확인
+
+<img src="/images/architecture/step1-3-nacl-architecture.png" alt="Step 1-3 최종 NACL 아키텍처" class="guide-img-lg" />
 
 34. Network ACLs 목록에서 `my-public-nacl`을 선택합니다.
 35. Inbound rules에서 다음 규칙이 있는지 확인합니다:

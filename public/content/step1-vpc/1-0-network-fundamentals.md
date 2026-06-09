@@ -465,6 +465,8 @@ VPC: 10.0.0.0/16 (65,534 IPs)
 
 ### 라우팅의 기본 원리
 
+<img src="/images/architecture/step1-0-vpc-routing.png" alt="VPC 라우팅 동작 흐름" class="guide-img-sm" />
+
 라우팅은 우편 배달과 비슷합니다. 우체국(라우터)이 편지(패킷)의 주소(목적지 IP)를 보고, 배달 규칙표(라우팅 테이블)에 따라 다음 배달소(Next Hop)로 전달합니다.
 
 ```
@@ -615,6 +617,8 @@ DNS 있는 세상:
 ```
 
 ### DNS 조회 과정 (상세)
+
+<img src="/images/architecture/step1-0-dns-lookup.png" alt="DNS 조회 과정" class="guide-img-md" />
 
 ```
 사용자가 브라우저에 "www.example.com" 입력
@@ -1037,6 +1041,8 @@ VPC 사용 환경 (현재):
 | **NACL**             | 서브넷 레벨 방화벽 (Stateless)  | 각 층의 출입 게이트 |
 
 ### VPC 전체 아키텍처 (실습 목표)
+
+<img src="/images/architecture/step1-1-vpc-architecture.png" alt="VPC 전체 아키텍처" class="guide-img-lg" />
 
 ```
 ┌─── VPC: 10.0.0.0/16 ──────────────────────────────────────────────┐
