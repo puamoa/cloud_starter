@@ -559,6 +559,26 @@ export const curriculum: WeekCurriculum[] = [
     ],
     difficulty: 'advanced',
   },
+  {
+    week: 12,
+    title: 'draw.io 아키텍처 다이어그램',
+    description:
+      'draw.io를 사용하여 지금까지 학습한 AWS 인프라의 아키텍처 다이어그램을 작성합니다.',
+    sessions: [
+      {
+        session: 1,
+        type: 'lab',
+        title: 'draw.io로 AWS 아키텍처 다이어그램 작성',
+        hasContent: true,
+        markdownPath: '/content/step12-drawio/12-1-drawio-architecture.md',
+        description:
+          'AWS 아이콘 라이브러리, VPC/서브넷/AZ 그룹 배치, 화살표 연결, PNG 내보내기',
+        awsServices: [],
+        estimatedCost: '무료 (AWS 리소스 생성 없음)',
+      },
+    ],
+    difficulty: 'beginner',
+  },
 ];
 
 export const sessionTypeConfig = {
