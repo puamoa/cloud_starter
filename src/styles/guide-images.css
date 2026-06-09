@@ -123,8 +123,10 @@
 .guide-img-row .guide-img-md,
 .guide-img-row .guide-img-lg {
   margin: 0;
-  flex: 1 1 0;
-  min-width: 200px;
+  flex: 0 0 auto;
+  width: auto !important;
+  max-width: 48%;
+  display: inline-block;
 }
 
 @media (max-width: 768px) {
