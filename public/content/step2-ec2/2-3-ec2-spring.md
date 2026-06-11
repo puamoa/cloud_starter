@@ -162,11 +162,17 @@ ssh -i C:\Users\<사용자명>\Downloads\my-keypair.pem ec2-user@<Public-IP>
 sudo dnf install java-17-amazon-corretto-devel -y
 ```
 
+<img src="/images/step2/2-3-step6-java-install.png" alt="Java 17 설치" class="guide-img-sm" />
+
+<img src="/images/step2/2-3-step6-java-install2.png" alt="Java 17 설치 완료" class="guide-img-sm" />
+
 7. Java 버전을 확인합니다:
 
 ```bash
 java -version
 ```
+
+<img src="/images/step2/2-3-step7-java-version.png" alt="Java 버전 확인" class="guide-img-sm" />
 
 > [!OUTPUT]
 >
@@ -183,6 +189,8 @@ echo 'export JAVA_HOME=/usr/lib/jvm/java-17-amazon-corretto' | sudo tee -a /etc/
 source /etc/profile.d/java.sh
 echo $JAVA_HOME
 ```
+
+<img src="/images/step2/2-3-step8-java-home.png" alt="JAVA_HOME 설정" class="guide-img-sm" />
 
 ✅ **태스크 완료**: Java 17(Amazon Corretto)이 설치되었습니다.
 
@@ -224,10 +232,39 @@ cd <프로젝트 디렉토리>
     - **Java**: `17`
     - **Dependencies**: `Spring Web` 추가
 
+    <img src="/images/step2/2-3-step10-spring-initializr.png" alt="Spring Initializr 설정" class="guide-img-sm" />
+
 > [!NOTE]
 > 기존 프로젝트가 Spring Boot 3.x 기반이라면, 여기서도 `3.5.x`를 선택하세요.  
 > 4.x와 3.x는 Jackson, Security 기본값 등이 달라 기존 코드에서 호환성 문제가 발생할 수 있습니다.  
 > 새로 시작하는 프로젝트는 4.x를 권장합니다.
+
+> [!CONCEPT] Spring Boot vs Spring MVC(레거시) — 버전과 Tomcat 호환성
+>
+> Spring Boot와 일반 Spring MVC(레거시)는 내부적으로 사용하는 Servlet API가 다르며, 이에 따라 호환되는 Tomcat 버전도 달라집니다.
+>
+> | 구분 | Spring Boot 3.x / 4.x | Spring MVC 5.x (레거시) |
+> | --- | --- | --- |
+> | Servlet API | `jakarta.servlet` (6.0+) | `javax.servlet` (4.0) |
+> | 내장 Tomcat | Tomcat 10+ (자동 포함) | 없음 (외부 설치 필요) |
+> | 외부 Tomcat | Tomcat 10+ | **Tomcat 9** |
+> | Java 최소 버전 | Java 17 이상 | Java 8 이상 |
+> | 패키지명 | `jakarta.servlet.http.*` | `javax.servlet.http.*` |
+>
+> **핵심 차이: `javax` → `jakarta` 전환**
+>
+> - Java EE가 Eclipse Foundation으로 이관되면서 패키지명이 `javax.*` → `jakarta.*`로 변경되었습니다.
+> - Tomcat 10부터 `jakarta.servlet`을 사용하므로, `javax.servlet` 기반 WAR는 **Tomcat 9까지만** 배포 가능합니다.
+> - Spring Boot 3.x/4.x는 `jakarta`를 사용하므로 Tomcat 10+과 호환됩니다.
+>
+> **실무에서의 선택 기준:**
+>
+> | 상황 | 권장 |
+> | --- | --- |
+> | 새 프로젝트 시작 | Spring Boot 4.x + 내장 Tomcat (JAR) |
+> | 기존 Boot 3.x 프로젝트 유지 | Spring Boot 3.x + 내장 Tomcat (JAR) |
+> | 학교/학원 레거시 프로젝트 (javax 기반) | Spring MVC 5.x + **Tomcat 9** (WAR) |
+> | 레거시를 Boot로 마이그레이션 | javax → jakarta 패키지 일괄 변경 필요 |
 
 11. [[Generate]] 버튼을 클릭하여 다운로드 후 압축 해제합니다.
 
@@ -241,6 +278,10 @@ cd <프로젝트 디렉토리>
 > - [[Create]] 클릭
 >
 > IntelliJ가 내부적으로 start.spring.io를 호출하므로 결과물은 웹에서 생성한 것과 동일합니다.
+>
+> <img src="/images/step2/2-3-step11-intellij1.png" alt="IntelliJ Spring Boot 프로젝트 생성 1" class="guide-img-sm" />
+>
+> <img src="/images/step2/2-3-step11-intellij2.png" alt="IntelliJ Spring Boot 프로젝트 생성 2" class="guide-img-sm" />
 
 12. 간단한 API를 추가합니다. `controller` 패키지를 만들고 그 안에 파일을 생성합니다:
 
@@ -284,12 +325,16 @@ public class HelloController {
 }
 ```
 
+<img src="/images/step2/2-3-step12-controller.png" alt="HelloController 생성" class="guide-img-sm" />
+
 13. `src/main/resources/application.properties`에 로그 설정을 추가합니다:
 
 ```properties
 # 요청 로그 출력 (배포 후 로그 확인용)
 logging.level.org.springframework.web=DEBUG
 ```
+
+<img src="/images/step2/2-3-step13-application-properties.png" alt="application.properties 설정" class="guide-img-sm" />
 
 > [!NOTE]
 > **Spring Boot 로그 레벨:**
@@ -322,6 +367,8 @@ logging.level.org.springframework.web=DEBUG
 ./gradlew build
 ```
 
+<img src="/images/step2/2-3-step14-gradle-build.png" alt="Gradle 빌드" class="guide-img-sm" />
+
 > [!OUTPUT]
 >
 > ```
@@ -348,6 +395,8 @@ logging.level.org.springframework.web=DEBUG
 java -jar build/libs/demo-0.0.1-SNAPSHOT.jar
 # 브라우저에서 http://localhost:8080 확인 후 Ctrl+C로 종료
 ```
+
+<img src="/images/step2/2-3-step15-local-test.png" alt="로컬 테스트" class="guide-img-sm" />
 
 방법 A를 완료했다면 **태스크 3**으로 이동하세요.
 
