@@ -43,6 +43,10 @@ estimatedCost: 크레딧 내 사용 가능 (비용 발생 가능)
 | 태스크 5~6 | EC2 내부        | 로그 확인 + 자동 재시작 테스트             |
 | 태스크 7   | EC2 내부        | Nginx 리버스 프록시 설정 (프론트엔드 연동) |
 
+### 아키텍처 다이어그램
+
+<img src="/images/step2/2-3-architecture.png" alt="Step 2-3 아키텍처 다이어그램" class="guide-img-lg" />
+
 > [!WARNING]
 > Step 2-1에서 EC2를 Stop한 경우, 먼저 Start하고 새로운 Public IP를 확인한 후 진행하세요.
 >
