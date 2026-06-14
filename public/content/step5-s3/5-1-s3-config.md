@@ -81,16 +81,14 @@ S3 버킷에는 두 가지 네임스페이스 방식이 있습니다:
 | 방식 | 이름 고유 범위 | 형식 예시 | 비고 |
 | ---- | -------------- | --------- | ---- |
 | **Global namespace** (기본) | 전 세계 모든 AWS 계정에서 고유 | `my-app-bucket` | 기존 방식, 이 실습에서 사용 |
-| **Account regional namespace** (2026.03~) | 내 계정 + 리전 내에서만 고유 | `my-app-{계정ID}-{리전}-an` | opt-in, 이름 충돌 걱정 없음 |
+| **Account Regional namespace** (recommended) | 내 계정 + 리전 내에서만 고유 | `my-app-{계정ID}-{리전}-an` | 이름 충돌 걱정 없음 |
 
 > [!NOTE]
-> **Account Regional Namespace (2026년 3월 도입)**
+> **Account Regional Namespace**
 >
-> 기존에는 버킷 이름이 전 세계 모든 AWS 계정에서 고유해야 했습니다.  
-> 2026년 3월부터 **Account Regional Namespace** 옵션이 추가되어, 버킷 이름을 계정+리전 범위로 한정할 수 있습니다.  
-> 이 방식을 선택하면 버킷 이름에 `{계정ID}-{리전}-an` 접미사가 자동으로 붙어 다른 계정과 이름이 겹칠 걱정이 없습니다.
->
-> 이 실습에서는 기본 방식(Global namespace)을 사용합니다.
+> 2026년 3월부터 도입된 옵션으로, 버킷 이름을 계정+리전 범위로 한정할 수 있습니다.  
+> 이 방식을 선택하면 버킷 이름에 `{계정ID}-{리전}-an` 접미사가 자동으로 붙어 다른 계정과 이름이 겹칠 걱정이 없습니다.  
+> AWS 콘솔에서 `(recommended)`로 표시되지만, 이 실습에서는 이름이 짧고 직관적인 **Global namespace**를 사용합니다.
 
 **버킷 이름 공통 규칙:**
 
@@ -122,11 +120,12 @@ S3 버킷에는 두 가지 네임스페이스 방식이 있습니다:
 3. 상단 검색창에 `S3`를 입력하고 선택합니다.
 4. [[Create bucket]]을 클릭합니다.
 5. **General configuration** 섹션을 설정합니다. 각 필드를 아래와 같이 입력합니다:
-   - **Bucket type**: General purpose (범용 버킷 — 대부분의 사용 사례에 적합)
-   - **Bucket name**: `{닉네임}-starter-app` (예: `hong-starter-app`, `mylab-starter-app`)
-     - 전 세계에서 고유한 이름이어야 합니다. 본인의 닉네임, 별칭, 또는 이니셜을 포함하면 중복을 피할 수 있습니다.
    - **AWS Region**: Asia Pacific (Seoul) ap-northeast-2
      - 이미 콘솔 상단에서 리전을 설정했다면 자동으로 선택되어 있습니다.
+   - **Bucket namespace**: `Global namespace` 선택
+     - `Account Regional namespace (recommended)`도 있지만, 이 실습에서는 이름이 짧고 직관적인 Global namespace를 사용합니다.
+   - **Bucket name**: `{닉네임}-starter-app` (예: `hong-starter-app`, `mylab-starter-app`)
+     - 전 세계에서 고유한 이름이어야 합니다. 본인의 닉네임, 별칭, 또는 이니셜을 포함하면 중복을 피할 수 있습니다.
 
 6. **Object Ownership** 섹션:
    - **ACLs disabled (recommended)** 선택 (기본값)

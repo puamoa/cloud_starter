@@ -1,0 +1,540 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  Step 5-2: EC2 instance for Spring S3 app deployment (VPC + 2AZ Public/Private Subnets + IGW + Route Tables included).
+  Java 17 auto-installed via UserData. Same high-availability network structure as Step 2-1.
+
+# ============================================================
+# 콘솔에서 파라미터 입력 시 그룹별로 정리해서 보여주는 설정
+# ============================================================
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: 'Required Settings'
+        Parameters:
+          - KeyPairName
+          - InstanceType
+          - LatestAmiId
+      - Label:
+          default: 'Network CIDR (Keep Default)'
+        Parameters:
+          - VpcCidr
+          - PublicSubnetACidr
+          - PublicSubnetCCidr
+          - PrivateSubnetACidr
+          - PrivateSubnetCCidr
+      - Label:
+          default: 'Security Group Access Control'
+        Parameters:
+          - SSHAccessCidr
+      - Label:
+          default: 'Tags'
+        Parameters:
+          - ProjectName
+          - CreatedByTag
+          - StepTag
+          - SessionTag
+    ParameterLabels:
+      KeyPairName:
+        default: EC2 Key Pair Name
+      InstanceType:
+        default: Instance Type
+      LatestAmiId:
+        default: AMI ID (Amazon Linux 2023)
+      VpcCidr:
+        default: VPC CIDR
+      PublicSubnetACidr:
+        default: Public Subnet A CIDR (AZ-a)
+      PublicSubnetCCidr:
+        default: Public Subnet C CIDR (AZ-c)
+      PrivateSubnetACidr:
+        default: Private Subnet A CIDR (AZ-a)
+      PrivateSubnetCCidr:
+        default: Private Subnet C CIDR (AZ-c)
+      SSHAccessCidr:
+        default: SSH Access CIDR
+      ProjectName:
+        default: Project Name (Resource Prefix)
+      CreatedByTag:
+        default: CreatedBy Tag
+      StepTag:
+        default: Step Tag
+      SessionTag:
+        default: Session Tag
+
+# ============================================================
+# 스택 생성 시 사용자가 입력하는 값들
+# ============================================================
+Parameters:
+  # SSH 접속에 사용할 키 페어 (EC2 콘솔 → Key Pairs에서 미리 생성 필요)
+  KeyPairName:
+    Type: AWS::EC2::KeyPair::KeyName
+    Description: Name of an existing EC2 Key Pair for SSH access
+
+  # EC2 사양 (학습용이면 t3.micro 유지)
+  InstanceType:
+    Type: String
+    Default: t3.micro
+    AllowedValues:
+      - t3.micro
+      - t3.small
+      - t3.medium
+    Description: EC2 instance type
+
+  # Amazon Linux 2023 최신 AMI를 SSM Parameter Store에서 자동으로 가져옴 (변경 불필요)
+  LatestAmiId:
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Default: /aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-x86_64
+    Description: Amazon Linux 2023 AMI (auto-resolved from SSM Parameter Store)
+
+  # ---------------------------------------------------------------------------
+  # 네트워크 CIDR (기본값 유지 권장)
+  # ---------------------------------------------------------------------------
+  VpcCidr:
+    Type: String
+    Default: 10.0.0.0/16
+    Description: IPv4 CIDR block for the VPC
+    AllowedPattern: '(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})/(\d{1,2})'
+
+  PublicSubnetACidr:
+    Type: String
+    Default: 10.0.1.0/24
+    Description: CIDR block for Public Subnet A (ap-northeast-2a)
+
+  PublicSubnetCCidr:
+    Type: String
+    Default: 10.0.2.0/24
+    Description: CIDR block for Public Subnet C (ap-northeast-2c)
+
+  PrivateSubnetACidr:
+    Type: String
+    Default: 10.0.11.0/24
+    Description: CIDR block for Private Subnet A (ap-northeast-2a)
+
+  PrivateSubnetCCidr:
+    Type: String
+    Default: 10.0.12.0/24
+    Description: CIDR block for Private Subnet C (ap-northeast-2c)
+
+  # SSH 접근 허용 IP 범위 (기본: 모든 IP, 보안을 위해 본인 IP/32로 제한 권장)
+  SSHAccessCidr:
+    Type: String
+    Default: 0.0.0.0/0
+    Description: CIDR block allowed for SSH access (use your IP/32 for security)
+    AllowedPattern: '(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})/(\d{1,2})'
+
+  # ---------------------------------------------------------------------------
+  # 태그 설정
+  # ---------------------------------------------------------------------------
+  ProjectName:
+    Type: String
+    Default: s3-app
+    Description: Prefix for all resource names (e.g. s3-app-vpc, s3-app-ec2)
+    AllowedPattern: '[a-zA-Z][a-zA-Z0-9-]*'
+    MinLength: 1
+    MaxLength: 20
+
+  CreatedByTag:
+    Type: String
+    Default: cloudformation
+    Description: Value for the CreatedBy tag on all resources
+
+  StepTag:
+    Type: String
+    Default: step5
+    Description: Value for the Step tag on all resources
+
+  SessionTag:
+    Type: String
+    Default: '5-2'
+    Description: Value for the Session tag on all resources
+
+# ============================================================
+# 실제 생성되는 AWS 리소스
+# ============================================================
+Resources:
+  # ----------------------------------------------------------
+  # VPC
+  # ----------------------------------------------------------
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: !Ref VpcCidr
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+        - Key: Name
+          Value: !Sub '${ProjectName}-vpc'
+        - Key: CreatedBy
+          Value: !Ref CreatedByTag
+        - Key: Step
+          Value: !Ref StepTag
+        - Key: Session
+          Value: !Ref SessionTag
+
+  # ----------------------------------------------------------
+  # Internet Gateway + VPC 연결
+  # ----------------------------------------------------------
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: !Sub '${ProjectName}-igw'
+        - Key: CreatedBy
+          Value: !Ref CreatedByTag
+        - Key: Step
+          Value: !Ref StepTag
+        - Key: Session
+          Value: !Ref SessionTag
+
+  AttachGateway:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref VPC
+      InternetGatewayId: !Ref InternetGateway
+
+  # ----------------------------------------------------------
+  # Public Subnets (2 AZ — 고가용성)
+  # ----------------------------------------------------------
+  PublicSubnetA:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: !Ref PublicSubnetACidr
+      AvailabilityZone: ap-northeast-2a
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: !Sub '${ProjectName}-public-subnet-a'
+        - Key: CreatedBy
+          Value: !Ref CreatedByTag
+        - Key: Step
+          Value: !Ref StepTag
+        - Key: Session
+          Value: !Ref SessionTag
+
+  PublicSubnetC:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: !Ref PublicSubnetCCidr
+      AvailabilityZone: ap-northeast-2c
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: !Sub '${ProjectName}-public-subnet-c'
+        - Key: CreatedBy
+          Value: !Ref CreatedByTag
+        - Key: Step
+          Value: !Ref StepTag
+        - Key: Session
+          Value: !Ref SessionTag
+
+  # ----------------------------------------------------------
+  # Private Subnets (2 AZ — 고가용성)
+  # ----------------------------------------------------------
+  PrivateSubnetA:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: !Ref PrivateSubnetACidr
+      AvailabilityZone: ap-northeast-2a
+      MapPublicIpOnLaunch: false
+      Tags:
+        - Key: Name
+          Value: !Sub '${ProjectName}-private-subnet-a'
+        - Key: CreatedBy
+          Value: !Ref CreatedByTag
+        - Key: Step
+          Value: !Ref StepTag
+        - Key: Session
+          Value: !Ref SessionTag
+
+  PrivateSubnetC:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: !Ref PrivateSubnetCCidr
+      AvailabilityZone: ap-northeast-2c
+      MapPublicIpOnLaunch: false
+      Tags:
+        - Key: Name
+          Value: !Sub '${ProjectName}-private-subnet-c'
+        - Key: CreatedBy
+          Value: !Ref CreatedByTag
+        - Key: Step
+          Value: !Ref StepTag
+        - Key: Session
+          Value: !Ref SessionTag
+
+  # ----------------------------------------------------------
+  # Public Route Table + IGW 라우트 + 서브넷 연결
+  # ----------------------------------------------------------
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Sub '${ProjectName}-public-rt'
+        - Key: CreatedBy
+          Value: !Ref CreatedByTag
+        - Key: Step
+          Value: !Ref StepTag
+        - Key: Session
+          Value: !Ref SessionTag
+
+  PublicRoute:
+    Type: AWS::EC2::Route
+    DependsOn: AttachGateway
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+
+  PublicSubnetARouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnetA
+      RouteTableId: !Ref PublicRouteTable
+
+  PublicSubnetCRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnetC
+      RouteTableId: !Ref PublicRouteTable
+
+  # ----------------------------------------------------------
+  # Private Route Tables (AZ별 분리 — 이후 NAT Gateway 연결 대비)
+  # ----------------------------------------------------------
+  PrivateRouteTableA:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Sub '${ProjectName}-private-rt-a'
+        - Key: CreatedBy
+          Value: !Ref CreatedByTag
+        - Key: Step
+          Value: !Ref StepTag
+        - Key: Session
+          Value: !Ref SessionTag
+
+  PrivateSubnetARouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PrivateSubnetA
+      RouteTableId: !Ref PrivateRouteTableA
+
+  PrivateRouteTableC:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Sub '${ProjectName}-private-rt-c'
+        - Key: CreatedBy
+          Value: !Ref CreatedByTag
+        - Key: Step
+          Value: !Ref StepTag
+        - Key: Session
+          Value: !Ref SessionTag
+
+  PrivateSubnetCRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PrivateSubnetC
+      RouteTableId: !Ref PrivateRouteTableC
+
+  # ----------------------------------------------------------
+  # Security Group: SSH(22) + Spring Boot(8080) 포트 허용
+  # ----------------------------------------------------------
+  SecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: !Sub '${ProjectName}-ec2-sg'
+      GroupDescription: !Sub '${ProjectName} - SSH + HTTP 8080 access'
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: !Ref SSHAccessCidr
+          Description: SSH access
+        - IpProtocol: tcp
+          FromPort: 8080
+          ToPort: 8080
+          CidrIp: 0.0.0.0/0
+          Description: Spring Boot application port
+      Tags:
+        - Key: Name
+          Value: !Sub '${ProjectName}-ec2-sg'
+        - Key: CreatedBy
+          Value: !Ref CreatedByTag
+        - Key: Step
+          Value: !Ref StepTag
+        - Key: Session
+          Value: !Ref SessionTag
+
+  # ----------------------------------------------------------
+  # EC2 Instance: Amazon Linux 2023 + Java 17 자동 설치
+  # Public Subnet A에 배치
+  # ----------------------------------------------------------
+  EC2Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !Ref LatestAmiId
+      InstanceType: !Ref InstanceType
+      KeyName: !Ref KeyPairName
+      SubnetId: !Ref PublicSubnetA
+      SecurityGroupIds:
+        - !Ref SecurityGroup
+      Tags:
+        - Key: Name
+          Value: !Sub '${ProjectName}-ec2'
+        - Key: CreatedBy
+          Value: !Ref CreatedByTag
+        - Key: Step
+          Value: !Ref StepTag
+        - Key: Session
+          Value: !Ref SessionTag
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          set -e
+
+          # 시스템 패키지 업데이트
+          dnf update -y
+
+          # ============================================================
+          # Swap 2GB 추가 (t3.micro 메모리 부족 대비 — Java + MySQL 동시 실행)
+          # ============================================================
+          dd if=/dev/zero of=/swapfile bs=128M count=16
+          chmod 600 /swapfile
+          mkswap /swapfile
+          swapon /swapfile
+          echo '/swapfile swap swap defaults 0 0' >> /etc/fstab
+
+          # ============================================================
+          # Java 17 설치 (Spring Boot / Tomcat 실행에 필요)
+          # ============================================================
+          dnf install -y java-17-amazon-corretto-devel
+
+          # JAVA_HOME 환경변수 설정
+          echo 'export JAVA_HOME=/usr/lib/jvm/java-17-amazon-corretto' > /etc/profile.d/java.sh
+          source /etc/profile.d/java.sh
+
+          # ============================================================
+          # MySQL 8.4 LTS 설치 (Step 2-1과 동일)
+          # ============================================================
+          dnf install -y https://dev.mysql.com/get/mysql84-community-release-el9-1.noarch.rpm
+          dnf install -y mysql-community-server
+          systemctl start mysqld
+          systemctl enable mysqld
+
+          # 임시 비밀번호 추출 후 root 비밀번호 변경 (학습용: Scoula123!)
+          TEMP_PW=$(grep 'temporary password' /var/log/mysqld.log | awk '{print $NF}')
+          mysql --connect-expired-password -u root -p"$TEMP_PW" -e "ALTER USER 'root'@'localhost' IDENTIFIED BY 'Scoula123!';"
+
+          # ============================================================
+          # Tomcat 9 설치 (Spring MVC 5.x javax.servlet 호환 — 레거시 프로젝트용)
+          # ============================================================
+          dnf install -y wget
+          cd /opt
+          wget https://archive.apache.org/dist/tomcat/tomcat-9/v9.0.106/bin/apache-tomcat-9.0.106.tar.gz
+          tar -xzf apache-tomcat-9.0.106.tar.gz
+          mv apache-tomcat-9.0.106 tomcat
+          rm -f apache-tomcat-9.0.106.tar.gz
+          chown -R ec2-user:ec2-user /opt/tomcat
+          chmod +x /opt/tomcat/bin/*.sh
+
+          # Tomcat systemd 서비스 등록
+          cat > /etc/systemd/system/tomcat.service << 'EOF'
+          [Unit]
+          Description=Apache Tomcat 9
+          After=network.target
+
+          [Service]
+          Type=forking
+          User=ec2-user
+          Group=ec2-user
+          Environment="JAVA_HOME=/usr/lib/jvm/java-17-amazon-corretto"
+          Environment="CATALINA_HOME=/opt/tomcat"
+          Environment="CATALINA_PID=/opt/tomcat/temp/tomcat.pid"
+          ExecStart=/opt/tomcat/bin/startup.sh
+          ExecStop=/opt/tomcat/bin/shutdown.sh
+          Restart=on-failure
+
+          [Install]
+          WantedBy=multi-user.target
+          EOF
+
+          systemctl daemon-reload
+          systemctl start tomcat
+          systemctl enable tomcat
+
+          # ============================================================
+          # 앱 배포 디렉토리 생성 (JAR/WAR 파일을 여기에 올림)
+          # ============================================================
+          mkdir -p /opt/app
+          chown ec2-user:ec2-user /opt/app
+
+          # Multipart 업로드 임시 디렉토리 (Tomcat에서 파일 업로드 시 필요)
+          mkdir -p /tmp/upload
+
+          # 설치 완료 로그 기록
+          echo "=== UserData Setup Log ===" > /opt/app/setup.log
+          echo "Completed at: $(date)" >> /opt/app/setup.log
+          java -version >> /opt/app/setup.log 2>&1
+          mysql --version >> /opt/app/setup.log 2>&1
+          echo "Tomcat: $(/opt/tomcat/bin/version.sh | grep 'Server number')" >> /opt/app/setup.log 2>&1
+
+# ============================================================
+# Outputs
+# ============================================================
+Outputs:
+  VpcId:
+    Description: VPC ID
+    Value: !Ref VPC
+
+  PublicSubnetAId:
+    Description: Public Subnet A ID (ap-northeast-2a)
+    Value: !Ref PublicSubnetA
+
+  PublicSubnetCId:
+    Description: Public Subnet C ID (ap-northeast-2c)
+    Value: !Ref PublicSubnetC
+
+  PrivateSubnetAId:
+    Description: Private Subnet A ID (ap-northeast-2a)
+    Value: !Ref PrivateSubnetA
+
+  PrivateSubnetCId:
+    Description: Private Subnet C ID (ap-northeast-2c)
+    Value: !Ref PrivateSubnetC
+
+  InstanceId:
+    Description: EC2 Instance ID
+    Value: !Ref EC2Instance
+
+  PublicIP:
+    Description: EC2 Public IP Address
+    Value: !GetAtt EC2Instance.PublicIp
+
+  PublicDNS:
+    Description: EC2 Public DNS Name
+    Value: !GetAtt EC2Instance.PublicDnsName
+
+  SecurityGroupId:
+    Description: Security Group ID
+    Value: !Ref SecurityGroup
+
+  SSHCommand:
+    Description: SSH command to connect
+    Value: !Sub 'ssh -i ${KeyPairName}.pem ec2-user@${EC2Instance.PublicIp}'
+
+  AppURL:
+    Description: Application URL
+    Value: !Sub 'http://${EC2Instance.PublicIp}:8080'
