@@ -24,6 +24,17 @@ estimatedCost: 크레딧 내 사용 가능 (비용 매우 저렴)
 
 **Spring Boot(새 프로젝트)** 또는 **기존 Spring MVC 프로젝트** 모두에서 동일한 AWS SDK를 사용하며, 의존성 추가와 설정 방법만 다릅니다.
 
+### 주요 개념 키워드
+
+| 키워드 | 설명 |
+| ------ | ---- |
+| **AWS SDK v2** | Java에서 AWS 서비스를 호출하기 위한 공식 라이브러리 |
+| **S3Client** | S3 업로드/다운로드/삭제 등 기본 작업을 수행하는 클라이언트 |
+| **Presigned URL** | 임시 서명이 포함된 URL — AWS 자격 증명 없이 S3 객체에 접근 가능 |
+| **IAM Role** | EC2에 부여하는 권한 — Access Key 없이 AWS 서비스에 접근 |
+| **Default Credential Provider Chain** | SDK가 자격 증명을 자동 탐색하는 순서 (환경변수 → credentials 파일 → EC2 Role) |
+| **CloudFormation UserData** | EC2 생성 시 자동 실행되는 부트스트랩 스크립트 |
+
 ### 실습 흐름
 
 ```
@@ -41,14 +52,31 @@ estimatedCost: 크레딧 내 사용 가능 (비용 매우 저렴)
     ↓
 [태스크 6] 로컬 실행 + API 테스트
     ↓
-[태스크 7] CloudFormation으로 EC2 생성 (UserData로 Java 등 설치)
+[태스크 7] CloudFormation으로 EC2 생성 (Java + MySQL + Tomcat 자동 설치)
     ↓
-[태스크 8] IAM Policy + Role 수동 생성 → EC2에 연결
+[태스크 8] IAM Role 생성 → EC2에 연결
     ↓
-[태스크 9] EC2 배포 + 테스트
+[태스크 9] EC2 배포 + DB 세팅 + 테스트
     ↓
-[리소스 정리] 모든 리소스 삭제
+[셀프 미션] CRUD 테스트 / 프론트 배포 / S3 활용 프로그램
+    ↓
+[리소스 정리] Tag Editor 확인 → 모든 리소스 삭제
 ```
+
+> [!NOTE]
+> **예상 비용 안내**
+>
+> | 리소스 | 예상 비용 | 비고 |
+> | ------ | --------- | ---- |
+> | EC2 t3.micro | ~$0.013/시간 ( ~$9.4/월) | 실습 후 즉시 삭제하면 수십 원 수준 |
+> | S3 저장 | ~$0.025/GB/월 | 실습 파일 수 MB → 거의 무료 |
+> | S3 요청 (PUT/GET) | $0.005/1,000건 (PUT), $0.0004/1,000건 (GET) | 실습 수십 건 → 무시 가능 |
+> | 데이터 전송 (S3→인터넷) | 월 100GB까지 무료 | 실습 범위 내 무료 |
+> | IAM | 무료 | — |
+>
+> ※ 위 금액은 서울 리전(ap-northeast-2) 기준 참고 값이며, 실제 요금은 환율 및 AWS 정책 변경에 따라 상이할 수 있습니다.  
+> 정확한 요금은 [AWS S3 요금 페이지](https://aws.amazon.com/s3/pricing/)와 [EC2 요금 페이지](https://aws.amazon.com/ec2/pricing/on-demand/)에서 확인하세요.  
+> **실습 직후 리소스를 정리하면 대부분 크레딧 범위 내에서 처리됩니다.**
 
 ---
 
@@ -2520,7 +2548,57 @@ curl http://{EC2-Public-IP}:8080/api/files?prefix=test/
 
 ---
 
-## 🎯 셀프 미션: 프론트엔드 배포 + S3 이미지 확인
+## 🎯 셀프 미션 1: EC2에서 게시판 CRUD 테스트 (curl)
+
+> [!NOTE]
+> EC2에 배포한 앱이 정상 동작하는지, curl로 게시판 API CRUD를 직접 테스트해 봅니다.
+
+📍 **실행 위치: EC2** (SSH 접속한 상태)
+
+### 목표
+
+- 게시글 목록 조회, 상세 조회, 등록, 수정, 삭제를 curl로 수행
+- 각 요청의 응답이 정상적으로 돌아오는지 확인
+
+### 힌트
+
+```bash
+# 게시글 목록 조회
+curl http://localhost:8080/api/board
+
+# 게시글 상세 조회 (1번 글)
+curl http://localhost:8080/api/board/1
+
+# 게시글 등록
+curl -X POST http://localhost:8080/api/board \
+  -F "title=EC2 테스트 글" \
+  -F "content=S3 실습 중 작성한 글입니다" \
+  -F "writer=ec2-user"
+
+# 게시글 수정 (등록한 글 번호로 변경)
+curl -X PUT http://localhost:8080/api/board/{no} \
+  -F "title=수정된 제목" \
+  -F "content=수정된 내용" \
+  -F "writer=ec2-user"
+
+# 게시글 삭제
+curl -X DELETE http://localhost:8080/api/board/{no}
+```
+
+### 확인 포인트
+
+- 목록 조회 시 JSON 배열이 반환되는지
+- 등록 후 목록에 새 글이 추가되었는지
+- 수정 후 상세 조회 시 내용이 변경되었는지
+- 삭제 후 해당 글이 목록에서 사라졌는지
+- DB 연결 에러 없이 모든 작업이 정상 동작하는지
+
+> [!TIP]
+> 인증이 필요한 API라면 먼저 로그인 API를 호출하여 토큰을 받고, `-H "Authorization: Bearer {token}"` 헤더를 추가하세요.
+
+---
+
+## 🎯 셀프 미션 2: 프론트엔드 배포 + S3 이미지 확인
 
 > [!NOTE]
 > 이 미션은 선택 사항입니다. 백엔드 배포가 정상 동작하는 것을 확인한 후, 프론트엔드도 EC2에 올려서 S3에서 이미지가 정상 로드되는지 확인해 봅니다.
@@ -2626,7 +2704,32 @@ sudo nginx -t && sudo systemctl restart nginx
 
 ---
 
+## 🎯 셀프 미션 3: S3 코드를 활용한 백엔드 프로그램 제작
 
+> [!NOTE]
+> **필수가 아닙니다.** 여유가 있다면 도전해 보세요.
+
+### 목표
+
+이 실습에서 만든 S3 업로드/다운로드/Presigned URL 코드를 활용하여, 본인만의 백엔드 기능을 하나 만들어 봅니다.
+
+### 아이디어 예시
+
+| 주제 | 설명 |
+| ---- | ---- |
+| 프로필 이미지 업로드 | 회원 정보에 프로필 사진 S3 업로드 + URL DB 저장 |
+| 게시글 첨부파일 S3 전환 | 기존 로컬 저장 방식을 S3로 교체 (board 첨부파일) |
+| 이미지 갤러리 API | S3의 특정 prefix 아래 파일 목록을 조회하여 갤러리 반환 |
+| Presigned URL 기반 대용량 업로드 | 프론트에서 Presigned URL로 직접 S3에 업로드하는 플로우 구현 |
+
+### 참고할 코드
+
+- `S3Service.upload()` — MultipartFile → S3 업로드 + key 반환
+- `S3Service.getFileUrl()` — key → 공개 URL 변환
+- `PresignedUrlService.generateUploadUrl()` — 클라이언트 직접 업로드용 URL 발급
+- `TravelImageDTO` — S3 URL을 프론트에 전달하는 패턴 참고
+
+---
 
 
 # 🗑️ 리소스 정리
