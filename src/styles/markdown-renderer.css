@@ -122,6 +122,12 @@
 /* strong 태그 스타일 */
 .markdown-strong {
   font-weight: 700;
+  margin-left: 0.15em;
+  margin-right: 0.3em;
+}
+
+.markdown-bold-text {
+  margin-right: 0.15em;
 }
 
 .markdown-strong-inline {
@@ -132,6 +138,7 @@
 
 .concept-strong {
   font-weight: 600;
+  margin-right: 0.15em;
 }
 
 /* Alert 내용 포맷팅 스타일 */

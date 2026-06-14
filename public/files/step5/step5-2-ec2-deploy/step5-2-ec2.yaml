@@ -1,0 +1,291 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'Step 5-2: EC2 instance for Spring S3 app deployment (Java 17 auto-installed via UserData)'
+
+# ============================================================
+# 콘솔에서 파라미터 입력 시 그룹별로 정리해서 보여주는 설정
+# ============================================================
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: Instance Configuration
+        Parameters:
+          - KeyPairName
+          - InstanceType
+          - LatestAmiId
+      - Label:
+          default: Network Configuration
+        Parameters:
+          - VpcId
+          - SubnetId
+          - SSHAccessCidr
+      - Label:
+          default: Tagging
+        Parameters:
+          - ProjectName
+          - CreatedByTag
+          - StepTag
+          - SessionTag
+    ParameterLabels:
+      KeyPairName:
+        default: EC2 Key Pair Name
+      InstanceType:
+        default: Instance Type
+      LatestAmiId:
+        default: AMI ID (Amazon Linux 2023)
+      VpcId:
+        default: VPC ID
+      SubnetId:
+        default: Public Subnet ID
+      SSHAccessCidr:
+        default: SSH Access CIDR
+      ProjectName:
+        default: Project Name (used for resource naming)
+      CreatedByTag:
+        default: CreatedBy Tag Value
+      StepTag:
+        default: Step Tag Value
+      SessionTag:
+        default: Session Tag Value
+
+# ============================================================
+# 스택 생성 시 사용자가 입력하는 값들
+# ============================================================
+Parameters:
+  # SSH 접속에 사용할 키 페어 (EC2 콘솔 → Key Pairs에서 미리 생성 필요)
+  KeyPairName:
+    Type: AWS::EC2::KeyPair::KeyName
+    Description: Name of an existing EC2 Key Pair for SSH access
+
+  # EC2 사양 (학습용이면 t3.micro 유지)
+  InstanceType:
+    Type: String
+    Default: t3.micro
+    AllowedValues:
+      - t3.micro
+      - t3.small
+      - t3.medium
+    Description: EC2 instance type
+
+  # Amazon Linux 2023 최신 AMI를 SSM Parameter Store에서 자동으로 가져옴 (변경 불필요)
+  LatestAmiId:
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Default: /aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-x86_64
+    Description: Amazon Linux 2023 AMI (auto-resolved from SSM Parameter Store)
+
+  # EC2가 속할 VPC (기본 VPC 또는 이전 실습에서 만든 VPC)
+  VpcId:
+    Type: AWS::EC2::VPC::Id
+    Description: VPC where the EC2 instance will be launched
+
+  # EC2가 배치될 서브넷 (반드시 Public Subnet이어야 외부 접근 가능)
+  SubnetId:
+    Type: AWS::EC2::Subnet::Id
+    Description: Public Subnet for the EC2 instance (must have internet access)
+
+  # SSH 접근 허용 IP 범위 (기본: 모든 IP, 보안을 위해 본인 IP/32로 제한 권장)
+  SSHAccessCidr:
+    Type: String
+    Default: 0.0.0.0/0
+    Description: CIDR block allowed for SSH access (use your IP/32 for security)
+    AllowedPattern: '^(\d{1,3}\.){3}\d{1,3}/\d{1,2}$'
+    ConstraintDescription: Must be a valid CIDR (e.g. 203.0.113.0/32 or 0.0.0.0/0)
+
+  # 리소스 이름에 붙는 접두사 (예: s3-app-ec2, s3-app-sg)
+  ProjectName:
+    Type: String
+    Default: s3-app
+    Description: Project name prefix for resource naming
+
+  # 태그 값 (리소스 추적 및 비용 관리용)
+  CreatedByTag:
+    Type: String
+    Default: cloudformation
+    Description: Value for the CreatedBy tag on all resources
+
+  StepTag:
+    Type: String
+    Default: step5
+    Description: Value for the Step tag on all resources
+
+  SessionTag:
+    Type: String
+    Default: '5-2'
+    Description: Value for the Session tag on all resources
+
+# ============================================================
+# 실제 생성되는 AWS 리소스
+# ============================================================
+Resources:
+  # ----------------------------------------------------------
+  # Security Group: SSH(22) + Spring Boot(8080) 포트 허용
+  # ----------------------------------------------------------
+  SecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: !Sub '${ProjectName} - SSH + HTTP 8080 access'
+      VpcId: !Ref VpcId
+      SecurityGroupIngress:
+        # SSH 접속 허용 (포트 22)
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: !Ref SSHAccessCidr
+          Description: SSH access
+        # Spring Boot 앱 접근 허용 (포트 8080, 모든 IP에서)
+        - IpProtocol: tcp
+          FromPort: 8080
+          ToPort: 8080
+          CidrIp: 0.0.0.0/0
+          Description: Spring Boot application port
+      Tags:
+        - Key: Name
+          Value: !Sub '${ProjectName}-sg'
+        - Key: CreatedBy
+          Value: !Ref CreatedByTag
+        - Key: Step
+          Value: !Ref StepTag
+        - Key: Session
+          Value: !Ref SessionTag
+
+  # ----------------------------------------------------------
+  # EC2 Instance: Amazon Linux 2023 + Java 17 자동 설치
+  # ----------------------------------------------------------
+  EC2Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !Ref LatestAmiId # Amazon Linux 2023 최신 AMI
+      InstanceType: !Ref InstanceType # t3.micro (기본)
+      KeyName: !Ref KeyPairName # SSH 키 페어
+      SubnetId: !Ref SubnetId # Public Subnet에 배치
+      SecurityGroupIds:
+        - !Ref SecurityGroup # 위에서 만든 SG 연결
+      Tags:
+        - Key: Name
+          Value: !Sub '${ProjectName}-ec2'
+        - Key: CreatedBy
+          Value: !Ref CreatedByTag
+        - Key: Step
+          Value: !Ref StepTag
+        - Key: Session
+          Value: !Ref SessionTag
+      # EC2 생성 직후 자동으로 실행되는 스크립트
+      # EC2 생성 직후 자동으로 실행되는 스크립트
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          set -e
+
+          # 시스템 패키지 업데이트
+          dnf update -y
+
+          # ============================================================
+          # Swap 2GB 추가 (t3.micro 메모리 부족 대비 — Java + MySQL 동시 실행)
+          # ============================================================
+          dd if=/dev/zero of=/swapfile bs=128M count=16
+          chmod 600 /swapfile
+          mkswap /swapfile
+          swapon /swapfile
+          echo '/swapfile swap swap defaults 0 0' >> /etc/fstab
+
+          # ============================================================
+          # Java 17 설치 (Spring Boot / Tomcat 실행에 필요)
+          # ============================================================
+          dnf install -y java-17-amazon-corretto-devel
+
+          # JAVA_HOME 환경변수 설정
+          echo 'export JAVA_HOME=/usr/lib/jvm/java-17-amazon-corretto' > /etc/profile.d/java.sh
+          source /etc/profile.d/java.sh
+
+          # ============================================================
+          # MySQL 8.4 LTS 설치 (Step 2-1과 동일)
+          # ============================================================
+          dnf install -y https://dev.mysql.com/get/mysql84-community-release-el9-1.noarch.rpm
+          dnf install -y mysql-community-server
+          systemctl start mysqld
+          systemctl enable mysqld
+
+          # 임시 비밀번호 추출 후 root 비밀번호 변경 (학습용: Scoula123!)
+          TEMP_PW=$(grep 'temporary password' /var/log/mysqld.log | awk '{print $NF}')
+          mysql --connect-expired-password -u root -p"$TEMP_PW" -e "ALTER USER 'root'@'localhost' IDENTIFIED BY 'Scoula123!';"
+
+          # ============================================================
+          # Tomcat 9 설치 (Spring MVC 5.x javax.servlet 호환 — 레거시 프로젝트용)
+          # ============================================================
+          dnf install -y wget
+          cd /opt
+          wget https://archive.apache.org/dist/tomcat/tomcat-9/v9.0.106/bin/apache-tomcat-9.0.106.tar.gz
+          tar -xzf apache-tomcat-9.0.106.tar.gz
+          mv apache-tomcat-9.0.106 tomcat
+          rm -f apache-tomcat-9.0.106.tar.gz
+          chown -R ec2-user:ec2-user /opt/tomcat
+          chmod +x /opt/tomcat/bin/*.sh
+
+          # Tomcat systemd 서비스 등록
+          cat > /etc/systemd/system/tomcat.service << 'EOF'
+          [Unit]
+          Description=Apache Tomcat 9
+          After=network.target
+
+          [Service]
+          Type=forking
+          User=ec2-user
+          Group=ec2-user
+          Environment="JAVA_HOME=/usr/lib/jvm/java-17-amazon-corretto"
+          Environment="CATALINA_HOME=/opt/tomcat"
+          Environment="CATALINA_PID=/opt/tomcat/temp/tomcat.pid"
+          ExecStart=/opt/tomcat/bin/startup.sh
+          ExecStop=/opt/tomcat/bin/shutdown.sh
+          Restart=on-failure
+
+          [Install]
+          WantedBy=multi-user.target
+          EOF
+
+          systemctl daemon-reload
+          systemctl start tomcat
+          systemctl enable tomcat
+
+          # ============================================================
+          # 앱 배포 디렉토리 생성 (JAR/WAR 파일을 여기에 올림)
+          # ============================================================
+          mkdir -p /opt/app
+          chown ec2-user:ec2-user /opt/app
+
+          # Multipart 업로드 임시 디렉토리 (Tomcat에서 파일 업로드 시 필요)
+          mkdir -p /tmp/upload
+
+          # 설치 완료 로그 기록
+          echo "=== UserData Setup Log ===" > /opt/app/setup.log
+          echo "Completed at: $(date)" >> /opt/app/setup.log
+          java -version >> /opt/app/setup.log 2>&1
+          mysql --version >> /opt/app/setup.log 2>&1
+          echo "Tomcat: $(/opt/tomcat/bin/version.sh | grep 'Server number')" >> /opt/app/setup.log 2>&1
+
+# ============================================================
+# Outputs
+# ============================================================
+Outputs:
+  InstanceId:
+    Description: EC2 Instance ID
+    Value: !Ref EC2Instance
+
+  PublicIP:
+    Description: EC2 Public IP Address
+    Value: !GetAtt EC2Instance.PublicIp
+
+  PublicDNS:
+    Description: EC2 Public DNS Name
+    Value: !GetAtt EC2Instance.PublicDnsName
+
+  SecurityGroupId:
+    Description: Security Group ID
+    Value: !Ref SecurityGroup
+
+  SSHCommand:
+    Description: SSH command to connect
+    Value: !Sub 'ssh -i ${KeyPairName}.pem ec2-user@${EC2Instance.PublicIp}'
+
+  AppURL:
+    Description: Application URL
+    Value: !Sub 'http://${EC2Instance.PublicIp}:8080'
