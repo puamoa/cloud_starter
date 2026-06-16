@@ -146,6 +146,10 @@ Target Group은 ALB가 트래픽을 전달할 대상(EC2 인스턴스)의 그룹
 
     <img src="/images/common/region-check.png" alt="리전 확인" class="guide-img-sm" />
 
+> [!TIP]
+> 일부 AWS 서비스(IAM, CloudFront, Route 53 등)는 **글로벌 서비스**이므로 리전 선택 드롭다운이 비활성화되거나 "Global"로 표시됩니다.  
+> 이 실습에서 사용하는 서비스는 리전 기반이므로 반드시 올바른 리전이 선택되어 있는지 확인하세요.
+
 3. 상단 검색창에 `EC2`를 입력하고 **EC2** 서비스를 선택합니다.
 4. 왼쪽 메뉴에서 **Load Balancing** → **Target Groups**를 클릭합니다.
 5. [[Create target group]] 버튼을 클릭합니다.
