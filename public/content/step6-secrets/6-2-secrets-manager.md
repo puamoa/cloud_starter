@@ -115,6 +115,10 @@ estimatedCost: 크레딧 내 사용 가능 (비밀당 월 $0.40 + API 호출 비
 
     <img src="/images/common/region-check.png" alt="리전 확인" class="guide-img-sm" />
 
+> [!TIP]
+> 일부 AWS 서비스(IAM, CloudFront, Route 53 등)는 **글로벌 서비스**이므로 리전 선택 드롭다운이 비활성화되거나 "Global"로 표시됩니다.  
+> 이 실습에서 사용하는 서비스는 리전 기반이므로 반드시 올바른 리전이 선택되어 있는지 확인하세요.
+
 3. 상단 검색창에 `Secrets Manager`를 입력합니다.
 4. 검색 결과에서 **Secrets Manager** 서비스를 클릭합니다.
 
