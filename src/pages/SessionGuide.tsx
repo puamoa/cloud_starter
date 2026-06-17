@@ -14,6 +14,7 @@ import {
   Icon,
 } from '@cloudscape-design/components';
 import { curriculum, sessionTypeConfig } from '@/data/curriculum';
+import { isStepPublished } from '@/utils/contentFilter';
 import { MarkdownRenderer } from '@/components/markdown/MarkdownRenderer';
 import {
   loadMarkdownFile,
@@ -184,7 +185,7 @@ export const SessionGuide: React.FC = () => {
 
   useEffect(() => {
     const loadContent = async () => {
-      if (!sessionData) {
+      if (!sessionData || !isStepPublished(week)) {
         setError('해당 차시를 찾을 수 없습니다.');
         setIsLoading(false);
         return;

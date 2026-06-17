@@ -42,6 +42,14 @@ export const siteConfig = {
   ],
 } as const;
 
+// 콘텐츠 공개 설정
+// production 빌드에서만 적용됨 (dev 모드에서는 모든 step이 표시됨)
+export const publishConfig = {
+  // 공개할 step 번호 목록
+  // 새 step 작업이 완료되면 여기에 번호를 추가하고 재배포하세요
+  publishedSteps: [0, 1, 2, 3, 5, 12] as number[],
+};
+
 // 조합된 문자열 헬퍼
 export const siteTitle = `${siteConfig.university} ${siteConfig.courseName}`;
 export const semesterInfo = siteConfig.semester;
