@@ -11,7 +11,7 @@ import {
   StatusIndicator,
   Icon,
 } from '@cloudscape-design/components';
-import { curriculum } from '@/data/curriculum';
+import { getVisibleCurriculum } from '@/utils/contentFilter';
 import { siteConfig, siteTitle, semesterInfo } from '@/data/siteConfig';
 import '@/styles/dashboard.css';
 import '@/styles/info-boxes.css';
@@ -279,7 +279,7 @@ export const Dashboard: React.FC = () => {
         }
       >
         <SpaceBetween direction="vertical" size="m">
-          {curriculum.map((week) => (
+          {getVisibleCurriculum().map((week) => (
             <Box
               key={week.week}
               id={`week-${week.week}`}

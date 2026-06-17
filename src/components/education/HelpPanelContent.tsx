@@ -11,6 +11,7 @@ import {
 } from '@cloudscape-design/components';
 import { labTerms, type Term } from '@/data/helpTerms';
 import { curriculum } from '@/data/curriculum';
+import { getVisibleCurriculum } from '@/utils/contentFilter';
 import { loadMarkdownFile } from '@/utils/markdownLoader';
 import './HelpPanelContent.css';
 
@@ -110,7 +111,7 @@ export const HelpPanelContent: React.FC<HelpPanelContentProps> = ({
         ];
 
         // 각 주차를 소주제로 추가
-        curriculum.forEach((week) => {
+        getVisibleCurriculum().forEach((week) => {
           toc.push({
             id: `week-${week.week}`,
             title: `${week.week}주차: ${week.title}`,

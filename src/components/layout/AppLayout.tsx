@@ -9,6 +9,7 @@ import {
 } from '@cloudscape-design/components';
 import { useTheme } from '@/contexts/ThemeContext';
 import { curriculum, sessionTypeConfig } from '@/data/curriculum';
+import { getVisibleCurriculum } from '@/utils/contentFilter';
 import { siteTitle } from '@/data/siteConfig';
 import { HelpPanelContent } from '../education';
 import '@/styles/app-layout.css';
@@ -107,7 +108,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
     },
     { type: 'divider' as const },
     // 단계별 섹션 메뉴 생성 (실습/데모만 표시)
-    ...curriculum
+    ...getVisibleCurriculum()
       .map((week) => {
         // 모든 세션 표시
         const visibleSessions = week.sessions;

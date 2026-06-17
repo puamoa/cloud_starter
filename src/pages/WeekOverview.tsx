@@ -11,14 +11,16 @@ import {
   ColumnLayout,
 } from '@cloudscape-design/components';
 import { curriculum } from '@/data/curriculum';
+import { isStepPublished } from '@/utils/contentFilter';
 import '@/styles/week-overview.css';
 
 export const WeekOverview: React.FC = () => {
   const { weekNumber } = useParams<{ weekNumber: string }>();
   const navigate = useNavigate();
-  const week = curriculum.find((w) => w.week === parseInt(weekNumber || '0'));
+  const weekNum = parseInt(weekNumber || '0');
+  const week = curriculum.find((w) => w.week === weekNum);
 
-  if (!week) {
+  if (!week || !isStepPublished(weekNum)) {
     return (
       <Container>
         <Box textAlign="center" padding="xxl">
