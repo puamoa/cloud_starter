@@ -12,7 +12,7 @@ learningObjectives:
   - 캐싱 전략의 종류를 이해할 수 있습니다.
   - AWS SDK의 자격 증명 체인과 환경별 인증 방식을 설명할 수 있습니다.
   - 파일 업로드 개발 시 보안 주의사항을 설명할 수 있습니다.
-  - S3 정적 웹 호스팅과 SPA 라우팅 개념을 이해할 수 있습니다.
+  - Amazon S3 정적 웹 호스팅과 SPA 라우팅 개념을 이해할 수 있습니다.
   - HTTPS/TLS의 역할과 CloudFront 연동 방식을 설명할 수 있습니다.
   - AWS CLI의 기본 명령어(sync, cp)를 이해할 수 있습니다.
   - IAM 사용자, 정책, 역할의 차이와 최소 권한 원칙을 설명할 수 있습니다.
@@ -26,7 +26,7 @@ learningObjectives:
 >
 > | 파트 | 섹션 | 대응 실습 |
 > | ---- | ---- | --------- |
-> | **스토리지 기초** | 1~9 | Session 1: S3 버킷 생성과 핵심 설정 |
+> | **스토리지 기초** | 1~9 | Session 1: Amazon S3 버킷 생성과 핵심 설정 |
 > | **개발/운영 기초** | 10~13 | Session 2: Spring에서 S3 파일 업로드 |
 > | **배포/서빙** | 14~17 | Session 3: S3 + CloudFront 정적 웹 호스팅 |
 >
@@ -54,9 +54,9 @@ learningObjectives:
 | **오브젝트 스토리지**              | 파일을 키-값 쌍의 객체로 저장. 계층 구조 없이 플랫하게 관리        | Amazon S3                  |
 | **블록 스토리지**                  | 데이터를 고정 크기 블록으로 나누어 저장. OS가 파일시스템으로 포맷  | Amazon EBS                 |
 | **파일 스토리지**                  | 디렉토리 계층 구조로 파일을 저장. 여러 서버가 동시 접근 가능       | Amazon EFS                 |
-| **버킷 (Bucket)**                  | S3에서 객체를 담는 최상위 컨테이너. 전 세계적으로 고유한 이름 필요 | my-app-bucket-12345        |
-| **객체 (Object)**                  | S3에 저장되는 파일 단위. 키(경로) + 값(데이터) + 메타데이터로 구성 | images/photo.jpg           |
-| **내구성 (Durability)**            | 데이터가 손실되지 않을 확률. S3는 99.999999999% (11 nines)         | 연간 객체 손실 확률 거의 0 |
+| **버킷 (Bucket)**                  | Amazon S3에서 객체를 담는 최상위 컨테이너. 전 세계적으로 고유한 이름 필요 | my-app-bucket-12345        |
+| **객체 (Object)**                  | Amazon S3에 저장되는 파일 단위. 키(경로) + 값(데이터) + 메타데이터로 구성 | images/photo.jpg           |
+| **내구성 (Durability)**            | 데이터가 손실되지 않을 확률. Amazon S3는 99.999999999% (11 nines)         | 연간 객체 손실 확률 거의 0 |
 | **가용성 (Availability)**          | 서비스에 접근할 수 있는 시간 비율                                  | S3 Standard: 99.99%        |
 | **스토리지 클래스**                | 접근 빈도와 비용에 따른 저장 등급                                  | Standard, IA, Glacier      |
 | **CDN (Content Delivery Network)** | 전 세계 엣지 서버에 콘텐츠를 캐싱하여 빠르게 전달                  | Amazon CloudFront          |
@@ -105,7 +105,7 @@ learningObjectives:
 | --------------------------------- | ---------------------------------------------------------------- |
 | **블록 스토리지 (Block Storage)** | 데이터를 고정 크기 블록으로 나누어 저장하는 방식                 |
 | **파일 시스템 (File System)**     | OS가 블록 스토리지 위에 구성하는 데이터 관리 구조 (ext4, xfs 등) |
-| **볼륨 (Volume)**                 | EC2에 연결된 하나의 EBS 스토리지 단위                            |
+| **볼륨 (Volume)**                 | Amazon EC2에 연결된 하나의 EBS 스토리지 단위                            |
 
 ### EBS 특성
 
@@ -150,13 +150,13 @@ learningObjectives:
 
 | 용어                       | 설명                                                        |
 | -------------------------- | ----------------------------------------------------------- |
-| **버킷 (Bucket)**          | S3에서 객체를 담는 최상위 컨테이너. 전 세계 고유 이름 필요  |
-| **객체 (Object)**          | S3에 저장되는 파일 단위. 키 + 데이터 + 메타데이터로 구성    |
+| **버킷 (Bucket)**          | Amazon S3에서 객체를 담는 최상위 컨테이너. 전 세계 고유 이름 필요  |
+| **객체 (Object)**          | Amazon S3에 저장되는 파일 단위. 키 + 데이터 + 메타데이터로 구성    |
 | **키 (Key)**               | 버킷 내에서 객체를 식별하는 고유 경로 (예: images/logo.png) |
 | **메타데이터 (Metadata)**  | 객체에 대한 부가 정보 (Content-Type, 크기, 수정일 등)       |
 | **버전 관리 (Versioning)** | 같은 키의 객체를 여러 버전으로 보관하는 기능                |
 
-### S3 객체 구조
+### Amazon S3 객체 구조
 
 ```
 S3 버킷: my-app-bucket
@@ -238,7 +238,7 @@ S3 버킷: my-app-bucket
 | ----------------------------- | ------------------------------------------------------- |
 | **EFS (Elastic File System)** | AWS의 관리형 NFS 파일 스토리지. 다중 EC2 동시 접근 가능 |
 | **NFS (Network File System)** | 네트워크를 통해 파일을 공유하는 프로토콜                |
-| **Mount Target**              | EFS를 VPC의 각 AZ에서 접근하기 위한 네트워크 엔드포인트 |
+| **Mount Target**              | EFS를 Amazon VPC의 각 AZ에서 접근하기 위한 네트워크 엔드포인트 |
 
 ### EFS 아키텍처
 
@@ -279,7 +279,7 @@ S3 버킷: my-app-bucket
 > 둘은 다른 개념이며, 높은 내구성이 높은 가용성을 보장하지 않습니다.
 >
 > **일상 비유:**
-> - **내구성** = "금고에 넣은 돈이 사라지지 않을 확률" → S3는 거의 100% (99.999999999%)
+> - **내구성** = "금고에 넣은 돈이 사라지지 않을 확률" → Amazon S3는 거의 100% (99.999999999%)
 > - **가용성** = "금고 문이 열리는 시간 비율" → 연간 52분 정도는 문이 안 열릴 수 있음
 >
 > 데이터는 안전하지만(내구성 높음), 서비스가 일시적으로 응답하지 않을 수는 있습니다(가용성 한계).
@@ -327,7 +327,7 @@ S3 버킷: my-app-bucket
 | **Glacier**                           | 아카이브용 초저비용 스토리지 클래스. 검색에 시간 소요 |
 | **수명 주기 정책 (Lifecycle Policy)** | 시간 경과에 따라 스토리지 클래스를 자동 전환하는 규칙 |
 
-### S3 스토리지 클래스 비교
+### Amazon S3 스토리지 클래스 비교
 
 | 클래스                   |    온도    | 저장 비용 | 검색 비용 | 최소 보관 | 사용 사례              |
 | ------------------------ | :--------: | --------- | --------- | --------- | ---------------------- |
@@ -368,7 +368,7 @@ S3 버킷: my-app-bucket
 ## 7. S3 보안과 접근 제어
 
 > [!CONCEPT] S3 접근 제어의 3가지 계층
-> S3의 접근 제어는 **Block Public Access**(버킷 레벨 차단), **버킷 정책**(JSON 정책 문서), **IAM 정책**(사용자/역할 레벨)의 3계층으로 구성됩니다.  
+> Amazon S3의 접근 제어는 **Block Public Access**(버킷 레벨 차단), **버킷 정책**(JSON 정책 문서), **IAM 정책**(사용자/역할 레벨)의 3계층으로 구성됩니다.  
 > 이 중 하나라도 "거부"하면 접근이 차단됩니다.
 >
 > **일상 비유 — 아파트 보안:**
@@ -384,7 +384,7 @@ S3 버킷: my-app-bucket
 | **버킷 정책 (Bucket Policy)** | 버킷에 연결하는 JSON 기반 접근 제어 정책. "누가, 무엇을, 어떤 조건에서" 허용/거부 |
 | **ACL (Access Control List)** | 레거시 접근 제어 방식. 2023년 이후 기본 비활성화, 사용 비권장 |
 | **Presigned URL** | 일정 시간만 유효한 임시 접근 URL. 인증 없이 특정 객체에 접근 허용 |
-| **OAC (Origin Access Control)** | CloudFront에서 S3에 접근할 때 사용하는 인증 방식 |
+| **OAC (Origin Access Control)** | CloudFront에서 Amazon S3에 접근할 때 사용하는 인증 방식 |
 
 ### 접근 제어 계층 구조
 
@@ -475,7 +475,7 @@ S3 버킷: my-app-bucket
 ## 9. S3 암호화
 
 > [!CONCEPT] S3 서버 측 암호화 (Server-Side Encryption)
-> S3는 객체를 저장할 때 자동으로 암호화하고, 읽을 때 자동으로 복호화합니다.  
+> Amazon S3는 객체를 저장할 때 자동으로 암호화하고, 읽을 때 자동으로 복호화합니다.  
 > 2023년 1월부터 모든 새 객체에 **SSE-S3가 기본 적용**됩니다.
 
 ### 암호화 방식 비교
@@ -516,7 +516,7 @@ SSE-S3 (기본):
 > - **IAM 역할** = 임시 방문증. EC2 같은 서비스에 "오늘만 S3 창고에 들어가도 됩니다"라고 발급
 > - **Access Key** = 카드키. 사원증 없이도 문을 열 수 있는 물리적 열쇠 (분실하면 위험!)
 >
-> Step 2에서 EC2에 IAM Role을 연결한 경험이 있다면, 여기서는 S3 접근에 동일한 개념을 적용합니다.
+> Step 2에서 Amazon EC2에 IAM Role을 연결한 경험이 있다면, 여기서는 S3 접근에 동일한 개념을 적용합니다.
 
 ### 주요 용어
 
@@ -575,7 +575,7 @@ SSE-S3 (기본):
 ```
 
 > [!TIP]
-> 5-2 실습에서 S3 전용 IAM 사용자를 만들고(로컬 개발), EC2에 IAM Role을 연결하여(배포) 동일한 코드가 두 환경에서 동작하는 것을 직접 체험합니다.
+> 5-2 실습에서 S3 전용 IAM 사용자를 만들고(로컬 개발), Amazon EC2에 IAM Role을 연결하여(배포) 동일한 코드가 두 환경에서 동작하는 것을 직접 체험합니다.
 
 ---
 
@@ -695,7 +695,7 @@ aws s3 ls
 | 방식 | 흐름 | 장점 | 단점 | 적합한 경우 |
 | ---- | ---- | ---- | ---- | ----------- |
 | 서버 경유 | 클라이언트 → 서버 → S3 | 구현 간단, 서버에서 검증/가공 가능 | 서버 메모리/대역폭 소모 | 소용량, 서버 검증 필요 |
-| Presigned URL | 서버가 URL 발급 → 클라이언트가 S3에 직접 업로드 | 서버 부하 최소 | 구현 복잡, Content-Type 일치 필수 | 대용량, 이미지/동영상 |
+| Presigned URL | 서버가 URL 발급 → 클라이언트가 Amazon S3에 직접 업로드 | 서버 부하 최소 | 구현 복잡, Content-Type 일치 필수 | 대용량, 이미지/동영상 |
 
 ### 파일 업로드 개발 시 주의사항
 
@@ -706,7 +706,7 @@ aws s3 ls
 | Content-Type | 업로드 시 올바른 MIME 타입 지정 (브라우저 표시에 영향) |
 | 경로 설계 | prefix로 용도 분리 (public/, private/, archive/) |
 | 삭제 정책 | 업로드만 하고 삭제 안 하면 비용 누적 — 수명 주기 규칙 활용 |
-| CORS | 브라우저에서 직접 S3로 업로드(Presigned URL) 시 CORS 설정 필수 |
+| CORS | 브라우저에서 직접 Amazon S3로 업로드(Presigned URL) 시 CORS 설정 필수 |
 | 파일 타입 검증 | 확장자뿐 아니라 실제 바이너리(Magic Bytes)를 확인하여 위장 파일 차단 |
 | 업로드 후 URL 반환 | public/ 경로면 S3 URL 직접 반환, private/ 경로면 Presigned URL 발급 |
 
@@ -716,7 +716,7 @@ aws s3 ls
 | ---- | ---- | ---- |
 | application.properties에 Access Key 넣고 Git push | AWS에서 경고 메일, 키 자동 비활성화 | 키 즉시 삭제 + credentials 파일 방식으로 전환 |
 | admin 키를 팀 전체가 공유 | 누가 뭘 했는지 추적 불가, 퇴사 시 키 교체 필요 | 팀원별 개인 IAM 사용자 생성 |
-| S3 버킷을 완전 공개(Block Public Access 해제 + 정책 없음) | 전체 버킷 데이터 인터넷 노출 | 버킷 정책으로 특정 prefix만 공개 |
+| Amazon S3 버킷을 완전 공개(Block Public Access 해제 + 정책 없음) | 전체 버킷 데이터 인터넷 노출 | 버킷 정책으로 특정 prefix만 공개 |
 | 파일 업로드 크기 제한 미설정 | 수 GB 파일 업로드 시 서버 OOM | max-file-size 설정 + Presigned URL 전환 |
 | 원본 파일명 그대로 S3 키로 사용 | 한글/특수문자로 URL 깨짐, 파일명 충돌 | UUID 기반 키 생성, 원본 파일명은 DB에 별도 저장 |
 | 업로드만 하고 삭제 안 함 | 월말 S3 비용 예상보다 높음 | 수명 주기 규칙으로 오래된 파일 자동 삭제/전환 |
@@ -803,7 +803,7 @@ CORS가 있으면:
 ```
 
 Same-Origin Policy는 이런 공격을 원천 차단합니다.  
-하지만 정상적인 교차 도메인 통신(예: 프론트엔드에서 S3로 파일 업로드)도 차단하므로, 서버에서 CORS 설정으로 허용할 도메인을 명시합니다.
+하지만 정상적인 교차 도메인 통신(예: 프론트엔드에서 Amazon S3로 파일 업로드)도 차단하므로, 서버에서 CORS 설정으로 허용할 도메인을 명시합니다.
 
 ### CORS 동작 방식: Preflight 요청
 
@@ -875,7 +875,7 @@ Same-Origin Policy는 이런 공격을 원천 차단합니다.
 
 | 에러 메시지 | 원인 | 해결 |
 | ----------- | ---- | ---- |
-| `Access to XMLHttpRequest has been blocked by CORS policy` | S3에 CORS 미설정 또는 Origin 미등록 | AllowedOrigins에 프론트엔드 도메인 추가 |
+| `Access to XMLHttpRequest has been blocked by CORS policy` | Amazon S3에 CORS 미설정 또는 Origin 미등록 | AllowedOrigins에 프론트엔드 도메인 추가 |
 | `Method PUT is not allowed by Access-Control-Allow-Methods` | AllowedMethods에 PUT 미포함 | AllowedMethods에 필요한 메서드 추가 |
 | `Request header field authorization is not allowed` | AllowedHeaders에 해당 헤더 미포함 | AllowedHeaders에 `"*"` 또는 해당 헤더 추가 |
 | CORS 설정 변경 후에도 에러 지속 | 브라우저 Preflight 캐시 | 브라우저 캐시 삭제 또는 시크릿 창에서 테스트 |
@@ -1001,17 +1001,17 @@ CDN 사용:
 
 ---
 
-## 16. S3 정적 웹 호스팅과 SPA
+## 16. Amazon S3 정적 웹 호스팅과 SPA
 
-> [!CONCEPT] S3 정적 웹 호스팅이란?
-> S3 버킷을 웹 서버처럼 사용하여 HTML, CSS, JS 파일을 HTTP 엔드포인트로 서빙하는 기능입니다.  
+> [!CONCEPT] Amazon S3 정적 웹 호스팅이란?
+> Amazon S3 버킷을 웹 서버처럼 사용하여 HTML, CSS, JS 파일을 HTTP 엔드포인트로 서빙하는 기능입니다.  
 > 별도 서버(EC2, Nginx) 없이 정적 사이트를 배포할 수 있으며, CloudFront를 연동하면 HTTPS와 CDN까지 적용됩니다.
 
 ### 주요 용어
 
 | 용어 | 설명 |
 | ---- | ---- |
-| **정적 웹 호스팅 (Static Website Hosting)** | S3 버킷에 저장된 파일을 웹 서버처럼 HTTP로 서빙하는 기능 |
+| **정적 웹 호스팅 (Static Website Hosting)** | Amazon S3 버킷에 저장된 파일을 웹 서버처럼 HTTP로 서빙하는 기능 |
 | **정적 사이트 (Static Site)** | 서버 측 처리 없이 브라우저에서 HTML/CSS/JS만으로 동작하는 사이트 |
 | **SPA (Single Page Application)** | 하나의 HTML 파일을 로드한 뒤, JavaScript가 페이지 전환을 처리하는 앱 (Vue, React 등) |
 | **클라이언트 사이드 라우팅** | URL 경로를 서버가 아닌 브라우저의 JavaScript(라우터)가 해석하는 방식 |
@@ -1116,7 +1116,7 @@ CloudFront 연동 시:
 | CDN               | 엣지 캐싱으로 지연 시간 최소화         |
 | 캐싱 전략         | 빠른 응답을 위한 데이터 임시 보관 패턴 |
 | CORS              | 브라우저 교차 도메인 요청 허용 설정    |
-| 정적 웹 호스팅    | S3를 웹 서버처럼 사용, SPA 배포에 활용 |
+| 정적 웹 호스팅    | Amazon S3를 웹 서버처럼 사용, SPA 배포에 활용 |
 | SPA 라우팅        | 모든 경로를 index.html로 처리, JS 라우터가 해석 |
 | HTTPS / TLS       | 통신 암호화, CloudFront 연동 시 자동 적용 |
 | AWS CLI           | 터미널에서 AWS 서비스 제어, `sync`로 배포 자동화 |
@@ -1127,6 +1127,6 @@ CloudFront 연동 시:
 ## 다음 단계
 
 이 이론을 바탕으로 다음 실습을 진행합니다:
-- **Session 1**: S3 버킷 생성과 핵심 설정 (섹션 3~9 활용)
+- **Session 1**: Amazon S3 버킷 생성과 핵심 설정 (섹션 3~9 활용)
 - **Session 2**: Spring에서 S3 파일 업로드 구현 (섹션 10~13 활용)
 - **Session 3**: S3 + CloudFront 정적 웹 호스팅 (섹션 14~17 활용)
