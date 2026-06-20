@@ -88,8 +88,12 @@ estimatedCost: 무료 (Parameter Group 변경은 비용 없음)
 3. 상단 검색창에 `RDS`를 입력하고 **Aurora and RDS** 서비스를 선택합니다.
 4. 왼쪽 메뉴에서 **Parameter groups**를 선택합니다.
 5. 상단에 **Custom** / **Default** 두 개의 탭이 있습니다. **Default** 탭을 클릭합니다.
+
+    <img src="/images/step4/4-2-step5-default-tab.png" alt="Default 탭" class="guide-img-sm" />
 6. 목록에서 `default.mysql8.4` 그룹 이름을 클릭합니다.
 7. 파라미터 목록이 표시됩니다. 상단의 검색창에 `time_zone`을 입력합니다.
+
+    <img src="/images/step4/4-2-step7-time-zone.png" alt="time_zone 검색" class="guide-img-sm" />
 8. `time_zone` 파라미터가 표시되지만, **Value** 열이 `-` (비어있음)이고 수정할 수 없는 것을 확인합니다.
 
 > [!TIP]
@@ -126,9 +130,13 @@ estimatedCost: 무료 (Parameter Group 변경은 비용 없음)
 
 10. Parameter groups 목록 화면에서 **Custom** 탭을 클릭합니다. [[Create parameter group]] 버튼을 클릭합니다.
 
+    <img src="/images/step4/4-2-step10-create-pg.png" alt="Create parameter group" class="guide-img-sm" />
+
 **Create parameter group** 페이지가 열립니다:
 
 11. **Parameter group name**에 `my-mysql84-params`를 입력합니다.
+
+    <img src="/images/step4/4-2-step11-pg-name.png" alt="Parameter group 설정" class="guide-img-sm" />
 12. **Description**에 `Custom parameter group for MySQL 8.4 - timezone, charset, connections`를 입력합니다.
 13. **Engine type** 드롭다운에서 `MySQL Community`를 선택합니다.
 14. **Parameter group family** 드롭다운에서 `mysql8.4`을 선택합니다.
@@ -150,6 +158,8 @@ estimatedCost: 무료 (Parameter Group 변경은 비용 없음)
 
 16. [[Create]] 버튼을 클릭합니다.
 
+    <img src="/images/step4/4-2-step16-created.png" alt="PG 생성 완료" class="guide-img-sm" />
+
 > [!OUTPUT]
 > "Parameter group my-mysql84-params was created successfully" 메시지가 표시됩니다.  
 > Parameter groups 목록의 **Custom** 탭에 `my-mysql84-params`가 추가된 것을 확인할 수 있습니다.
@@ -161,6 +171,12 @@ estimatedCost: 무료 (Parameter Group 변경은 비용 없음)
 > - `CreatedBy` = `admin-user`
 > - `Step` = `step4`
 > - `Session` = `4-2`
+>
+> <img src="/images/step4/4-2-step16-tag1.png" alt="Tags 섹션" class="guide-img-sm" />
+>
+> <img src="/images/step4/4-2-step16-tag2.png" alt="Manage tags" class="guide-img-sm" />
+>
+> <img src="/images/step4/4-2-step16-tag3.png" alt="태그 추가 완료" class="guide-img-sm" />
 >
 > 리소스 정리 시 Tag Editor로 한눈에 확인하려면 태그 추가를 권장합니다.
 
@@ -190,15 +206,21 @@ estimatedCost: 무료 (Parameter Group 변경은 비용 없음)
 
 17. Parameter groups 목록에서 **Custom** 탭의 `my-mysql84-params` 이름을 클릭합니다.
 18. 상세 페이지가 열립니다. **Parameters** 섹션의 검색창에 `time_zone`을 입력합니다.
+
+    <img src="/images/step4/4-2-step18-pg-detail.png" alt="Parameter Group 상세" class="guide-img-sm" />
 19. `time_zone` 파라미터가 필터링되어 표시됩니다. **Apply type** 열이 `Dynamic`인 것을 확인합니다.
 20. 우측 상단의 [[Edit]] 버튼을 클릭합니다.
 21. `time_zone` 행의 **Value** 열을 클릭합니다. Allowed values 목록과 함께 입력란이 표시됩니다.
 22. 입력란에 `Asia/Seoul`을 입력합니다.
 
+    <img src="/images/step4/4-2-step22-timezone-input.png" alt="Asia/Seoul 입력" class="guide-img-sm" />
+
 > [!TIP]
 > Allowed values 목록이 매우 길지만, 아래 입력란에 직접 `Asia/Seoul`을 타이핑하면 됩니다.
 
 23. 우측 상단의 [[Save Changes]] 버튼을 클릭합니다.
+
+    <img src="/images/step4/4-2-step23-save-timezone.png" alt="Save Changes" class="guide-img-sm" />
 
 > [!OUTPUT]
 > "Parameter group my-mysql84-params was modified successfully" 메시지가 표시됩니다.  
@@ -258,6 +280,8 @@ estimatedCost: 무료 (Parameter Group 변경은 비용 없음)
 
 24. `my-mysql84-params` 상세 페이지에서 우측 상단의 [[Edit]] 버튼을 클릭합니다.
 25. 검색창에 `character_set`을 입력합니다.
+
+    <img src="/images/step4/4-2-step25-charset-edit.png" alt="character_set 검색" class="guide-img-sm" />
 26. `character_set_client` 행의 **Value** 열을 클릭하고 입력란에 `utf8mb4`를 입력합니다.
 27. `character_set_connection` 행의 **Value** 열을 클릭하고 `utf8mb4`를 입력합니다.
 28. `character_set_database` 행의 **Value** 열을 클릭하고 `utf8mb4`를 입력합니다.
@@ -272,6 +296,8 @@ estimatedCost: 무료 (Parameter Group 변경은 비용 없음)
 > 이 경우 `binary`를 입력하면 해결됩니다.
 
 31. 검색창을 지우고 `collation`을 입력합니다.
+
+    <img src="/images/step4/4-2-step31-collation.png" alt="collation 검색" class="guide-img-sm" />
 32. `collation_connection` 행의 **Value** 열을 클릭하고 `utf8mb4_unicode_ci`를 입력합니다.
 33. `collation_server` 행의 **Value** 열을 클릭하고 `utf8mb4_unicode_ci`를 입력합니다.
 
@@ -280,6 +306,8 @@ estimatedCost: 무료 (Parameter Group 변경은 비용 없음)
 > `utf8mb4_`로 시작하는 collation이 매우 많으므로 직접 입력하는 것이 빠릅니다.
 
 34. [[Save Changes]] 버튼을 클릭합니다.
+
+    <img src="/images/step4/4-2-step34-save-charset.png" alt="Save Changes" class="guide-img-sm" />
 
 > [!OUTPUT]
 > "Parameter group my-mysql84-params was modified successfully" 메시지가 표시됩니다.  
@@ -342,9 +370,13 @@ estimatedCost: 무료 (Parameter Group 변경은 비용 없음)
 
 35. `my-mysql84-params` 상세 페이지에서 우측 상단의 [[Edit]] 버튼을 클릭합니다.
 36. 상단 검색창에 `max_connections`를 입력합니다.
+
+    <img src="/images/step4/4-2-step36-maxconn-search.png" alt="max_connections 검색" class="guide-img-sm" />
 37. `max_connections` 파라미터가 표시됩니다. 현재 값이 `{DBInstanceClassMemory/12582880}` (수식)인 것을 확인합니다.
 38. `max_connections` 행의 **Value** 열을 클릭합니다.
 39. 기존 값을 지우고 `100`을 입력합니다.
+
+    <img src="/images/step4/4-2-step39-maxconn-100.png" alt="max_connections 100" class="guide-img-sm" />
 
 > [!NOTE]
 > 값을 수식(`{DBInstanceClassMemory/12582880}`)에서 고정값(`100`)으로 변경합니다.  
@@ -354,6 +386,8 @@ estimatedCost: 무료 (Parameter Group 변경은 비용 없음)
 > 수식을 유지하면서 배수를 조정하고 싶다면 `{DBInstanceClassMemory/8388608}` (약 1.5배)처럼 분모를 줄일 수도 있습니다.
 
 40. [[Save Changes]] 버튼을 클릭합니다.
+
+    <img src="/images/step4/4-2-step40-save-maxconn.png" alt="Save Changes" class="guide-img-sm" />
 
 > [!OUTPUT]
 > "Parameter group my-mysql84-params was modified successfully" 메시지가 표시됩니다.  
@@ -383,6 +417,8 @@ ssh -i ~/Downloads/my-keypair.pem ec2-user@<EC2-Public-IP>
 mysql -h <RDS-Endpoint> -u admin -p --default-character-set=utf8mb4
 ```
 
+<img src="/images/step4/4-2-step42-ssh-connect.png" alt="MySQL 접속" class="guide-img-sm" />
+
 43. 비밀번호를 입력합니다. (Step 4-1에서 설정한 마스터 비밀번호, 예: `MyPassword123!`)
 
 44. 현재 시간대를 확인합니다:
@@ -390,6 +426,8 @@ mysql -h <RDS-Endpoint> -u admin -p --default-character-set=utf8mb4
 ```sql
 SELECT @@global.time_zone, @@session.time_zone, NOW();
 ```
+
+<img src="/images/step4/4-2-step44-timezone-before.png" alt="time_zone 기본값" class="guide-img-sm" />
 
 > [!OUTPUT]
 >
@@ -409,6 +447,8 @@ SELECT @@global.time_zone, @@session.time_zone, NOW();
 ```sql
 SHOW VARIABLES LIKE 'character_set%';
 ```
+
+<img src="/images/step4/4-2-step45-charset-before.png" alt="character_set 기본값" class="guide-img-sm" />
 
 > [!OUTPUT]
 >
@@ -435,6 +475,8 @@ SHOW VARIABLES LIKE 'character_set%';
 SHOW VARIABLES LIKE 'collation%';
 ```
 
+<img src="/images/step4/4-2-step46-collation-before.png" alt="collation 기본값" class="guide-img-sm" />
+
 > [!OUTPUT]
 >
 > ```
@@ -455,6 +497,8 @@ SHOW VARIABLES LIKE 'collation%';
 ```sql
 SHOW VARIABLES LIKE 'max_connections';
 ```
+
+<img src="/images/step4/4-2-step47-maxconn-before.png" alt="max_connections 기본값" class="guide-img-sm" />
 
 > [!OUTPUT]
 >
@@ -501,10 +545,14 @@ EXIT;
 
 49. 왼쪽 메뉴에서 **Databases**를 선택합니다.
 50. 데이터베이스 목록에서 `my-rds-mysql`의 라디오 버튼을 선택합니다.
+
+    <img src="/images/step4/4-2-step50-databases.png" alt="Databases 목록" class="guide-img-sm" />
 51. 우측 상단의 [[Modify]] 버튼을 클릭합니다.
 52. **Modify DB instance** 페이지가 열립니다. 아래로 스크롤하여 **Additional configuration** 섹션을 찾습니다.
 53. **DB parameter group** 드롭다운을 클릭합니다.
 54. 드롭다운에서 `my-mysql84-params`를 선택합니다.
+
+    <img src="/images/step4/4-2-step54-pg-select.png" alt="Parameter Group 선택" class="guide-img-sm" />
 
 > [!WARNING]
 > 드롭다운에 `my-mysql84-params`가 표시되지 않는 경우:
@@ -514,9 +562,13 @@ EXIT;
 > - Parameter Group 생성 시 family를 잘못 선택했다면, 삭제 후 올바른 family로 다시 생성하세요.
 
 55. 다른 설정은 변경하지 않고 페이지 최하단의 [[Continue]] 버튼을 클릭합니다.
+
+    <img src="/images/step4/4-2-step55-continue.png" alt="Continue" class="guide-img-sm" />
 56. **Summary of modifications** 페이지가 표시됩니다. 변경 사항을 확인합니다:
     - DB parameter group: `default.mysql8.4` → `my-mysql84-params`
 57. **Schedule of modifications** 섹션에서 `Apply immediately`를 선택합니다.
+
+    <img src="/images/step4/4-2-step57-apply.png" alt="Apply immediately" class="guide-img-sm" />
 
 > [!NOTE]
 > **Apply immediately vs Apply during the next scheduled maintenance window:**
@@ -527,6 +579,10 @@ EXIT;
 > 운영 환경에서는 서비스 영향을 최소화하기 위해 유지보수 시간에 적용하는 것이 좋습니다.
 
 58. [[Modify DB instance]] 버튼을 클릭합니다.
+
+    <img src="/images/step4/4-2-step58-modify1.png" alt="Modify DB instance" class="guide-img-sm" />
+
+    <img src="/images/step4/4-2-step58-modify2.png" alt="Modifying 상태" class="guide-img-sm" />
 
 > [!OUTPUT]
 > Databases 목록으로 돌아갑니다.
@@ -540,11 +596,15 @@ EXIT;
 61. 우측 상단의 **Actions** 드롭다운을 클릭합니다.
 62. **Reboot**를 선택합니다.
 
+    <img src="/images/step4/4-2-step62-reboot.png" alt="Reboot 선택" class="guide-img-sm" />
+
 > [!TIP]
 > 이 실습에서 변경한 파라미터(`time_zone`, `character_set_*`, `collation_*`, `max_connections`)는 모두 **Dynamic**이므로 Modify만으로 즉시 반영됩니다.  
 > 재부팅은 필수가 아니지만, Static 파라미터 변경 시에는 반드시 필요하며, 확실한 적용을 위해 재부팅하는 것이 모범 사례입니다.
 
 63. 확인 팝업에서 [[Confirm]] 버튼을 클릭합니다.
+
+    <img src="/images/step4/4-2-step63-confirm.png" alt="Reboot 확인" class="guide-img-sm" />
 
 > [!WARNING]
 > 재부팅 중에는 Amazon RDS에 접속할 수 없습니다.
@@ -554,7 +614,12 @@ EXIT;
 > - Multi-AZ 구성이면 Failover가 발생하여 다운타임을 최소화할 수 있습니다.
 
 64. Status가 `Rebooting`으로 변경되는 것을 확인합니다.
+
+    <img src="/images/step4/4-2-step64-rebooting.png" alt="Rebooting" class="guide-img-sm" />
+
 65. 1~3분 후 Status가 다시 `Available`로 돌아올 때까지 기다립니다.
+
+    <img src="/images/step4/4-2-step65-available.png" alt="Available" class="guide-img-sm" />
 
 > [!TIP]
 > 재부팅 완료 후, `my-rds-mysql`을 클릭하여 상세 페이지로 이동합니다.  
@@ -563,6 +628,8 @@ EXIT;
 >
 > - `in-sync`: 모든 파라미터가 정상 적용됨
 > - `pending-reboot`: 아직 재부팅이 필요한 Static 파라미터가 있음
+>
+> <img src="/images/step4/4-2-step65-insync.png" alt="in-sync 확인" class="guide-img-sm" />
 
 > [!TROUBLESHOOTING]
 > **Parameter Group 적용 문제:**
@@ -599,6 +666,8 @@ ssh -i ~/Downloads/my-keypair.pem ec2-user@<EC2-Public-IP>
 mysql -h <RDS-Endpoint> -u admin -p --default-character-set=utf8mb4
 ```
 
+<img src="/images/step4/4-2-step67-mysql-connect.png" alt="MySQL 접속" class="guide-img-sm" />
+
 > [!WARNING]
 > `--default-character-set=utf8mb4` 옵션을 반드시 붙이세요.  
 > 이 옵션 없이 접속하면 MariaDB 클라이언트가 자체 기본 charset(`utf8mb3`)으로 연결하여,  
@@ -608,6 +677,8 @@ mysql -h <RDS-Endpoint> -u admin -p --default-character-set=utf8mb4
 > | --------- | ------------------------ |
 > | `--default-character-set=utf8mb4` 포함 | `utf8mb4_general_ci` (charset 기본 collation) |
 > | 옵션 없이 접속 | `utf8mb3_general_ci` ❌ (클라이언트 기본 charset) |
+>
+> <img src="/images/step4/4-2-step67-charset-warning.png" alt="charset 미지정 시" class="guide-img-sm" />
 
 68. 비밀번호를 입력합니다. (Step 4-1에서 설정한 마스터 비밀번호, 예: `MyPassword123!`)
 
@@ -630,6 +701,8 @@ mysql -h <RDS-Endpoint> -u admin -p --default-character-set=utf8mb4
 SELECT @@global.time_zone, @@session.time_zone, NOW();
 ```
 
+<img src="/images/step4/4-2-step69-timezone-after.png" alt="time_zone 변경 확인" class="guide-img-sm" />
+
 > [!OUTPUT]
 >
 > ```
@@ -651,6 +724,8 @@ SELECT @@global.time_zone, @@session.time_zone, NOW();
 ```sql
 SHOW VARIABLES LIKE 'collation%';
 ```
+
+<img src="/images/step4/4-2-step70-collation-after.png" alt="collation 변경 확인" class="guide-img-sm" />
 
 > [!OUTPUT]
 >
@@ -678,6 +753,8 @@ SHOW VARIABLES LIKE 'collation%';
 SHOW VARIABLES LIKE 'max_connections';
 ```
 
+<img src="/images/step4/4-2-step71-maxconn-after.png" alt="max_connections 변경 확인" class="guide-img-sm" />
+
 > [!OUTPUT]
 >
 > ```
@@ -696,6 +773,8 @@ SHOW VARIABLES LIKE 'max_connections';
 ```sql
 SHOW STATUS LIKE 'Threads_connected';
 ```
+
+<img src="/images/step4/4-2-step72-threads.png" alt="Threads_connected" class="guide-img-sm" />
 
 > [!OUTPUT]
 >
@@ -722,6 +801,8 @@ INSERT INTO emoji_test (content) VALUES ('Hello 😀🎉🚀');
 SELECT * FROM emoji_test;
 ```
 
+<img src="/images/step4/4-2-step73-emoji.png" alt="이모지 테스트" class="guide-img-sm" />
+
 > [!OUTPUT]
 >
 > ```
@@ -740,6 +821,8 @@ SELECT * FROM emoji_test;
 ```sql
 DROP DATABASE testdb;
 ```
+
+<img src="/images/step4/4-2-step74-cleanup.png" alt="테스트 정리" class="guide-img-sm" />
 
 75. MySQL을 종료합니다:
 
@@ -981,6 +1064,9 @@ jdbc.hikari.idle-timeout=600000
     - **Tag key**: `Step`
     - **Tag value**: `step4`
 4. [[Search resources]] 버튼을 클릭합니다.
+
+    <img src="/images/step4/4-2-rm4-tag-editor.png" alt="Tag Editor 검색 결과" class="guide-img-sm" />
+
 5. 4-1, 4-2에서 생성한 리소스(RDS, EC2, Parameter Group, Security Group 등)가 표시되는지 확인합니다.
 
 > [!TIP]
@@ -994,12 +1080,23 @@ jdbc.hikari.idle-timeout=600000
 7. 왼쪽 메뉴에서 **Databases**를 선택합니다.
 8. `my-rds-mysql`을 선택합니다 (라디오 버튼 클릭).
 9. 상단 **Actions** → **Delete**를 클릭합니다.
+
+    <img src="/images/step4/4-1-rm14-delete-popup.png" alt="Delete 클릭" class="guide-img-sm" />
+
 10. 삭제 확인 팝업에서:
     - ☐ **Create final snapshot**: 체크 해제 (기본값 유지)
     - ☑ **I acknowledge that upon instance deletion...**: 체크합니다.
     - 확인 입력란에 `delete me`를 입력합니다.
+
+    <img src="/images/step4/4-1-rm15-delete-confirm.png" alt="Delete 확인" class="guide-img-sm" />
+
 11. [[Delete]] 버튼을 클릭합니다.
+
+    <img src="/images/step4/4-1-rm16-deleting.png" alt="Deleting" class="guide-img-sm" />
+
 12. 상태가 `Deleting`으로 변경됩니다. 완전히 삭제될 때까지 약 5~10분 기다립니다.
+
+    <img src="/images/step4/4-1-rm17-deleted.png" alt="삭제 완료" class="guide-img-sm" />
 
 > [!WARNING]
 > Amazon RDS 삭제에는 시간이 걸립니다. 상태가 목록에서 사라질 때까지 기다린 후 다음 단계를 진행하세요.
@@ -1015,7 +1112,14 @@ jdbc.hikari.idle-timeout=600000
 13. Amazon RDS 콘솔 왼쪽 메뉴에서 **Parameter groups**를 선택합니다.
 14. `my-mysql84-params`를 선택합니다.
 15. **Actions** → [[Delete]]를 클릭합니다.
+
+    <img src="/images/step4/4-2-rm15-pg-delete.png" alt="Parameter Group 삭제" class="guide-img-sm" />
+
 16. 확인 팝업에서 [[Delete]] 버튼을 클릭합니다.
+
+    <img src="/images/step4/4-2-rm16-pg-confirm1.png" alt="삭제 확인" class="guide-img-sm" />
+
+    <img src="/images/step4/4-2-rm16-pg-confirm2.png" alt="삭제 완료" class="guide-img-sm" />
 
 > [!TROUBLESHOOTING]
 > **"Cannot delete the parameter group because it is in use" 에러:**
@@ -1029,7 +1133,12 @@ jdbc.hikari.idle-timeout=600000
 17. 왼쪽 메뉴에서 **Subnet groups**를 선택합니다.
 18. `my-db-subnet-group`을 선택합니다.
 19. [[Delete]] 버튼을 클릭합니다.
+
+    <img src="/images/step4/4-1-rm20-subnet-delete.png" alt="Subnet Group 삭제" class="guide-img-sm" />
+
 20. 확인 팝업에서 [[Delete]] 버튼을 클릭합니다.
+
+    <img src="/images/step4/4-1-rm21-subnet-confirm1.png" alt="삭제 확인" class="guide-img-sm" />
 
 > [!TROUBLESHOOTING]
 > **"Cannot delete the subnet group because it is in use" 에러:**
@@ -1044,7 +1153,12 @@ jdbc.hikari.idle-timeout=600000
 22. 왼쪽 메뉴에서 **Instances**를 선택합니다.
 23. `my-rds-client`를 체크합니다.
 24. 상단 **Instance state** → **Terminate instance**를 클릭합니다.
+
+    <img src="/images/step4/4-1-rm25-ec2-terminate.png" alt="Terminate instance" class="guide-img-sm" />
+
 25. 확인 팝업에서 [[Terminate]] 버튼을 클릭합니다.
+
+    <img src="/images/step4/4-1-rm26-ec2-confirm.png" alt="Terminate 확인" class="guide-img-sm" />
 
 ---
 
@@ -1054,7 +1168,12 @@ jdbc.hikari.idle-timeout=600000
 27. **Stacks** 목록에서 `rds-lab-prereq` 스택을 선택합니다.
 28. [[Delete]] 버튼을 클릭합니다.
 29. 확인 팝업에서 [[Delete stack]]을 클릭합니다.
+
+    <img src="/images/step4/4-1-rm31-cf-delete.png" alt="Delete stack" class="guide-img-sm" />
+
 30. 스택 상태가 `DELETE_IN_PROGRESS` → `DELETE_COMPLETE`가 될 때까지 기다립니다 (약 2~3분).
+
+    <img src="/images/step4/4-1-rm32-cf-complete.png" alt="DELETE_COMPLETE" class="guide-img-sm" />
 
 > [!NOTE]
 > CloudFormation 스택을 삭제하면 스택이 생성한 모든 리소스(VPC, Subnet, IGW, Route Table, Security Group)가 자동으로 삭제됩니다.
@@ -1071,6 +1190,8 @@ jdbc.hikari.idle-timeout=600000
     - **Tag key**: `Step`
     - **Tag value**: `step4`
 34. [[Search resources]] 버튼을 클릭합니다.
+
+    <img src="/images/step4/4-2-rm34-tag-final.png" alt="Tag Editor 최종 확인" class="guide-img-sm" />
 35. 검색 결과가 비어있는지 확인합니다.
 
 > [!OUTPUT]

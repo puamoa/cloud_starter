@@ -72,15 +72,29 @@ Amazon EC2에서 MySQL Client를 설치하여 Amazon RDS에 접속하고 정상 
 5. **Prerequisite - Prepare template**에서 `Choose an existing template`을 선택합니다.
 6. **Specify template**에서 `Upload a template file`을 선택합니다.
 7. [[Choose file]] 버튼을 클릭하고 다운로드한 `step4-1-rds-prereq.yaml` 파일을 선택합니다.
+
+    <img src="/images/step4/4-1-step7-upload-template.png" alt="템플릿 업로드" class="guide-img-sm" />
+
 8. [[Next]] 버튼을 클릭합니다.
 9. **Stack name**에 `rds-lab-prereq`를 입력합니다.
 10. **Parameters** 섹션에서 기본값을 확인합니다. 특별한 이유가 없다면 기본값을 유지합니다.
+
+    <img src="/images/step4/4-1-step10-parameters.png" alt="Parameters 설정" class="guide-img-sm" />
+
 11. [[Next]] 버튼을 클릭합니다.
 12. **Configure stack options** 페이지에서 추가 설정 없이 아래로 스크롤합니다.
+
+    <img src="/images/step4/4-1-step12-stack-options.png" alt="Stack options" class="guide-img-sm" />
+
 13. [[Next]] 버튼을 클릭합니다.
 14. **Review and create** 페이지에서 설정을 확인합니다.
+
+    <img src="/images/step4/4-1-step14-review.png" alt="Review and create" class="guide-img-sm" />
+
 15. [[Submit]] 버튼을 클릭합니다.
 16. 스택 상태가 `CREATE_COMPLETE`가 될 때까지 기다립니다 (약 1~2분).
+
+    <img src="/images/step4/4-1-step16-create-complete.png" alt="CREATE_COMPLETE" class="guide-img-sm" />
 
 > [!NOTE]
 > 스택 생성이 완료되면 **Outputs** 탭에서 생성된 리소스의 ID를 확인할 수 있습니다.
@@ -173,7 +187,11 @@ Amazon EC2에서 MySQL Client를 설치하여 Amazon RDS에 접속하고 정상 
 이 태스크에서는 Amazon RDS 인스턴스를 배치할 DB Subnet Group을 AWS 콘솔에서 생성합니다.
 
 17. 상단 검색창에 `RDS`를 입력하고 **Aurora and RDS** 서비스를 선택합니다.
+
+    <img src="/images/step4/4-1-step17-rds-console.png" alt="RDS 콘솔" class="guide-img-sm" />
 18. 왼쪽 메뉴에서 **Subnet groups**를 선택합니다.
+
+    <img src="/images/step4/4-1-step18-subnet-groups.png" alt="Subnet groups 메뉴" class="guide-img-sm" />
 19. [[Create DB subnet group]] 버튼을 클릭합니다.
 20. 다음과 같이 설정합니다:
 
@@ -183,16 +201,24 @@ Amazon EC2에서 MySQL Client를 설치하여 Amazon RDS에 접속하고 정상 
     - **Description**: `DB Subnet Group for RDS lab`
     - **VPC**: 드롭다운에서 `my-vpc`를 선택합니다.
 
+    <img src="/images/step4/4-1-step20-subnet-details.png" alt="Subnet group details" class="guide-img-sm" />
+
 21. **Add subnets** 섹션에서 **Availability Zones** 드롭다운을 클릭하고 다음 2개를 선택합니다:
     - `ap-northeast-2a`
     - `ap-northeast-2c`
 
+    <img src="/images/step4/4-1-step21-az-select.png" alt="AZ 선택" class="guide-img-sm" />
+
 > [!WARNING]
 > 반드시 **2개 이상의 서로 다른 AZ**를 선택해야 합니다. 1개만 선택하면 DB Subnet Group 생성이 실패합니다.
+>
+> <img src="/images/step4/4-1-step21-az-warning.png" alt="AZ 경고" class="guide-img-sm" />
 
 22. **Subnets** 드롭다운에서 **Private Subnet**을 선택합니다:
     - `10.0.11.0/24` (my-private-subnet-a)
     - `10.0.12.0/24` (my-private-subnet-c)
+
+    <img src="/images/step4/4-1-step22-subnet-select.png" alt="Subnet 선택" class="guide-img-sm" />
 
 > [!WARNING]
 > **Public Subnet을 선택하지 마세요.**  
@@ -214,10 +240,16 @@ Amazon EC2에서 MySQL Client를 설치하여 Amazon RDS에 접속하고 정상 
 > - `Step` = `step4`
 > - `Session` = `4-1`
 >
+> <img src="/images/step4/4-1-step23-tag1.png" alt="Tags 탭" class="guide-img-sm" />
+>
+> <img src="/images/step4/4-1-step23-tag2.png" alt="태그 추가" class="guide-img-sm" />
+>
 > 리소스 정리 시 Tag Editor로 한눈에 확인하려면 태그 추가를 권장합니다.  
 > 실무에서도 환경별(dev/staging/prod) 또는 프로젝트별로 태그를 붙여 그룹을 구분하면 관리가 편해집니다.
 
 23. [[Create]] 버튼을 클릭합니다.
+
+    <img src="/images/step4/4-1-step23-created.png" alt="Subnet Group 생성 완료" class="guide-img-sm" />
 
 > [!OUTPUT]
 > "Successfully created my-db-subnet-group. View subnet group" 메시지가 표시됩니다.
@@ -265,6 +297,8 @@ Amazon EC2에서 MySQL Client를 설치하여 Amazon RDS에 접속하고 정상 
 24. Amazon RDS 콘솔 왼쪽 메뉴에서 **Databases**를 선택합니다.
 25. 우측 상단의 [[Create database ▾]] 드롭다운을 클릭하고 **Full configuration**을 선택합니다.
 
+    <img src="/images/step4/4-1-step25-create-db.png" alt="Create database" class="guide-img-sm" />
+
 > [!NOTE]
 > **Create database 드롭다운 옵션:**
 >
@@ -279,6 +313,8 @@ Amazon EC2에서 MySQL Client를 설치하여 Amazon RDS에 접속하고 정상 
 **Engine options:**
 
 26. **Engine type**: `MySQL`을 선택합니다.
+
+    <img src="/images/step4/4-1-step26-engine.png" alt="Engine type 선택" class="guide-img-sm" />
 
 **Choose a database creation method:**
 
@@ -312,6 +348,8 @@ Amazon EC2에서 MySQL Client를 설치하여 Amazon RDS에 접속하고 정상 
 
 29. **Deployment options**: `Single-AZ DB instance deployment (1 instance)`를 선택합니다.
 
+    <img src="/images/step4/4-1-step29-deployment.png" alt="Deployment options" class="guide-img-sm" />
+
 > [!NOTE]
 > Sandbox 템플릿 선택 시 자동으로 Single-AZ가 선택됩니다.
 >
@@ -329,6 +367,8 @@ Amazon EC2에서 MySQL Client를 설치하여 Amazon RDS에 접속하고 정상 
     - ☐ **Enable RDS Extended Support**: 체크 해제 (유료 옵션)
     - **DB instance identifier**: `my-rds-mysql`
 
+    <img src="/images/step4/4-1-step30-settings.png" alt="Settings" class="guide-img-sm" />
+
 **Credentials Settings:**
 
 31. 다음과 같이 설정합니다:
@@ -337,6 +377,8 @@ Amazon EC2에서 MySQL Client를 설치하여 Amazon RDS에 접속하고 정상 
     - ☐ **Auto generate password**: 체크 해제
     - **Master password**: `MyPassword123!` (원하는 비밀번호 입력)
     - **Confirm master password**: 동일한 비밀번호를 다시 입력합니다.
+
+    <img src="/images/step4/4-1-step31-credentials.png" alt="Credentials Settings" class="guide-img-sm" />
 
 > [!WARNING]
 > Master password는 반드시 기억해 두세요. 이후 Amazon EC2에서 Amazon RDS에 접속할 때 필요합니다.  
@@ -356,6 +398,8 @@ Amazon EC2에서 MySQL Client를 설치하여 Amazon RDS에 접속하고 정상 
     - **DB instance class**: `Burstable classes (includes t classes)` 선택
     - **Instance type**: `db.t4g.micro` (기본값 — 2 vCPUs, 1 GiB RAM)
 
+    <img src="/images/step4/4-1-step32-instance.png" alt="Instance configuration" class="guide-img-sm" />
+
 > [!NOTE]
 > Sandbox 템플릿 선택 시 자동으로 `db.t4g.micro`가 선택됩니다.
 >
@@ -372,6 +416,8 @@ Amazon EC2에서 MySQL Client를 설치하여 Amazon RDS에 접속하고 정상 
     - **Storage type**: `General Purpose SSD (gp2)`
     - **Allocated storage**: `20` GiB
     - **Additional storage configuration** 펼치기 → **Storage autoscaling**: `Enable storage autoscaling` 체크 해제
+
+    <img src="/images/step4/4-1-step33-storage.png" alt="Storage" class="guide-img-sm" />
 
 > [!TIP]
 > Storage autoscaling을 비활성화하면 예상치 못한 스토리지 비용 증가를 방지할 수 있습니다.
@@ -390,6 +436,8 @@ Amazon EC2에서 MySQL Client를 설치하여 Amazon RDS에 접속하고 정상 
     - **RDS Proxy**: ☐ 체크 해제 (기본값)
     - **Certificate authority**: 기본값 유지 (`rds-ca-rsa2048-g1`)
 
+    <img src="/images/step4/4-1-step34-connectivity.png" alt="Connectivity" class="guide-img-sm" />
+
 > [!WARNING]
 > **Public access**를 반드시 `No`로 설정하세요.  
 > `Yes`로 설정하면 Amazon RDS에 Public IP가 할당되어 인터넷에서 직접 접근이 가능해집니다.
@@ -406,12 +454,16 @@ Amazon EC2에서 MySQL Client를 설치하여 Amazon RDS에 접속하고 정상 
     - `Step` = `step4`
     - `Session` = `4-1`
 
+    <img src="/images/step4/4-1-step35-tags.png" alt="Tags" class="guide-img-sm" />
+
 **Monitoring:**
 
 36. 다음과 같이 설정합니다:
     - **Database Insights**: `Database Insights - Standard` 선택 (기본값)
     - **Additional monitoring settings** 펼치기:
       - ☐ **Enable Enhanced monitoring**: 체크 해제
+
+    <img src="/images/step4/4-1-step36-monitoring.png" alt="Monitoring" class="guide-img-sm" />
 
 > [!TIP]
 > Enhanced Monitoring은 추가 비용이 발생할 수 있으므로 학습 환경에서는 비활성화합니다.
@@ -443,6 +495,8 @@ Amazon EC2에서 MySQL Client를 설치하여 Amazon RDS에 접속하고 정상 
     **Deletion protection:**
     - ☐ **Enable deletion protection**: 체크 해제
 
+    <img src="/images/step4/4-1-step37-additional.png" alt="Additional configuration" class="guide-img-sm" />
+
 > [!WARNING]
 > **Deletion protection**이 체크되어 있으면 실습 후 Amazon RDS를 삭제할 수 없습니다.  
 > 학습 환경에서는 반드시 체크 해제하세요.
@@ -452,6 +506,8 @@ Amazon EC2에서 MySQL Client를 설치하여 Amazon RDS에 접속하고 정상 
 > 비워두면 빈 MySQL 서버만 생성되고, 접속 후 수동으로 `CREATE DATABASE`를 실행해야 합니다.
 
 38. [[Create database]] 버튼을 클릭합니다.
+
+    <img src="/images/step4/4-1-step38-create-db.png" alt="Create database" class="guide-img-sm" />
 
 > [!OUTPUT]
 > "Creating database my-rds-mysql" 메시지가 표시됩니다.
@@ -475,7 +531,11 @@ Amazon EC2에서 MySQL Client를 설치하여 Amazon RDS에 접속하고 정상 
 > `Available` 상태가 되면 **Endpoint**를 확인할 수 있습니다.
 
 39. 상태가 `Available`이 되면 `my-rds-mysql`을 클릭하여 상세 정보를 확인합니다.
+
+    <img src="/images/step4/4-1-step39-creating.png" alt="RDS Creating" class="guide-img-sm" />
 40. **Connectivity & security** 탭에서 **Endpoint**를 메모합니다.
+
+    <img src="/images/step4/4-1-step40-endpoint.png" alt="Endpoint 확인" class="guide-img-sm" />
 
 > [!OUTPUT]
 > Endpoint 형식:
@@ -514,6 +574,8 @@ Amazon EC2에서 MySQL Client를 설치하여 Amazon RDS에 접속하고 정상 
 
 41. 상단 검색창에 `EC2`를 입력하고 **EC2** 서비스를 선택합니다.
 42. 왼쪽 메뉴에서 **Instances**를 선택합니다.
+
+    <img src="/images/step4/4-1-step42-ec2-instances.png" alt="EC2 Instances" class="guide-img-sm" />
 43. [[Launch instances]] 버튼을 클릭합니다.
 
 **Name and tags:**
@@ -523,6 +585,8 @@ Amazon EC2에서 MySQL Client를 설치하여 Amazon RDS에 접속하고 정상 
     - `CreatedBy` = `admin-user`
     - `Step` = `step4`
     - `Session` = `4-1`
+
+    <img src="/images/step4/4-1-step44-name-tags.png" alt="Name and tags" class="guide-img-sm" />
 
 **Application and OS Images (Amazon Machine Image):**
 
@@ -535,6 +599,8 @@ Amazon EC2에서 MySQL Client를 설치하여 Amazon RDS에 접속하고 정상 
 **Instance type:**
 
 46. `t3.micro`를 선택합니다.
+
+    <img src="/images/step4/4-1-step46-instance-type.png" alt="Instance type" class="guide-img-sm" />
 
 > [!NOTE]
 > 이 실습에서는 MySQL Client만 실행하므로 `t3.micro` (1GB RAM)로 충분합니다.
@@ -560,6 +626,8 @@ Amazon EC2에서 MySQL Client를 설치하여 Amazon RDS에 접속하고 정상 
     - **Firewall (security groups)**: `Select existing security group` 선택
     - **Common security groups**: `my-ec2-sg` 선택
 
+    <img src="/images/step4/4-1-step48-network.png" alt="Network settings" class="guide-img-sm" />
+
 > [!WARNING]
 > Amazon EC2는 반드시 **Public Subnet**에 배치하고 **Auto-assign public IP**를 `Enable`로 설정하세요.  
 > Public IP가 없으면 로컬 PC에서 SSH 접속이 불가능합니다.
@@ -569,6 +637,8 @@ Amazon EC2에서 MySQL Client를 설치하여 Amazon RDS에 접속하고 정상 
 49. 기본값을 유지합니다:
     - **Root volume**: `8` GiB, `gp3`, 3000 IOPS (기본값)
     - **File systems**: `None` 선택 (기본값)
+
+    <img src="/images/step4/4-1-step49-storage.png" alt="Configure storage" class="guide-img-sm" />
 
 > [!NOTE]
 > MySQL Client만 실행할 용도이므로 8GB 기본 스토리지면 충분합니다.  
@@ -585,6 +655,8 @@ Amazon EC2에서 MySQL Client를 설치하여 Amazon RDS에 접속하고 정상 
 
 **Advanced details** 섹션을 펼칩니다 (클릭하여 확장):
 
+<img src="/images/step4/4-1-step50-advanced-top.png" alt="Advanced details" class="guide-img-sm" />
+
 50. 다음과 같이 설정합니다:
     - **IAM instance profile**: 비워둡니다 (이 실습에서는 불필요)
     - 맨 아래로 스크롤하여 **User data** 필드에 다음 스크립트를 붙여넣습니다:
@@ -595,6 +667,8 @@ Amazon EC2에서 MySQL Client를 설치하여 Amazon RDS에 접속하고 정상 
     ```
 
     - 나머지 설정은 모두 기본값을 유지합니다.
+
+    <img src="/images/step4/4-1-step50-userdata.png" alt="User data" class="guide-img-sm" />
 
 > [!NOTE]
 > **User Data란?**  
@@ -609,7 +683,14 @@ Amazon EC2에서 MySQL Client를 설치하여 Amazon RDS에 접속하고 정상 
 > - SSH 접속이 가능해도 스크립트 실행이 완료되지 않았을 수 있으니 1~2분 대기 후 사용하세요.
 
 51. [[Launch instance]] 버튼을 클릭합니다.
+
+    <img src="/images/step4/4-1-step51-launch1.png" alt="Launch instance" class="guide-img-sm" />
+
+    <img src="/images/step4/4-1-step51-launch2.png" alt="Launch 성공" class="guide-img-sm" />
+
 52. 인스턴스 상태가 `Running`이 될 때까지 기다립니다 (약 1~2분).
+
+    <img src="/images/step4/4-1-step52-running.png" alt="Running 상태" class="guide-img-sm" />
 53. `my-rds-client`의 **Public IPv4 address**를 메모합니다.
 
 ### EC2에 SSH 접속 및 MySQL Client 설치
@@ -623,6 +704,8 @@ chmod 400 ~/Downloads/my-keypair.pem
 # EC2에 SSH 접속
 ssh -i ~/Downloads/my-keypair.pem ec2-user@<EC2-Public-IP>
 ```
+
+<img src="/images/step4/4-1-step54-ssh.png" alt="SSH 접속" class="guide-img-sm" />
 
 55. `Are you sure you want to continue connecting?` 메시지가 나오면 `yes`를 입력합니다.
 
@@ -638,6 +721,8 @@ ssh -i ~/Downloads/my-keypair.pem ec2-user@<EC2-Public-IP>
 ```bash
 mysql --version
 ```
+
+<img src="/images/step4/4-1-step56-mysql-version.png" alt="mysql --version" class="guide-img-sm" />
 
 > [!OUTPUT]
 > ```
@@ -671,6 +756,10 @@ mysql -h <RDS-Endpoint> -u admin -p
 > ```bash
 > mysql -h my-rds-mysql.xxxxxxxxxxxx.ap-northeast-2.rds.amazonaws.com -u admin -p
 > ```
+>
+> <img src="/images/step4/4-1-step57-endpoint-note.png" alt="Endpoint 확인" class="guide-img-sm" />
+
+<img src="/images/step4/4-1-step57-mysql-connect.png" alt="MySQL 접속" class="guide-img-sm" />
 
 58. `Enter password:` 프롬프트가 나오면 태스크 3에서 설정한 Master password를 입력합니다 (예: `MyPassword123!`).
 
@@ -692,6 +781,8 @@ mysql -h <RDS-Endpoint> -u admin -p
 ```sql
 SHOW DATABASES;
 ```
+
+<img src="/images/step4/4-1-step59-show-databases.png" alt="SHOW DATABASES" class="guide-img-sm" />
 
 > [!OUTPUT]
 >
@@ -727,6 +818,8 @@ INSERT INTO students (name, email) VALUES ('김철수', 'kim@example.com');
 
 SELECT * FROM students;
 ```
+
+<img src="/images/step4/4-1-step60-test-data.png" alt="테스트 데이터" class="guide-img-sm" />
 
 > [!OUTPUT]
 >
@@ -889,10 +982,20 @@ spring:
 4-2를 나중에 진행할 예정이라면 Amazon RDS와 Amazon EC2를 정지만 합니다.
 
 1. Amazon RDS 콘솔 → **Databases** → `my-rds-mysql` 선택 → **Actions** → **Stop temporarily**를 클릭합니다.
+
+    <img src="/images/step4/4-1-rm1-stop-temporarily.png" alt="Stop temporarily" class="guide-img-sm" />
+
 2. **Stop DB instance temporarily** 팝업에서:
     - **Acknowledgement**: `I acknowledge that stopping the DB instance...` 체크합니다.
     - **Snapshot - optional**: `Save the DB instance in a snapshot` 체크 해제 (기본값 유지)
+
+    <img src="/images/step4/4-1-rm2-stop-popup.png" alt="Stop 팝업" class="guide-img-sm" />
+
 3. [[Stop temporarily]] 버튼을 클릭합니다.
+
+    <img src="/images/step4/4-1-rm3-stop-confirm1.png" alt="Stop 확인" class="guide-img-sm" />
+
+    <img src="/images/step4/4-1-rm3-stop-confirm2.png" alt="Stopping 상태" class="guide-img-sm" />
 
 > [!TIP]
 > **Snapshot 옵션**은 정지 전 현재 상태를 스냅샷으로 저장하는 기능입니다.  
@@ -955,15 +1058,18 @@ spring:
 
 삭제 전에 이 실습에서 생성한 리소스를 확인합니다.
 
-1. 상단 검색창에 `Resource Groups & Tag Editor`를 입력하고 선택합니다.
-2. 왼쪽 메뉴에서 **Tag Editor**를 선택합니다.
-3. 다음과 같이 설정합니다:
+6. 상단 검색창에 `Resource Groups & Tag Editor`를 입력하고 선택합니다.
+7. 왼쪽 메뉴에서 **Tag Editor**를 선택합니다.
+8. 다음과 같이 설정합니다:
     - **Regions**: `ap-northeast-2`
     - **Resource types**: `All supported resource types`
     - **Tag key**: `Session`
     - **Tag value**: `4-1`
-4. [[Search resources]] 버튼을 클릭합니다.
-5. 이 실습에서 생성한 리소스(RDS, EC2, Security Group 등)가 표시되는지 확인합니다.
+9. [[Search resources]] 버튼을 클릭합니다.
+
+    <img src="/images/step4/4-1-rm9-tag-editor.png" alt="Tag Editor 검색 결과" class="guide-img-sm" />
+
+10. 이 실습에서 생성한 리소스(RDS, EC2, Security Group 등)가 표시되는지 확인합니다.
 
 > [!TIP]
 > Tag Editor는 리소스를 찾는 용도로만 사용합니다. 실제 삭제는 다음 단계에서 수행합니다.
@@ -972,16 +1078,26 @@ spring:
 
 ### 단계 2: Amazon RDS 인스턴스 삭제
 
-6. 상단 검색창에 `RDS`를 입력하고 **Aurora and RDS** 서비스를 선택합니다.
-7. 왼쪽 메뉴에서 **Databases**를 선택합니다.
-8. `my-rds-mysql`을 선택합니다 (라디오 버튼 클릭).
-9. 상단 **Actions** → **Delete**를 클릭합니다.
-10. 삭제 확인 팝업에서:
+11. 상단 검색창에 `RDS`를 입력하고 **Aurora and RDS** 서비스를 선택합니다.
+12. 왼쪽 메뉴에서 **Databases**를 선택합니다.
+13. `my-rds-mysql`을 선택합니다 (라디오 버튼 클릭).
+14. 상단 **Actions** → **Delete**를 클릭합니다.
+
+    <img src="/images/step4/4-1-rm14-delete-popup.png" alt="Delete 클릭" class="guide-img-sm" />
+
+15. 삭제 확인 팝업에서:
     - ☐ **Create final snapshot**: 체크 해제 (기본값 유지)
     - ☑ **I acknowledge that upon instance deletion...**: 체크합니다.
     - 확인 입력란에 `delete me`를 입력합니다.
-11. [[Delete]] 버튼을 클릭합니다.
-12. 상태가 `Deleting`으로 변경됩니다. 완전히 삭제될 때까지 약 5~10분 기다립니다.
+
+    <img src="/images/step4/4-1-rm15-delete-confirm.png" alt="Delete 확인" class="guide-img-sm" />
+16. [[Delete]] 버튼을 클릭합니다.
+
+    <img src="/images/step4/4-1-rm16-deleting.png" alt="Deleting" class="guide-img-sm" />
+
+17. 상태가 `Deleting`으로 변경됩니다. 완전히 삭제될 때까지 약 5~10분 기다립니다.
+
+    <img src="/images/step4/4-1-rm17-deleted.png" alt="삭제 완료" class="guide-img-sm" />
 
 > [!WARNING]
 > Amazon RDS 삭제에는 시간이 걸립니다. 상태가 목록에서 사라질 때까지 기다린 후 다음 단계를 진행하세요.
@@ -994,10 +1110,17 @@ spring:
 
 ### 단계 3: DB Subnet Group 삭제
 
-13. Amazon RDS 콘솔 왼쪽 메뉴에서 **Subnet groups**를 선택합니다.
-14. `my-db-subnet-group`을 선택합니다.
-15. [[Delete]] 버튼을 클릭합니다.
-16. 확인 팝업에서 [[Delete]] 버튼을 클릭합니다.
+18. Amazon RDS 콘솔 왼쪽 메뉴에서 **Subnet groups**를 선택합니다.
+19. `my-db-subnet-group`을 선택합니다.
+20. [[Delete]] 버튼을 클릭합니다.
+
+    <img src="/images/step4/4-1-rm20-subnet-delete.png" alt="Subnet Group 삭제" class="guide-img-sm" />
+
+21. 확인 팝업에서 [[Delete]] 버튼을 클릭합니다.
+
+    <img src="/images/step4/4-1-rm21-subnet-confirm1.png" alt="삭제 확인" class="guide-img-sm" />
+
+    <img src="/images/step4/4-1-rm21-subnet-confirm2.png" alt="삭제 완료" class="guide-img-sm" />
 
 > [!TROUBLESHOOTING]
 > **"Cannot delete the subnet group because it is in use" 에러:**
@@ -1008,22 +1131,37 @@ spring:
 
 ### 단계 4: Amazon EC2 인스턴스 종료
 
-17. 상단 검색창에 `EC2`를 입력하고 **EC2** 서비스를 선택합니다.
-18. 왼쪽 메뉴에서 **Instances**를 선택합니다.
-19. `my-rds-client`를 체크합니다.
-20. 상단 **Instance state** → **Terminate instance**를 클릭합니다.
-21. 확인 팝업에서 [[Terminate]] 버튼을 클릭합니다.
-22. 인스턴스 상태가 `Shutting down` → `Terminated`로 변경되는 것을 확인합니다.
+22. 상단 검색창에 `EC2`를 입력하고 **EC2** 서비스를 선택합니다.
+23. 왼쪽 메뉴에서 **Instances**를 선택합니다.
+24. `my-rds-client`를 체크합니다.
+25. 상단 **Instance state** → **Terminate instance**를 클릭합니다.
+
+    <img src="/images/step4/4-1-rm25-ec2-terminate.png" alt="Terminate instance" class="guide-img-sm" />
+
+26. 확인 팝업에서 [[Terminate]] 버튼을 클릭합니다.
+
+    <img src="/images/step4/4-1-rm26-ec2-confirm.png" alt="Terminate 확인" class="guide-img-sm" />
+
+27. 인스턴스 상태가 `Shutting down` → `Terminated`로 변경되는 것을 확인합니다.
+
+    <img src="/images/step4/4-1-rm27-ec2-terminated1.png" alt="Shutting down" class="guide-img-sm" />
+
+    <img src="/images/step4/4-1-rm27-ec2-terminated2.png" alt="Terminated" class="guide-img-sm" />
 
 ---
 
 ### 단계 5: CloudFormation 스택 삭제 (태스크 0에서 생성한 경우)
 
-23. 상단 검색창에 `CloudFormation`을 입력하고 선택합니다.
-24. **Stacks** 목록에서 `rds-lab-prereq` 스택을 선택합니다.
-25. [[Delete]] 버튼을 클릭합니다.
-26. 확인 팝업에서 [[Delete stack]]을 클릭합니다.
-27. 스택 상태가 `DELETE_IN_PROGRESS` → `DELETE_COMPLETE`가 될 때까지 기다립니다 (약 2~3분).
+28. 상단 검색창에 `CloudFormation`을 입력하고 선택합니다.
+29. **Stacks** 목록에서 `rds-lab-prereq` 스택을 선택합니다.
+30. [[Delete]] 버튼을 클릭합니다.
+31. 확인 팝업에서 [[Delete stack]]을 클릭합니다.
+
+    <img src="/images/step4/4-1-rm31-cf-delete.png" alt="Delete stack" class="guide-img-sm" />
+
+32. 스택 상태가 `DELETE_IN_PROGRESS` → `DELETE_COMPLETE`가 될 때까지 기다립니다 (약 2~3분).
+
+    <img src="/images/step4/4-1-rm32-cf-complete.png" alt="DELETE_COMPLETE" class="guide-img-sm" />
 
 > [!NOTE]
 > CloudFormation 스택을 삭제하면 스택이 생성한 모든 리소스(VPC, Subnet, IGW, Route Table, Security Group)가 자동으로 삭제됩니다.
@@ -1041,10 +1179,10 @@ spring:
 
 ### 단계 6: 삭제 확인
 
-28. **RDS 콘솔 → Databases**: `my-rds-mysql`이 목록에서 사라졌는지 확인합니다.
-29. **RDS 콘솔 → Subnet groups**: `my-db-subnet-group`이 목록에서 사라졌는지 확인합니다.
-30. **EC2 콘솔 → Instances**: `my-rds-client`가 `Terminated` 상태인지 확인합니다.
-31. **CloudFormation 콘솔**: `rds-lab-prereq` 스택이 목록에서 사라졌는지 확인합니다.
+33. **RDS 콘솔 → Databases**: `my-rds-mysql`이 목록에서 사라졌는지 확인합니다.
+34. **RDS 콘솔 → Subnet groups**: `my-db-subnet-group`이 목록에서 사라졌는지 확인합니다.
+35. **EC2 콘솔 → Instances**: `my-rds-client`가 `Terminated` 상태인지 확인합니다.
+36. **CloudFormation 콘솔**: `rds-lab-prereq` 스택이 목록에서 사라졌는지 확인합니다.
 
 > [!NOTE]
 > Terminated 상태의 EC2 인스턴스는 약 1시간 후 콘솔 목록에서 자동으로 사라집니다.
@@ -1053,15 +1191,17 @@ spring:
 
 ### 단계 7: Tag Editor로 최종 확인
 
-32. 상단 검색창에 `Resource Groups & Tag Editor`를 입력하고 선택합니다.
-33. 왼쪽 메뉴에서 **Tag Editor**를 선택합니다.
-34. 다음과 같이 설정합니다:
+37. 상단 검색창에 `Resource Groups & Tag Editor`를 입력하고 선택합니다.
+38. 왼쪽 메뉴에서 **Tag Editor**를 선택합니다.
+39. 다음과 같이 설정합니다:
     - **Regions**: `ap-northeast-2`
     - **Resource types**: `All supported resource types`
     - **Tag key**: `Session`
     - **Tag value**: `4-1`
-35. [[Search resources]] 버튼을 클릭합니다.
-36. 검색 결과가 비어있는지 확인합니다.
+40. [[Search resources]] 버튼을 클릭합니다.
+
+    <img src="/images/step4/4-1-rm40-tag-final.png" alt="Tag Editor 최종 확인" class="guide-img-sm" />
+41. 검색 결과가 비어있는지 확인합니다.
 
 > [!OUTPUT]
 > 결과가 비어있으면 모든 리소스가 정상 정리된 것입니다.  
