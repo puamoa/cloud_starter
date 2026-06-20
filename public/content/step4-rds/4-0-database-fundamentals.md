@@ -441,7 +441,7 @@ ROLLBACK;  -- 모든 변경 취소
 │        ▲                                  ▲          │
 │        │                                  │          │
 │   쓰기 요청                          읽기 요청       │
-│   (INSERT, UPDATE)                   (SELECT)         │
+│   (INSERT, UPDATE)                   (SELECT)        │
 │                                                      │
 │  • 최대 15개 Read Replica 생성 가능 (Aurora)         │
 │  • 다른 리전에도 생성 가능 (Cross-Region)            │
@@ -656,7 +656,7 @@ db.{세대}{특성}.{크기}
 | Multi-AZ          | 고가용성을 위한 동기식 복제                    |
 | Read Replica      | 읽기 성능을 위한 비동기식 복제                 |
 | DB Subnet Group   | RDS가 배치될 서브넷 모음 (최소 2 AZ)           |
-| Parameter Group   | RDS 엔진 설정을 관리하는 컨테이너             |
+| Parameter Group   | RDS 엔진 설정을 관리하는 컨테이너              |
 | Security Group    | RDS 네트워크 접근을 제어하는 방화벽            |
 | 자동 백업         | 매일 자동 실행, Point-in-time Recovery 가능    |
 
