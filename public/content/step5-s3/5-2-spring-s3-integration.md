@@ -63,6 +63,10 @@ estimatedCost: 크레딧 내 사용 가능 (비용 매우 저렴)
 [리소스 정리] Tag Editor 확인 → 모든 리소스 삭제
 ```
 
+### 아키텍처 다이어그램
+
+<img src="/images/step5/5-2-architecture.png" alt="Step 5 S3 + Spring Boot 아키텍처" class="guide-img-lg" />
+
 > [!NOTE]
 > **예상 비용 안내**
 >
