@@ -483,7 +483,8 @@ Amazon EC2에서 MySQL Client를 설치하여 Amazon RDS에 접속하고 정상 
 > ```
 > my-rds-mysql.xxxxxxxxxxxx.ap-northeast-2.rds.amazonaws.com
 > ```
->
+
+> [!TIP]
 > 이 Endpoint가 Amazon EC2에서 Amazon RDS에 접속할 때 사용하는 호스트 주소입니다.
 > Port는 `3306` (MySQL 기본 포트)입니다.
 
@@ -642,7 +643,8 @@ mysql --version
 > ```
 > mysql  Ver 15.1 Distrib 10.5.x-MariaDB, for Linux (x86_64)
 > ```
->
+
+> [!TIP]
 > 버전 정보가 표시되면 정상 설치된 것입니다.
 
 > [!TROUBLESHOOTING]
@@ -705,7 +707,8 @@ SHOW DATABASES;
 > +--------------------+
 > 5 rows in set (0.00 sec)
 > ```
->
+
+> [!TIP]
 > `mydb`가 목록에 있으면 태스크 3에서 설정한 Initial database name이 정상 생성된 것입니다.
 
 60. 테스트 테이블을 생성하고 데이터를 삽입합니다:
@@ -886,9 +889,17 @@ spring:
 4-2를 나중에 진행할 예정이라면 Amazon RDS와 Amazon EC2를 정지만 합니다.
 
 1. Amazon RDS 콘솔 → **Databases** → `my-rds-mysql` 선택 → **Actions** → **Stop temporarily**를 클릭합니다.
-2. 확인 팝업에서 [[Stop temporarily]]를 클릭합니다.
-3. Amazon EC2 콘솔 → **Instances** → `my-rds-client` 선택 → **Instance state** → **Stop instance**를 클릭합니다.
-4. 확인 팝업에서 [[Stop]]을 클릭합니다.
+2. **Stop DB instance temporarily** 팝업에서:
+    - **Acknowledgement**: `I acknowledge that stopping the DB instance...` 체크합니다.
+    - **Snapshot - optional**: `Save the DB instance in a snapshot` 체크 해제 (기본값 유지)
+3. [[Stop temporarily]] 버튼을 클릭합니다.
+
+> [!TIP]
+> **Snapshot 옵션**은 정지 전 현재 상태를 스냅샷으로 저장하는 기능입니다.  
+> 스냅샷을 저장하면 나중에 해당 시점으로 복원할 수 있지만, 스냅샷 스토리지 비용이 발생합니다.  
+> 학습 환경에서는 체크 해제로 두세요. 데이터가 중요한 운영 환경에서는 활용을 고려합니다.
+4. Amazon EC2 콘솔 → **Instances** → `my-rds-client` 선택 → **Instance state** → **Stop instance**를 클릭합니다.
+5. 확인 팝업에서 [[Stop]]을 클릭합니다.
 
 > [!WARNING]
 > **Amazon RDS Stop 주의사항:**
@@ -961,21 +972,23 @@ spring:
 
 ### 단계 2: Amazon RDS 인스턴스 삭제
 
-6. 상단 검색창에 `RDS`를 입력하고 **RDS** 서비스를 선택합니다.
+6. 상단 검색창에 `RDS`를 입력하고 **Aurora and RDS** 서비스를 선택합니다.
 7. 왼쪽 메뉴에서 **Databases**를 선택합니다.
 8. `my-rds-mysql`을 선택합니다 (라디오 버튼 클릭).
 9. 상단 **Actions** → **Delete**를 클릭합니다.
 10. 삭제 확인 팝업에서:
-    - **Create final snapshot?**: `No` 선택 (체크 해제)
-    - **I acknowledge that upon instance deletion...**: 체크합니다.
-    - **Retain automated backups**: `No` 선택 (체크 해제)
+    - ☐ **Create final snapshot**: 체크 해제 (기본값 유지)
+    - ☑ **I acknowledge that upon instance deletion...**: 체크합니다.
     - 확인 입력란에 `delete me`를 입력합니다.
 11. [[Delete]] 버튼을 클릭합니다.
 12. 상태가 `Deleting`으로 변경됩니다. 완전히 삭제될 때까지 약 5~10분 기다립니다.
 
 > [!WARNING]
 > Amazon RDS 삭제에는 시간이 걸립니다. 상태가 목록에서 사라질 때까지 기다린 후 다음 단계를 진행하세요.
-> Final snapshot을 생성하면 스냅샷 스토리지 비용이 발생하므로, 학습 환경에서는 `No`를 선택합니다.
+
+> [!TIP]
+> **Create final snapshot**을 체크하면 삭제 전 스냅샷을 생성하여 나중에 복원할 수 있지만, 스냅샷 스토리지 비용이 발생합니다.  
+> 학습 환경에서는 체크 해제하세요.
 
 ---
 
