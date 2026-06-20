@@ -27,6 +27,10 @@ estimatedCost: 크레딧 내 사용 가능 (비용 매우 저렴)
 [개념 이해] → [버킷 생성] → [핵심 설정] → [업로드/다운로드] → [퍼블릭 접근] → [버전 관리] → [수명 주기] → [시나리오 정리]
 ```
 
+### 아키텍처 다이어그램
+
+<img src="/images/step5/5-2-architecture.png" alt="Step 5 S3 + Spring Boot 아키텍처" class="guide-img-lg" />
+
 ---
 
 ## 태스크 1: S3 개념 이해

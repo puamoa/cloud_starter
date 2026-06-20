@@ -89,8 +89,8 @@ Amazon EC2에서 MySQL Client를 설치하여 Amazon RDS에 접속하고 정상 
 > 이 CloudFormation 템플릿은 다음 리소스를 생성합니다:
 >
 > - VPC (`my-vpc`, 10.0.0.0/16)
-> - Public Subnet 2개 (`my-public-subnet-a`, `my-public-subnet-b`) — 서로 다른 AZ
-> - Private Subnet 2개 (`my-private-subnet-a`, `my-private-subnet-b`) — 서로 다른 AZ
+> - Public Subnet 1개 (`my-public-subnet-a`)
+> - Private Subnet 2개 (`my-private-subnet-a`, `my-private-subnet-c`) — 서로 다른 AZ
 > - Internet Gateway + Public Route Table
 > - Security Group (`my-ec2-sg`: SSH 22, `my-rds-sg`: MySQL 3306)
 
@@ -113,10 +113,10 @@ Amazon EC2에서 MySQL Client를 설치하여 Amazon RDS에 접속하고 정상 
 > ┌─────────────────────────────────────────────────────────┐
 > │                        VPC (10.0.0.0/16)                │
 > │                                                         │
-> │  ┌─── AZ-a ───────────┐    ┌─── AZ-b ───────────┐     │
+> │  ┌─── AZ-a ───────────┐    ┌─── AZ-c ───────────┐     │
 > │  │                     │    │                     │     │
-> │  │  Public Subnet      │    │  Public Subnet      │     │
-> │  │  10.0.1.0/24        │    │  10.0.2.0/24        │     │
+> │  │  Public Subnet      │    │                     │     │
+> │  │  10.0.1.0/24        │    │                     │     │
 > │  │  [EC2 - App Server] │    │                     │     │
 > │  │                     │    │                     │     │
 > │  │  Private Subnet     │    │  Private Subnet     │     │
@@ -125,7 +125,7 @@ Amazon EC2에서 MySQL Client를 설치하여 Amazon RDS에 접속하고 정상 
 > │  │                     │    │                     │     │
 > │  └─────────────────────┘    └─────────────────────┘     │
 > │                                                         │
-> │  DB Subnet Group = { Private Subnet A + Private Subnet B }
+> │  DB Subnet Group = { Private Subnet A + Private Subnet C }
 > └─────────────────────────────────────────────────────────┘
 > ```
 >
@@ -162,14 +162,14 @@ Amazon EC2에서 MySQL Client를 설치하여 Amazon RDS에 접속하고 정상 
 
 21. **Availability Zones** 드롭다운에서 다음 2개를 선택합니다:
     - `ap-northeast-2a`
-    - `ap-northeast-2b`
+    - `ap-northeast-2c`
 
 > [!WARNING]
 > 반드시 **2개 이상의 서로 다른 AZ**를 선택해야 합니다. 1개만 선택하면 DB Subnet Group 생성이 실패합니다.
 
 22. **Subnets** 드롭다운에서 **Private Subnet**을 선택합니다:
     - `10.0.11.0/24` (my-private-subnet-a)
-    - `10.0.12.0/24` (my-private-subnet-b)
+    - `10.0.12.0/24` (my-private-subnet-c)
 
 > [!WARNING]
 > **Public Subnet을 선택하지 마세요.** DB Subnet Group에 Public Subnet을 포함하면 Amazon RDS가 인터넷에 노출될 수 있습니다.
@@ -195,7 +195,7 @@ Amazon EC2에서 MySQL Client를 설치하여 Amazon RDS에 접속하고 정상 
 >
 > | Name               | VPC    | Status   | AZs                              |
 > | ------------------ | ------ | -------- | -------------------------------- |
-> | my-db-subnet-group | my-vpc | Complete | ap-northeast-2a, ap-northeast-2b |
+> | my-db-subnet-group | my-vpc | Complete | ap-northeast-2a, ap-northeast-2c |
 
 > [!TROUBLESHOOTING]
 > **DB Subnet Group 생성 실패 시:**
