@@ -775,93 +775,127 @@ spring:
 # 🗑️ 리소스 정리
 
 > [!NOTE]
-> Parameter Group 자체는 **완전 무료**입니다. 몇 개를 생성하든 비용이 발생하지 않습니다.
-> 따라서 삭제하지 않고 유지해도 되지만, 깔끔한 정리를 위해 삭제 방법을 안내합니다.
+> Parameter Group 자체는 **완전 무료**이지만, Amazon RDS 인스턴스는 실행 중이면 과금됩니다.  
+> Amazon RDS를 삭제해야 커스텀 Parameter Group도 삭제할 수 있습니다.
 >
-> Amazon RDS 인스턴스 자체의 비용 정리는 **Step 4-1의 리소스 정리** 섹션을 참조하세요.
+> 이 실습에서 **추가로 생성한 리소스는 Parameter Group(`my-mysql84-params`)뿐**입니다.  
+> Amazon RDS, DB Subnet Group, Amazon EC2, CloudFormation 스택은 Step 4-1에서 생성한 것입니다.
 
 > [!WARNING]
-> Parameter Group을 삭제하려면 **먼저 Amazon RDS 인스턴스에서 분리**해야 합니다.
-> Amazon RDS가 사용 중인 Parameter Group은 삭제할 수 없습니다.
-> 삭제 순서: Amazon RDS에서 기본 PG로 변경 → Reboot → 커스텀 PG 삭제
+> 삭제 순서: **Amazon RDS 삭제 → 커스텀 PG 삭제 → DB Subnet Group 삭제 → EC2 종료 → CloudFormation 스택 삭제**
+>
+> Amazon RDS가 사용 중인 Parameter Group과 DB Subnet Group은 RDS를 먼저 삭제해야 삭제 가능합니다.
 
 ---
 
-### 단계 1: Amazon RDS에서 Parameter Group 분리
+### 단계 1: Tag Editor로 생성된 리소스 확인
 
-1. 상단 검색창에 `RDS`를 입력하고 RDS 서비스를 선택합니다.
-2. 왼쪽 메뉴에서 **Databases**를 선택합니다.
-3. `my-rds-mysql`의 라디오 버튼을 선택합니다.
-4. [[Modify]] 버튼을 클릭합니다.
-5. 아래로 스크롤하여 **Additional configuration** 섹션을 찾습니다.
-6. **DB parameter group** 드롭다운에서 `default.mysql8.4`을 선택합니다.
-7. 페이지 최하단의 [[Continue]] 버튼을 클릭합니다.
-8. **Schedule of modifications**에서 `Apply immediately`를 선택합니다.
-9. [[Modify DB instance]] 버튼을 클릭합니다.
-10. Status가 `Available`로 돌아올 때까지 기다립니다.
+삭제 전에 이 실습에서 생성한 리소스를 확인합니다.
 
-> [!NOTE]
-> 기본 Parameter Group으로 되돌리면 시간대가 UTC로, 문자셋이 기본값으로, max_connections가 수식 기반으로 복원됩니다.
+1. 상단 검색창에 `Resource Groups & Tag Editor`를 입력하고 선택합니다.
+2. 왼쪽 메뉴에서 **Tag Editor**를 선택합니다.
+3. 다음과 같이 설정합니다:
+    - **Regions**: `ap-northeast-2`
+    - **Resource types**: `All supported resource types`
+    - **Tag key**: `Step`
+    - **Tag value**: `step4`
+4. [[Search resources]] 버튼을 클릭합니다.
+5. 4-1, 4-2에서 생성한 리소스(RDS, EC2, Parameter Group, Security Group 등)가 표시되는지 확인합니다.
+
+> [!TIP]
+> Tag Editor는 리소스를 찾는 용도로만 사용합니다. 실제 삭제는 다음 단계에서 수행합니다.
 
 ---
 
-### 단계 2: Amazon RDS 재부팅
+### 단계 2: Amazon RDS 인스턴스 삭제
 
-11. `my-rds-mysql`의 라디오 버튼을 선택합니다.
-12. **Actions** → **Reboot**를 선택합니다.
-13. 확인 팝업에서 [[Confirm]] 버튼을 클릭합니다.
-14. Status가 `Available`로 돌아올 때까지 기다립니다. (1~3분 소요)
+6. 상단 검색창에 `RDS`를 입력하고 **RDS** 서비스를 선택합니다.
+7. 왼쪽 메뉴에서 **Databases**를 선택합니다.
+8. `my-rds-mysql`을 선택합니다 (라디오 버튼 클릭).
+9. 상단 **Actions** → **Delete**를 클릭합니다.
+10. 삭제 확인 팝업에서:
+    - **Create final snapshot?**: `No` 선택 (체크 해제)
+    - **I acknowledge that upon instance deletion...**: 체크합니다.
+    - **Retain automated backups**: `No` 선택 (체크 해제)
+    - 확인 입력란에 `delete me`를 입력합니다.
+11. [[Delete]] 버튼을 클릭합니다.
+12. 상태가 `Deleting`으로 변경됩니다. 완전히 삭제될 때까지 약 5~10분 기다립니다.
+
+> [!WARNING]
+> Amazon RDS 삭제에는 시간이 걸립니다. 상태가 목록에서 사라질 때까지 기다린 후 다음 단계를 진행하세요.
+> Final snapshot을 생성하면 스냅샷 스토리지 비용이 발생하므로, 학습 환경에서는 `No`를 선택합니다.
 
 ---
 
 ### 단계 3: 커스텀 Parameter Group 삭제
 
-15. 왼쪽 메뉴에서 **Parameter groups**를 선택합니다.
-16. `my-mysql84-params` 왼쪽의 라디오 버튼을 선택합니다.
-17. **Actions** 드롭다운을 클릭합니다.
-18. [[Delete]]를 선택합니다.
-19. 확인 팝업에서 [[Delete]]를 클릭합니다.
+13. Amazon RDS 콘솔 왼쪽 메뉴에서 **Parameter groups**를 선택합니다.
+14. `my-mysql84-params`를 선택합니다.
+15. **Actions** → [[Delete]]를 클릭합니다.
+16. 확인 팝업에서 [[Delete]] 버튼을 클릭합니다.
 
 > [!TROUBLESHOOTING]
-> **Parameter Group 삭제 실패:**
+> **"Cannot delete the parameter group because it is in use" 에러:**
 >
-> | 증상                                          | 원인                        | 해결 방법                                        |
-> | --------------------------------------------- | --------------------------- | ------------------------------------------------ |
-> | "Cannot delete, parameter group is in use"    | Amazon RDS가 아직 이 PG를 사용 중  | Amazon RDS Modify에서 default PG로 변경 후 재시도       |
-> | Delete 메뉴가 비활성화                        | 기본 Parameter Group 선택함 | 커스텀 PG(`my-mysql84-params`)를 선택했는지 확인 |
-> | "Parameter group is associated with instance" | Modify 후 Reboot 미실행     | Amazon RDS Reboot 실행 후 재시도                        |
+> Amazon RDS 인스턴스가 아직 삭제 중입니다. Databases 목록에서 `my-rds-mysql`이 완전히 사라질 때까지 기다린 후 다시 시도하세요 (약 5~10분).
 
 ---
 
-### 단계 4: 삭제 확인
+### 단계 4: DB Subnet Group 삭제
 
-20. Parameter groups 목록에서 `my-mysql84-params`가 사라졌는지 확인합니다.
-21. `default.mysql8.4`만 남아있으면 정리 완료입니다.
+17. 왼쪽 메뉴에서 **Subnet groups**를 선택합니다.
+18. `my-db-subnet-group`을 선택합니다.
+19. [[Delete]] 버튼을 클릭합니다.
+20. 확인 팝업에서 [[Delete]] 버튼을 클릭합니다.
 
-> [!TIP]
-> 커스텀 Parameter Group은 팀 표준 설정으로 유지하면 편리합니다.
-> 새 Amazon RDS 인스턴스를 생성할 때 바로 적용할 수 있어, 매번 파라미터를 하나씩 설정하는 수고를 줄일 수 있습니다.
-> 비용이 없으므로, 삭제하지 않고 유지하는 것도 좋은 선택입니다.
+> [!TROUBLESHOOTING]
+> **"Cannot delete the subnet group because it is in use" 에러:**
+>
+> Amazon RDS 인스턴스가 아직 삭제 중입니다. Databases 목록에서 `my-rds-mysql`이 완전히 사라질 때까지 기다린 후 다시 시도하세요 (약 5~10분).
 
 ---
 
-### 단계 5: Tag Editor로 최종 확인
+### 단계 5: Amazon EC2 인스턴스 종료
 
-22. 상단 검색창에 `Resource Groups & Tag Editor`를 입력하고 선택합니다.
-23. 왼쪽 메뉴에서 **Tag Editor**를 선택합니다.
-24. 다음과 같이 설정합니다:
+21. 상단 검색창에 `EC2`를 입력하고 **EC2** 서비스를 선택합니다.
+22. 왼쪽 메뉴에서 **Instances**를 선택합니다.
+23. `my-rds-client`를 체크합니다.
+24. 상단 **Instance state** → **Terminate instance**를 클릭합니다.
+25. 확인 팝업에서 [[Terminate]] 버튼을 클릭합니다.
+
+---
+
+### 단계 6: CloudFormation 스택 삭제 (태스크 0에서 생성한 경우)
+
+26. 상단 검색창에 `CloudFormation`을 입력하고 선택합니다.
+27. **Stacks** 목록에서 `rds-lab-prereq` 스택을 선택합니다.
+28. [[Delete]] 버튼을 클릭합니다.
+29. 확인 팝업에서 [[Delete stack]]을 클릭합니다.
+30. 스택 상태가 `DELETE_IN_PROGRESS` → `DELETE_COMPLETE`가 될 때까지 기다립니다 (약 2~3분).
+
+> [!NOTE]
+> CloudFormation 스택을 삭제하면 스택이 생성한 모든 리소스(VPC, Subnet, IGW, Route Table, Security Group)가 자동으로 삭제됩니다.
+
+---
+
+### 단계 7: Tag Editor로 최종 확인
+
+31. 상단 검색창에 `Resource Groups & Tag Editor`를 입력하고 선택합니다.
+32. 왼쪽 메뉴에서 **Tag Editor**를 선택합니다.
+33. 다음과 같이 설정합니다:
     - **Regions**: `ap-northeast-2`
     - **Resource types**: `All supported resource types`
-    - **Tag key**: `Session`
-    - **Tag value**: `4-2`
-25. [[Search resources]] 버튼을 클릭합니다.
-26. 검색 결과가 비어있는지 확인합니다.
+    - **Tag key**: `Step`
+    - **Tag value**: `step4`
+34. [[Search resources]] 버튼을 클릭합니다.
+35. 검색 결과가 비어있는지 확인합니다.
 
 > [!OUTPUT]
-> 결과가 비어있으면 모든 리소스가 정상 정리된 것입니다.
+> 결과가 비어있으면 모든 리소스가 정상 정리된 것입니다.  
+> 리소스가 남아있다면 해당 리소스를 클릭하여 서비스 콘솔에서 수동 삭제합니다.
 
 > [!TIP]
-> `Session: 4-2`로 검색했을 때 결과가 비어있어도, `Step: step4`로도 검색해보세요.  
-> 4-1에서 생성한 리소스가 남아있을 수 있습니다.
+> `Step: step4`로 검색하면 4-1과 4-2에서 생성한 모든 리소스를 한번에 확인할 수 있습니다.  
+> `Session: 4-2`로도 검색하여 이 실습 전용 리소스(Parameter Group)가 삭제되었는지 확인하세요.
 
 ✅ **실습 종료**: 모든 리소스가 정리되었습니다.
