@@ -15,17 +15,19 @@ prerequisites:
 estimatedCost: 무료 (Parameter Group 변경은 비용 없음)
 ---
 
-이 실습에서는 Amazon RDS의 Parameter Group을 커스터마이징합니다. 시간대를 Asia/Seoul로 변경하고, 문자셋을 utf8mb4로 설정하며, max_connections를 애플리케이션 요구에 맞게 조정합니다.
+이 실습에서는 Amazon RDS의 Parameter Group을 커스터마이징합니다.  
+시간대를 Asia/Seoul로 변경하고, 문자셋을 utf8mb4로 설정하며, max_connections를 애플리케이션 요구에 맞게 조정합니다.
 
 ### 실습 흐름
 
 ```
-[Parameter Group 개념 이해] → [커스텀 Parameter Group 생성] → [파라미터 설정] → [Amazon RDS에 적용] → [Amazon EC2에서 SQL로 확인] → [Spring Boot 연계]
+[Parameter Group 개념 이해] → [커스텀 Parameter Group 생성] → [파라미터 설정] → [변경 전 기본값 확인] → [Amazon RDS에 적용] → [변경 후 설정 확인] → [Spring Boot 연계]
 ```
 
 > [!NOTE]
-> 이 실습은 Amazon RDS MySQL 인스턴스가 필요합니다. Step 4-1에서 생성한 Amazon RDS 인스턴스(`my-rds-mysql`)를 사용합니다.
-> Amazon EC2에서 Amazon RDS에 접속하여 설정을 확인하는 단계가 있으므로, Step 2-1의 Amazon EC2 인스턴스도 실행 중이어야 합니다.
+> 이 실습은 Amazon RDS MySQL 인스턴스가 필요합니다.  
+> Step 4-1에서 생성한 Amazon RDS 인스턴스(`my-rds-mysql`)를 사용합니다.  
+> Amazon EC2에서 Amazon RDS에 접속하여 설정을 확인하는 단계가 있으므로, Step 4-1에서 생성한 Amazon EC2 인스턴스(`my-rds-client`)도 실행 중이어야 합니다.
 
 > [!WARNING]
 > **비용 주의**: Parameter Group 자체는 무료이지만, Amazon RDS 인스턴스가 실행 중이어야 합니다.
@@ -42,7 +44,7 @@ estimatedCost: 무료 (Parameter Group 변경은 비용 없음)
 ## 태스크 1: Parameter Group 개념 이해
 
 > [!CONCEPT] Parameter Group이란?
-> Parameter Group은 Amazon RDS 인스턴스의 데이터베이스 엔진 설정을 관리하는 컨테이너입니다.
+> Parameter Group은 Amazon RDS 인스턴스의 데이터베이스 엔진 설정을 관리하는 컨테이너입니다.  
 > MySQL을 직접 설치하면 `my.cnf`(또는 `my.ini`) 파일에서 설정을 변경하지만,
 > Amazon RDS는 서버에 직접 접근할 수 없으므로 Parameter Group을 통해 설정을 관리합니다.
 >
@@ -60,7 +62,7 @@ estimatedCost: 무료 (Parameter Group 변경은 비용 없음)
 > | Dynamic | Parameter Group 적용 즉시 반영 | `time_zone`, `character_set_*`, `max_connections`   |
 > | Static  | Amazon RDS 재부팅(Reboot) 후에만 반영 | `innodb_buffer_pool_size`, `lower_case_table_names` |
 >
-> Dynamic 파라미터만 변경했더라도, 확실한 적용을 위해 재부팅하는 것이 모범 사례입니다.
+> Dynamic 파라미터만 변경했더라도, 확실한 적용을 위해 재부팅하는 것이 모범 사례입니다.  
 > 콘솔에서 각 파라미터의 **Apply type** 열을 보면 Dynamic/Static 여부를 확인할 수 있습니다.
 
 ### 기본 Parameter Group을 수정할 수 없는 이유
@@ -83,22 +85,26 @@ estimatedCost: 무료 (Parameter Group 변경은 비용 없음)
 > 일부 AWS 서비스(IAM, CloudFront, Route 53 등)는 **글로벌 서비스**이므로 리전 선택 드롭다운이 비활성화되거나 "Global"로 표시됩니다.  
 > 이 실습에서 사용하는 서비스는 리전 기반이므로 반드시 올바른 리전이 선택되어 있는지 확인하세요.
 
-3. 상단 검색창에 `RDS`를 입력하고 **RDS** 서비스를 선택합니다.
+3. 상단 검색창에 `RDS`를 입력하고 **Aurora and RDS** 서비스를 선택합니다.
 4. 왼쪽 메뉴에서 **Parameter groups**를 선택합니다.
-5. 목록에서 `default.mysql8.4` 그룹 이름을 클릭합니다.
-6. 파라미터 목록이 표시됩니다. 상단의 검색창에 `time_zone`을 입력합니다.
-7. `time_zone` 파라미터가 표시되지만, **Values** 열이 `engine-default`로 되어 있고 수정할 수 없는 것을 확인합니다.
+5. 상단에 **Custom** / **Default** 두 개의 탭이 있습니다. **Default** 탭을 클릭합니다.
+6. 목록에서 `default.mysql8.4` 그룹 이름을 클릭합니다.
+7. 파라미터 목록이 표시됩니다. 상단의 검색창에 `time_zone`을 입력합니다.
+8. `time_zone` 파라미터가 표시되지만, **Value** 열이 `-` (비어있음)이고 수정할 수 없는 것을 확인합니다.
 
 > [!TIP]
-> 기본 Parameter Group에서 [[Edit parameters]] 버튼을 클릭해도 값을 변경할 수 없습니다.
-> "This parameter group cannot be modified because it is a default parameter group" 메시지가 표시됩니다.
+> Default Parameter Group 상세 페이지에서 **Parameters** 섹션을 확인하면:
+> - `time_zone`: Value가 `-`, Apply type이 `Dynamic`, Value type이 `Modifiable`
+> - `default_time_zone`, `system_time_zone`: Value type이 `Non Modifiable`
+>
+> Value type이 `Modifiable`이라도 Default Parameter Group에서는 실제로 값을 변경할 수 없습니다.  
 > 이것이 커스텀 Parameter Group을 생성해야 하는 이유입니다.
 
-8. 왼쪽 메뉴에서 **Parameter groups**를 클릭하여 목록으로 돌아갑니다.
+9. 왼쪽 메뉴에서 **Parameter groups**를 클릭하여 목록으로 돌아갑니다.
 
 > [!OUTPUT]
-> Parameter groups 목록에 `default.mysql8.4`이 표시됩니다.
-> Type 열에 `DB Parameter Group`으로 표시되며, Description에 `Default parameter group for mysql8.4`이라고 되어 있습니다.
+> Parameter groups 목록으로 돌아오면 **Custom** 탭과 **Default** 탭이 보입니다.  
+> Default 탭에 `default.mysql8.4`이 표시됩니다.
 
 ✅ **태스크 완료**: 기본 Parameter Group이 읽기 전용임을 확인했습니다.
 
@@ -107,7 +113,7 @@ estimatedCost: 무료 (Parameter Group 변경은 비용 없음)
 ## 태스크 2: 커스텀 Parameter Group 생성
 
 > [!CONCEPT] 커스텀 Parameter Group
-> 커스텀 Parameter Group은 기본 그룹을 복사한 뒤 원하는 값을 수정할 수 있는 그룹입니다.
+> 커스텀 Parameter Group은 기본 그룹을 복사한 뒤 원하는 값을 수정할 수 있는 그룹입니다.  
 > 생성 시 기본 그룹의 모든 파라미터 값이 복사되며, 이후 개별 파라미터를 자유롭게 변경할 수 있습니다.
 >
 > **네이밍 규칙 권장:**
@@ -118,15 +124,21 @@ estimatedCost: 무료 (Parameter Group 변경은 비용 없음)
 
 ### 상세 단계
 
-9. Parameter groups 목록 화면에서 [[Create parameter group]] 버튼을 클릭합니다.
-10. **Parameter group family** 드롭다운에서 `mysql8.4`을 선택합니다.
+10. Parameter groups 목록 화면에서 **Custom** 탭을 클릭합니다. [[Create parameter group]] 버튼을 클릭합니다.
+
+**Create parameter group** 페이지가 열립니다:
+
+11. **Parameter group name**에 `my-mysql84-params`를 입력합니다.
+12. **Description**에 `Custom parameter group for MySQL 8.4 - timezone, charset, connections`를 입력합니다.
+13. **Engine type** 드롭다운에서 `MySQL Community`를 선택합니다.
+14. **Parameter group family** 드롭다운에서 `mysql8.4`을 선택합니다.
 
 > [!WARNING]
 > Parameter group family는 Amazon RDS 인스턴스의 엔진 버전과 반드시 일치해야 합니다.
 > Step 4-1에서 MySQL 8.4으로 생성했다면 `mysql8.4`을 선택합니다.
 > 버전이 다르면 나중에 Amazon RDS에 적용할 때 드롭다운에 표시되지 않습니다.
 
-11. **Type**에서 `DB Parameter Group`을 선택합니다.
+15. **Type** 드롭다운에서 `DB Parameter Group`을 선택합니다.
 
 > [!NOTE]
 > Type에는 `DB Parameter Group`과 `DB Cluster Parameter Group` 두 가지가 있습니다.
@@ -136,21 +148,21 @@ estimatedCost: 무료 (Parameter Group 변경은 비용 없음)
 >
 > Step 4-1에서 생성한 것이 단일 Amazon RDS 인스턴스이므로 `DB Parameter Group`을 선택합니다.
 
-12. **Group name**에 `my-mysql84-params`를 입력합니다.
-13. **Description**에 `Custom parameter group for MySQL 8.4 - timezone, charset, connections`를 입력합니다.
-14. **Tags** 섹션에서 [[Add tag]]를 클릭하여 다음 태그를 추가합니다:
-
-| Key         | Value        |
-| ----------- | ------------ |
-| `CreatedBy` | `admin-user` |
-| `Step`      | `step4`      |
-| `Session`   | `4-2`        |
-
-15. [[Create]] 버튼을 클릭합니다.
+16. [[Create]] 버튼을 클릭합니다.
 
 > [!OUTPUT]
-> "Parameter group my-mysql84-params was created successfully" 메시지가 표시됩니다.
-> Parameter groups 목록에 `my-mysql84-params`가 추가된 것을 확인할 수 있습니다.
+> "Parameter group my-mysql84-params was created successfully" 메시지가 표시됩니다.  
+> Parameter groups 목록의 **Custom** 탭에 `my-mysql84-params`가 추가된 것을 확인할 수 있습니다.
+
+> [!TIP]
+> Parameter Group 생성 페이지에는 태그를 추가하는 옵션이 없습니다.  
+> 생성 후 Custom 탭에서 `my-mysql84-params`를 클릭 → 하단 **Tags** 섹션에서 [[Manage tags]]를 클릭하여 추가할 수 있습니다.
+>
+> - `CreatedBy` = `admin-user`
+> - `Step` = `step4`
+> - `Session` = `4-2`
+>
+> 리소스 정리 시 Tag Editor로 한눈에 확인하려면 태그 추가를 권장합니다.
 
 > [!TIP]
 > Parameter Group 자체는 비용이 발생하지 않습니다. 여러 개를 생성해도 무료이므로,
@@ -176,25 +188,24 @@ estimatedCost: 무료 (Parameter Group 변경은 비용 없음)
 
 ### 상세 단계
 
-16. Parameter groups 목록에서 `my-mysql84-params` 이름을 클릭합니다.
-17. 파라미터 목록이 표시됩니다. 상단 검색창에 `time_zone`을 입력합니다.
-18. `time_zone` 파라미터가 필터링되어 표시됩니다. **Apply type** 열이 `Dynamic`인 것을 확인합니다.
-19. [[Edit parameters]] 버튼을 클릭합니다.
-20. `time_zone` 행의 **Values** 열 드롭다운을 클릭합니다.
-21. 드롭다운 목록에서 `Asia/Seoul`을 선택합니다.
+17. Parameter groups 목록에서 **Custom** 탭의 `my-mysql84-params` 이름을 클릭합니다.
+18. 상세 페이지가 열립니다. **Parameters** 섹션의 검색창에 `time_zone`을 입력합니다.
+19. `time_zone` 파라미터가 필터링되어 표시됩니다. **Apply type** 열이 `Dynamic`인 것을 확인합니다.
+20. 우측 상단의 [[Edit]] 버튼을 클릭합니다.
+21. `time_zone` 행의 **Value** 열을 클릭합니다. Allowed values 목록과 함께 입력란이 표시됩니다.
+22. 입력란에 `Asia/Seoul`을 입력합니다.
 
 > [!TIP]
-> 드롭다운 목록이 길어서 찾기 어려울 수 있습니다. 드롭다운이 열린 상태에서 키보드로 `Asia`를 입력하면 빠르게 이동할 수 있습니다.
-> 또는 드롭다운 상단의 필터 입력란에 `Seoul`을 입력하여 검색합니다.
+> Allowed values 목록이 매우 길지만, 아래 입력란에 직접 `Asia/Seoul`을 타이핑하면 됩니다.
 
-22. [[Save changes]] 버튼을 클릭합니다.
+23. 우측 상단의 [[Save Changes]] 버튼을 클릭합니다.
 
 > [!OUTPUT]
-> "Parameter group my-mysql84-params was modified successfully" 메시지가 표시됩니다.
+> "Parameter group my-mysql84-params was modified successfully" 메시지가 표시됩니다.  
 > `time_zone` 파라미터의 Values 열이 `Asia/Seoul`로 변경된 것을 확인할 수 있습니다.
 
 > [!NOTE]
-> `time_zone`은 Dynamic 파라미터이므로 Parameter Group을 Amazon RDS에 적용하면 재부팅 없이 즉시 반영됩니다.
+> `time_zone`은 Dynamic 파라미터이므로 Parameter Group을 Amazon RDS에 적용하면 재부팅 없이 즉시 반영됩니다.  
 > 하지만 이 실습에서는 다른 파라미터도 함께 변경한 뒤 한 번에 적용합니다.
 
 ✅ **태스크 완료**: 시간대가 Asia/Seoul로 설정되었습니다.
@@ -204,7 +215,7 @@ estimatedCost: 무료 (Parameter Group 변경은 비용 없음)
 ## 태스크 4: 문자셋 설정 (utf8mb4)
 
 > [!CONCEPT] utf8 vs utf8mb4
-> MySQL의 `utf8`은 실제로 **3바이트**까지만 지원하는 불완전한 UTF-8 구현입니다.
+> MySQL의 `utf8`은 실제로 **3바이트**까지만 지원하는 불완전한 UTF-8 구현입니다.  
 > 이모지(😀, 🎉)나 일부 한자 등 4바이트 문자를 저장하면 에러가 발생합니다.
 >
 > `utf8mb4`는 **4바이트**를 완전히 지원하는 진짜 UTF-8입니다.
@@ -214,7 +225,7 @@ estimatedCost: 무료 (Parameter Group 변경은 비용 없음)
 > utf8mb4 → 최대 4바이트 → 이모지 저장 가능 ✅
 > ```
 >
-> **새 프로젝트에서는 항상 `utf8mb4`를 사용하세요.**
+> **새 프로젝트에서는 항상 `utf8mb4`를 사용하세요.**  
 > 기존 프로젝트에서 utf8 → utf8mb4로 변경할 때는 인덱스 크기 제한에 주의해야 합니다.
 
 > [!CONCEPT] Collation (정렬 규칙)
@@ -245,34 +256,38 @@ estimatedCost: 무료 (Parameter Group 변경은 비용 없음)
 
 ### 상세 단계
 
-23. `my-mysql84-params` 파라미터 목록 화면에서 [[Edit parameters]] 버튼을 클릭합니다.
-24. 상단 검색창에 `character_set`을 입력합니다.
-25. `character_set_client` 행의 **Values** 열 드롭다운을 클릭하고 `utf8mb4`를 선택합니다.
-26. `character_set_connection` 행의 **Values** 열 드롭다운을 클릭하고 `utf8mb4`를 선택합니다.
-27. `character_set_database` 행의 **Values** 열 드롭다운을 클릭하고 `utf8mb4`를 선택합니다.
-28. `character_set_results` 행의 **Values** 열 드롭다운을 클릭하고 `utf8mb4`를 선택합니다.
-29. `character_set_server` 행의 **Values** 열 드롭다운을 클릭하고 `utf8mb4`를 선택합니다.
+24. `my-mysql84-params` 상세 페이지에서 우측 상단의 [[Edit]] 버튼을 클릭합니다.
+25. 검색창에 `character_set`을 입력합니다.
+26. `character_set_client` 행의 **Value** 열을 클릭하고 입력란에 `utf8mb4`를 입력합니다.
+27. `character_set_connection` 행의 **Value** 열을 클릭하고 `utf8mb4`를 입력합니다.
+28. `character_set_database` 행의 **Value** 열을 클릭하고 `utf8mb4`를 입력합니다.
+29. `character_set_results` 행의 **Value** 열을 클릭하고 `utf8mb4`를 입력합니다.
+30. `character_set_server` 행의 **Value** 열을 클릭하고 `utf8mb4`를 입력합니다.
 
 > [!TIP]
-> `character_set_filesystem`은 변경하지 않습니다. 이 파라미터는 파일 이름 인코딩에 사용되며, 기본값 `binary`를 유지하는 것이 안전합니다.
+> `character_set_filesystem`은 변경하지 않습니다. 입력란이 비어있더라도 값을 입력하지 마세요.  
+> 이 파라미터는 파일 이름 인코딩에 사용되며, 기본값 `binary`를 유지하는 것이 안전합니다.
+>
+> ⚠️ 실수로 입력란을 클릭해 비워둔 채 Save하면 "Invalid parameter value" 에러가 발생합니다.  
+> 이 경우 `binary`를 입력하면 해결됩니다.
 
-30. 검색창을 지우고 `collation`을 입력합니다.
-31. `collation_connection` 행의 **Values** 열 드롭다운을 클릭하고 `utf8mb4_unicode_ci`를 선택합니다.
-32. `collation_server` 행의 **Values** 열 드롭다운을 클릭하고 `utf8mb4_unicode_ci`를 선택합니다.
+31. 검색창을 지우고 `collation`을 입력합니다.
+32. `collation_connection` 행의 **Value** 열을 클릭하고 `utf8mb4_unicode_ci`를 입력합니다.
+33. `collation_server` 행의 **Value** 열을 클릭하고 `utf8mb4_unicode_ci`를 입력합니다.
 
 > [!TIP]
-> 드롭다운에서 `utf8mb4_unicode_ci`를 찾기 어려우면, 드롭다운 필터에 `unicode`를 입력하여 검색합니다.
-> `utf8mb4_`로 시작하는 collation이 매우 많으므로 필터를 활용하세요.
+> Allowed values 목록에서 선택해도 되고, 입력란에 직접 타이핑해도 됩니다.  
+> `utf8mb4_`로 시작하는 collation이 매우 많으므로 직접 입력하는 것이 빠릅니다.
 
-33. [[Save changes]] 버튼을 클릭합니다.
+34. [[Save Changes]] 버튼을 클릭합니다.
 
 > [!OUTPUT]
-> "Parameter group my-mysql84-params was modified successfully" 메시지가 표시됩니다.
+> "Parameter group my-mysql84-params was modified successfully" 메시지가 표시됩니다.  
 > 검색창에 `character_set`을 입력하면 5개 파라미터 모두 `utf8mb4`로 변경된 것을 확인할 수 있습니다.
 
 > [!WARNING]
-> `character_set_database`는 기존 데이터베이스의 문자셋을 변경하지 않습니다.
-> 이 설정은 **새로 생성되는 데이터베이스**의 기본 문자셋만 지정합니다.
+> `character_set_database`는 기존 데이터베이스의 문자셋을 변경하지 않습니다.  
+> 이 설정은 **새로 생성되는 데이터베이스**의 기본 문자셋만 지정합니다.  
 > 기존 데이터베이스의 문자셋을 변경하려면 SQL로 직접 `ALTER DATABASE` 명령을 실행해야 합니다:
 >
 > ```sql
@@ -286,7 +301,7 @@ estimatedCost: 무료 (Parameter Group 변경은 비용 없음)
 ## 태스크 5: max_connections 설정
 
 > [!CONCEPT] max_connections (최대 동시 연결 수)
-> `max_connections`는 Amazon RDS 인스턴스가 동시에 허용하는 최대 데이터베이스 연결 수입니다.
+> `max_connections`는 Amazon RDS 인스턴스가 동시에 허용하는 최대 데이터베이스 연결 수입니다.  
 > 이 값을 초과하면 새로운 연결 시도 시 `Too many connections` 에러가 발생합니다.
 >
 > **Amazon RDS 기본 계산 공식:**
@@ -325,33 +340,153 @@ estimatedCost: 무료 (Parameter Group 변경은 비용 없음)
 
 ### 상세 단계
 
-34. `my-mysql84-params` 파라미터 목록 화면에서 [[Edit parameters]] 버튼을 클릭합니다.
-35. 상단 검색창에 `max_connections`를 입력합니다.
-36. `max_connections` 파라미터가 표시됩니다. 현재 값이 `{DBInstanceClassMemory/12582880}` (수식)인 것을 확인합니다.
-37. `max_connections` 행의 **Values** 열 입력란을 클릭합니다.
-38. 기존 값을 지우고 `100`을 입력합니다.
+35. `my-mysql84-params` 상세 페이지에서 우측 상단의 [[Edit]] 버튼을 클릭합니다.
+36. 상단 검색창에 `max_connections`를 입력합니다.
+37. `max_connections` 파라미터가 표시됩니다. 현재 값이 `{DBInstanceClassMemory/12582880}` (수식)인 것을 확인합니다.
+38. `max_connections` 행의 **Value** 열을 클릭합니다.
+39. 기존 값을 지우고 `100`을 입력합니다.
 
 > [!NOTE]
-> 값을 수식(`{DBInstanceClassMemory/12582880}`)에서 고정값(`100`)으로 변경합니다.
+> 값을 수식(`{DBInstanceClassMemory/12582880}`)에서 고정값(`100`)으로 변경합니다.  
 > 고정값을 사용하면 인스턴스 타입을 변경해도 max_connections가 자동 조정되지 않으므로,
 > 인스턴스 스케일업 시 이 값도 함께 조정해야 합니다.
 >
 > 수식을 유지하면서 배수를 조정하고 싶다면 `{DBInstanceClassMemory/8388608}` (약 1.5배)처럼 분모를 줄일 수도 있습니다.
 
-39. [[Save changes]] 버튼을 클릭합니다.
+40. [[Save Changes]] 버튼을 클릭합니다.
 
 > [!OUTPUT]
-> "Parameter group my-mysql84-params was modified successfully" 메시지가 표시됩니다.
+> "Parameter group my-mysql84-params was modified successfully" 메시지가 표시됩니다.  
 > `max_connections` 파라미터의 Values 열이 `100`으로 변경된 것을 확인할 수 있습니다.
 
 ✅ **태스크 완료**: max_connections가 100으로 설정되었습니다.
 
 ---
 
-## 태스크 6: Parameter Group을 Amazon RDS에 적용
+## 태스크 6: 변경 전 기본값 확인 (Amazon EC2에서 Amazon RDS 접속)
+
+> [!NOTE]
+> Parameter Group을 적용하기 **전에** 현재 기본값을 확인합니다.  
+> 변경 후와 비교하면 설정이 정상 반영되었는지 명확하게 판단할 수 있습니다.
+
+### 상세 단계
+
+41. 로컬 터미널에서 Amazon EC2에 SSH로 접속합니다:
+
+```bash
+ssh -i ~/Downloads/my-keypair.pem ec2-user@<EC2-Public-IP>
+```
+
+42. Amazon EC2에서 Amazon RDS에 MySQL 클라이언트로 접속합니다:
+
+```bash
+mysql -h <RDS-Endpoint> -u admin -p --default-character-set=utf8mb4
+```
+
+43. 비밀번호를 입력합니다. (Step 4-1에서 설정한 마스터 비밀번호, 예: `MyPassword123!`)
+
+44. 현재 시간대를 확인합니다:
+
+```sql
+SELECT @@global.time_zone, @@session.time_zone, NOW();
+```
+
+> [!OUTPUT]
+>
+> ```
+> +--------------------+---------------------+---------------------+
+> | @@global.time_zone | @@session.time_zone | NOW()               |
+> +--------------------+---------------------+---------------------+
+> | UTC                | UTC                 | 2024-xx-xx 06:30:00 |
+> +--------------------+---------------------+---------------------+
+> ```
+
+> [!TIP]
+> 기본값은 **UTC**입니다. `NOW()`가 한국 시간보다 9시간 느리게 표시됩니다.
+
+45. 현재 문자셋을 확인합니다:
+
+```sql
+SHOW VARIABLES LIKE 'character_set%';
+```
+
+> [!OUTPUT]
+>
+> ```
+> +--------------------------+---------+
+> | Variable_name            | Value   |
+> +--------------------------+---------+
+> | character_set_client     | utf8mb4 |
+> | character_set_connection | utf8mb4 |
+> | character_set_database   | utf8mb4 |
+> | character_set_filesystem | binary  |
+> | character_set_results    | utf8mb4 |
+> | character_set_server     | utf8mb4 |
+> | character_set_system     | utf8mb3 |
+> +--------------------------+---------+
+> ```
+
+> [!TIP]
+> MySQL 8.4의 기본값은 이미 `utf8mb4`입니다. 하지만 collation은 기본값인 `utf8mb4_0900_ai_ci`일 수 있습니다.
+
+46. 현재 Collation을 확인합니다:
+
+```sql
+SHOW VARIABLES LIKE 'collation%';
+```
+
+> [!OUTPUT]
+>
+> ```
+> +----------------------+--------------------+
+> | Variable_name        | Value              |
+> +----------------------+--------------------+
+> | collation_connection | utf8mb4_0900_ai_ci |
+> | collation_database   | utf8mb4_0900_ai_ci |
+> | collation_server     | utf8mb4_0900_ai_ci |
+> +----------------------+--------------------+
+> ```
+
+> [!TIP]
+> 기본 Collation은 `utf8mb4_0900_ai_ci`입니다. 이 실습에서 `utf8mb4_unicode_ci`로 변경합니다.
+
+47. 현재 max_connections를 확인합니다:
+
+```sql
+SHOW VARIABLES LIKE 'max_connections';
+```
+
+> [!OUTPUT]
+>
+> ```
+> +-----------------+-------+
+> | Variable_name   | Value |
+> +-----------------+-------+
+> | max_connections | 66    |
+> +-----------------+-------+
+> ```
+
+> [!TIP]
+> db.t4g.micro(1GB)의 기본 max_connections는 약 60~66입니다 (수식: `{DBInstanceClassMemory/12582880}`, 실제 사용 가능 메모리에 따라 다름).
+
+48. MySQL을 종료하고 SSH 세션을 유지합니다:
+
+```sql
+EXIT;
+```
+
+> [!TIP]
+> SSH 세션은 종료하지 마세요. 태스크 8에서 변경 후 확인 시 다시 사용합니다.  
+> 만약 SSH가 끊어졌다면 나중에 다시 접속하면 됩니다.
+
+✅ **태스크 완료**: 변경 전 기본값을 확인했습니다. (UTC, utf8mb4_0900_ai_ci, max_connections=66)
+
+---
+
+## 태스크 7: Parameter Group을 Amazon RDS에 적용
 
 > [!CONCEPT] Parameter Group 적용 프로세스
-> 커스텀 Parameter Group을 생성하고 값을 변경했지만, 아직 Amazon RDS 인스턴스에는 적용되지 않았습니다.
+> 커스텀 Parameter Group을 생성하고 값을 변경했지만, 아직 Amazon RDS 인스턴스에는 적용되지 않았습니다.  
 > Amazon RDS 인스턴스의 설정을 Modify하여 Parameter Group을 교체한 뒤, Reboot해야 완전히 적용됩니다.
 >
 > ```
@@ -364,12 +499,12 @@ estimatedCost: 무료 (Parameter Group 변경은 비용 없음)
 
 ### 상세 단계: Amazon RDS Modify
 
-40. 왼쪽 메뉴에서 **Databases**를 선택합니다.
-41. 데이터베이스 목록에서 `my-rds-mysql`의 라디오 버튼을 선택합니다.
-42. 우측 상단의 [[Modify]] 버튼을 클릭합니다.
-43. **Modify DB instance** 페이지가 열립니다. 아래로 스크롤하여 **Additional configuration** 섹션을 찾습니다.
-44. **DB parameter group** 드롭다운을 클릭합니다.
-45. 드롭다운에서 `my-mysql84-params`를 선택합니다.
+49. 왼쪽 메뉴에서 **Databases**를 선택합니다.
+50. 데이터베이스 목록에서 `my-rds-mysql`의 라디오 버튼을 선택합니다.
+51. 우측 상단의 [[Modify]] 버튼을 클릭합니다.
+52. **Modify DB instance** 페이지가 열립니다. 아래로 스크롤하여 **Additional configuration** 섹션을 찾습니다.
+53. **DB parameter group** 드롭다운을 클릭합니다.
+54. 드롭다운에서 `my-mysql84-params`를 선택합니다.
 
 > [!WARNING]
 > 드롭다운에 `my-mysql84-params`가 표시되지 않는 경우:
@@ -378,10 +513,10 @@ estimatedCost: 무료 (Parameter Group 변경은 비용 없음)
 > - 예: Amazon RDS가 MySQL 8.4이면 Parameter Group family도 `mysql8.4`이어야 합니다.
 > - Parameter Group 생성 시 family를 잘못 선택했다면, 삭제 후 올바른 family로 다시 생성하세요.
 
-46. 다른 설정은 변경하지 않고 페이지 최하단의 [[Continue]] 버튼을 클릭합니다.
-47. **Summary of modifications** 페이지가 표시됩니다. 변경 사항을 확인합니다:
+55. 다른 설정은 변경하지 않고 페이지 최하단의 [[Continue]] 버튼을 클릭합니다.
+56. **Summary of modifications** 페이지가 표시됩니다. 변경 사항을 확인합니다:
     - DB parameter group: `default.mysql8.4` → `my-mysql84-params`
-48. **Schedule of modifications** 섹션에서 `Apply immediately`를 선택합니다.
+57. **Schedule of modifications** 섹션에서 `Apply immediately`를 선택합니다.
 
 > [!NOTE]
 > **Apply immediately vs Apply during the next scheduled maintenance window:**
@@ -391,20 +526,25 @@ estimatedCost: 무료 (Parameter Group 변경은 비용 없음)
 >
 > 운영 환경에서는 서비스 영향을 최소화하기 위해 유지보수 시간에 적용하는 것이 좋습니다.
 
-49. [[Modify DB instance]] 버튼을 클릭합니다.
+58. [[Modify DB instance]] 버튼을 클릭합니다.
 
 > [!OUTPUT]
 > Databases 목록으로 돌아갑니다.
-> `my-rds-mysql`의 Status가 `Modifying`으로 변경됩니다.
+> `my-rds-mysql`의 Status가 `Modifying`으로 변경됩니다.  
 > 1~2분 후 다시 `Available`로 돌아옵니다.
 
 ### 상세 단계: Amazon RDS Reboot
 
-50. `my-rds-mysql`의 Status가 `Available`로 돌아올 때까지 기다립니다. (새로고침 버튼 🔄 클릭)
-51. `my-rds-mysql`의 라디오 버튼을 선택합니다.
-52. 우측 상단의 **Actions** 드롭다운을 클릭합니다.
-53. **Reboot**를 선택합니다.
-54. 확인 팝업에서 [[Confirm]] 버튼을 클릭합니다.
+59. `my-rds-mysql`의 Status가 `Available`로 돌아올 때까지 기다립니다. (새로고침 버튼 🔄 클릭)
+60. `my-rds-mysql`의 라디오 버튼을 선택합니다.
+61. 우측 상단의 **Actions** 드롭다운을 클릭합니다.
+62. **Reboot**를 선택합니다.
+
+> [!TIP]
+> 이 실습에서 변경한 파라미터(`time_zone`, `character_set_*`, `collation_*`, `max_connections`)는 모두 **Dynamic**이므로 Modify만으로 즉시 반영됩니다.  
+> 재부팅은 필수가 아니지만, Static 파라미터 변경 시에는 반드시 필요하며, 확실한 적용을 위해 재부팅하는 것이 모범 사례입니다.
+
+63. 확인 팝업에서 [[Confirm]] 버튼을 클릭합니다.
 
 > [!WARNING]
 > 재부팅 중에는 Amazon RDS에 접속할 수 없습니다.
@@ -413,11 +553,11 @@ estimatedCost: 무료 (Parameter Group 변경은 비용 없음)
 > - 운영 환경에서는 반드시 **점검 시간(maintenance window)**에 진행하세요.
 > - Multi-AZ 구성이면 Failover가 발생하여 다운타임을 최소화할 수 있습니다.
 
-55. Status가 `Rebooting`으로 변경되는 것을 확인합니다.
-56. 1~3분 후 Status가 다시 `Available`로 돌아올 때까지 기다립니다.
+64. Status가 `Rebooting`으로 변경되는 것을 확인합니다.
+65. 1~3분 후 Status가 다시 `Available`로 돌아올 때까지 기다립니다.
 
 > [!TIP]
-> 재부팅 완료 후, `my-rds-mysql`을 클릭하여 상세 페이지로 이동합니다.
+> 재부팅 완료 후, `my-rds-mysql`을 클릭하여 상세 페이지로 이동합니다.  
 > **Configuration** 탭에서 **DB instance parameter group** 항목이 `my-mysql84-params`로 표시되고,
 > 상태가 `in-sync`인지 확인합니다.
 >
@@ -439,30 +579,40 @@ estimatedCost: 무료 (Parameter Group 변경은 비용 없음)
 
 ---
 
-## 태스크 7: 설정 확인 (Amazon EC2에서 Amazon RDS 접속하여 SQL로 확인)
+## 태스크 8: 변경 후 설정 확인 (Amazon EC2에서 Amazon RDS 접속하여 SQL로 확인)
 
 > [!NOTE]
-> 이 태스크에서는 Step 2-1에서 생성한 Amazon EC2 인스턴스에 SSH로 접속한 뒤, Amazon RDS에 MySQL 클라이언트로 연결하여 설정을 확인합니다.
+> 태스크 6에서 확인한 기본값과 비교하여 Parameter Group 설정이 정상 적용되었는지 확인합니다.  
 > Amazon EC2에 MySQL 클라이언트가 설치되어 있어야 합니다. (Step 4-1에서 설치 완료)
 
 ### 상세 단계: Amazon EC2에서 Amazon RDS 접속
 
-57. 로컬 터미널에서 Amazon EC2에 SSH로 접속합니다:
+66. 로컬 터미널에서 Amazon EC2에 SSH로 접속합니다 (이미 접속 중이면 생략):
 
 ```bash
-ssh -i my-key.pem ec2-user@<EC2-Public-IP>
+ssh -i ~/Downloads/my-keypair.pem ec2-user@<EC2-Public-IP>
 ```
 
-58. Amazon EC2에서 Amazon RDS에 MySQL 클라이언트로 접속합니다:
+67. Amazon EC2에서 Amazon RDS에 MySQL 클라이언트로 접속합니다:
 
 ```bash
-mysql -h my-rds-mysql.xxxxxxxxxxxx.ap-northeast-2.rds.amazonaws.com -u admin -p
+mysql -h <RDS-Endpoint> -u admin -p --default-character-set=utf8mb4
 ```
 
-59. 비밀번호를 입력합니다. (Step 4-1에서 설정한 마스터 비밀번호)
+> [!WARNING]
+> `--default-character-set=utf8mb4` 옵션을 반드시 붙이세요.  
+> 이 옵션 없이 접속하면 MariaDB 클라이언트가 자체 기본 charset(`utf8mb3`)으로 연결하여,  
+> `collation_connection`이 Parameter Group 설정(`utf8mb4_unicode_ci`)과 다르게 표시됩니다.
+>
+> | 접속 방식 | collation_connection 결과 |
+> | --------- | ------------------------ |
+> | `--default-character-set=utf8mb4` 포함 | `utf8mb4_general_ci` (charset 기본 collation) |
+> | 옵션 없이 접속 | `utf8mb3_general_ci` ❌ (클라이언트 기본 charset) |
+
+68. 비밀번호를 입력합니다. (Step 4-1에서 설정한 마스터 비밀번호, 예: `MyPassword123!`)
 
 > [!TIP]
-> Amazon RDS 엔드포인트를 모르겠다면:
+> Amazon RDS 엔드포인트를 모르겠다면:  
 > Amazon RDS 콘솔 → Databases → `my-rds-mysql` 클릭 → **Connectivity & security** 탭 → **Endpoint** 값을 복사합니다.
 
 > [!WARNING]
@@ -474,65 +624,29 @@ mysql -h my-rds-mysql.xxxxxxxxxxxx.ap-northeast-2.rds.amazonaws.com -u admin -p
 
 ### 상세 단계: 시간대 확인
 
-60. MySQL 프롬프트에서 현재 시간을 확인합니다:
+69. MySQL 프롬프트에서 현재 시간을 확인합니다:
 
 ```sql
-SELECT NOW();
+SELECT @@global.time_zone, @@session.time_zone, NOW();
 ```
 
 > [!OUTPUT]
 >
 > ```
-> +---------------------+
-> | NOW()               |
-> +---------------------+
-> | 2024-xx-xx 15:30:00 |  ← 한국 시간 (UTC+9)으로 표시됨
-> +---------------------+
+> +--------------------+---------------------+---------------------+
+> | @@global.time_zone | @@session.time_zone | NOW()               |
+> +--------------------+---------------------+---------------------+
+> | Asia/Seoul         | Asia/Seoul          | 2024-xx-xx 15:30:00 |
+> +--------------------+---------------------+---------------------+
 > ```
 
-61. 시간대 설정을 확인합니다:
-
-```sql
-SELECT @@global.time_zone, @@session.time_zone;
-```
-
-> [!OUTPUT]
->
-> ```
-> +--------------------+---------------------+
-> | @@global.time_zone | @@session.time_zone |
-> +--------------------+---------------------+
-> | Asia/Seoul         | Asia/Seoul          |
-> +--------------------+---------------------+
-> ```
+> [!TIP]
+> 태스크 6에서 `UTC`였던 time_zone이 `Asia/Seoul`로 변경되었습니다.  
+> `NOW()` 결과도 한국 시간(UTC+9)으로 표시됩니다.
 
 ### 상세 단계: 문자셋 확인
 
-62. 문자셋 설정을 확인합니다:
-
-```sql
-SHOW VARIABLES LIKE 'character_set%';
-```
-
-> [!OUTPUT]
->
-> ```
-> +--------------------------+----------+
-> | Variable_name            | Value    |
-> +--------------------------+----------+
-> | character_set_client     | utf8mb4  |
-> | character_set_connection | utf8mb4  |
-> | character_set_database   | utf8mb4  |
-> | character_set_filesystem | binary   |
-> | character_set_results    | utf8mb4  |
-> | character_set_server     | utf8mb4  |
-> | character_set_system     | utf8mb3  |
-> +--------------------------+----------+
-> ```
->
-> `character_set_system`은 MySQL 내부 메타데이터용으로 변경할 수 없습니다. `binary`와 `utf8mb3`은 정상입니다.
-
-63. Collation 설정을 확인합니다:
+70. Collation 설정을 확인합니다:
 
 ```sql
 SHOW VARIABLES LIKE 'collation%';
@@ -544,15 +658,21 @@ SHOW VARIABLES LIKE 'collation%';
 > +----------------------+--------------------+
 > | Variable_name        | Value              |
 > +----------------------+--------------------+
-> | collation_connection | utf8mb4_unicode_ci |
+> | collation_connection | utf8mb4_general_ci |
 > | collation_database   | utf8mb4_unicode_ci |
 > | collation_server     | utf8mb4_unicode_ci |
 > +----------------------+--------------------+
 > ```
 
+> [!NOTE]
+> `collation_database`와 `collation_server`가 `utf8mb4_unicode_ci`로 변경되었으면 정상입니다.  
+> `collation_connection`이 `utf8mb4_general_ci`로 표시되는 것은 MySQL 클라이언트가 charset의 기본 collation을 사용하기 때문이며, **서버 설정에는 문제가 없습니다.**  
+> 새로 생성되는 DB/테이블은 `collation_server` 값(`utf8mb4_unicode_ci`)을 따릅니다.  
+> 애플리케이션(Spring Boot)에서는 JDBC URL에 `connectionCollation=utf8mb4_unicode_ci`를 추가하면 일치시킬 수 있습니다.
+
 ### 상세 단계: max_connections 확인
 
-64. max_connections 설정을 확인합니다:
+71. max_connections 설정을 확인합니다:
 
 ```sql
 SHOW VARIABLES LIKE 'max_connections';
@@ -568,7 +688,10 @@ SHOW VARIABLES LIKE 'max_connections';
 > +-----------------+-------+
 > ```
 
-65. 현재 사용 중인 연결 수를 확인합니다:
+> [!TIP]
+> 태스크 6에서 `66`이었던 max_connections가 `100`으로 변경되었습니다.
+
+72. 현재 사용 중인 연결 수를 확인합니다:
 
 ```sql
 SHOW STATUS LIKE 'Threads_connected';
@@ -583,12 +706,13 @@ SHOW STATUS LIKE 'Threads_connected';
 > | Threads_connected | 1     |
 > +-------------------+-------+
 > ```
->
-> 현재 1개의 연결(본인의 접속)만 사용 중입니다. max_connections=100이므로 99개의 여유가 있습니다.
+
+> [!TIP]
+> 본인의 접속 외에 2~3개가 표시될 수 있습니다. Amazon RDS가 내부적으로 모니터링/헬스체크용 연결을 유지하기 때문이며 정상입니다.
 
 ### 상세 단계: 이모지 저장 테스트 (선택)
 
-66. utf8mb4가 정상 동작하는지 이모지를 저장하여 테스트합니다:
+73. utf8mb4가 정상 동작하는지 이모지를 저장하여 테스트합니다:
 
 ```sql
 CREATE DATABASE IF NOT EXISTS testdb CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -607,22 +731,23 @@ SELECT * FROM emoji_test;
 > |  1 | Hello 😀🎉🚀    |
 > +----+------------------+
 > ```
->
+
+> [!TIP]
 > 이모지가 정상적으로 저장·조회됩니다. utf8mb4 설정이 올바르게 적용된 것입니다.
 
-67. 테스트 데이터를 정리합니다:
+74. 테스트 데이터를 정리합니다:
 
 ```sql
 DROP DATABASE testdb;
 ```
 
-68. MySQL을 종료합니다:
+75. MySQL을 종료합니다:
 
 ```sql
 EXIT;
 ```
 
-69. Amazon EC2 SSH 세션을 종료합니다:
+76. Amazon EC2 SSH 세션을 종료합니다:
 
 ```bash
 exit
@@ -638,16 +763,27 @@ exit
 > | max_connections가 66 (기본값)           | PG가 적용되지 않음           | Amazon RDS Modify에서 PG 재선택 → Apply immediately → Reboot   |
 > | `ERROR 1045 Access denied`              | 비밀번호 오류                | Step 4-1에서 설정한 마스터 비밀번호 확인                |
 > | `ERROR 2003 Can't connect`              | 네트워크/SG 문제             | Amazon EC2→Amazon RDS Security Group 인바운드 3306 허용 확인          |
+> | collation_connection이 `utf8mb3_general_ci` | 클라이언트 charset 미지정 | `--default-character-set=utf8mb4` 옵션으로 재접속 |
 > | 이모지 저장 시 `Incorrect string value` | 테이블이 utf8로 생성됨       | `ALTER TABLE ... CONVERT TO CHARACTER SET utf8mb4` 실행 |
 
 ✅ **태스크 완료**: 모든 파라미터(시간대, 문자셋, max_connections)가 올바르게 적용된 것을 확인했습니다.
 
+> [!TIP]
+> **변경 전후 비교 요약:**
+>
+> | 설정 | 변경 전 (태스크 6) | 변경 후 (태스크 8) |
+> | ---- | ------------------ | ------------------ |
+> | time_zone | UTC | Asia/Seoul |
+> | collation_server | utf8mb4_0900_ai_ci | utf8mb4_unicode_ci |
+> | collation_database | utf8mb4_0900_ai_ci | utf8mb4_unicode_ci |
+> | max_connections | 60~66 | 100 |
+
 ---
 
-## 태스크 8: Spring Boot HikariCP 설정 연계
+## 태스크 9: Spring Boot HikariCP 설정 연계
 
 > [!CONCEPT] HikariCP 커넥션 풀
-> Spring Boot는 기본적으로 **HikariCP**를 커넥션 풀로 사용합니다.
+> Spring Boot는 기본적으로 **HikariCP**를 커넥션 풀로 사용합니다.  
 > 커넥션 풀은 DB 연결을 미리 생성해두고 재사용하여 매번 연결/해제하는 오버헤드를 줄입니다.
 >
 > ```
@@ -691,7 +827,7 @@ exit
 >
 > 서버가 늘어날 것을 고려하여 항상 여유를 두세요.
 
-### application.yml 설정 예시
+### application.yml 설정 예시 (Spring Boot)
 
 아래는 Amazon RDS Parameter Group 설정에 맞춘 Spring Boot `application.yml` 예시입니다:
 
@@ -699,7 +835,7 @@ exit
 spring:
   datasource:
     # RDS 엔드포인트 (Step 4-1에서 확인한 값으로 교체)
-    url: jdbc:mysql://my-rds-mysql.xxxxxxxxxxxx.ap-northeast-2.rds.amazonaws.com:3306/appdb?useSSL=false&serverTimezone=Asia/Seoul&characterEncoding=UTF-8
+    url: jdbc:mysql://<RDS-Endpoint>:3306/mydb?useSSL=false&serverTimezone=Asia/Seoul&characterEncoding=UTF-8&connectionCollation=utf8mb4_unicode_ci
     username: admin
     password: ${DB_PASSWORD} # 환경변수로 관리 (하드코딩 금지)
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -717,6 +853,45 @@ spring:
       # 연결 유효성 검사
       connection-test-query: SELECT 1
 ```
+
+### application.properties 설정 예시 (Spring MVC 레거시)
+
+Spring MVC 레거시 프로젝트에서 `@PropertySource`로 `application.properties`를 읽는 경우:
+
+```properties
+# JDBC 드라이버 설정
+jdbc.driver=com.mysql.cj.jdbc.Driver
+jdbc.url=jdbc:mysql://<RDS-Endpoint>:3306/mydb?useSSL=false&serverTimezone=Asia/Seoul&characterEncoding=UTF-8&connectionCollation=utf8mb4_unicode_ci
+jdbc.username=admin
+jdbc.password=MyPassword123!
+
+# HikariCP 설정
+jdbc.hikari.maximum-pool-size=10
+jdbc.hikari.minimum-idle=5
+jdbc.hikari.connection-timeout=3000
+jdbc.hikari.max-lifetime=1800000
+jdbc.hikari.idle-timeout=600000
+```
+
+> [!TIP]
+> **log4jdbc를 사용하는 경우** (SQL 로그 출력):
+>
+> ```properties
+> jdbc.driver=net.sf.log4jdbc.sql.jdbcapi.DriverSpy
+> jdbc.url=jdbc:log4jdbc:mysql://<RDS-Endpoint>:3306/mydb?useSSL=false&serverTimezone=Asia/Seoul&characterEncoding=UTF-8&connectionCollation=utf8mb4_unicode_ci
+> ```
+>
+> 드라이버와 URL 접두사만 변경하면 됩니다. 나머지 설정은 동일합니다.
+
+> [!NOTE]
+> **Spring Boot vs Spring MVC 레거시 차이:**
+>
+> | 항목 | Spring Boot | Spring MVC 레거시 |
+> | ---- | ----------- | ----------------- |
+> | 설정 파일 | `application.yml` 또는 `application.properties` | `application.properties` (커스텀 경로) |
+> | DataSource 생성 | 자동 설정 (Auto-configuration) | `@Bean`으로 직접 생성 (XML 또는 Java Config) |
+> | 커넥션 풀 | HikariCP 기본 내장 | 별도 의존성 추가 필요 (`hikaricp`) |
+> | 비밀번호 관리 | `${DB_PASSWORD}` 환경변수 | `application.properties`에 직접 또는 프로필 분리 |
 
 > [!WARNING]
 > **비밀번호를 application.yml에 직접 작성하지 마세요!**
@@ -748,12 +923,16 @@ spring:
 > [!NOTE]
 > **max-lifetime 설정 주의:**
 >
-> HikariCP의 `max-lifetime`은 Amazon RDS의 `wait_timeout`보다 **짧게** 설정해야 합니다.
+> HikariCP의 `max-lifetime`은 Amazon RDS의 `wait_timeout`보다 **짧게** 설정해야 합니다.  
 > Amazon RDS MySQL의 기본 `wait_timeout`은 28800초(8시간)이므로, HikariCP의 `max-lifetime`을 1800초(30분)로 설정하면 안전합니다.
 >
 > 만약 `max-lifetime > wait_timeout`이면, Amazon RDS가 먼저 연결을 끊어버려서 애플리케이션에서 `Connection is closed` 에러가 발생합니다.
 
 ✅ **태스크 완료**: Spring Boot HikariCP 설정과 Amazon RDS Parameter Group의 연계를 이해했습니다.
+
+> [!TIP]
+> Step 4-1의 셀프 미션(백엔드 프로젝트 DB 세팅)을 아직 하지 않았다면 이 시점에서 진행해 보세요.  
+> Parameter Group 적용 후 `NOW()` 호출 시 한국 시간이 반환되고, 이모지 저장이 정상 동작하는지 애플리케이션 레벨에서 확인할 수 있습니다.
 
 ---
 
@@ -766,6 +945,7 @@ spring:
 - `time_zone`을 `Asia/Seoul`로 설정하여 한국 시간대를 적용했습니다.
 - `character_set_*` 5개와 `collation_*` 2개를 `utf8mb4`/`utf8mb4_unicode_ci`로 통일했습니다.
 - `max_connections`를 100으로 설정하고 계산 공식을 이해했습니다.
+- **변경 전 기본값을 SQL로 확인**하고, Parameter Group 적용 후 변경된 값과 비교했습니다.
 - Amazon RDS에 Parameter Group을 적용(Modify)하고 재부팅(Reboot)했습니다.
 - Amazon EC2에서 SQL로 모든 설정이 올바르게 반영되었음을 확인했습니다.
 - Spring Boot HikariCP 커넥션 풀 설정과 Amazon RDS max_connections의 관계를 이해했습니다.
@@ -784,7 +964,8 @@ spring:
 > [!WARNING]
 > 삭제 순서: **Amazon RDS 삭제 → 커스텀 PG 삭제 → DB Subnet Group 삭제 → EC2 종료 → CloudFormation 스택 삭제**
 >
-> Amazon RDS가 사용 중인 Parameter Group과 DB Subnet Group은 RDS를 먼저 삭제해야 삭제 가능합니다.
+> Amazon RDS가 사용 중인 Parameter Group과 DB Subnet Group은 RDS를 먼저 삭제해야 삭제 가능합니다.  
+> PG만 먼저 삭제하고 싶다면, Amazon RDS Modify에서 `default.mysql8.4`로 되돌린 뒤(재부팅 불필요) PG를 삭제할 수 있습니다.
 
 ---
 
@@ -809,21 +990,23 @@ spring:
 
 ### 단계 2: Amazon RDS 인스턴스 삭제
 
-6. 상단 검색창에 `RDS`를 입력하고 **RDS** 서비스를 선택합니다.
+6. 상단 검색창에 `RDS`를 입력하고 **Aurora and RDS** 서비스를 선택합니다.
 7. 왼쪽 메뉴에서 **Databases**를 선택합니다.
 8. `my-rds-mysql`을 선택합니다 (라디오 버튼 클릭).
 9. 상단 **Actions** → **Delete**를 클릭합니다.
 10. 삭제 확인 팝업에서:
-    - **Create final snapshot?**: `No` 선택 (체크 해제)
-    - **I acknowledge that upon instance deletion...**: 체크합니다.
-    - **Retain automated backups**: `No` 선택 (체크 해제)
+    - ☐ **Create final snapshot**: 체크 해제 (기본값 유지)
+    - ☑ **I acknowledge that upon instance deletion...**: 체크합니다.
     - 확인 입력란에 `delete me`를 입력합니다.
 11. [[Delete]] 버튼을 클릭합니다.
 12. 상태가 `Deleting`으로 변경됩니다. 완전히 삭제될 때까지 약 5~10분 기다립니다.
 
 > [!WARNING]
 > Amazon RDS 삭제에는 시간이 걸립니다. 상태가 목록에서 사라질 때까지 기다린 후 다음 단계를 진행하세요.
-> Final snapshot을 생성하면 스냅샷 스토리지 비용이 발생하므로, 학습 환경에서는 `No`를 선택합니다.
+
+> [!TIP]
+> **Create final snapshot**을 체크하면 삭제 전 스냅샷을 생성하여 나중에 복원할 수 있지만, 스냅샷 스토리지 비용이 발생합니다.  
+> 학습 환경에서는 체크 해제하세요.
 
 ---
 
@@ -865,7 +1048,7 @@ spring:
 
 ---
 
-### 단계 6: CloudFormation 스택 삭제 (태스크 0에서 생성한 경우)
+### 단계 6: CloudFormation 스택 삭제 (Step 4-1 태스크 0에서 생성한 경우)
 
 26. 상단 검색창에 `CloudFormation`을 입력하고 선택합니다.
 27. **Stacks** 목록에서 `rds-lab-prereq` 스택을 선택합니다.
