@@ -178,6 +178,8 @@ Amazon EC2에서 MySQL Client를 설치하여 Amazon RDS에 접속하고 정상 
 > **운영 환경에서는 반드시 Private Subnet에 Amazon RDS를 배치합니다.**  
 > 이 실습에서도 Private Subnet에 Amazon RDS를 배치하고, 같은 VPC 내의 EC2에서만 접속합니다.
 
+<img src="/images/step4/4-1-architecture.png" alt="Step 4 아키텍처" class="guide-img-lg" />
+
 ✅ **태스크 완료**: DB Subnet Group의 개념과 2개 AZ가 필요한 이유를 이해했습니다.
 
 ---
@@ -865,6 +867,8 @@ exit
 
 > [!NOTE]
 > 이 미션은 선택 사항입니다. 실습에서 생성한 Amazon RDS를 활용하여 실제 프로젝트 데이터베이스를 세팅해 봅니다.
+
+<img src="/images/step4/4-1-self-architecture.png" alt="셀프 미션 아키텍처" class="guide-img-lg" />
 
 ### 목표
 

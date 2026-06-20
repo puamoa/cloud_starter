@@ -24,6 +24,8 @@ estimatedCost: 무료 (Parameter Group 변경은 비용 없음)
 [Parameter Group 개념 이해] → [커스텀 Parameter Group 생성] → [파라미터 설정] → [변경 전 기본값 확인] → [Amazon RDS에 적용] → [변경 후 설정 확인] → [Spring Boot 연계]
 ```
 
+<img src="/images/step4/4-1-architecture.png" alt="Step 4 아키텍처" class="guide-img-lg" />
+
 > [!NOTE]
 > 이 실습은 Amazon RDS MySQL 인스턴스가 필요합니다.  
 > Step 4-1에서 생성한 Amazon RDS 인스턴스(`my-rds-mysql`)를 사용합니다.  
