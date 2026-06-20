@@ -27,7 +27,7 @@ Security Group과의 차이를 이해하고, Stateless 특성에 따른 Ephemera
 > Public Subnet에는 커스텀 NACL(`my-public-nacl`)을, Private Subnet에는 기본 NACL(Default)을 사용합니다.
 
 > [!NOTE]
-> 이 실습은 VPC와 서브넷이 필요합니다.  
+> 이 실습은 Amazon VPC와 서브넷이 필요합니다.  
 > Step 1-1 또는 Step 1-2에서 생성한 VPC(`my-vpc`)와 서브넷을 사용하거나, 기존에 보유한 VPC를 사용합니다.
 
 ## 태스크 1: NACL 개념 이해
@@ -58,16 +58,16 @@ Security Group과의 차이를 이해하고, Stateless 특성에 따른 Ephemera
 > [!NOTE]
 > **ENI (Elastic Network Interface)란?**
 >
-> ENI는 VPC 내에서 인스턴스에 연결되는 **가상 네트워크 카드**입니다. 물리 서버의 LAN 카드에 해당합니다.
+> ENI는 Amazon VPC 내에서 인스턴스에 연결되는 **가상 네트워크 카드**입니다. 물리 서버의 LAN 카드에 해당합니다.
 >
-> - EC2 인스턴스를 생성하면 자동으로 **Primary ENI**가 하나 생성되어 연결됩니다.
+> - Amazon EC2 인스턴스를 생성하면 자동으로 **Primary ENI**가 하나 생성되어 연결됩니다.
 > - ENI에는 사설 IP, Public IP, MAC 주소, Security Group이 할당됩니다.
 > - Security Group은 실제로 **인스턴스가 아닌 ENI에 연결**됩니다. 그래서 "인스턴스 레벨"이라고 표현합니다.
 > - 하나의 인스턴스에 여러 ENI를 연결할 수 있고, 각 ENI에 서로 다른 Security Group을 적용할 수 있습니다.
 > - ENI를 다른 인스턴스로 이동(detach → attach)하면 IP와 Security Group 설정이 함께 이동합니다.
 >
 > ```
-> EC2 인스턴스
+> Amazon EC2 인스턴스
 > └── ENI (eth0) ← Primary ENI
 >     ├── Private IP: 10.0.1.50
 >     ├── Public IP: 54.180.x.x (할당된 경우)
@@ -139,7 +139,7 @@ Security Group과의 차이를 이해하고, Stateless 특성에 따른 Ephemera
     <img src="/images/step1/1-3-step8-subnet-assoc.png" alt="Subnet associations 확인" class="guide-img-sm" />
 
 > [!NOTE]
-> 기본 NACL은 VPC의 모든 서브넷에 자동으로 연결됩니다. 서브넷을 커스텀 NACL에 연결하면 기본 NACL에서 분리됩니다.
+> 기본 NACL은 Amazon VPC의 모든 서브넷에 자동으로 연결됩니다. 서브넷을 커스텀 NACL에 연결하면 기본 NACL에서 분리됩니다.
 
 ✅ **태스크 완료**: 기본 NACL의 규칙과 동작을 확인했습니다.
 
@@ -268,7 +268,7 @@ Public Subnet에 적용할 커스텀 NACL을 생성합니다. 웹 트래픽(HTTP
 
 > [!NOTE]
 > Rule 140은 서버가 외부로 요청을 보낸 후 응답을 받기 위한 Ephemeral Port입니다.  
-> 예를 들어 EC2에서 `yum update`를 실행하면, 패키지 서버의 응답이 이 포트 범위로 돌아옵니다.
+> 예를 들어 Amazon EC2에서 `yum update`를 실행하면, 패키지 서버의 응답이 이 포트 범위로 돌아옵니다.
 
 21. [[Save changes]] 버튼을 클릭합니다.
 
@@ -302,7 +302,7 @@ Public Subnet에 적용할 커스텀 NACL을 생성합니다. 웹 트래픽(HTTP
     <img src="/images/step1/1-3-step26-outbound-rules.png" alt="Outbound rules 전체" class="guide-img-sm" />
 
 > [!CONCEPT] 아웃바운드 Ephemeral Port의 의미
-> 외부 클라이언트가 EC2의 80 포트로 요청을 보내면, EC2는 클라이언트의 임시 포트로 응답을 보내야 합니다.  
+> 외부 클라이언트가 Amazon EC2의 80 포트로 요청을 보내면, Amazon EC2는 클라이언트의 임시 포트로 응답을 보내야 합니다.  
 > 이 응답 트래픽이 아웃바운드 Ephemeral Port 규칙에 의해 허용됩니다.
 
 27. [[Save changes]] 버튼을 클릭합니다.
@@ -431,7 +431,7 @@ Public Subnet에 적용할 커스텀 NACL을 생성합니다. 웹 트래픽(HTTP
 > **실제 차단 테스트는 Step 2-1에서 진행합니다.**
 >
 > 여기서 사용한 `203.0.113.0/24`는 문서 예시용 IP(RFC 5737)로, 실제 트래픽이 발생하지 않아 차단 효과를 체감할 수 없습니다.  
-> Step 2-1에서 EC2를 생성한 뒤, 본인의 IP(`My IP`)를 DENY에 넣으면 실제로 웹 접속이 차단되는 것을 확인할 수 있습니다.
+> Step 2-1에서 Amazon EC2를 생성한 뒤, 본인의 IP(`My IP`)를 DENY에 넣으면 실제로 웹 접속이 차단되는 것을 확인할 수 있습니다.
 >
 > 실무에서 긴급 차단이 필요한 경우:
 >
@@ -495,8 +495,8 @@ Public Subnet에 적용할 커스텀 NACL을 생성합니다. 웹 트래픽(HTTP
 > [!NOTE]
 > **실제 통신 차단/허용 테스트는 Step 2-1에서 진행합니다.**
 >
-> 이 실습에서는 NACL 규칙을 설계하고 생성했지만, VPC 내에 EC2 인스턴스가 없어 실제 트래픽 차단을 체험할 수 없습니다.  
-> Step 2-1에서 EC2를 생성한 뒤, 옵션 태스크로 NACL 규칙을 변경하여 HTTP 접속이 차단/복구되는 것을 직접 확인합니다.
+> 이 실습에서는 NACL 규칙을 설계하고 생성했지만, Amazon VPC 내에 Amazon EC2 인스턴스가 없어 실제 트래픽 차단을 체험할 수 없습니다.  
+> Step 2-1에서 Amazon EC2를 생성한 뒤, 옵션 태스크로 NACL 규칙을 변경하여 HTTP 접속이 차단/복구되는 것을 직접 확인합니다.
 >
 > - NACL DENY 규칙 추가 → 웹 접속 차단 확인.
 > - DENY 규칙 제거 → 웹 접속 복구 확인.
