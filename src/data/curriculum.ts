@@ -1,6 +1,6 @@
 // AWS 기초 실습 가이드 - 단계별 커리큘럼 데이터
 
-export type SessionType = 'lab' | 'demo' | 'theory';
+export type SessionType = 'lab' | 'demo' | 'theory' | 'mission';
 
 export interface Session {
   session: number;
@@ -337,6 +337,22 @@ export const curriculum: WeekCurriculum[] = [
         awsServices: ['AWS Secrets Manager'],
         estimatedCost: '크레딧 내 사용 가능 (비밀당 월 $0.40)',
       },
+      {
+        session: 3,
+        type: 'mission',
+        title: '🚀 셀프 미션: Amazon EC2에 Spring 백엔드 배포',
+        hasContent: true,
+        markdownPath: '/content/step6-secrets/6-3-self-mission.md',
+        description:
+          'Step 2~6 통합 복습. Parameter Store + Secrets Manager로 비밀 관리하며 EC2에 실제 배포',
+        awsServices: [
+          'Amazon EC2',
+          'AWS Systems Manager Parameter Store',
+          'AWS Secrets Manager',
+        ],
+        estimatedCost:
+          '크레딧 내 사용 가능 (Amazon EC2 t3.micro 시간당 ~$0.013 + Amazon RDS 선택 시 추가)',
+      },
     ],
     difficulty: 'intermediate',
   },
@@ -585,4 +601,5 @@ export const sessionTypeConfig = {
   theory: { icon: 'file', label: '이론', color: 'grey', emoji: '📕' },
   lab: { icon: 'settings', label: '실습', color: 'blue', emoji: '⚡' },
   demo: { icon: 'video-on', label: '데모', color: 'green', emoji: '🖥️' },
+  mission: { icon: 'star', label: '미션', color: 'orange', emoji: '🚀' },
 } as const;

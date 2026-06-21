@@ -277,6 +277,63 @@ Servlet Container (Tomcat 시작)
 >
 > 역할과 계층 구조는 동일합니다. 표현 방식만 다릅니다.
 
+### JDBC 드라이버 이해: log4jdbc vs 일반 드라이버
+
+> [!CONCEPT] JDBC 드라이버란?
+> JDBC 드라이버는 Java 애플리케이션이 데이터베이스와 통신하기 위한 **어댑터**입니다.  
+> 프로젝트에서 어떤 드라이버를 사용하느냐에 따라 URL 형식과 부가 기능이 달라집니다.
+
+| 드라이버 | 클래스명 | URL 형식 | 용도 |
+| -------- | -------- | -------- | ---- |
+| **MySQL 기본** | `com.mysql.cj.jdbc.Driver` | `jdbc:mysql://host:3306/db` | 순수 DB 연결 |
+| **log4jdbc** | `net.sf.log4jdbc.sql.jdbcapi.DriverSpy` | `jdbc:log4jdbc:mysql://host:3306/db` | SQL 로깅 + DB 연결 |
+
+> [!CONCEPT] log4jdbc란?
+> `log4jdbc`는 JDBC 드라이버를 **래핑(wrapping)**하여 실행되는 SQL, 파라미터 바인딩, 실행 시간 등을 자동으로 로깅해주는 라이브러리입니다.
+>
+> ```
+> 일반 드라이버:
+>   Application → com.mysql.cj.jdbc.Driver → MySQL
+>   (SQL 로그 없음)
+>
+> log4jdbc 드라이버:
+>   Application → DriverSpy(로깅) → com.mysql.cj.jdbc.Driver → MySQL
+>   (SQL + 파라미터 + 실행 시간 자동 로깅)
+> ```
+>
+> - **개발 환경**: SQL을 보면서 디버깅해야 하므로 `log4jdbc` 사용 (권장)
+> - **운영 환경**: 로깅 오버헤드를 줄이기 위해 일반 드라이버 사용 (또는 log4jdbc 유지 + 로그 레벨 조정)
+
+**중요**: 드라이버와 URL은 **반드시 쌍으로 맞춰야** 합니다:
+
+```properties
+# ✅ 올바른 조합 1: log4jdbc 드라이버 + log4jdbc URL
+jdbc.driver=net.sf.log4jdbc.sql.jdbcapi.DriverSpy
+jdbc.url=jdbc:log4jdbc:mysql://localhost:3306/mydb
+
+# ✅ 올바른 조합 2: 일반 드라이버 + 일반 URL
+jdbc.driver=com.mysql.cj.jdbc.Driver
+jdbc.url=jdbc:mysql://localhost:3306/mydb
+
+# ❌ 잘못된 조합: log4jdbc 드라이버 + 일반 URL → 에러 발생!
+jdbc.driver=net.sf.log4jdbc.sql.jdbcapi.DriverSpy
+jdbc.url=jdbc:mysql://localhost:3306/mydb
+# → "DriverSpy claims to not accept jdbcUrl" 에러
+```
+
+> [!TIP]
+> 현재 로컬 프로젝트(`application.properties`)는 `log4jdbc`를 사용하고 있습니다:
+>
+> ```properties
+> jdbc.driver=net.sf.log4jdbc.sql.jdbcapi.DriverSpy
+> jdbc.url=jdbc:log4jdbc:mysql://localhost:3306/scoula_db
+> ```
+>
+> AWS 배포 시 Parameter Store에 값을 넣을 때도 이 규칙을 지켜야 합니다.  
+> 드라이버를 바꾸면 URL도 함께 바꿔야 합니다.
+
+---
+
 ### @Profile — 환경별 설정 분리
 
 `@Profile`을 사용하면 실행 환경에 따라 다른 Bean을 활성화할 수 있습니다:
