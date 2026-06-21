@@ -4,6 +4,8 @@ week: 6
 session: 0
 type: theory
 learningObjectives:
+  - Spring Boot와 Spring MVC 레거시의 설정 구조 차이를 설명할 수 있습니다.
+  - '@Profile'을 사용하여 환경별 설정을 분리할 수 있습니다.
   - 인증(Authentication)과 인가(Authorization)의 차이를 설명할 수 있습니다.
   - 대칭키와 비대칭키 암호화 원리를 이해할 수 있습니다.
   - KMS(Key Management Service) 개념을 이해할 수 있습니다.
@@ -17,7 +19,295 @@ learningObjectives:
 
 ---
 
-## 1. 인증(Authentication) vs 인가(Authorization)
+## 1. Spring 설정 구조 이해
+
+> [!CONCEPT] 왜 설정 구조를 먼저 알아야 하나?
+> 이번 Step부터 **로컬 개발 환경**과 **AWS 배포 환경**에서 설정이 달라집니다.  
+> DB 접속 정보, API 키 등이 환경마다 다르고, 관리 방식도 다릅니다.  
+> 이를 안전하게 처리하려면 Spring의 설정 구조를 이해하고, 환경별로 분리하는 방법을 알아야 합니다.
+
+### Spring Boot vs Spring MVC 레거시 설정 비교
+
+| 항목 | Spring Boot | Spring MVC 레거시 |
+| ---- | ----------- | ----------------- |
+| 설정 방식 | 자동 설정 (Auto-configuration) | 수동 설정 (@Configuration 클래스 또는 XML) |
+| DataSource | `application.properties`에 작성하면 자동 생성 | `@Bean` 메서드로 직접 생성 |
+| 트랜잭션 | `@EnableTransactionManagement` 자동 | 수동 설정 필요 |
+| 서블릿 등록 | 내장 Tomcat이 자동 처리 | WebConfig에서 직접 등록 |
+| 설정 파일 | `application.properties` 또는 `application.yml` | `application.properties` + Java Config 클래스들 |
+| 환경 분리 | `application-{profile}.properties` | `@Profile` 어노테이션 |
+
+### Spring Boot 설정 구조
+
+Boot는 **Convention over Configuration** 철학으로, 대부분의 설정을 자동으로 처리합니다:
+
+```
+Spring Boot 프로젝트
+├── src/main/resources/
+│   ├── application.properties            ← DB, 서버 포트 등 모든 설정
+│   ├── application-local.properties      ← 로컬 전용 설정 (선택)
+│   └── application-aws.properties        ← AWS 배포 전용 설정 (선택)
+└── src/main/java/
+    └── com/example/demo/
+        ├── DemoApplication.java          ← @SpringBootApplication (자동 설정 시작점)
+        └── config/
+            └── (필요할 때만 추가)        ← 자동 설정으로 부족할 때 직접 작성
+```
+
+```properties
+# application.properties — 이것만으로 DataSource가 자동 생성됨
+spring.datasource.url=jdbc:mysql://localhost:3306/mydb
+spring.datasource.username=admin
+spring.datasource.password=1234
+spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
+```
+
+> [!TIP]
+> Boot에서는 `@Configuration` 클래스를 직접 작성하지 않아도 대부분 동작합니다.  
+> 자동 설정을 **덮어쓰고 싶을 때만** (예: Parameter Store에서 값을 가져올 때) 직접 Bean을 정의합니다.
+
+### Spring MVC 레거시 설정 구조
+
+레거시에서는 **모든 설정을 개발자가 직접** 작성합니다:
+
+```
+Spring MVC 레거시 프로젝트
+├── src/main/resources/
+│   └── application.properties           ← DB 접속 정보 등 외부 설정값
+└── src/main/java/
+    └── org/scoula/config/
+        ├── WebConfig.java               ← 웹 애플리케이션 초기화 (web.xml 대체)
+        ├── RootConfig.java              ← 비즈니스 계층 설정 (DataSource, MyBatis, 서비스)
+        ├── ServletConfig.java           ← 웹 계층 설정 (Controller, ViewResolver)
+        └── SecurityConfig.java          ← 보안 설정 (인증/인가)
+```
+
+### 각 설정 파일의 역할
+
+> [!CONCEPT] WebConfig — 모든 설정의 시작점
+> `WebConfig`는 `AbstractAnnotationConfigDispatcherServletInitializer`를 상속하며, 기존 `web.xml`의 역할을 대체합니다.  
+> 여기서 **어떤 설정 클래스를 어디에 등록할지** 결정합니다.
+>
+> ```java
+> public class WebConfig extends AbstractAnnotationConfigDispatcherServletInitializer {
+>
+>     @Override
+>     protected Class<?>[] getRootConfigClasses() {
+>         // 비즈니스 계층 설정 — 앱 전체에서 공유
+>         return new Class[] { RootConfig.class, SecurityConfig.class };
+>     }
+>
+>     @Override
+>     protected Class<?>[] getServletConfigClasses() {
+>         // 웹 계층 설정 — DispatcherServlet에서만 사용
+>         return new Class[] { ServletConfig.class };
+>     }
+>
+>     @Override
+>     protected String[] getServletMappings() {
+>         return new String[] { "/" };
+>     }
+> }
+> ```
+
+| 설정 클래스 | 역할 | 등록 위치 | 주요 내용 |
+| ----------- | ---- | --------- | --------- |
+| **WebConfig** | 앱 초기화 (web.xml 대체) | — (Servlet 컨테이너가 자동 감지) | Root/Servlet 설정 등록 |
+| **RootConfig** | 비즈니스 계층 | `getRootConfigClasses()` | DataSource, MyBatis, Service, 트랜잭션 |
+| **ServletConfig** | 웹 계층 | `getServletConfigClasses()` | Controller, ViewResolver, 인터셉터 |
+| **SecurityConfig** | 보안 | `getRootConfigClasses()` | 인증/인가, 필터 체인 |
+
+> [!NOTE]
+> **클래스 이름은 관례일 뿐 강제가 아닙니다.**  
+> `RootConfig`를 `AppConfig`로, `ServletConfig`를 `WebMvcConfig`로 바꿔도 동작합니다.  
+> 중요한 것은 **역할과 등록 위치**입니다.
+
+### RootConfig 상세 구조 (현재 백엔드 프로젝트 기준)
+
+```java
+@Configuration
+@PropertySource({"classpath:/application.properties"})    // 외부 설정 파일 로드
+@MapperScan(basePackages = {"org.scoula.board.mapper"})   // MyBatis Mapper 스캔
+@ComponentScan(basePackages = {"org.scoula.config", ...}) // Bean 자동 스캔
+@EnableTransactionManagement                               // 트랜잭션 활성화
+public class RootConfig {
+
+    @Value("${jdbc.url}") String url;      // application.properties에서 값 주입
+
+    @Bean
+    public DataSource dataSource() { ... }           // DB 연결 풀
+
+    @Bean
+    public SqlSessionFactory sqlSessionFactory() { ... }  // MyBatis 설정
+
+    @Bean
+    public DataSourceTransactionManager transactionManager() { ... }  // 트랜잭션
+}
+```
+
+> [!CONCEPT] @PropertySource + @Value 흐름
+> ```
+>  application.properties           @Value("${jdbc.url}")          DataSource Bean
+> ┌──────────────────────┐         ┌──────────────────┐          ┌───────────────┐
+> │ jdbc.url=localhost.. │ ──────→ │ String url 필드  │ ──────→  │ setJdbcUrl()  │
+> │ jdbc.password=1234   │         │ String password  │          │ setPassword() │ 
+> └──────────────────────┘         └──────────────────┘          └───────────────┘
+> ```
+> `@PropertySource`로 파일을 로드하고, `@Value`로 개별 값을 필드에 주입합니다.
+
+### @ComponentScan과 설정 클래스 자동 등록
+
+외부에 별도 `@Configuration` 클래스를 만들면, `@ComponentScan`이 자동으로 찾아서 등록합니다:
+
+```java
+// RootConfig.java
+@ComponentScan(basePackages = {"org.scoula.config", ...})
+//                              ↑ 이 패키지 안의 @Configuration 클래스를 자동 스캔
+```
+
+```
+org/scoula/config/
+├── RootConfig.java              ← @ComponentScan 선언
+├── LocalDataSourceConfig.java   ← @Configuration → 자동 등록됨
+├── AwsDataSourceConfig.java     ← @Configuration → 자동 등록됨
+└── ParameterStoreService.java   ← @Component → 자동 등록됨
+```
+
+> [!CONCEPT] @ComponentScan이 스캔하는 대상
+> `@ComponentScan`은 지정된 패키지 안의 다음 어노테이션이 붙은 클래스를 **모두** Bean으로 등록합니다:
+>
+> | 어노테이션 | 용도 | 예시 |
+> | ---------- | ---- | ---- |
+> | `@Component` | 범용 Bean | 유틸리티, 헬퍼 |
+> | `@Service` | 비즈니스 로직 | BoardService |
+> | `@Repository` | 데이터 접근 | BoardMapper |
+> | `@Configuration` | 설정 클래스 | DataSourceConfig |
+> | `@Controller` | 웹 요청 처리 | BoardController |
+>
+> 따라서 **WebConfig에 직접 등록하지 않아도**, `@ComponentScan` 범위 안에 있으면 자동으로 Spring 컨테이너에 등록됩니다.
+
+> [!TIP]
+> 새 설정 파일을 추가할 때 확인할 것:
+>
+> 1. 파일의 패키지가 `@ComponentScan`의 `basePackages`에 포함되는지
+> 2. 클래스에 `@Configuration` (또는 `@Component`)이 붙어있는지
+>
+> 이 두 조건만 만족하면 별도 등록 없이 자동으로 인식됩니다.
+
+### 설정이 퍼져나가는 전체 흐름
+
+Spring 레거시에서 Bean 등록은 **트리 구조**로 퍼져나갑니다:
+
+```
+Servlet Container (Tomcat 시작)
+  │
+  └── WebConfig (시작점 — web.xml 대체)
+        │
+        ├── getRootConfigClasses() ─── 비즈니스 계층 (앱 전체 공유)
+        │     │
+        │     ├── RootConfig
+        │     │     │
+        │     │     └── @ComponentScan(basePackages = {...})
+        │     │           │
+        │     │           ├── [설정 클래스] @Configuration
+        │     │           │     ├── LocalDataSourceConfig
+        │     │           │     ├── AwsDataSourceConfig
+        │     │           │     └── ParameterStoreService (@Component)
+        │     │           │
+        │     │           ├── [서비스 계층] @Service
+        │     │           │     ├── BoardService
+        │     │           │     ├── MemberService
+        │     │           │     └── TravelService
+        │     │           │
+        │     │           ├── [데이터 접근] @MapperScan
+        │     │           │     ├── BoardMapper (MyBatis)
+        │     │           │     ├── MemberMapper
+        │     │           │     └── TravelMapper
+        │     │           │
+        │     │           └── [유틸리티] @Component
+        │     │                 └── FileUtil 등
+        │     │
+        │     └── SecurityConfig
+        │           └── 인증/인가 필터, UserDetailsService 등
+        │
+        └── getServletConfigClasses() ─── 웹 계층 (DispatcherServlet 전용)
+              │
+              └── ServletConfig
+                    │
+                    └── @ComponentScan(basePackages = {"org.scoula.controller"})
+                          │
+                          ├── [컨트롤러] @Controller / @RestController
+                          │     ├── BoardController
+                          │     ├── MemberController
+                          │     └── TravelController
+                          │
+                          └── [웹 설정]
+                                ├── ViewResolver (JSP/Thymeleaf)
+                                ├── MultipartResolver (파일 업로드)
+                                └── Interceptor (인터셉터)
+```
+
+> [!CONCEPT] Root Context vs Servlet Context
+>
+> | 구분 | Root Context | Servlet Context |
+> | ---- | ------------ | --------------- |
+> | 설정 | RootConfig, SecurityConfig | ServletConfig |
+> | Bean | Service, Repository, DataSource | Controller, ViewResolver |
+> | 범위 | 앱 전체에서 공유 | DispatcherServlet에서만 사용 |
+> | 접근 | Servlet Context에서 Root Bean 접근 **가능** | Root에서 Servlet Bean 접근 **불가** |
+>
+> Controller(Servlet Context)에서 Service(Root Context)를 `@Autowired`로 주입받을 수 있지만,  
+> 반대로 Service에서 Controller를 주입받을 수는 없습니다.
+
+> [!TIP]
+> **핵심 원리**: WebConfig에서 설정 클래스를 직접 등록하고, 각 설정 클래스의 `@ComponentScan`이 하위 Bean들을 자동으로 끌어옵니다.  
+> 새 파일을 추가할 때 WebConfig을 수정할 필요 없이, `@ComponentScan` 범위 안에 넣으면 됩니다.
+
+### XML 설정 방식 (참고)
+
+> [!NOTE]
+> 과거에는 Java Config 대신 **XML 파일**로 동일한 설정을 했습니다.  
+> 현재 프로젝트는 Java Config 방식이지만, 구형 프로젝트에서는 아래 구조를 볼 수 있습니다:
+>
+> | Java Config | XML 동등물 |
+> | ----------- | ---------- |
+> | `WebConfig.java` | `web.xml` |
+> | `RootConfig.java` | `applicationContext.xml` (또는 `root-context.xml`) |
+> | `ServletConfig.java` | `dispatcher-servlet.xml` (또는 `servlet-context.xml`) |
+>
+> 역할과 계층 구조는 동일합니다. 표현 방식만 다릅니다.
+
+### @Profile — 환경별 설정 분리
+
+`@Profile`을 사용하면 실행 환경에 따라 다른 Bean을 활성화할 수 있습니다:
+
+```java
+@Configuration
+@Profile("local")    // 로컬 개발 시에만 활성화
+public class LocalDataSourceConfig { ... }
+
+@Configuration
+@Profile("aws")      // AWS 배포 시에만 활성화
+public class AwsDataSourceConfig { ... }
+```
+
+**프로필 활성화 방법:**
+
+| 환경 | 방법 |
+| ---- | ---- |
+| 로컬 (IntelliJ) | Run Configuration → VM options: `-Dspring.profiles.active=local` |
+| 로컬 (Boot) | `application.properties`에 `spring.profiles.active=local` |
+| EC2 배포 | `java -jar app.jar --spring.profiles.active=aws` |
+| Tomcat WAR | `catalina.sh`에 `JAVA_OPTS="-Dspring.profiles.active=aws"` |
+
+> [!TIP]
+> `@Profile("!aws")`는 "aws가 **아닌** 모든 경우"를 의미합니다.  
+> 프로필을 지정하지 않으면 기본적으로 `default` 프로필이 활성화됩니다.  
+> `@Profile("!aws")`는 `default` 프로필에서도 활성화되므로, 로컬에서 별도 프로필 설정 없이도 동작합니다.
+
+---
+
+## 2. 인증(Authentication) vs 인가(Authorization)
 
 
 ### 주요 용어
@@ -87,7 +377,7 @@ learningObjectives:
 
 ---
 
-## 2. 대칭키 / 비대칭키 암호화
+## 3. 대칭키 / 비대칭키 암호화
 
 
 ### 주요 용어
@@ -166,7 +456,7 @@ learningObjectives:
 
 ---
 
-## 3. KMS (Key Management Service) 개념
+## 4. KMS (Key Management Service) 개념
 
 
 ### 주요 용어
@@ -221,7 +511,7 @@ learningObjectives:
 
 ---
 
-## 4. 비밀값 관리의 중요성
+## 5. 비밀값 관리의 중요성
 
 
 ### 주요 용어
@@ -281,7 +571,7 @@ Git commit & push (GitHub Public Repo)
 
 ---
 
-## 5. 환경 변수 vs 비밀 저장소
+## 6. 환경 변수 vs 비밀 저장소
 
 
 ### 주요 용어
@@ -323,7 +613,7 @@ Git commit & push (GitHub Public Repo)
 
 ---
 
-## 6. 최소 권한 원칙 (Principle of Least Privilege)
+## 7. 최소 권한 원칙 (Principle of Least Privilege)
 
 
 ### 주요 용어
@@ -397,7 +687,7 @@ Git commit & push (GitHub Public Repo)
 
 ---
 
-## 7. Zero Trust 보안 모델
+## 8. Zero Trust 보안 모델
 
 
 ### 주요 용어
@@ -453,6 +743,8 @@ Zero Trust:
 
 | 개념            | 한 줄 요약                                      |
 | --------------- | ----------------------------------------------- |
+| Spring 설정 구조 | Boot=자동, 레거시=수동 (WebConfig→RootConfig→ServletConfig) |
+| @Profile        | 환경별(local/aws) Bean을 분리하여 충돌 없이 관리 |
 | 인증 vs 인가    | 누구인지 확인 vs 무엇을 할 수 있는지 결정       |
 | 대칭키 암호화   | 같은 키로 암호화/복호화 (빠름, 키 교환 어려움)  |
 | 비대칭키 암호화 | 공개키/개인키 쌍 사용 (느림, 키 교환 안전)      |

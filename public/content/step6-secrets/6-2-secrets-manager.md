@@ -7,18 +7,24 @@ awsServices:
 learningObjectives:
   - Secrets Manager에 비밀을 생성하고 조회할 수 있습니다.
   - Parameter Store와 Secrets Manager의 차이를 비교할 수 있습니다.
-  - RDS 비밀번호 자동 로테이션을 설정할 수 있습니다.
+  - Amazon RDS 비밀번호 자동 로테이션을 설정할 수 있습니다.
   - Spring 프로젝트(Boot/MVC)에서 Secrets Manager 값을 조회하여 사용할 수 있습니다.
 prerequisites:
   - AWS 계정 생성 완료
-  - RDS MySQL 인스턴스 (자동 로테이션 실습 시 필요, 선택)
+  - Amazon RDS MySQL 인스턴스 (자동 로테이션 실습 시 필요, 선택)
 estimatedCost: 크레딧 내 사용 가능 (비밀당 월 $0.40 + API 호출 비용)
 ---
 
-이 실습에서는 AWS Secrets Manager를 사용하여 비밀값을 관리합니다. Parameter Store와의 차이를 이해하고, RDS 비밀번호 자동 로테이션을 설정하는 방법을 학습합니다.
+이 실습에서는 AWS Secrets Manager를 사용하여 비밀값을 관리합니다. Parameter Store와의 차이를 이해하고, Amazon RDS 비밀번호 자동 로테이션을 설정하는 방법을 학습합니다.
+
+### 실습 흐름
+
+```
+[서비스 비교] → [콘솔에서 비밀 생성] → [CLI로 생성/조회] → [Spring 연동] → [RDS 자동 로테이션]
+```
 
 > [!NOTE]
-> 이 실습은 독립적으로 진행할 수 있습니다. 자동 로테이션 실습(태스크 5)은 RDS 인스턴스가 필요하지만, 나머지 태스크는 AWS 계정만 있으면 진행 가능합니다.
+> 이 실습은 독립적으로 진행할 수 있습니다. 자동 로테이션 실습(태스크 5)은 Amazon RDS 인스턴스가 필요하지만, 나머지 태스크는 AWS 계정만 있으면 진행 가능합니다.
 
 > [!WARNING]
 > Secrets Manager는 비밀당 월 $0.40이 과금됩니다 (크레딧에서 차감). 실습 후 불필요한 비밀은 삭제하세요.
@@ -135,8 +141,8 @@ estimatedCost: 크레딧 내 사용 가능 (비밀당 월 $0.40 + API 호출 비
 >
 > | Secret type                         | 용도                               |
 > | ----------------------------------- | ---------------------------------- |
-> | Credentials for Amazon RDS database | RDS 자격 증명 (자동 로테이션 지원) |
-> | Credentials for other database      | RDS 외 DB (Redshift 등)            |
+> | Credentials for Amazon RDS database | Amazon RDS 자격 증명 (자동 로테이션 지원) |
+> | Credentials for other database      | Amazon RDS 외 DB (Redshift 등)            |
 > | **Other type of secret**            | 범용 키-값 쌍 (API 키, 토큰 등)    |
 >
 > 이 태스크에서는 범용 비밀을 생성하므로 **Other type of secret**을 선택합니다.
@@ -388,7 +394,7 @@ aws secretsmanager list-secrets \
 > ```
 >
 > **장점**: application.yml/properties에 비밀번호를 하드코딩하지 않아도 됩니다.
-> **주의**: EC2/ECS에 적절한 IAM Role이 있어야 Secrets Manager API를 호출할 수 있습니다.
+> **주의**: Amazon EC2/ECS에 적절한 IAM Role이 있어야 Secrets Manager API를 호출할 수 있습니다.
 
 ### 의존성 추가
 
@@ -586,16 +592,16 @@ java -jar build/libs/demo-0.0.1-SNAPSHOT.jar
 
 > [!NOTE]
 > 로컬에서 실행할 때는 AWS CLI 자격 증명(`~/.aws/credentials`)이 설정되어 있어야 합니다.
-> EC2에서 실행할 때는 인스턴스에 연결된 IAM Role에 `secretsmanager:GetSecretValue` 권한이 필요합니다.
+> Amazon EC2에서 실행할 때는 인스턴스에 연결된 IAM Role에 `secretsmanager:GetSecretValue` 권한이 필요합니다.
 
 ✅ **태스크 완료**: Spring에서 Secrets Manager 값을 조회하여 DataSource를 설정했습니다.
 
 ---
 
-## 태스크 5: RDS 비밀번호 자동 로테이션 설정 (선택)
+## 태스크 5: Amazon RDS 비밀번호 자동 로테이션 설정 (선택)
 
 > [!NOTE]
-> 이 태스크는 RDS MySQL 인스턴스가 필요합니다. Step 4-1에서 생성한 RDS를 사용하거나, 이 태스크를 건너뛸 수 있습니다.
+> 이 태스크는 Amazon RDS MySQL 인스턴스가 필요합니다. Step 4-1에서 생성한 Amazon RDS를 사용하거나, 이 태스크를 건너뛸 수 있습니다.
 
 > [!CONCEPT] 자동 로테이션 동작 원리
 >
@@ -625,27 +631,27 @@ java -jar build/libs/demo-0.0.1-SNAPSHOT.jar
 > └─────────────────────────────────────────────────────────────┘
 > ```
 
-### RDS용 비밀 생성
+### Amazon RDS용 비밀 생성
 
 33. Secrets Manager 콘솔로 이동합니다 (상단 검색창에 `Secrets Manager` 입력).
 34. [[Store a new secret]] 버튼을 클릭합니다.
 35. **Secret type** 섹션에서 **Credentials for Amazon RDS database**를 선택합니다.
 
 > [!TIP]
-> **Credentials for Amazon RDS database**를 선택하면 Secrets Manager가 RDS와 직접 통합됩니다.
-> 자동 로테이션 시 Lambda가 RDS에 직접 접속하여 비밀번호를 변경할 수 있습니다.
+> **Credentials for Amazon RDS database**를 선택하면 Secrets Manager가 Amazon RDS와 직접 통합됩니다.
+> 자동 로테이션 시 Lambda가 Amazon RDS에 직접 접속하여 비밀번호를 변경할 수 있습니다.
 
 36. **Credentials** 섹션에서 다음을 입력합니다:
     - **User name**: `admin`
-    - **Password**: RDS 생성 시 설정한 마스터 비밀번호
+    - **Password**: Amazon RDS 생성 시 설정한 마스터 비밀번호
 37. **Encryption key**: `aws/secretsmanager` (기본값) 유지합니다.
 38. **Database** 섹션에서 목록에 표시된 `my-rds-mysql` 인스턴스를 선택합니다.
 
 > [!WARNING]
-> Database 목록에 RDS 인스턴스가 표시되지 않으면:
+> Database 목록에 Amazon RDS 인스턴스가 표시되지 않으면:
 >
-> - RDS 인스턴스가 같은 리전(ap-northeast-2)에 있는지 확인하세요.
-> - RDS 인스턴스가 `Available` 상태인지 확인하세요.
+> - Amazon RDS 인스턴스가 같은 리전(ap-northeast-2)에 있는지 확인하세요.
+> - Amazon RDS 인스턴스가 `Available` 상태인지 확인하세요.
 > - IAM 사용자에 `rds:DescribeDBInstances` 권한이 있는지 확인하세요.
 
 39. [[Next]] 버튼을 클릭합니다.
@@ -688,11 +694,11 @@ java -jar build/libs/demo-0.0.1-SNAPSHOT.jar
 >
 > - Lambda 함수 (`SecretsManagerRDSRotation`)를 생성합니다.
 > - Lambda에 필요한 IAM Role과 정책을 연결합니다.
-> - Lambda를 VPC에 배치합니다 (RDS 접근을 위해).
+> - Lambda를 VPC에 배치합니다 (Amazon RDS 접근을 위해).
 > - 첫 번째 로테이션을 즉시 실행합니다.
 
 > [!WARNING]
-> 첫 번째 로테이션이 즉시 실행됩니다. 이 시점에서 RDS 비밀번호가 변경됩니다.
+> 첫 번째 로테이션이 즉시 실행됩니다. 이 시점에서 Amazon RDS 비밀번호가 변경됩니다.
 > 기존 애플리케이션이 하드코딩된 비밀번호를 사용하고 있다면 접속이 끊길 수 있습니다.
 > 반드시 태스크 4의 Secrets Manager 연동을 먼저 적용한 후 로테이션을 설정하세요.
 
@@ -711,18 +717,18 @@ java -jar build/libs/demo-0.0.1-SNAPSHOT.jar
 > [!OUTPUT]
 > password 값이 자동 생성된 복잡한 문자열로 변경되어 있습니다.
 > 예: `aB3$kL9mNp2!xYz7`
-> 이 비밀번호는 Lambda가 자동으로 생성하고 RDS에 적용한 것입니다.
+> 이 비밀번호는 Lambda가 자동으로 생성하고 Amazon RDS에 적용한 것입니다.
 
-✅ **태스크 완료**: RDS 비밀번호 자동 로테이션이 설정되었습니다.
+✅ **태스크 완료**: Amazon RDS 비밀번호 자동 로테이션이 설정되었습니다.
 
 > [!TROUBLESHOOTING]
 > | 증상 | 원인 | 해결 방법 |
 > |------|------|-----------|
-> | 로테이션 실패 (Lambda 에러) | Lambda가 RDS에 접근 불가 | Lambda의 VPC 설정 및 Security Group 확인 |
-> | `Rotation failed` 상태 | RDS 엔드포인트 변경 또는 네트워크 문제 | CloudWatch Logs에서 Lambda 로그 확인 (`/aws/lambda/SecretsManagerRDSRotation`) |
+> | 로테이션 실패 (Lambda 에러) | Lambda가 Amazon RDS에 접근 불가 | Lambda의 VPC 설정 및 Security Group 확인 |
+> | `Rotation failed` 상태 | Amazon RDS 엔드포인트 변경 또는 네트워크 문제 | CloudWatch Logs에서 Lambda 로그 확인 (`/aws/lambda/SecretsManagerRDSRotation`) |
 > | 앱 접속 끊김 | 로테이션 후 앱이 이전 비밀번호 사용 | 앱에서 Secrets Manager 재조회 로직 추가 또는 재시작 |
 > | Lambda 함수 생성 실패 | VPC 서브넷에 NAT 없음 | Lambda가 Secrets Manager API 호출 가능하도록 NAT Gateway 또는 VPC Endpoint 설정 |
-> | Database 목록에 RDS 미표시 | 다른 리전 또는 권한 부족 | 리전 확인 + `rds:DescribeDBInstances` 권한 확인 |
+> | Database 목록에 Amazon RDS 미표시 | 다른 리전 또는 권한 부족 | 리전 확인 + `rds:DescribeDBInstances` 권한 확인 |
 
 ---
 
@@ -734,7 +740,7 @@ java -jar build/libs/demo-0.0.1-SNAPSHOT.jar
 - Secrets Manager에 DB 자격 증명을 콘솔에서 저장하고 조회했습니다.
 - AWS CLI로 비밀을 생성, 조회, 업데이트했습니다.
 - Spring 프로젝트(Boot/MVC)에서 Secrets Manager 값을 조회하여 DataSource를 설정했습니다.
-- RDS 비밀번호 자동 로테이션을 설정했습니다 (선택).
+- Amazon RDS 비밀번호 자동 로테이션을 설정했습니다 (선택).
 
 ---
 
@@ -770,11 +776,25 @@ java -jar build/libs/demo-0.0.1-SNAPSHOT.jar
 
 ---
 
-### 단계 1: CLI로 비밀 즉시 삭제 (권장)
+### 단계 1: Tag Editor로 리소스 확인
+
+56. 상단 검색창에 `Resource Groups & Tag Editor`를 입력하고 선택합니다.
+57. 왼쪽 메뉴에서 **Tag Editor**를 선택합니다.
+58. 다음 조건으로 검색합니다:
+    - **Regions**: `ap-northeast-2`
+    - **Tag key**: `Session`, **Tag value**: `6-2`
+59. [[Search resources]] 버튼을 클릭합니다.
+
+> [!OUTPUT]
+> 이 실습에서 생성한 리소스 목록이 표시됩니다 (Secrets Manager 비밀 등).
+
+---
+
+### 단계 2: CLI로 비밀 즉시 삭제 (권장)
 
 복구 기간 없이 즉시 삭제하여 과금을 즉시 중단합니다.
 
-56. 터미널에서 다음 명령어를 실행합니다:
+60. 터미널에서 다음 명령어를 실행합니다:
 
 ```bash
 aws secretsmanager delete-secret \
@@ -793,7 +813,7 @@ aws secretsmanager delete-secret \
 > }
 > ```
 
-57. 두 번째 비밀을 삭제합니다:
+61. 두 번째 비밀을 삭제합니다:
 
 ```bash
 aws secretsmanager delete-secret \
@@ -802,7 +822,7 @@ aws secretsmanager delete-secret \
   --region ap-northeast-2
 ```
 
-58. 태스크 5를 진행한 경우, 세 번째 비밀도 삭제합니다:
+62. 태스크 5를 진행한 경우, 세 번째 비밀도 삭제합니다:
 
 ```bash
 aws secretsmanager delete-secret \
@@ -818,54 +838,62 @@ aws secretsmanager delete-secret \
 
 ---
 
-### 단계 2: 콘솔에서 비밀 삭제 (대안)
+### 단계 3: 콘솔에서 비밀 삭제 (대안)
 
 CLI를 사용하지 않는 경우 콘솔에서 삭제합니다. 단, 최소 7일의 복구 기간이 있으며 그 동안에도 과금됩니다.
 
-59. Secrets Manager 콘솔에서 삭제할 비밀을 클릭하여 상세 페이지로 이동합니다.
-60. 우측 상단의 **Actions** 드롭다운을 클릭합니다.
-61. [[Delete secret]]을 선택합니다.
-62. **Waiting period** 필드에 `7` (최소 대기 기간)을 입력합니다.
-63. [[Schedule deletion]] 버튼을 클릭합니다.
+63. Secrets Manager 콘솔에서 삭제할 비밀을 클릭하여 상세 페이지로 이동합니다.
+64. 우측 상단의 **Actions** 드롭다운을 클릭합니다.
+65. [[Delete secret]]을 선택합니다.
+66. **Waiting period** 필드에 `7` (최소 대기 기간)을 입력합니다.
+67. [[Schedule deletion]] 버튼을 클릭합니다.
 
 > [!OUTPUT]
 > 비밀 상태가 "Scheduled for deletion" 으로 변경됩니다.
 > 7일 후 자동으로 영구 삭제됩니다.
 
-64. 나머지 비밀들도 동일하게 삭제를 예약합니다.
+68. 나머지 비밀들도 동일하게 삭제를 예약합니다.
 
 ---
 
-### 단계 3: Lambda 로테이션 함수 삭제 (태스크 5 진행한 경우)
+### 단계 4: Lambda 로테이션 함수 삭제 (태스크 5 진행한 경우)
 
-65. 상단 검색창에 `Lambda`를 입력하고 **Lambda** 서비스를 선택합니다.
-66. Functions 목록에서 `SecretsManagerRDSRotation` 함수를 클릭합니다.
-67. 우측 상단의 **Actions** 드롭다운을 클릭합니다.
-68. [[Delete function]]을 선택합니다.
-69. 확인 팝업에서 `delete`를 입력하고 [[Delete]] 버튼을 클릭합니다.
+69. 상단 검색창에 `Lambda`를 입력하고 **Lambda** 서비스를 선택합니다.
+70. Functions 목록에서 `SecretsManagerRDSRotation` 함수를 클릭합니다.
+71. 우측 상단의 **Actions** 드롭다운을 클릭합니다.
+72. [[Delete function]]을 선택합니다.
+73. 확인 팝업에서 `delete`를 입력하고 [[Delete]] 버튼을 클릭합니다.
 
 > [!OUTPUT]
 > "Successfully deleted function SecretsManagerRDSRotation" 메시지가 표시됩니다.
 
 ---
 
-### 단계 4: IAM Role 삭제 (태스크 5 진행한 경우)
+### 단계 5: IAM Role 삭제 (태스크 5 진행한 경우)
 
-70. 상단 검색창에 `IAM`을 입력하고 **IAM** 서비스를 선택합니다.
-71. 왼쪽 메뉴에서 **Roles**를 선택합니다.
-72. 검색창에 `SecretsManager`를 입력합니다.
-73. `SecretsManagerRDSRotation` 관련 Role을 선택합니다 (체크박스 클릭).
-74. [[Delete]] 버튼을 클릭합니다.
-75. 확인 필드에 Role 이름을 입력하고 [[Delete]] 버튼을 클릭합니다.
+74. 상단 검색창에 `IAM`을 입력하고 **IAM** 서비스를 선택합니다.
+75. 왼쪽 메뉴에서 **Roles**를 선택합니다.
+76. 검색창에 `SecretsManager`를 입력합니다.
+77. `SecretsManagerRDSRotation` 관련 Role을 선택합니다 (체크박스 클릭).
+78. [[Delete]] 버튼을 클릭합니다.
+79. 확인 필드에 Role 이름을 입력하고 [[Delete]] 버튼을 클릭합니다.
 
 > [!OUTPUT]
 > Role이 삭제됩니다.
 
 ---
 
-### 단계 5: 삭제 확인
+### 단계 6: Tag Editor로 최종 확인
 
-76. 터미널에서 다음 명령어를 실행하여 비밀이 모두 삭제되었는지 확인합니다:
+80. 상단 검색창에 `Resource Groups & Tag Editor`를 입력하고 선택합니다.
+81. 왼쪽 메뉴에서 **Tag Editor**를 선택합니다.
+82. Regions: `ap-northeast-2`, Tag key: `Session`, Tag value: `6-2`로 검색합니다.
+83. 검색 결과가 없으면 모든 리소스가 정리된 것입니다.
+
+> [!TIP]
+> `Step: step6`으로도 추가 검색하여 이 Step의 다른 세션에서 생성한 리소스도 함께 확인하세요.
+
+84. 터미널에서도 비밀이 모두 삭제되었는지 확인합니다:
 
 ```bash
 aws secretsmanager list-secrets \
@@ -877,14 +905,6 @@ aws secretsmanager list-secrets \
 > [!OUTPUT]
 > 즉시 삭제한 경우: 결과가 비어있습니다 (모든 비밀 삭제 완료).
 > 예약 삭제한 경우: DeletedDate 열에 삭제 예정 날짜가 표시됩니다.
-
-> [!TIP]
-> **Tag Editor로 최종 확인:**
->
-> 1. 상단 검색창에 `Resource Groups & Tag Editor`를 입력하고 선택합니다.
-> 2. 왼쪽 메뉴에서 **Tag Editor**를 선택합니다.
-> 3. Regions: `ap-northeast-2`, Tag key: `Session`, Tag value: `6-2`로 검색합니다.
-> 4. 검색 결과가 없으면 모든 리소스가 정리된 것입니다.
 
 | 문제                                    | 원인                                | 해결                                              |
 | --------------------------------------- | ----------------------------------- | ------------------------------------------------- |
