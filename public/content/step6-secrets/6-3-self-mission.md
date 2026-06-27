@@ -114,8 +114,96 @@ Amazon EC2에서 Spring 애플리케이션이 `aws` 프로필로 기동되어, *
 > | `starter/prod/db-password` | Amazon RDS 마스터 비밀번호 |
 >
 > - `AwsDataSourceConfig`에서 password만 Secrets Manager에서 가져오도록 수정이 필요합니다.
+
+> [!TIP]
+> **AwsDataSourceConfig 수정 힌트:**
+>
+> ```java
+> // password만 Secrets Manager에서, 나머지는 Parameter Store에서
+> @RequiredArgsConstructor
+> public class AwsDataSourceConfig {
+>     private final ParameterStoreService parameterStore;
+>     private final SecretsManagerService secretsManager;
+>
+>     @Bean
+>     public DataSource dataSource() {
+>         HikariConfig config = new HikariConfig();
+>         config.setDriverClassName(parameterStore.getDbDriver());   // Parameter Store
+>         config.setJdbcUrl(parameterStore.getDbUrl());              // Parameter Store (driver와 쌍 맞춤)
+>         config.setUsername(parameterStore.getDbUsername());         // Parameter Store
+>         config.setPassword(secretsManager.getDbPassword());        // Secrets Manager
+>         return new HikariDataSource(config);
+>     }
+> }
+> ```
+>
+> **핵심**: driver와 URL은 Parameter Store에서 관리하면 쌍이 자동으로 맞습니다.  
+> 6-2에서 `SecretsManagerService`의 `getJdbcUrl()`은 `jdbc:mysql://` 형식으로 고정되어 있으므로,  
+> `log4jdbc` 드라이버를 사용하려면 URL을 Parameter Store에서 가져오는 이 방식이 필요합니다.
+>
+> **SecretsManagerService의 `secretId` 변경:**  
+> 6-2에서는 `secretId("starter/prod/db-credentials")`로 하드코딩되어 있습니다.  
+> 본인이 생성한 비밀 이름이 다르다면 (예: `starter/prod/db-password`) 코드에서 `secretId`를 맞춰 변경하세요.
+
 > - Amazon EC2와 Amazon RDS가 **같은 VPC** 안에 있어야 하고, Security Group에서 3306 포트를 허용해야 합니다.
 > - Amazon RDS 사용 시 운영 환경에서는 `log4jdbc` 대신 일반 드라이버(`com.mysql.cj.jdbc.Driver`)를 권장합니다.
+
+> [!NOTE]
+> **추가 도전 (보너스):**  
+> 6-2 태스크 5에서 배운 자동 로테이션을 이 배포 환경에도 적용해보세요.  
+> VPC Endpoint 생성 → Secrets Manager에 RDS 비밀번호 로테이션 설정 → 로테이션 후 앱 재시작 확인까지 해보면 프로덕션 수준의 비밀 관리를 경험할 수 있습니다.
+
+---
+
+### 옵션 C: Secrets Manager만 사용 (하드코딩 완전 제거)
+
+이 방식은 Parameter Store를 사용하지 않고, **모든 DB 접속 정보를 Secrets Manager 하나에** 저장합니다.  
+6-2에서 `getJdbcUrl()`의 URL 형식이 하드코딩된 문제를 해결합니다.
+
+**비밀 관리**: Secrets Manager만 사용
+
+> [!TIP]
+> **힌트**
+>
+> Secrets Manager에 저장할 JSON에 `driver`와 `url` 키를 추가합니다:
+>
+> ```json
+> {
+>   "driver": "com.mysql.cj.jdbc.Driver",
+>   "url": "jdbc:mysql://my-rds.xxxx.rds.amazonaws.com:3306/scoula_db",
+>   "username": "admin",
+>   "password": "MyPassword123!"
+> }
+> ```
+>
+> `SecretsManagerService`에서 `driver`와 `url`을 직접 읽도록 수정합니다:
+>
+> ```java
+> // getJdbcUrl() 대신 — JSON에서 직접 읽기
+> public String getDbDriver() { return driver; }
+> public String getDbUrl() { return url; }
+>
+> @PostConstruct
+> public void loadSecrets() {
+>     // ...
+>     this.driver = secret.get("driver").asText();
+>     this.url = secret.get("url").asText();
+>     this.username = secret.get("username").asText();
+>     this.password = secret.get("password").asText();
+> }
+> ```
+>
+> `DataSourceConfig`에서는 모두 Secrets Manager에서 가져옵니다:
+>
+> ```java
+> config.setDriverClassName(secretsManager.getDbDriver());
+> config.setJdbcUrl(secretsManager.getDbUrl());
+> config.setUsername(secretsManager.getDbUsername());
+> config.setPassword(secretsManager.getDbPassword());
+> ```
+>
+> **장점**: Parameter Store 없이 Secrets Manager 하나로 관리. 하드코딩 완전 제거.  
+> **단점**: Secrets Manager는 유료 (비밀당 월 과금). 값 변경 시 전체 JSON을 다시 전달해야 함.
 
 ---
 

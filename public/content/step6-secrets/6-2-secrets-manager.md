@@ -96,10 +96,10 @@ Parameter Store와의 차이를 이해하고, Amazon RDS 비밀번호 자동 로
 > │       │   └── SecretString (JSON):                      │
 > │       │       {                                         │
 > │       │         "username": "admin",                    │
-> │       │         "password": "MySecretPass123!",         │
-> │       │         "host": "my-rds.xxx.rds.amazonaws.com", │
+> │       │         "password": "MyPassword123!",           │
+> │       │         "host": "localhost",                    │
 > │       │         "port": "3306",                         │
-> │       │         "dbname": "appdb"                       │
+> │       │         "dbname": "starter_db"                  │
 > │       │       }                                         │
 > │       │                                                 │
 > │       ├── Version: AWSPREVIOUS (이전 버전, 롤백용)      │
@@ -738,11 +738,15 @@ public class DataSourceConfig {
         ds.setJdbcUrl(secretsManager.getJdbcUrl());          // Secrets Manager에서 host+port+dbname 조합
         ds.setUsername(secretsManager.getDbUsername());       // Secrets Manager에서 조회
         ds.setPassword(secretsManager.getDbPassword());      // Secrets Manager에서 조회
-        ds.setDriverClassName("com.mysql.cj.jdbc.Driver");   // MySQL 기본 드라이버
+        ds.setDriverClassName("com.mysql.cj.jdbc.Driver");   // MySQL 기본 드라이버 (환경에 따라 변경)
         return ds;
     }
 }
 ```
+
+> [!TIP]
+> driver를 하드코딩하지 않으려면 Secrets Manager JSON에 `"driver": "com.mysql.cj.jdbc.Driver"` 필드를 추가하거나,  
+> 6-3 셀프 미션처럼 driver는 Parameter Store에서, password는 Secrets Manager에서 가져오는 혼합 방식을 사용하세요.
 
 > [!NOTE]
 > `@Profile("aws")`를 붙였으므로 로컬에서는 기존 `application.properties`의 DataSource 설정이 그대로 사용됩니다.  
@@ -772,7 +776,7 @@ public class AwsDataSourceConfig {
     @Bean
     public DataSource dataSource() {
         HikariConfig config = new HikariConfig();
-        config.setDriverClassName("com.mysql.cj.jdbc.Driver");       // MySQL 기본 드라이버
+        config.setDriverClassName("com.mysql.cj.jdbc.Driver");       // MySQL 기본 드라이버 (환경에 따라 변경)
         config.setJdbcUrl(secretsManager.getJdbcUrl());              // Secrets Manager에서 조합된 URL
         config.setUsername(secretsManager.getDbUsername());           // Secrets Manager에서 조회
         config.setPassword(secretsManager.getDbPassword());          // Secrets Manager에서 조회
@@ -780,6 +784,10 @@ public class AwsDataSourceConfig {
     }
 }
 ```
+
+> [!TIP]
+> 레거시 프로젝트에서 `log4jdbc`를 사용한다면 driver와 URL을 맞춰야 합니다.  
+> 이 경우 Secrets Manager의 `host` 값 앞에 `log4jdbc:`를 붙이거나, driver를 Parameter Store에서 관리하는 6-3 셀프 미션 방식을 권장합니다.
 
 > [!TIP]
 > 레거시에서 6-1의 `LocalDataSourceConfig`(`@Profile("!aws")`)를 이미 작성했다면,  
@@ -799,7 +807,7 @@ public class AwsDataSourceConfig {
 >
 > 프로필을 지정하지 않으면 `@Profile("aws")` Bean은 비활성화되고, 로컬 설정이 그대로 동작합니다.
 
-32. (Boot) `application.properties`의 기존 DB 설정은 그대로 유지합니다:
+31. (Boot) `application.properties`의 기존 DB 설정은 그대로 유지합니다:
 
 ```properties
 # 로컬 실행용 (aws 프로필이 아닐 때 자동 사용)
@@ -861,8 +869,99 @@ Run Configuration → VM options에 `-Dspring.profiles.active=aws` 추가 후 To
 ## 태스크 5: Amazon RDS 비밀번호 자동 로테이션 설정 (선택)
 
 > [!NOTE]
-> 이 태스크는 Amazon RDS MySQL 인스턴스가 필요합니다.   
-> Step 4-1에서 생성한 Amazon RDS를 사용하거나, 이 태스크를 건너뛸 수 있습니다.
+> 이 태스크는 Amazon RDS MySQL 인스턴스가 필요합니다.
+>
+> **본인 상황에 맞는 경로를 선택하세요:**
+>
+> | 상황 | 진행 방법 |
+> |------|-----------|
+> | Step 4에서 Amazon RDS를 이미 생성함 | 바로 아래 단계 진행 |
+> | Amazon RDS가 없지만 실습하고 싶음 | CloudFormation으로 환경 구축 후 진행 (아래 TIP 참고) |
+> | 이 태스크를 건너뛰고 싶음 | 마무리 섹션으로 이동 |
+
+> [!NOTE]
+> Amazon RDS가 없는 경우 아래 CloudFormation 단계로 환경을 구축하세요.  
+> Step 4에서 Amazon RDS를 이미 생성했다면 "VPC Endpoint 생성" 섹션으로 건너뛰세요.
+
+### CloudFormation으로 Amazon RDS 환경 구축 (Amazon RDS가 없는 경우)
+
+이 실습에서 제공하는 CloudFormation 템플릿을 사용하면 VPC + Amazon RDS 환경을 자동 생성할 수 있습니다.
+
+> [!DOWNLOAD]
+> [step6-2-rds-rotation-lab.zip](/files/step6/step6-2-rds-rotation-lab.zip)
+>
+> - `step6-2-rds-rotation-prereq.yaml` - AWS CloudFormation 템플릿 (VPC, 서브넷 4개, Security Group, DB Subnet Group, Amazon RDS MySQL 자동 생성)
+
+> [!CONCEPT] 이 템플릿이 생성하는 리소스
+>
+> | 리소스 | 설명 |
+> |--------|------|
+> | VPC + 서브넷 4개 | 퍼블릭 2 + 프라이빗 2 (2 AZ) |
+> | Internet Gateway + Route Table | 퍼블릭 서브넷 인터넷 연결 |
+> | RDS Security Group | VPC 내부 + Lambda에서 MySQL(3306) 허용 |
+> | Lambda Security Group | 로테이션 Lambda용 |
+> | DB Subnet Group | 프라이빗 서브넷 2개로 구성 |
+> | RDS MySQL (db.t3.micro) | 프라이빗 서브넷에 배치 |
+
+> [!WARNING]
+> **Amazon RDS 비용:** db.t3.micro 기준 시간당 과금됩니다 (크레딧에서 차감).  
+> 최신 요금은 [AWS RDS 요금 페이지](https://aws.amazon.com/rds/pricing/)를 확인하세요.  
+> **실습 종료 후 반드시 스택을 삭제하세요.** 방치 시 지속 과금됩니다.
+
+32. 다운로드한 zip 파일을 압축 해제합니다.
+33. AWS Management Console 상단 검색창에 `CloudFormation`을 입력하고 선택합니다.
+34. [[Create stack]] → **With new resources (standard)** 를 클릭합니다.
+35. **Prepare template** 섹션에서 `Choose an existing template`을 선택합니다.
+36. **Template source** 섹션에서 `Upload a template file`을 선택합니다.
+37. [[Choose file]] 을 클릭하여 `step6-2-rds-rotation-prereq.yaml` 파일을 업로드합니다.
+38. [[Next]] 버튼을 클릭합니다.
+39. **Stack name** 필드에 `step6-rds-rotation-lab`을 입력합니다.
+40. **Parameters** 섹션에서 다음 값을 확인하고, 본인 환경에 맞게 변경합니다:
+    - `DBMasterUsername`: `admin` (Secrets Manager의 `username`과 동일하게 설정)
+    - `DBMasterPassword`: `MyPassword123!` (Secrets Manager의 `password`와 동일하게 설정)
+    - `DBName`: `starter_db` (Secrets Manager의 `dbname`과 동일하게 설정)
+    - 나머지 파라미터는 기본값 유지
+
+> [!TIP]
+> Secrets Manager에 저장한 값과 다른 username/password/dbname을 사용했다면 여기서 맞춰 변경하세요.  
+> CloudFormation Parameters의 값 = Secrets Manager에 저장한 값 = 실제 RDS 접속 정보가 모두 일치해야 합니다.
+41. [[Next]] 버튼을 클릭합니다.
+42. **Configure stack options** 페이지에서 기본값 유지, [[Next]] 버튼을 클릭합니다.
+43. **Review** 페이지 하단의 **Capabilities** 체크박스를 선택합니다.
+44. [[Submit]] 버튼을 클릭합니다.
+45. **Status**가 `CREATE_COMPLETE`로 변경될 때까지 대기합니다 (약 5~10분).
+
+> [!OUTPUT]
+> 스택 상태가 `CREATE_COMPLETE`로 변경되면 모든 리소스가 생성된 것입니다.  
+> **Outputs** 탭을 클릭하면 RDS 엔드포인트 등 생성된 리소스 정보를 확인할 수 있습니다.
+
+46. **Outputs** 탭에서 `RDSEndpoint` 값을 복사합니다 (예: `starter-mysql.xxxx.ap-northeast-2.rds.amazonaws.com`).
+47. Secrets Manager의 `host` 값을 RDS 엔드포인트로 업데이트합니다:
+
+```bash
+aws secretsmanager update-secret \
+  --secret-id "starter/prod/db-credentials" \
+  --secret-string '{"username":"admin","password":"MyPassword123!","host":"여기에-RDS-엔드포인트-붙여넣기","port":"3306","dbname":"starter_db"}' \
+  --region ap-northeast-2
+```
+
+> [!TIP]
+> `여기에-RDS-엔드포인트-붙여넣기` 부분을 Outputs에서 복사한 실제 엔드포인트로 교체하세요.  
+> 예: `starter-mysql.abc123xyz.ap-northeast-2.rds.amazonaws.com`
+>
+> **변경 확인:** 업데이트 후 다음 명령어로 값이 올바르게 변경되었는지 확인합니다:
+>
+> ```bash
+> aws secretsmanager get-secret-value \
+>   --secret-id "starter/prod/db-credentials" \
+>   --query "SecretString" \
+>   --output text \
+>   --region ap-northeast-2
+> ```
+>
+> `host` 값이 RDS 엔드포인트로 변경되어 있으면 성공입니다.
+
+### VPC Endpoint 생성 (자동 로테이션 필수)
 
 > [!CONCEPT] 자동 로테이션 동작 원리
 >
@@ -892,21 +991,123 @@ Run Configuration → VM options에 `-Dspring.profiles.active=aws` 추가 후 To
 > └─────────────────────────────────────────────────────────────┘
 > ```
 
+> [!CONCEPT] VPC Endpoint란?
+> VPC Endpoint는 프라이빗 서브넷에서 **인터넷을 거치지 않고** AWS 서비스에 직접 접근하는 통로입니다.
+>
+> ```
+> [프라이빗 서브넷]
+>   └── Lambda (로테이션 함수)
+>         ├── RDS 접속 → 프라이빗 내부 통신 (OK)
+>         └── Secrets Manager API 호출 → ❌ 인터넷 없음!
+>                                         ✅ VPC Endpoint로 해결
+> ```
+>
+> 로테이션 Lambda는 RDS와 같은 프라이빗 서브넷에 배치됩니다.  
+> RDS 접속은 내부 통신이라 문제없지만, Secrets Manager API를 호출하려면 경로가 필요합니다.  
+> **NAT Gateway가 있으면 이미 동작하지만**, VPC Endpoint를 사용하면 NAT 없이도 가능하고 비용도 절감됩니다.
+
+> [!NOTE]
+> Step 3에서 NAT Gateway 또는 NAT Instance를 생성한 경우, 프라이빗 서브넷에서 이미 인터넷 접근이 가능합니다.  
+> 이 경우 VPC Endpoint 없이도 로테이션이 동작하지만, **VPC Endpoint 학습을 위해 함께 진행하는 것을 권장합니다.**
+
+48. VPC 콘솔로 이동합니다 (상단 검색창에 `VPC` 입력).
+49. 왼쪽 메뉴에서 **Endpoints**를 클릭합니다.
+50. [[Create endpoint]] 버튼을 클릭합니다.
+51. **Name tag** 필드에 `starter-secretsmanager-endpoint`를 입력합니다.
+52. **Type** 섹션에서 `AWS services`를 선택합니다 (기본값).
+
+> [!NOTE]
+> **Type 옵션 설명:**
+>
+> | Type | 설명 |
+> |------|------|
+> | **AWS services** | AWS 서비스에 Interface 또는 Gateway로 연결 (이번 실습) |
+> | PrivateLink Ready partner services | AWS 파트너 SaaS 서비스 연결 |
+> | AWS Marketplace services | Marketplace에서 구매한 서비스 연결 |
+> | EC2 Instance Connect Endpoint | 프라이빗 서브넷 Amazon EC2에 SSH 접속 |
+> | Resources | Amazon RDS 등 리소스에 Resource endpoint로 연결 |
+> | Service networks | VPC Lattice 서비스 네트워크 연결 |
+> | Endpoint services that use NLBs and GWLBs | NLB/GWLB 기반 서비스 연결 |
+
+53. **Services** 검색창에 `secretsmanager`를 입력합니다.
+54. `com.amazonaws.ap-northeast-2.secretsmanager` 서비스를 선택합니다 (Type: **Interface**).
+
+> [!NOTE]
+> VPC Endpoint에는 두 가지 유형이 있습니다:
+>
+> | 유형 | 방식 | 대상 서비스 | 비용 |
+> |------|------|-------------|------|
+> | **Gateway** | 라우트 테이블에 경로 추가 | Amazon S3, DynamoDB만 | 무료 |
+> | **Interface** | 서브넷에 ENI(네트워크 인터페이스) 생성 | 대부분의 AWS 서비스 | 시간당 과금 |
+>
+> Secrets Manager는 **Interface** 유형입니다. 서비스를 선택하면 Type 열에서 확인할 수 있습니다.
+
+55. **VPC** 드롭다운에서 본인의 VPC를 선택합니다 (예: `starter-vpc`).
+
+> [!NOTE]
+> **Additional settings** 섹션의 **Enable private DNS name**은 체크된 상태를 유지하세요 (기본값).  
+> 이 설정이 켜져 있으면 VPC 내에서 Secrets Manager API를 호출할 때 자동으로 VPC Endpoint를 경유합니다.  
+> 코드 변경 없이 기존 SDK 코드가 그대로 동작합니다.
+
+56. **Subnets** 섹션에서 프라이빗 서브넷 2개를 선택합니다:
+    - `ap-northeast-2a` → 드롭다운에서 **Private Subnet A** 선택
+    - `ap-northeast-2c` → 드롭다운에서 **Private Subnet C** 선택
+
+> [!WARNING]
+> 각 AZ의 드롭다운에 퍼블릭/프라이빗 서브넷이 모두 표시됩니다.  
+> 반드시 **private** 서브넷을 선택하세요. Lambda가 프라이빗 서브넷에 배치되므로 같은 서브넷에 Endpoint가 있어야 합니다.
+
+57. **Security groups** 섹션에서 Security Group을 선택합니다.
+
+> [!TIP]
+> **CloudFormation으로 환경을 구축한 경우:** `starter-lambda-sg`를 선택하세요 (인바운드 443 이미 설정됨).
+>
+> **Step 4에서 직접 RDS를 만든 경우 (Lambda SG가 없는 경우):**  
+> VPC 기본 Security Group (`default`)을 선택하세요.  
+> VPC 기본 SG는 **같은 SG를 소스로 하는 모든 트래픽을 허용**하므로,  
+> Lambda에도 같은 기본 SG가 적용되어 있으면 443 통신이 자동으로 허용됩니다.
+>
+> 만약 로테이션 설정 후 timeout 에러가 발생한다면, VPC Endpoint의 SG에 다음 인바운드 규칙을 추가하세요:
+> - **Type**: HTTPS (443)
+> - **Source**: VPC CIDR (`10.0.0.0/16`) 또는 Lambda에 적용된 SG
+
+58. **Policy**는 `Full access` (기본값)를 유지합니다.
+
+> [!NOTE]
+> `Full access`는 VPC 내 모든 사용자/서비스가 이 Endpoint를 통해 Secrets Manager에 접근할 수 있다는 의미입니다.  
+> 학습 환경에서는 이 설정으로 충분합니다. 프로덕션에서는 `Custom` 정책으로 특정 비밀만 허용할 수 있습니다.
+
+59. **Tags** 섹션에서 [[Add new tag]]를 클릭하여 태그를 추가합니다:
+    - `CreatedBy` = `admin-user`
+    - `Step` = `step6`
+    - `Session` = `6-2`
+
+60. [[Create endpoint]] 버튼을 클릭합니다.
+
+> [!OUTPUT]
+> "Successfully created VPC endpoint vpce-xxxxxxxxx" 메시지가 표시됩니다.  
+> Status가 `Available`이 되면 사용 가능합니다 (보통 1~2분 소요).
+
+> [!WARNING]
+> **VPC Endpoint 비용**: 시간당 과금됩니다 (크레딧에서 차감).  
+> 최신 요금은 [AWS PrivateLink 요금 페이지](https://aws.amazon.com/privatelink/pricing/)를 확인하세요.  
+> **실습 후 반드시 삭제하세요.** 리소스 정리 섹션에서 삭제 방법을 안내합니다.
+
 ### Amazon RDS용 비밀 생성
 
-33. Secrets Manager 콘솔로 이동합니다 (상단 검색창에 `Secrets Manager` 입력).
-34. [[Store a new secret]] 버튼을 클릭합니다.
-35. **Secret type** 섹션에서 **Credentials for Amazon RDS database**를 선택합니다.
+61. Secrets Manager 콘솔로 이동합니다 (상단 검색창에 `Secrets Manager` 입력).
+62. [[Store a new secret]] 버튼을 클릭합니다.
+63. **Secret type** 섹션에서 **Credentials for Amazon RDS database**를 선택합니다.
 
 > [!TIP]
 > **Credentials for Amazon RDS database**를 선택하면 Secrets Manager가 Amazon RDS와 직접 통합됩니다.  
 > 자동 로테이션 시 Lambda가 Amazon RDS에 직접 접속하여 비밀번호를 변경할 수 있습니다.
 
-36. **Credentials** 섹션에서 다음을 입력합니다:
+64. **Credentials** 섹션에서 다음을 입력합니다:
     - **User name**: `admin`
-    - **Password**: Amazon RDS 생성 시 설정한 마스터 비밀번호
-37. **Encryption key**: `aws/secretsmanager` (기본값) 유지합니다.
-38. **Database** 섹션에서 목록에 표시된 `my-rds-mysql` 인스턴스를 선택합니다.
+    - **Password**: Amazon RDS 생성 시 설정한 마스터 비밀번호 (예: `MyPassword123!`)
+65. **Encryption key**: `aws/secretsmanager` (기본값) 유지합니다.
+66. **Database** 섹션에서 목록에 표시된 본인의 Amazon RDS 인스턴스를 선택합니다 (예: `starter-mysql`).
 
 > [!WARNING]
 > Database 목록에 Amazon RDS 인스턴스가 표시되지 않으면:
@@ -915,65 +1116,95 @@ Run Configuration → VM options에 `-Dspring.profiles.active=aws` 추가 후 To
 > - Amazon RDS 인스턴스가 `Available` 상태인지 확인하세요.
 > - IAM 사용자에 `rds:DescribeDBInstances` 권한이 있는지 확인하세요.
 
-39. [[Next]] 버튼을 클릭합니다.
-40. **Secret name** 필드에 `starter/prod/rds-auto-rotate`를 입력합니다.
-41. **Description** 필드에 `RDS MySQL auto-rotation credentials`를 입력합니다.
-42. **Tags** 섹션에서 [[Add tag]]를 클릭하고 다음을 추가합니다:
+67. [[Next]] 버튼을 클릭합니다.
+68. **Secret name** 필드에 `starter/prod/rds-auto-rotate`를 입력합니다.
+69. **Description** 필드에 `RDS MySQL auto-rotation credentials`를 입력합니다.
+70. **Tags** 섹션에서 [[Add tag]]를 클릭하고 다음을 추가합니다:
+    - `CreatedBy` = `admin-user`
+    - `Step` = `step6`
+    - `Session` = `6-2`
 
-| Key         | Value        |
-| ----------- | ------------ |
-| `CreatedBy` | `admin-user` |
-| `Step`      | `step6`      |
-| `Session`   | `6-2`        |
-
-43. [[Next]] 버튼을 클릭합니다.
+71. [[Next]] 버튼을 클릭합니다.
 
 ### 자동 로테이션 활성화
 
-44. **Configure rotation** 페이지에서 **Turn on automatic rotation** 토글을 활성화합니다.
-45. **Rotation schedule** 섹션에서 다음을 설정합니다:
-    - **Schedule expression type**: `Days` 선택
-    - **Days**: `30` 입력
-46. **Rotation function** 섹션에서:
-    - **Create a new Lambda function** 선택
-    - **Lambda function name**: `SecretsManagerRDSRotation` 입력
-47. **Use separate credentials to rotate this secret**: `No` 선택
+72. **Configure rotation** 페이지에서 **Automatic rotation** 토글을 활성화합니다.
+73. **Rotation schedule** 섹션에서 다음을 설정합니다:
+    - **Schedule expression builder** 라디오 선택
+    - **Time unit**: `Days` 선택
+    - **Days**: `30` 입력 (30일마다 자동 로테이션)
+
+> [!TIP]
+> `Hours`로 설정하면 더 짧은 주기로 테스트할 수 있습니다 (예: 23시간).  
+> **Window duration**은 빈칸으로 두면 됩니다 (기본값 사용).  
+> **Rotate immediately when the secret is stored** 체크박스는 켜둔 상태를 유지하세요 — 저장 즉시 첫 로테이션이 실행됩니다.
+
+74. **Rotation function** 섹션에서:
+    - **Create a rotation function** 라디오를 선택합니다.
+    - **Lambda rotation function** 이름 필드에 `mysql-rotation-lambda`를 입력합니다 (앞에 `SecretsManager` 접두사가 자동 추가됨).
 
 > [!NOTE]
-> "Use separate credentials"를 No로 설정하면 비밀에 저장된 자격 증명 자체로 비밀번호를 변경합니다.  
-> 이 방식은 단일 사용자 로테이션(single-user rotation)이라고 합니다.
->
-> Yes를 선택하면 별도의 관리자 자격 증명으로 비밀번호를 변경합니다 (multi-user rotation).  
-> 프로덕션에서는 multi-user rotation이 더 안전합니다.
+> 최종 Lambda 함수 이름은 `SecretsManagermysql-rotation-lambda`가 됩니다.  
+> 이미 같은 이름의 함수가 있으면 다른 이름을 사용하세요.
 
-48. [[Next]] 버튼을 클릭합니다.
-49. **Review** 페이지에서 설정을 확인합니다.
-50. [[Store]] 버튼을 클릭합니다.
+75. **Rotation strategy** 섹션에서 `Single user`를 선택합니다 (기본값).
+
+> [!CONCEPT] Rotation strategy 차이
+>
+> | 전략 | 설명 | 적합한 경우 |
+> |------|------|-------------|
+> | **Single user** | 비밀에 저장된 사용자가 직접 자신의 비밀번호를 변경 | 학습 환경, 단일 DB 사용자 |
+> | **Alternating users** | 사용자를 복제(clone)하여 두 세트를 번갈아 사용 | 프로덕션 (다운타임 최소화) |
+>
+> Single user는 로테이션 중 짧은 순간 접속이 불가할 수 있지만, 설정이 간단합니다.  
+> Alternating users는 별도 admin 자격 증명이 필요합니다.
+
+76. **IAM permissions** 섹션에서 `Create default role`을 선택합니다 (기본값).
+
+> [!NOTE]
+> AWS가 Lambda에 필요한 IAM Role을 자동으로 생성합니다.  
+> 이 Role에는 Secrets Manager API 호출, Amazon RDS 접근, VPC 네트워크 인터페이스 생성 권한이 포함됩니다.
+
+77. [[Next]] 버튼을 클릭합니다.
+78. **Review** 페이지에서 설정을 확인합니다.
+79. [[Store]] 버튼을 클릭합니다.
 
 > [!OUTPUT]
-> 비밀이 생성되고, AWS가 자동으로:
->
-> - Lambda 함수 (`SecretsManagerRDSRotation`)를 생성합니다.
-> - Lambda에 필요한 IAM Role과 정책을 연결합니다.
-> - Lambda를 VPC에 배치합니다 (Amazon RDS 접근을 위해).
-> - 첫 번째 로테이션을 즉시 실행합니다.
+> 녹색 배너로 "You successfully stored the secret starter/prod/rds-auto-rotate" 메시지가 표시됩니다.  
+> "AWS CloudFormation is setting up rotation resources, this can take up to 2 minutes to complete." 안내가 함께 표시됩니다.  
+> Secrets 목록 페이지로 이동합니다.
 
 > [!WARNING]
 > 첫 번째 로테이션이 즉시 실행됩니다. 이 시점에서 Amazon RDS 비밀번호가 변경됩니다.  
 > 기존 애플리케이션이 하드코딩된 비밀번호를 사용하고 있다면 접속이 끊길 수 있습니다.  
 > 반드시 태스크 4의 Secrets Manager 연동을 먼저 적용한 후 로테이션을 설정하세요.
 
+> [!CONCEPT] AWS가 자동으로 생성하는 리소스
+>
+> 로테이션을 설정하면 AWS가 내부적으로 다음 리소스를 자동 생성합니다:
+>
+> | 리소스 | 이름 예시 | 설명 |
+> |--------|-----------|------|
+> | Lambda 함수 | `SecretsManagermysql-rotation-lambda` | 비밀번호 변경 로직 실행 |
+> | IAM Role | `SecretsManagermysql-rotation-lambda-role` | Lambda에 필요한 권한 |
+> | CloudWatch Log Group | `/aws/lambda/SecretsManagermysql-rotation-lambda` | Lambda 실행 로그 저장 |
+>
+> **CloudWatch Log Group**은 Lambda가 처음 실행될 때 자동 생성됩니다.  
+> 로테이션 실패 시 이 로그를 확인하면 원인을 파악할 수 있습니다.  
+> Lambda를 삭제해도 Log Group은 남아있으므로, 리소스 정리 시 별도로 삭제해야 합니다.
+
 ### 로테이션 결과 확인
 
-51. 비밀 상세 페이지에서 **Rotation configuration** 섹션을 확인합니다.
-52. **Rotation status**가 `Enabled`로 표시되는지 확인합니다.
-53. **Last rotated date**에 날짜/시간이 표시되면 첫 번째 로테이션이 완료된 것입니다.
+80. Secrets 목록에서 `starter/prod/rds-auto-rotate`를 클릭하여 상세 페이지로 이동합니다.
+81. **Rotation configuration** 섹션을 확인합니다.
+82. **Rotation status**가 `Enabled`로 표시되는지 확인합니다.
+83. **Last rotated date**에 날짜/시간이 표시되면 첫 번째 로테이션이 완료된 것입니다.
 
 > [!NOTE]
 > 첫 번째 로테이션 완료까지 1~2분 소요될 수 있습니다. 페이지를 새로고침하여 확인하세요.
 
-54. **Secret value** 섹션에서 [[Retrieve secret value]]를 클릭합니다.
-55. `password` 값이 이전과 다른 자동 생성된 비밀번호로 변경되었는지 확인합니다.
+84. **Secret value** 섹션에서 [[Retrieve secret value]]를 클릭합니다.
+85. `password` 값이 이전과 다른 자동 생성된 비밀번호로 변경되었는지 확인합니다.
 
 > [!OUTPUT]
 > password 값이 자동 생성된 복잡한 문자열로 변경되어 있습니다.  
@@ -982,14 +1213,69 @@ Run Configuration → VM options에 `-Dspring.profiles.active=aws` 추가 후 To
 
 ✅ **태스크 완료**: Amazon RDS 비밀번호 자동 로테이션이 설정되었습니다.
 
+> [!CONCEPT] 로테이션 후 애플리케이션 대응
+>
+> 로테이션이 실행되면 RDS 비밀번호가 자동으로 변경됩니다.  
+> 하지만 Spring 앱의 `@PostConstruct`는 **시작 시 1회만** 값을 로드하므로, 로테이션 후 앱이 이전 비밀번호를 계속 사용합니다.
+>
+> | 대응 방법 | 설명 | 적합한 환경 |
+> |-----------|------|-------------|
+> | 앱 재시작 | 가장 단순. 재시작 시 새 비밀번호를 로드 | 학습, 소규모 |
+> | 주기적 재조회 | 스케줄러로 N분마다 Secrets Manager 재조회 | 중규모 |
+> | HikariCP 갱신 | 커넥션 풀의 password를 런타임에 교체 | 프로덕션 |
+> | Spring Cloud AWS | `SecretsManagerPropertySource` 자동 갱신 | 프로덕션 (Spring Boot) |
+>
+> 학습 단계에서는 **로테이션 후 앱을 재시작**하면 됩니다.  
+> ECS/EKS 환경에서는 롤링 재배포로 자연스럽게 처리됩니다.
+
+> [!NOTE]
+> **코드에서 비밀 이름 주의:**  
+> 이 태스크에서는 학습 목적으로 별도 비밀(`starter/prod/rds-auto-rotate`)을 생성했습니다.  
+> 실제 프로덕션에서는 **하나의 비밀에 로테이션을 설정**하고, 코드의 `secretId`도 그 비밀 이름을 가리키도록 합니다.  
+> 태스크 4에서 작성한 `SecretsManagerService`의 `secretId`를 로테이션이 설정된 비밀 이름으로 맞춰야 합니다.
+
 > [!TROUBLESHOOTING]
 > | 증상 | 원인 | 해결 방법 |
 > |------|------|-----------|
-> | 로테이션 실패 (Lambda 에러) | Lambda가 Amazon RDS에 접근 불가 | Lambda의 VPC 설정 및 Security Group 확인 |
-> | `Rotation failed` 상태 | Amazon RDS 엔드포인트 변경 또는 네트워크 문제 | CloudWatch Logs에서 Lambda 로그 확인 (`/aws/lambda/SecretsManagerRDSRotation`) |
+> | 로테이션 Lambda timeout (30초) | VPC Endpoint SG에 인바운드 443이 없음 | 아래 "SG 인바운드 추가" 가이드 참고 |
+> | 로테이션 실패 (Lambda 에러) | Lambda가 Amazon RDS에 접근 불가 | Lambda의 VPC 설정 및 Security Group 확인 (RDS SG에 Lambda SG로부터 3306 인바운드 필요) |
+> | `Rotation failed` 상태 | Amazon RDS 엔드포인트 변경 또는 네트워크 문제 | CloudWatch Logs에서 Lambda 로그 확인 (`/aws/lambda/SecretsManager*`) |
 > | 앱 접속 끊김 | 로테이션 후 앱이 이전 비밀번호 사용 | 앱에서 Secrets Manager 재조회 로직 추가 또는 재시작 |
-> | Lambda 함수 생성 실패 | VPC 서브넷에 NAT 없음 | Lambda가 Secrets Manager API 호출 가능하도록 NAT Gateway 또는 VPC Endpoint 설정 |
-> | Database 목록에 Amazon RDS 미표시 | 다른 리전 또는 권한 부족 | 리전 확인 + `rds:DescribeDBInstances` 권한 확인 |
+> | Lambda 함수 생성 실패 | VPC 서브넷에 ENI 생성 불가 | 서브넷에 사용 가능한 IP가 있는지 확인 |
+
+> [!TIP]
+> **Lambda timeout 해결 — Lambda의 Security Group 확인 및 변경:**
+>
+> 로테이션 Lambda가 자동 생성될 때 RDS용 SG(`starter-rds-sg`)가 할당됩니다.  
+> 이 SG에는 443(HTTPS) 인바운드가 없어서 VPC Endpoint 통신이 차단될 수 있습니다.
+>
+> **방법 A: Lambda의 SG를 `starter-lambda-sg`로 변경** (권장)
+>
+> - Lambda 콘솔 → 생성된 로테이션 함수 클릭 (예: `SecretsManagermysql-rotation-lambda`)
+> - **Configuration** 탭 → **VPC** 클릭
+> - [[Edit]] 버튼 클릭
+> - **Security groups** 섹션에서 기존 SG를 제거하고 `starter-lambda-sg` 선택
+> - [[Save]] 버튼 클릭
+>
+> `starter-lambda-sg`는 RDS SG의 인바운드 소스로도 등록되어 있으므로 RDS 접속도 정상 동작합니다.
+>
+> **방법 B: VPC Endpoint SG에 인바운드 443 추가**
+>
+> Lambda SG를 변경하지 않고, VPC Endpoint에 적용된 SG에 인바운드를 추가하는 방법입니다:
+>
+> - VPC 콘솔 → 왼쪽 메뉴 **Security Groups** 클릭
+> - VPC Endpoint에 적용한 SG 클릭 (예: `starter-lambda-sg`)
+> - **Inbound rules** 탭 → [[Edit inbound rules]] 클릭
+> - [[Add rule]] 클릭 → **Type**: `HTTPS`, **Source**: `10.0.0.0/16` (VPC CIDR) 입력
+> - [[Save rules]] 클릭
+>
+> **변경 후 로테이션 재시도:**
+>
+> - Secrets Manager 콘솔 → `starter/prod/rds-auto-rotate` 클릭
+> - **Rotation** 탭 → [[Edit rotation]] 클릭
+> - **Rotate immediately when the secret is stored** 체크
+> - [[Save]] 클릭
+> - 1~2분 후 **Last rotated date**에 시간이 표시되면 성공
 
 ---
 
@@ -1001,52 +1287,78 @@ Run Configuration → VM options에 `-Dspring.profiles.active=aws` 추가 후 To
 - Secrets Manager에 DB 자격 증명을 콘솔에서 저장하고 조회했습니다.
 - AWS CLI로 비밀을 생성, 조회, 업데이트했습니다.
 - Spring 프로젝트(Boot/MVC)에서 Secrets Manager 값을 조회하여 DataSource를 설정했습니다.
+- VPC Endpoint를 생성하여 프라이빗 서브넷에서 AWS 서비스에 접근하는 방법을 학습했습니다.
 - Amazon RDS 비밀번호 자동 로테이션을 설정했습니다 (선택).
+
+### 비밀 유형별 비교 정리
+
+이 실습에서 두 가지 Secret type을 사용했습니다. 차이를 정리합니다:
+
+| 항목 | Other type of secret (태스크 2) | Credentials for Amazon RDS database (태스크 5) |
+|------|------|------|
+| 용도 | 범용 키-값 쌍 저장 | Amazon RDS 전용 자격 증명 |
+| 값 형식 | 자유 JSON (key 직접 정의) | AWS가 `engine`, `host`, `dbInstanceIdentifier` 등 자동 추가 |
+| 자동 로테이션 | ❌ 직접 Lambda 작성 필요 | ✅ AWS 제공 템플릿 Lambda로 원클릭 설정 |
+| DB 연결 테스트 | ❌ 미지원 | ✅ 로테이션 시 자동 접속 검증 |
+| 코드에서 사용 | `getSecretValue` → JSON 직접 파싱 | 동일 |
+| 비밀번호 변경 시 | 수동 `update-secret` | Lambda가 자동 생성 + RDS에 적용 |
+| 적합한 경우 | API 키, 토큰, 커스텀 설정 | DB 비밀번호 자동 교체가 필요할 때 |
+
+> [!TIP]
+> **어떤 걸 선택할까?**
+>
+> - DB 비밀번호를 **수동으로 관리**하면서 코드에 하드코딩만 피하고 싶다 → **Other type of secret**
+> - DB 비밀번호를 **자동으로 주기적 교체**하고 싶다 → **Credentials for Amazon RDS database**
+> - 둘 다 가능하지만, 자동 로테이션은 VPC Endpoint + Lambda + Security Group 설정이 추가로 필요합니다.
+
+> [!NOTE]
+> **다음 단계 안내**  
+> Session 6-3 셀프 미션에서는 지금까지 학습한 Parameter Store + Secrets Manager를 활용하여 **Amazon EC2에 실제 배포**하는 통합 실습을 진행합니다.  
+> Step 2~6의 내용을 종합 복습할 수 있는 기회입니다.
 
 ---
 
 # 🗑️ 리소스 정리
 
 > [!WARNING]
-> Secrets Manager는 비밀당 월 $0.40이 과금됩니다.  
-> 실습 후 불필요한 비밀은 반드시 삭제하세요.
+> **실습 후 반드시 아래 리소스를 삭제하세요.** 삭제하지 않으면 지속적으로 과금됩니다.
 >
-> | 리소스                         | 월 비용        | 삭제 방법          |
-> | ------------------------------ | -------------- | ------------------ |
-> | `starter/prod/db-credentials`  | $0.40          | CLI 즉시 삭제 권장 |
-> | `starter/prod/api-keys`        | $0.40          | CLI 즉시 삭제 권장 |
-> | `starter/prod/rds-auto-rotate` | $0.40          | CLI 즉시 삭제 권장 |
-> | Lambda (로테이션용)            | $0 (무료 티어) | 콘솔에서 삭제      |
+> | 리소스                         | 비용              | 삭제 방법              |
+> | ------------------------------ | ----------------- | ---------------------- |
+> | `starter/prod/db-credentials`  | 비밀당 월 과금    | CLI 즉시 삭제 권장     |
+> | `starter/prod/api-keys`        | 비밀당 월 과금    | CLI 즉시 삭제 권장     |
+> | `starter/prod/rds-auto-rotate` | 비밀당 월 과금    | CLI 즉시 삭제 권장     |
+> | Lambda (로테이션용)            | 무료 티어 내      | 콘솔에서 삭제          |
+> | CloudWatch Log Group           | 소량이면 무료     | 콘솔에서 삭제          |
+> | VPC Endpoint (Secrets Manager) | 시간당 과금       | 콘솔에서 삭제          |
+> | CloudFormation 스택 (RDS 포함) | RDS 시간당 과금   | 스택 삭제로 일괄 정리  |
 >
-> 삭제하지 않으면 월 최대 **$1.20** 과금됩니다.
+> 콘솔 삭제는 7일 대기 기간이 있어 그 동안에도 과금됩니다. **CLI 즉시 삭제를 권장합니다.**
 
 > [!NOTE]
 > 삭제 순서 (의존 관계):
 >
 > ```
-> 삭제 순서: Secrets → Lambda → IAM Role
+> 삭제 순서: Secrets → Lambda → Log Group → VPC Endpoint → CloudFormation 스택
 >
-> Secrets Manager 비밀 ---참조---→ Lambda (로테이션)
->         │                           │
->         │ 먼저 삭제                   │ 나중에 삭제
->         ▼                           ▼
->   (1) 비밀 즉시 삭제          (2) Lambda 삭제
->                            (3) IAM Role 삭제
+>   (1) Secrets Manager 비밀 즉시 삭제
+>   (2) Lambda 함수 삭제
+>   (3) CloudWatch Log Group 삭제
+>   (4) VPC Endpoint 삭제
+>   (5) IAM Role 삭제
+>   (6) CloudFormation 스택 삭제 (사용한 경우)
 > ```
->
-> 콘솔 삭제는 7일 대기 기간이 있어 그 동안에도 과금됩니다.  
-> **CLI 즉시 삭제를 권장합니다.**
 
 ---
 
 ### 단계 1: Tag Editor로 리소스 확인
 
-56. 상단 검색창에 `Resource Groups & Tag Editor`를 입력하고 선택합니다.
-57. 왼쪽 메뉴에서 **Tag Editor**를 선택합니다.
-58. 다음 조건으로 검색합니다:
+1. 상단 검색창에 `Resource Groups & Tag Editor`를 입력하고 선택합니다.
+2. 왼쪽 메뉴에서 **Tag Editor**를 선택합니다.
+3. 다음 조건으로 검색합니다:
     - **Regions**: `ap-northeast-2`
     - **Tag key**: `Session`, **Tag value**: `6-2`
-59. [[Search resources]] 버튼을 클릭합니다.
+4. [[Search resources]] 버튼을 클릭합니다.
 
 > [!OUTPUT]
 > 이 실습에서 생성한 리소스 목록이 표시됩니다 (Secrets Manager 비밀 등).
@@ -1055,9 +1367,14 @@ Run Configuration → VM options에 `-Dspring.profiles.active=aws` 추가 후 To
 
 ### 단계 2: CLI로 비밀 즉시 삭제 (권장)
 
+> [!WARNING]
+> `--force-delete-without-recovery` 옵션을 사용하면 **되돌릴 수 없습니다**.  
+> 삭제 전에 비밀 값이 다른 곳에 백업되어 있는지 확인하세요.  
+> 실습용 비밀이므로 즉시 삭제해도 문제없습니다.
+
 복구 기간 없이 즉시 삭제하여 과금을 즉시 중단합니다.
 
-60. 터미널에서 다음 명령어를 실행합니다:
+5. 터미널에서 다음 명령어를 실행합니다:
 
 ```bash
 aws secretsmanager delete-secret \
@@ -1076,7 +1393,7 @@ aws secretsmanager delete-secret \
 > }
 > ```
 
-61. 두 번째 비밀을 삭제합니다:
+6. 두 번째 비밀을 삭제합니다:
 
 ```bash
 aws secretsmanager delete-secret \
@@ -1085,7 +1402,7 @@ aws secretsmanager delete-secret \
   --region ap-northeast-2
 ```
 
-62. 태스크 5를 진행한 경우, 세 번째 비밀도 삭제합니다:
+7. 태스크 5를 진행한 경우, 세 번째 비밀도 삭제합니다:
 
 ```bash
 aws secretsmanager delete-secret \
@@ -1094,11 +1411,6 @@ aws secretsmanager delete-secret \
   --region ap-northeast-2
 ```
 
-> [!WARNING]
-> `--force-delete-without-recovery` 옵션을 사용하면 **되돌릴 수 없습니다**.  
-> 삭제 전에 비밀 값이 다른 곳에 백업되어 있는지 확인하세요.  
-> 실습용 비밀이므로 즉시 삭제해도 문제없습니다.
-
 ---
 
 ### 단계 3: 콘솔에서 비밀 삭제 (대안)
@@ -1106,58 +1418,115 @@ aws secretsmanager delete-secret \
 CLI를 사용하지 않는 경우 콘솔에서 삭제합니다.   
 단, 최소 7일의 복구 기간이 있으며 그 동안에도 과금됩니다.
 
-63. Secrets Manager 콘솔에서 삭제할 비밀을 클릭하여 상세 페이지로 이동합니다.
-64. 우측 상단의 **Actions** 드롭다운을 클릭합니다.
-65. [[Delete secret]]을 선택합니다.
-66. **Waiting period** 필드에 `7` (최소 대기 기간)을 입력합니다.
-67. [[Schedule deletion]] 버튼을 클릭합니다.
+8. Secrets Manager 콘솔에서 삭제할 비밀을 클릭하여 상세 페이지로 이동합니다.
+9. 우측 상단의 **Actions** 드롭다운을 클릭합니다.
+10. [[Delete secret]]을 선택합니다.
+11. **Waiting period** 필드에 `7` (최소 대기 기간)을 입력합니다.
+12. [[Schedule deletion]] 버튼을 클릭합니다.
 
 > [!OUTPUT]
 > 비밀 상태가 "Scheduled for deletion" 으로 변경됩니다.
 > 7일 후 자동으로 영구 삭제됩니다.
 
-68. 나머지 비밀들도 동일하게 삭제를 예약합니다.
+13. 나머지 비밀들도 동일하게 삭제를 예약합니다.
 
 ---
 
 ### 단계 4: Lambda 로테이션 함수 삭제 (태스크 5 진행한 경우)
 
-69. 상단 검색창에 `Lambda`를 입력하고 **Lambda** 서비스를 선택합니다.
-70. Functions 목록에서 `SecretsManagerRDSRotation` 함수를 클릭합니다.
-71. 우측 상단의 **Actions** 드롭다운을 클릭합니다.
-72. [[Delete function]]을 선택합니다.
-73. 확인 팝업에서 `delete`를 입력하고 [[Delete]] 버튼을 클릭합니다.
+14. 상단 검색창에 `Lambda`를 입력하고 **Lambda** 서비스를 선택합니다.
+15. Functions 목록에서 `SecretsManagermysql-rotation-lambda` 함수를 클릭합니다.
+16. 우측 상단의 **Actions** 드롭다운을 클릭합니다.
+17. [[Delete]]을 선택합니다.
+18. 확인 팝업에서 `confirm`를 입력하고 [[Delete]] 버튼을 클릭합니다.
 
 > [!OUTPUT]
-> "Successfully deleted function SecretsManagerRDSRotation" 메시지가 표시됩니다.
+> "Successfully deleted function: SecretsManagermysql-rotation-lambda" 메시지가 표시됩니다.
 
 ---
 
-### 단계 5: IAM Role 삭제 (태스크 5 진행한 경우)
+### 단계 5: CloudWatch Log Group 삭제 (태스크 5 진행한 경우)
 
-74. 상단 검색창에 `IAM`을 입력하고 **IAM** 서비스를 선택합니다.
-75. 왼쪽 메뉴에서 **Roles**를 선택합니다.
-76. 검색창에 `SecretsManager`를 입력합니다.
-77. `SecretsManagerRDSRotation` 관련 Role을 선택합니다 (체크박스 클릭).
-78. [[Delete]] 버튼을 클릭합니다.
-79. 확인 필드에 Role 이름을 입력하고 [[Delete]] 버튼을 클릭합니다.
+19. 상단 검색창에 `CloudWatch`를 입력하고 **CloudWatch** 서비스를 선택합니다.
+20. 왼쪽 메뉴에서 **Logs** → **Log groups**를 클릭합니다.
+21. 검색창에 `SecretsManager`를 입력합니다.
+22. `/aws/lambda/SecretsManagermysql-rotation-lambda` 로그 그룹을 선택합니다 (체크박스 클릭).
+23. **Actions** → [[Delete log group(s)]]를 클릭합니다.
+24. 확인 팝업에서 [[Delete]]를 클릭합니다.
+
+> [!OUTPUT]
+> 로그 그룹이 삭제됩니다.
+
+> [!NOTE]
+> Lambda가 실행될 때 CloudWatch에 자동으로 로그 그룹이 생성됩니다.  
+> Lambda를 삭제해도 로그 그룹은 남아있으므로 별도로 삭제해야 합니다.
+
+---
+
+### 단계 6: IAM Role 삭제 (태스크 5 진행한 경우)
+
+> [!NOTE]
+> 로테이션 설정 시 AWS가 자동으로 CloudFormation 스택(`SecretsManagerRDSMySQLRotationSingleUser...`)을 생성합니다.  
+> 이 스택은 Lambda, IAM Role, Security Group 인바운드 규칙 등을 포함합니다.  
+> **비밀 삭제 후에도 이 스택이 남아있을 수 있으므로**, CloudFormation 콘솔에서 확인하고 삭제하세요.
+>
+> - CloudFormation → Stacks → `SecretsManagerRDSMySQLRotation...` 스택 선택 → [[Delete stack]]
+> - NESTED 스택이 있으면 상위 스택만 삭제하면 하위도 자동 삭제됩니다.
+
+25. 상단 검색창에 `IAM`을 입력하고 **IAM** 서비스를 선택합니다.
+26. 왼쪽 메뉴에서 **Roles**를 선택합니다.
+27. 검색창에 `SecretsManager`를 입력합니다.
+28. `SecretsManagermysql-rotation-lambda` 관련 Role을 선택합니다 (체크박스 클릭).
+29. [[Delete]] 버튼을 클릭합니다.
+30. 확인 필드에 Role 이름을 입력하고 [[Delete]] 버튼을 클릭합니다.
 
 > [!OUTPUT]
 > Role이 삭제됩니다.
 
 ---
 
-### 단계 6: Tag Editor로 최종 확인
+### 단계 7: VPC Endpoint 삭제 (태스크 5 진행한 경우)
 
-80. 상단 검색창에 `Resource Groups & Tag Editor`를 입력하고 선택합니다.
-81. 왼쪽 메뉴에서 **Tag Editor**를 선택합니다.
-82. Regions: `ap-northeast-2`, Tag key: `Session`, Tag value: `6-2`로 검색합니다.
-83. 검색 결과가 없으면 모든 리소스가 정리된 것입니다.
+31. 상단 검색창에 `VPC`를 입력하고 **VPC** 서비스를 선택합니다.
+32. 왼쪽 메뉴에서 **Endpoints**를 클릭합니다.
+33. `starter-secretsmanager-endpoint`를 선택합니다 (체크박스 클릭).
+34. **Actions** → [[Delete VPC endpoints]]를 클릭합니다.
+35. 확인 필드에 `delete`를 입력하고 [[Delete]] 버튼을 클릭합니다.
+
+> [!OUTPUT]
+> Endpoint 상태가 "Deleting"으로 변경됩니다. 몇 분 후 목록에서 사라집니다.
+
+---
+
+### 단계 8: CloudFormation 스택 삭제 (CloudFormation으로 RDS를 생성한 경우)
+
+36. 상단 검색창에 `CloudFormation`을 입력하고 선택합니다.
+37. Stacks 목록에서 `step6-rds-rotation-lab`을 선택합니다.
+38. [[Delete]] 버튼을 클릭합니다.
+39. 확인 팝업에서 [[Delete stack]]을 클릭합니다.
+
+> [!OUTPUT]
+> 스택 상태가 `DELETE_IN_PROGRESS`로 변경됩니다. RDS 삭제 포함 5~10분 소요됩니다.  
+> 완료되면 스택이 목록에서 사라지고, VPC + RDS + Security Group 등 모든 리소스가 함께 삭제됩니다.
+
+> [!NOTE]
+> CloudFormation을 사용하지 않고 Step 4에서 직접 만든 Amazon RDS라면 이 단계는 건너뛰세요.  
+> Amazon RDS를 유지할지 삭제할지는 본인 판단에 따릅니다.  
+> 삭제하려면 [Step 4-1 리소스 정리](/week/4/session/1) 가이드의 삭제 섹션을 참고하세요.
+
+---
+
+### 단계 9: Tag Editor로 최종 확인
+
+40. 상단 검색창에 `Resource Groups & Tag Editor`를 입력하고 선택합니다.
+41. 왼쪽 메뉴에서 **Tag Editor**를 선택합니다.
+42. Regions: `ap-northeast-2`, Tag key: `Session`, Tag value: `6-2`로 검색합니다.
+43. 검색 결과가 없으면 모든 리소스가 정리된 것입니다.
 
 > [!TIP]
 > `Step: step6`으로도 추가 검색하여 이 Step의 다른 세션에서 생성한 리소스도 함께 확인하세요.
 
-84. 터미널에서도 비밀이 모두 삭제되었는지 확인합니다:
+44. 터미널에서도 비밀이 모두 삭제되었는지 확인합니다:
 
 ```bash
 aws secretsmanager list-secrets \
