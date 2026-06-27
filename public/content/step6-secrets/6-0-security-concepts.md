@@ -6,6 +6,7 @@ type: theory
 learningObjectives:
   - Spring Boot와 Spring MVC 레거시의 설정 구조 차이를 설명할 수 있습니다.
   - '@Profile'을 사용하여 환경별 설정을 분리할 수 있습니다.
+  - JDBC 드라이버(log4jdbc vs 일반)의 차이와 URL 규칙을 이해할 수 있습니다.
   - 인증(Authentication)과 인가(Authorization)의 차이를 설명할 수 있습니다.
   - 대칭키와 비대칭키 암호화 원리를 이해할 수 있습니다.
   - KMS(Key Management Service) 개념을 이해할 수 있습니다.
@@ -364,7 +365,109 @@ public class AwsDataSourceConfig { ... }
 
 ---
 
-## 2. 인증(Authentication) vs 인가(Authorization)
+## 2. 비밀값 관리의 중요성
+
+
+### 주요 용어
+
+| 용어 | 설명 |
+| --- | --- |
+| **비밀값 (Secret)** | DB 비밀번호, API 키, 토큰 등 외부에 노출되면 안 되는 민감 정보 |
+| **하드코딩** | 비밀값을 소스 코드에 직접 작성하는 것 (보안 위험) |
+| **AWS Secrets Manager** | 비밀값을 안전하게 저장하고 자동 로테이션하는 AWS 서비스 |
+| **Parameter Store** | AWS Systems Manager의 설정값/비밀값 저장소 (무료 티어 있음) |
+> [!CONCEPT] 비밀값 하드코딩의 위험성
+> **비밀값**(Secrets)은 DB 비밀번호, API 키, 토큰 등 노출되면 보안 사고로 이어지는 민감한 정보입니다. 소스 코드에 하드코딩하면 Git 히스토리에 영구 기록되어 유출 위험이 극도로 높아집니다.
+
+### 하드코딩의 위험성
+
+```
+❌ 절대 하지 말아야 할 것:
+
+// application.properties
+spring.datasource.password=MySecretP@ss123
+
+// .env (Git에 커밋됨)
+AWS_SECRET_ACCESS_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+
+// 소스 코드
+const API_KEY = "sk-1234567890abcdef";
+```
+
+### 비밀값 유출 시나리오
+
+```
+개발자가 비밀번호를 코드에 하드코딩
+    │
+    ▼
+Git commit & push (GitHub Public Repo)
+    │
+    ▼
+봇이 수 초 내에 감지 (GitHub 스캔 봇)
+    │
+    ├── AWS Access Key → 수 분 내 채굴 인스턴스 생성
+    │   └── 수백만 원 비용 청구 💸
+    │
+    ├── DB 비밀번호 → 데이터 유출/삭제
+    │
+    └── API Key → 무단 사용, 과금 폭탄
+```
+
+### 비밀값 관리 성숙도 모델
+
+| 수준 | 방법                            |  보안   | 관리 |
+| :--: | ------------------------------- | :-----: | :--: |
+|  1   | 소스 코드 하드코딩              | ❌ 최악 |  ❌  |
+|  2   | .env 파일 (gitignore)           | ⚠️ 부족 |  ⚠️  |
+|  3   | 환경 변수 (서버 설정)           | 🔶 보통 |  🔶  |
+|  4   | Parameter Store                 | ✅ 좋음 |  ✅  |
+|  5   | Secrets Manager + 자동 로테이션 | ✅ 최고 |  ✅  |
+
+---
+
+## 3. 환경 변수 vs 비밀 저장소
+
+
+### 주요 용어
+
+| 용어 | 설명 |
+| --- | --- |
+| **환경 변수 (Environment Variable)** | OS 레벨에서 애플리케이션에 설정값을 주입하는 방법 |
+| **비밀 저장소 (Secret Store)** | 비밀값을 중앙에서 암호화하여 관리하는 전용 서비스 |
+| **.env 파일** | 환경 변수를 파일로 관리하는 방법 (.gitignore에 반드시 등록) |
+> [!CONCEPT] 환경 변수와 비밀 저장소 비교
+> **환경 변수**는 OS 레벨에서 설정하는 키-값 쌍이고, **비밀 저장소**는 암호화된 중앙 저장소에서 비밀값을 관리하는 전용 서비스입니다. 환경 변수는 간편하지만 암호화/감사/로테이션이 어렵습니다.
+
+### 비교표
+
+| 항목               | 환경 변수      | Parameter Store       | Secrets Manager  |
+| ------------------ | -------------- | --------------------- | ---------------- |
+| **암호화**         | ❌ 평문        | ✅ SecureString (KMS) | ✅ 기본 암호화   |
+| **버전 관리**      | ❌             | ✅                    | ✅               |
+| **접근 제어**      | OS 사용자 권한 | IAM 정책              | IAM 정책         |
+| **감사 로그**      | ❌             | ✅ CloudTrail         | ✅ CloudTrail    |
+| **자동 로테이션**  | ❌             | ❌                    | ✅ (Lambda 연동) |
+| **비용**           | 무료           | 무료 (Standard)       | $0.40/비밀/월    |
+| **크기 제한**      | OS 의존        | 8KB                   | 64KB             |
+| **교차 계정 공유** | ❌             | ✅                    | ✅               |
+
+### AWS 비밀 관리 서비스 선택 가이드
+
+```
+비밀값 관리가 필요한가?
+    │
+    ├── 단순 설정값 (비밀 아님) → Systems Manager Parameter Store (String)
+    │
+    ├── 비밀번호/API 키 (정적) → Parameter Store (SecureString)
+    │   └── 무료, KMS 암호화, IAM 제어
+    │
+    └── DB 비밀번호 (자동 로테이션 필요) → Secrets Manager
+        └── 유료, 자동 로테이션, RDS 통합
+```
+
+---
+
+## 4. 인증(Authentication) vs 인가(Authorization)
 
 
 ### 주요 용어
@@ -434,7 +537,81 @@ public class AwsDataSourceConfig { ... }
 
 ---
 
-## 3. 대칭키 / 비대칭키 암호화
+## 5. 최소 권한 원칙 (Principle of Least Privilege)
+
+
+### 주요 용어
+
+| 용어 | 설명 |
+| --- | --- |
+| **최소 권한 원칙 (PoLP)** | 작업에 필요한 최소한의 권한만 부여하는 보안 원칙 |
+| **IAM Policy** | AWS에서 권한을 정의하는 JSON 문서 (Allow/Deny + Action + Resource) |
+| **권한 경계 (Permission Boundary)** | IAM 사용자/역할이 가질 수 있는 최대 권한을 제한하는 정책 |
+> [!CONCEPT] 최소 권한 원칙
+> **최소 권한 원칙**은 사용자나 서비스에게 작업 수행에 필요한 **최소한의 권한만** 부여하는 보안 원칙입니다. 과도한 권한은 보안 사고 시 피해 범위를 확대시킵니다.
+
+### 최소 권한 적용 예시
+
+```
+❌ 나쁜 예: 모든 권한 부여
+{
+  "Effect": "Allow",
+  "Action": "*",
+  "Resource": "*"
+}
+→ 모든 AWS 서비스에 모든 작업 가능 (위험!)
+
+✅ 좋은 예: 필요한 권한만 부여
+{
+  "Effect": "Allow",
+  "Action": [
+    "s3:GetObject",
+    "s3:PutObject"
+  ],
+  "Resource": "arn:aws:s3:::my-app-bucket/uploads/*"
+}
+→ 특정 버킷의 특정 경로에서 읽기/쓰기만 가능
+```
+
+### 최소 권한 구현 전략
+
+| 전략               | 설명                                   |
+| ------------------ | -------------------------------------- |
+| **시작은 제로**    | 권한 없이 시작, 필요할 때 추가         |
+| **서비스별 역할**  | EC2, Lambda 각각 별도 IAM Role         |
+| **리소스 한정**    | `*` 대신 구체적 ARN 지정               |
+| **조건 추가**      | IP 제한, MFA 필수, 시간 제한           |
+| **정기 검토**      | IAM Access Analyzer로 미사용 권한 확인 |
+| **임시 자격 증명** | 장기 Access Key 대신 Role + STS        |
+
+### 권한 에스컬레이션 방지
+
+```
+┌─────────────────────────────────────────────────────┐
+│  권한 경계 (Permissions Boundary)                   │
+│                                                     │
+│  IAM 정책이 허용하더라도,                           │
+│  권한 경계를 넘는 작업은 거부됨                     │
+│                                                     │
+│  ┌─── IAM 정책 ────┐                                │
+│  │ S3 Full Access  │                                │
+│  │ EC2 Full Access │                                │
+│  │ RDS Full Access │                                │
+│  └────────┬────────┘                                │
+│           │                                         │
+│  ┌────────┴────── 권한 경계 ───────┐                │
+│  │ S3: 허용                        │                │
+│  │ EC2: 허용                       │                │
+│  │ RDS: ❌ 차단 (경계 밖)          │                │
+│  └─────────────────────────────────┘                │
+│                                                     │
+│  실제 권한 = IAM 정책 ∩ 권한 경계                   │
+└─────────────────────────────────────────────────────┘
+```
+
+---
+
+## 6. 대칭키 / 비대칭키 암호화
 
 
 ### 주요 용어
@@ -513,7 +690,7 @@ public class AwsDataSourceConfig { ... }
 
 ---
 
-## 4. KMS (Key Management Service) 개념
+## 7. KMS (Key Management Service) 개념
 
 
 ### 주요 용어
@@ -566,181 +743,49 @@ public class AwsDataSourceConfig { ... }
 | **고객 관리형 키**  | 사용자    | $1/월 + API 호출 | 세밀한 제어 필요 시     |
 | **사용자 가져오기** | 사용자    | $1/월 + API 호출 | 기존 키 마이그레이션    |
 
----
+### KMS와 AWS 비밀 관리 서비스의 관계
 
-## 5. 비밀값 관리의 중요성
-
-
-### 주요 용어
-
-| 용어 | 설명 |
-| --- | --- |
-| **비밀값 (Secret)** | DB 비밀번호, API 키, 토큰 등 외부에 노출되면 안 되는 민감 정보 |
-| **하드코딩** | 비밀값을 소스 코드에 직접 작성하는 것 (보안 위험) |
-| **AWS Secrets Manager** | 비밀값을 안전하게 저장하고 자동 로테이션하는 AWS 서비스 |
-| **Parameter Store** | AWS Systems Manager의 설정값/비밀값 저장소 (무료 티어 있음) |
-> [!CONCEPT] 비밀값 하드코딩의 위험성
-> **비밀값**(Secrets)은 DB 비밀번호, API 키, 토큰 등 노출되면 보안 사고로 이어지는 민감한 정보입니다. 소스 코드에 하드코딩하면 Git 히스토리에 영구 기록되어 유출 위험이 극도로 높아집니다.
-
-### 하드코딩의 위험성
+실습에서 사용하는 Parameter Store와 Secrets Manager는 내부적으로 KMS를 사용하여 비밀값을 암호화합니다:
 
 ```
-❌ 절대 하지 말아야 할 것:
-
-// application.properties
-spring.datasource.password=MySecretP@ss123
-
-// .env (Git에 커밋됨)
-AWS_SECRET_ACCESS_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
-
-// 소스 코드
-const API_KEY = "sk-1234567890abcdef";
+┌─────────────────────────────────────────────────────────────┐
+│              KMS ↔ 비밀 관리 서비스 관계                      │
+│                                                             │
+│  [SSM Parameter Store - SecureString]                       │
+│       │                                                     │
+│       │ 저장 시: KMS 키(alias/aws/ssm)로 암호화             │
+│       │ 조회 시: withDecryption=true → KMS로 복호화         │
+│       │                                                     │
+│       └──→ KMS (alias/aws/ssm) — AWS 관리형 키, 무료       │
+│                                                             │
+│  [Secrets Manager]                                          │
+│       │                                                     │
+│       │ 저장 시: KMS 키(aws/secretsmanager)로 자동 암호화   │
+│       │ 조회 시: GetSecretValue → 자동 복호화               │
+│       │                                                     │
+│       └──→ KMS (aws/secretsmanager) — AWS 관리형 키, 무료   │
+└─────────────────────────────────────────────────────────────┘
 ```
 
-### 비밀값 유출 시나리오
+| 서비스 | 사용하는 KMS 키 | 암호화 시점 | 복호화 시점 | 추가 비용 |
+|--------|----------------|-------------|-------------|-----------|
+| Parameter Store (SecureString) | `alias/aws/ssm` | 파라미터 저장 시 | `--with-decryption` 옵션 사용 시 | 무료 (기본 키) |
+| Secrets Manager | `aws/secretsmanager` | 비밀 저장 시 (자동) | `GetSecretValue` API 호출 시 (자동) | 무료 (기본 키) |
 
-```
-개발자가 비밀번호를 코드에 하드코딩
-    │
-    ▼
-Git commit & push (GitHub Public Repo)
-    │
-    ▼
-봇이 수 초 내에 감지 (GitHub 스캔 봇)
-    │
-    ├── AWS Access Key → 수 분 내 채굴 인스턴스 생성
-    │   └── 수백만 원 비용 청구 💸
-    │
-    ├── DB 비밀번호 → 데이터 유출/삭제
-    │
-    └── API Key → 무단 사용, 과금 폭탄
-```
+> [!CONCEPT] 실습에서의 KMS 키 선택
+>
+> - **Parameter Store**: SecureString 생성 시 "KMS Key ID"로 `alias/aws/ssm`을 선택합니다.  
+>   이 키는 AWS가 자동으로 생성·관리하며, 비용이 발생하지 않습니다.
+> - **Secrets Manager**: 비밀 생성 시 "Encryption key"로 `aws/secretsmanager`를 유지합니다.  
+>   이 역시 AWS 관리형 키로 무료입니다.
+>
+> 두 서비스 모두 **기본 AWS 관리형 키를 사용하면 KMS 관련 추가 비용은 없습니다.**  
+> 커스텀 키(고객 관리형 키)를 사용하면 키당 월 $1 + API 호출 비용이 발생합니다.
 
-### 비밀값 관리 성숙도 모델
-
-| 수준 | 방법                            |  보안   | 관리 |
-| :--: | ------------------------------- | :-----: | :--: |
-|  1   | 소스 코드 하드코딩              | ❌ 최악 |  ❌  |
-|  2   | .env 파일 (gitignore)           | ⚠️ 부족 |  ⚠️  |
-|  3   | 환경 변수 (서버 설정)           | 🔶 보통 |  🔶  |
-|  4   | Parameter Store                 | ✅ 좋음 |  ✅  |
-|  5   | Secrets Manager + 자동 로테이션 | ✅ 최고 |  ✅  |
-
----
-
-## 6. 환경 변수 vs 비밀 저장소
-
-
-### 주요 용어
-
-| 용어 | 설명 |
-| --- | --- |
-| **환경 변수 (Environment Variable)** | OS 레벨에서 애플리케이션에 설정값을 주입하는 방법 |
-| **비밀 저장소 (Secret Store)** | 비밀값을 중앙에서 암호화하여 관리하는 전용 서비스 |
-| **.env 파일** | 환경 변수를 파일로 관리하는 방법 (.gitignore에 반드시 등록) |
-> [!CONCEPT] 환경 변수와 비밀 저장소 비교
-> **환경 변수**는 OS 레벨에서 설정하는 키-값 쌍이고, **비밀 저장소**는 암호화된 중앙 저장소에서 비밀값을 관리하는 전용 서비스입니다. 환경 변수는 간편하지만 암호화/감사/로테이션이 어렵습니다.
-
-### 비교표
-
-| 항목               | 환경 변수      | Parameter Store       | Secrets Manager  |
-| ------------------ | -------------- | --------------------- | ---------------- |
-| **암호화**         | ❌ 평문        | ✅ SecureString (KMS) | ✅ 기본 암호화   |
-| **버전 관리**      | ❌             | ✅                    | ✅               |
-| **접근 제어**      | OS 사용자 권한 | IAM 정책              | IAM 정책         |
-| **감사 로그**      | ❌             | ✅ CloudTrail         | ✅ CloudTrail    |
-| **자동 로테이션**  | ❌             | ❌                    | ✅ (Lambda 연동) |
-| **비용**           | 무료           | 무료 (Standard)       | $0.40/비밀/월    |
-| **크기 제한**      | OS 의존        | 8KB                   | 64KB             |
-| **교차 계정 공유** | ❌             | ✅                    | ✅               |
-
-### AWS 비밀 관리 서비스 선택 가이드
-
-```
-비밀값 관리가 필요한가?
-    │
-    ├── 단순 설정값 (비밀 아님) → Systems Manager Parameter Store (String)
-    │
-    ├── 비밀번호/API 키 (정적) → Parameter Store (SecureString)
-    │   └── 무료, KMS 암호화, IAM 제어
-    │
-    └── DB 비밀번호 (자동 로테이션 필요) → Secrets Manager
-        └── 유료, 자동 로테이션, RDS 통합
-```
-
----
-
-## 7. 최소 권한 원칙 (Principle of Least Privilege)
-
-
-### 주요 용어
-
-| 용어 | 설명 |
-| --- | --- |
-| **최소 권한 원칙 (PoLP)** | 작업에 필요한 최소한의 권한만 부여하는 보안 원칙 |
-| **IAM Policy** | AWS에서 권한을 정의하는 JSON 문서 (Allow/Deny + Action + Resource) |
-| **권한 경계 (Permission Boundary)** | IAM 사용자/역할이 가질 수 있는 최대 권한을 제한하는 정책 |
-> [!CONCEPT] 최소 권한 원칙
-> **최소 권한 원칙**은 사용자나 서비스에게 작업 수행에 필요한 **최소한의 권한만** 부여하는 보안 원칙입니다. 과도한 권한은 보안 사고 시 피해 범위를 확대시킵니다.
-
-### 최소 권한 적용 예시
-
-```
-❌ 나쁜 예: 모든 권한 부여
-{
-  "Effect": "Allow",
-  "Action": "*",
-  "Resource": "*"
-}
-→ 모든 AWS 서비스에 모든 작업 가능 (위험!)
-
-✅ 좋은 예: 필요한 권한만 부여
-{
-  "Effect": "Allow",
-  "Action": [
-    "s3:GetObject",
-    "s3:PutObject"
-  ],
-  "Resource": "arn:aws:s3:::my-app-bucket/uploads/*"
-}
-→ 특정 버킷의 특정 경로에서 읽기/쓰기만 가능
-```
-
-### 최소 권한 구현 전략
-
-| 전략               | 설명                                   |
-| ------------------ | -------------------------------------- |
-| **시작은 제로**    | 권한 없이 시작, 필요할 때 추가         |
-| **서비스별 역할**  | EC2, Lambda 각각 별도 IAM Role         |
-| **리소스 한정**    | `*` 대신 구체적 ARN 지정               |
-| **조건 추가**      | IP 제한, MFA 필수, 시간 제한           |
-| **정기 검토**      | IAM Access Analyzer로 미사용 권한 확인 |
-| **임시 자격 증명** | 장기 Access Key 대신 Role + STS        |
-
-### 권한 에스컬레이션 방지
-
-```
-┌─────────────────────────────────────────────────────┐
-│  권한 경계 (Permissions Boundary)                   │
-│                                                     │
-│  IAM 정책이 허용하더라도,                           │
-│  권한 경계를 넘는 작업은 거부됨                     │
-│                                                     │
-│  ┌─── IAM 정책 ────┐                                │
-│  │ S3 Full Access  │                                │
-│  │ EC2 Full Access │                                │
-│  │ RDS Full Access │                                │
-│  └────────┬────────┘                                │
-│           │                                         │
-│  ┌────────┴────── 권한 경계 ───────┐                │
-│  │ S3: 허용                        │                │
-│  │ EC2: 허용                       │                │
-│  │ RDS: ❌ 차단 (경계 밖)          │                │
-│  └─────────────────────────────────┘                │
-│                                                     │
-│  실제 권한 = IAM 정책 ∩ 권한 경계                   │
-└─────────────────────────────────────────────────────┘
-```
+> [!TIP]
+> IAM 정책에서 SecureString을 복호화하려면 `kms:Decrypt` 권한이 필요합니다.  
+> 6-1 태스크 6에서 IAM 정책에 `kms:Decrypt` Action을 포함하는 이유가 바로 이것입니다.  
+> Secrets Manager는 `secretsmanager:GetSecretValue` 권한만 있으면 복호화가 자동으로 처리됩니다.
 
 ---
 
@@ -802,12 +847,12 @@ Zero Trust:
 | --------------- | ----------------------------------------------- |
 | Spring 설정 구조 | Boot=자동, 레거시=수동 (WebConfig→RootConfig→ServletConfig) |
 | @Profile        | 환경별(local/aws) Bean을 분리하여 충돌 없이 관리 |
-| 인증 vs 인가    | 누구인지 확인 vs 무엇을 할 수 있는지 결정       |
-| 대칭키 암호화   | 같은 키로 암호화/복호화 (빠름, 키 교환 어려움)  |
-| 비대칭키 암호화 | 공개키/개인키 쌍 사용 (느림, 키 교환 안전)      |
-| KMS             | AWS 암호화 키 관리 서비스 (Envelope Encryption) |
 | 비밀값 관리     | 하드코딩 금지, 전용 저장소 사용 필수            |
+| 환경 변수 vs 저장소 | 환경 변수는 간편, 비밀 저장소는 암호화+감사+로테이션 |
+| 인증 vs 인가    | 누구인지 확인 vs 무엇을 할 수 있는지 결정       |
 | 최소 권한 원칙  | 필요한 최소한의 권한만 부여                     |
+| 대칭키 암호화   | 같은 키로 암호화/복호화 (빠름, 키 교환 어려움)  |
+| KMS             | AWS 암호화 키 관리 서비스 (Envelope Encryption) |
 | Zero Trust      | 위치 무관, 모든 접근을 항상 검증                |
 
 ---
