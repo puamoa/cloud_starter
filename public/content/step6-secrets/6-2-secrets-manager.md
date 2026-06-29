@@ -131,6 +131,8 @@ Parameter Store와의 차이를 이해하고, Amazon RDS 비밀번호 자동 로
 3. 상단 검색창에 `Secrets Manager`를 입력합니다.
 4. 검색 결과에서 **Secrets Manager** 서비스를 클릭합니다.
 
+    <img src="/images/step6/6-2-step4-secrets-manager-search.png" alt="Secrets Manager 검색" class="guide-img-sm" />
+
 > [!OUTPUT]
 > Secrets Manager 소개 페이지가 표시됩니다.  
 > 우측 **Get started** 섹션에 [[Store a new secret]] 버튼이 보입니다.  
@@ -139,7 +141,12 @@ Parameter Store와의 차이를 이해하고, Amazon RDS 비밀번호 자동 로
 ### 새 비밀 생성
 
 5. [[Store a new secret]] 버튼을 클릭합니다 (또는 왼쪽 메뉴 **Secrets** 클릭 후 [[Store a new secret]]).
+
+    <img src="/images/step6/6-2-step5-store-new-secret.png" alt="Store a new secret 버튼" class="guide-img-sm" />
+
 6. **Secret type** 섹션에서 **Other type of secret**을 선택합니다.
+
+    <img src="/images/step6/6-2-step6-other-type.png" alt="Other type of secret 선택" class="guide-img-sm" />
 
 > [!TIP]
 > Secret type 옵션 설명:
@@ -197,6 +204,8 @@ Parameter Store와의 차이를 이해하고, Amazon RDS 비밀번호 자동 로
 
 10. **Secret name** 필드에 `starter/prod/db-credentials`를 입력합니다.
 
+    <img src="/images/step6/6-2-step10-secret-name.png" alt="Secret name 입력" class="guide-img-sm" />
+
 > [!TIP]
 > 비밀 이름에 `/`를 사용하면 계층 구조로 관리할 수 있습니다.  
 > 예: `{프로젝트}/{환경}/{용도}` → `starter/prod/db-credentials`
@@ -221,6 +230,8 @@ Parameter Store와의 차이를 이해하고, Amazon RDS 비밀번호 자동 로
 
 15. **Configure rotation** 페이지가 표시됩니다. **Automatic rotation** 토글이 꺼져 있는 상태를 유지합니다.
 
+    <img src="/images/step6/6-2-step15-rotation-disabled.png" alt="Configure rotation 비활성화" class="guide-img-sm" />
+
 > [!CONCEPT] Configure rotation 페이지 설명
 >
 > 이 페이지는 비밀값을 **자동으로 주기적 교체**하는 설정입니다:
@@ -242,7 +253,12 @@ Parameter Store와의 차이를 이해하고, Amazon RDS 비밀번호 자동 로
     - Secret type: Other type of secret
     - Encryption key: `aws/secretsmanager`
     - Rotation: Disabled
+
+    <img src="/images/step6/6-2-step17-review.png" alt="Review 페이지" class="guide-img-sm" />
+
 18. [[Store]] 버튼을 클릭합니다.
+
+    <img src="/images/step6/6-2-step18-store-success.png" alt="비밀 생성 완료" class="guide-img-sm" />
 
 > [!OUTPUT]
 > 녹색 배너로 "You successfully stored the secret starter/prod/db-credentials." 메시지가 표시됩니다.  
@@ -255,7 +271,12 @@ Parameter Store와의 차이를 이해하고, Amazon RDS 비밀번호 자동 로
 ### 저장된 비밀 값 확인
 
 19. 비밀 상세 페이지에서 **Secret value** 섹션으로 스크롤합니다.
+
+    <img src="/images/step6/6-2-step19-secret-detail.png" alt="Secret value 섹션" class="guide-img-sm" />
+
 20. [[Retrieve secret value]] 버튼을 클릭합니다.
+
+    <img src="/images/step6/6-2-step20-retrieve-secret.png" alt="Retrieve secret value" class="guide-img-sm" />
 
 > [!OUTPUT]
 > 저장된 키-값 쌍이 테이블 형태로 표시됩니다:
@@ -306,6 +327,8 @@ Parameter Store와의 차이를 이해하고, Amazon RDS 비밀번호 자동 로
 > → `SecretsManagerReadWrite` 검색 → 체크 → Add permissions
 >
 > 또는 AWS CloudShell을 사용하면 별도 설정 없이 현재 로그인한 사용자 권한으로 바로 실행됩니다.
+>
+> <img src="/images/step6/6-2-step21-iam-permission.png" alt="IAM 권한 추가" class="guide-img-sm" />
 
 > [!TIP]
 > 로컬 터미널에서 CLI 출력이 `(END)`로 멈추는 경우, 먼저 다음 명령어를 실행하면 이후 모든 명령에서 페이저가 비활성화됩니다:
@@ -315,6 +338,8 @@ Parameter Store와의 차이를 이해하고, Amazon RDS 비밀번호 자동 로
 > ```
 >
 > 터미널을 새로 열 때마다 실행해야 합니다. 영구 적용하려면 `~/.zshrc`에 추가하세요.
+>
+> <img src="/images/step6/6-2-step21-pager-tip.png" alt="AWS PAGER 설정" class="guide-img-sm" />
 
 ### 주요 CLI 명령어 요약
 
@@ -337,6 +362,12 @@ aws secretsmanager create-secret \
   --secret-string '{"payment_api_key":"pk_live_abc123","notification_key":"nk_xyz789"}' \
   --region ap-northeast-2
 ```
+
+<img src="/images/step6/6-2-step21-create-secret-cli1.png" alt="create-secret 명령어 입력" class="guide-img-sm" />
+
+<img src="/images/step6/6-2-step21-create-secret-cli2.png" alt="create-secret 실행 결과" class="guide-img-sm" />
+
+<img src="/images/step6/6-2-step21-create-secret-cli3.png" alt="create-secret 콘솔 확인" class="guide-img-sm" />
 
 > [!NOTE]
 > 각 옵션 설명:
@@ -377,6 +408,8 @@ aws secretsmanager get-secret-value \
   --region ap-northeast-2
 ```
 
+<img src="/images/step6/6-2-step22-get-secret-value.png" alt="get-secret-value 실행 결과" class="guide-img-sm" />
+
 > [!NOTE]
 > `get-secret-value`는 비밀의 실제 값을 평문으로 반환합니다.  
 > `--secret-id`에는 비밀 이름 또는 ARN을 지정합니다.
@@ -402,6 +435,8 @@ aws secretsmanager get-secret-value \
   --region ap-northeast-2
 ```
 
+<img src="/images/step6/6-2-step23-get-db-credentials.png" alt="db-credentials 조회 결과" class="guide-img-sm" />
+
 > [!OUTPUT]
 >
 > ```json
@@ -425,6 +460,8 @@ aws secretsmanager get-secret-value \
   --region ap-northeast-2
 ```
 
+<img src="/images/step6/6-2-step24-query-secretstring.png" alt="query로 SecretString 추출" class="guide-img-sm" />
+
 > [!NOTE]
 > `--query`는 JMESPath 표현식으로 응답에서 원하는 필드만 추출합니다.  
 > `--output text`와 함께 사용하면 따옴표 없는 순수 텍스트로 출력됩니다.
@@ -445,6 +482,10 @@ aws secretsmanager update-secret \
   --secret-string '{"username":"admin","password":"NewPassword456!","host":"localhost","port":"3306","dbname":"starter_db"}' \
   --region ap-northeast-2
 ```
+
+<img src="/images/step6/6-2-step25-update-secret1.png" alt="update-secret 명령어" class="guide-img-sm" />
+
+<img src="/images/step6/6-2-step25-update-secret2.png" alt="update-secret 결과" class="guide-img-sm" />
 
 > [!NOTE]
 > `update-secret`은 기존 비밀의 값을 덮어씁니다. 전체 JSON을 다시 전달해야 합니다 (부분 업데이트 불가).  
@@ -473,6 +514,8 @@ aws secretsmanager update-secret \
   --region ap-northeast-2
 ```
 
+<img src="/images/step6/6-2-step26-restore-secret.png" alt="비밀번호 복원" class="guide-img-sm" />
+
 > [!OUTPUT]
 > `VersionId`가 새로 발급되면 복원 완료입니다. 이제 `password`가 다시 `MyPassword123!`입니다.
 
@@ -486,6 +529,8 @@ aws secretsmanager list-secrets \
   --output table \
   --region ap-northeast-2
 ```
+
+<img src="/images/step6/6-2-step27-list-secrets.png" alt="list-secrets 결과" class="guide-img-sm" />
 
 > [!NOTE]
 > `list-secrets`는 비밀의 **메타데이터만** 반환합니다 (값은 포함되지 않음).  
@@ -564,6 +609,8 @@ dependencies {
 }
 ```
 
+<img src="/images/step6/6-2-step28-gradle-boot.png" alt="Spring Boot build.gradle" class="guide-img-sm" />
+
 > [!TIP]
 > `spring-boot-starter-web`을 사용 중이라면 Jackson은 이미 포함되어 있으므로 `jackson-databind` 줄은 생략해도 됩니다.  
 > 에러가 나면 추가하세요. BOM 버전 관리 덕분에 Jackson 버전은 명시하지 않아도 됩니다.
@@ -582,6 +629,8 @@ dependencies {
     implementation 'com.fasterxml.jackson.core:jackson-databind:2.17.0'
 }
 ```
+
+<img src="/images/step6/6-2-step28-gradle-mvc.png" alt="Spring MVC build.gradle" class="guide-img-sm" />
 
 > [!NOTE]
 > Step 5 또는 6-1에서 AWS SDK 의존성을 이미 추가한 경우, 같은 버전(`2.44.0`)으로 `secretsmanager`만 한 줄 추가하면 됩니다.  
@@ -614,6 +663,10 @@ dependencies {
 > (아래 30번에서 새 DataSourceConfig를 작성하므로, 기존 것을 교체하면 됩니다.)
 >
 > 나중에 프로덕션에서는 Parameter Store 또는 Secrets Manager 중 하나만 선택하여 사용합니다.
+>
+> <img src="/images/step6/6-2-step29-profile-warning.png" alt="ParameterStoreService 프로필 변경" class="guide-img-sm" />
+>
+> <img src="/images/step6/6-2-step29-profile-warning2.png" alt="ParameterStoreService 프로필 변경 2" class="guide-img-sm" />
 
 29. `src/main/java/com/example/demo/config/` 디렉토리에 `SecretsManagerService.java` 파일을 생성합니다:
 
@@ -704,6 +757,10 @@ public class SecretsManagerService {
 }
 ```
 
+<img src="/images/step6/6-2-step29-secrets-manager-service1.png" alt="SecretsManagerService 코드 1" class="guide-img-sm" />
+
+<img src="/images/step6/6-2-step29-secrets-manager-service2.png" alt="SecretsManagerService 코드 2" class="guide-img-sm" />
+
 > [!WARNING]
 > `secretId("starter/prod/db-credentials")` 부분을 태스크 2에서 생성한 비밀 이름과 정확히 일치시키세요.  
 > 대소문자와 슬래시(`/`)를 포함하여 정확히 입력해야 합니다.
@@ -743,6 +800,8 @@ public class DataSourceConfig {
     }
 }
 ```
+
+<img src="/images/step6/6-2-step30-datasource-boot.png" alt="DataSourceConfig (Boot)" class="guide-img-sm" />
 
 > [!TIP]
 > driver를 하드코딩하지 않으려면 Secrets Manager JSON에 `"driver": "com.mysql.cj.jdbc.Driver"` 필드를 추가하거나,  
@@ -785,6 +844,8 @@ public class AwsDataSourceConfig {
 }
 ```
 
+<img src="/images/step6/6-2-step30-datasource-mvc.png" alt="AwsDataSourceConfig (MVC)" class="guide-img-sm" />
+
 > [!TIP]
 > 레거시 프로젝트에서 `log4jdbc`를 사용한다면 driver와 URL을 맞춰야 합니다.  
 > 이 경우 Secrets Manager의 `host` 값 앞에 `log4jdbc:`를 붙이거나, driver를 Parameter Store에서 관리하는 6-3 셀프 미션 방식을 권장합니다.
@@ -806,6 +867,8 @@ public class AwsDataSourceConfig {
 > | Tomcat WAR 배포 | `JAVA_OPTS="-Dspring.profiles.active=aws"` |
 >
 > 프로필을 지정하지 않으면 `@Profile("aws")` Bean은 비활성화되고, 로컬 설정이 그대로 동작합니다.
+>
+> <img src="/images/step6/6-2-step31-intellij-profile.png" alt="IntelliJ Boot Active profiles 설정" class="guide-img-sm" />
 
 31. (Boot) `application.properties`의 기존 DB 설정은 그대로 유지합니다:
 
@@ -816,6 +879,8 @@ spring.datasource.username=admin
 spring.datasource.password=MyPassword123!
 spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
 ```
+
+<img src="/images/step6/6-2-step31-boot-properties.png" alt="application.properties DB 설정" class="guide-img-sm" />
 
 > [!TIP]
 > 6-1과 마찬가지로 `@Profile("aws")`로 분리했기 때문에, 로컬에서는 기존 설정이 그대로 동작합니다.  
@@ -840,9 +905,15 @@ spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
 ./gradlew bootRun --args='--spring.profiles.active=aws'
 ```
 
+<img src="/images/step6/6-2-step31-boot-properties.png" alt="Spring Boot 실행" class="guide-img-sm" />
+
 **Spring MVC 레거시 (IntelliJ):**
 
 Run Configuration → VM options에 `-Dspring.profiles.active=aws` 추가 후 Tomcat 실행.
+
+<img src="/images/step6/6-2-step31-mvc-properties.png" alt="레거시 VM options 설정" class="guide-img-sm" />
+
+<img src="/images/step6/6-2-step31-mvc-properties2.png" alt="레거시 Tomcat 실행" class="guide-img-sm" />
 
 > [!OUTPUT]
 > 콘솔 로그에 다음과 같이 출력되면 Secrets Manager 연동 **성공**입니다:
@@ -914,6 +985,9 @@ Run Configuration → VM options에 `-Dspring.profiles.active=aws` 추가 후 To
 35. **Prepare template** 섹션에서 `Choose an existing template`을 선택합니다.
 36. **Template source** 섹션에서 `Upload a template file`을 선택합니다.
 37. [[Choose file]] 을 클릭하여 `step6-2-rds-rotation-prereq.yaml` 파일을 업로드합니다.
+
+    <img src="/images/step6/6-2-step37-cfn-create-stack.png" alt="CloudFormation 템플릿 업로드" class="guide-img-sm" />
+
 38. [[Next]] 버튼을 클릭합니다.
 39. **Stack name** 필드에 `step6-rds-rotation-lab`을 입력합니다.
 40. **Parameters** 섹션에서 다음 값을 확인하고, 본인 환경에 맞게 변경합니다:
@@ -922,12 +996,20 @@ Run Configuration → VM options에 `-Dspring.profiles.active=aws` 추가 후 To
     - `DBName`: `starter_db` (Secrets Manager의 `dbname`과 동일하게 설정)
     - 나머지 파라미터는 기본값 유지
 
+     <img src="/images/step6/6-2-step40-rds-secret-type.png" alt="Parameters 섹션" class="guide-img-sm" />
+
 > [!TIP]
 > Secrets Manager에 저장한 값과 다른 username/password/dbname을 사용했다면 여기서 맞춰 변경하세요.  
 > CloudFormation Parameters의 값 = Secrets Manager에 저장한 값 = 실제 RDS 접속 정보가 모두 일치해야 합니다.
 41. [[Next]] 버튼을 클릭합니다.
 42. **Configure stack options** 페이지에서 기본값 유지, [[Next]] 버튼을 클릭합니다.
+
+    <img src="/images/step6/6-2-step42-secret-name-rotation.png" alt="Configure stack options" class="guide-img-sm" />
+
 43. **Review** 페이지 하단의 **Capabilities** 체크박스를 선택합니다.
+
+    <img src="/images/step6/6-2-step43-capabilities.png" alt="Capabilities 체크박스" class="guide-img-sm" />
+
 44. [[Submit]] 버튼을 클릭합니다.
 45. **Status**가 `CREATE_COMPLETE`로 변경될 때까지 대기합니다 (약 5~10분).
 
@@ -936,6 +1018,9 @@ Run Configuration → VM options에 `-Dspring.profiles.active=aws` 추가 후 To
 > **Outputs** 탭을 클릭하면 RDS 엔드포인트 등 생성된 리소스 정보를 확인할 수 있습니다.
 
 46. **Outputs** 탭에서 `RDSEndpoint` 값을 복사합니다 (예: `starter-mysql.xxxx.ap-northeast-2.rds.amazonaws.com`).
+
+    <img src="/images/step6/6-2-step46-vpc-endpoint.png" alt="Outputs 탭 RDS 엔드포인트" class="guide-img-sm" />
+
 47. Secrets Manager의 `host` 값을 RDS 엔드포인트로 업데이트합니다:
 
 ```bash
@@ -944,6 +1029,8 @@ aws secretsmanager update-secret \
   --secret-string '{"username":"admin","password":"MyPassword123!","host":"여기에-RDS-엔드포인트-붙여넣기","port":"3306","dbname":"starter_db"}' \
   --region ap-northeast-2
 ```
+
+<img src="/images/step6/6-2-step47-endpoint-settings.png" alt="host 값 업데이트" class="guide-img-sm" />
 
 > [!TIP]
 > `여기에-RDS-엔드포인트-붙여넣기` 부분을 Outputs에서 복사한 실제 엔드포인트로 교체하세요.  
@@ -960,6 +1047,8 @@ aws secretsmanager update-secret \
 > ```
 >
 > `host` 값이 RDS 엔드포인트로 변경되어 있으면 성공입니다.
+>
+> <img src="/images/step6/6-2-step47-verify-update.png" alt="변경 확인 결과" class="guide-img-sm" />
 
 ### VPC Endpoint 생성 (자동 로테이션 필수)
 
@@ -1012,8 +1101,13 @@ aws secretsmanager update-secret \
 
 48. VPC 콘솔로 이동합니다 (상단 검색창에 `VPC` 입력).
 49. 왼쪽 메뉴에서 **Endpoints**를 클릭합니다.
+
+    <img src="/images/step6/6-2-step49-vpc-endpoint.png" alt="VPC Endpoints 메뉴" class="guide-img-sm" />
+
 50. [[Create endpoint]] 버튼을 클릭합니다.
 51. **Name tag** 필드에 `starter-secretsmanager-endpoint`를 입력합니다.
+
+    <img src="/images/step6/6-2-step51-endpoint-created.png" alt="Endpoint 이름 설정" class="guide-img-sm" />
 52. **Type** 섹션에서 `AWS services`를 선택합니다 (기본값).
 
 > [!NOTE]
@@ -1030,6 +1124,9 @@ aws secretsmanager update-secret \
 > | Endpoint services that use NLBs and GWLBs | NLB/GWLB 기반 서비스 연결 |
 
 53. **Services** 검색창에 `secretsmanager`를 입력합니다.
+
+    <img src="/images/step6/6-2-step53-service-search.png" alt="Services에서 secretsmanager 검색" class="guide-img-sm" />
+
 54. `com.amazonaws.ap-northeast-2.secretsmanager` 서비스를 선택합니다 (Type: **Interface**).
 
 > [!NOTE]
@@ -1053,11 +1150,15 @@ aws secretsmanager update-secret \
     - `ap-northeast-2a` → 드롭다운에서 **Private Subnet A** 선택
     - `ap-northeast-2c` → 드롭다운에서 **Private Subnet C** 선택
 
+    <img src="/images/step6/6-2-step56-create-endpoint.png" alt="Subnets 선택" class="guide-img-sm" />
+
 > [!WARNING]
 > 각 AZ의 드롭다운에 퍼블릭/프라이빗 서브넷이 모두 표시됩니다.  
 > 반드시 **private** 서브넷을 선택하세요. Lambda가 프라이빗 서브넷에 배치되므로 같은 서브넷에 Endpoint가 있어야 합니다.
 
 57. **Security groups** 섹션에서 Security Group을 선택합니다.
+
+    <img src="/images/step6/6-2-step57-security-group.png" alt="Security Group 선택" class="guide-img-sm" />
 
 > [!TIP]
 > **CloudFormation으로 환경을 구축한 경우:** `starter-lambda-sg`를 선택하세요 (인바운드 443 이미 설정됨).
@@ -1073,6 +1174,8 @@ aws secretsmanager update-secret \
 
 58. **Policy**는 `Full access` (기본값)를 유지합니다.
 
+    <img src="/images/step6/6-2-step58-endpoint-tags.png" alt="Policy 설정" class="guide-img-sm" />
+
 > [!NOTE]
 > `Full access`는 VPC 내 모든 사용자/서비스가 이 Endpoint를 통해 Secrets Manager에 접근할 수 있다는 의미입니다.  
 > 학습 환경에서는 이 설정으로 충분합니다. 프로덕션에서는 `Custom` 정책으로 특정 비밀만 허용할 수 있습니다.
@@ -1082,7 +1185,13 @@ aws secretsmanager update-secret \
     - `Step` = `step6`
     - `Session` = `6-2`
 
+    <img src="/images/step6/6-2-step59-endpoint-available.png" alt="Tags 추가" class="guide-img-sm" />
+
 60. [[Create endpoint]] 버튼을 클릭합니다.
+
+    <img src="/images/step6/6-2-step60-rotation-config.png" alt="Endpoint 생성" class="guide-img-sm" />
+
+    <img src="/images/step6/6-2-step60-rotation-config2.png" alt="Endpoint 생성 완료" class="guide-img-sm" />
 
 > [!OUTPUT]
 > "Successfully created VPC endpoint vpce-xxxxxxxxx" 메시지가 표시됩니다.  
@@ -1097,7 +1206,12 @@ aws secretsmanager update-secret \
 
 61. Secrets Manager 콘솔로 이동합니다 (상단 검색창에 `Secrets Manager` 입력).
 62. [[Store a new secret]] 버튼을 클릭합니다.
+
+    <img src="/images/step6/6-2-step62-rds-secret.png" alt="Store a new secret" class="guide-img-sm" />
+
 63. **Secret type** 섹션에서 **Credentials for Amazon RDS database**를 선택합니다.
+
+    <img src="/images/step6/6-2-step63-rds-credentials.png" alt="RDS database 선택" class="guide-img-sm" />
 
 > [!TIP]
 > **Credentials for Amazon RDS database**를 선택하면 Secrets Manager가 Amazon RDS와 직접 통합됩니다.  
@@ -1118,6 +1232,9 @@ aws secretsmanager update-secret \
 
 67. [[Next]] 버튼을 클릭합니다.
 68. **Secret name** 필드에 `starter/prod/rds-auto-rotate`를 입력합니다.
+
+    <img src="/images/step6/6-2-step68-rotation-enable.png" alt="Secret name 입력" class="guide-img-sm" />
+
 69. **Description** 필드에 `RDS MySQL auto-rotation credentials`를 입력합니다.
 70. **Tags** 섹션에서 [[Add tag]]를 클릭하고 다음을 추가합니다:
     - `CreatedBy` = `admin-user`
@@ -1129,6 +1246,9 @@ aws secretsmanager update-secret \
 ### 자동 로테이션 활성화
 
 72. **Configure rotation** 페이지에서 **Automatic rotation** 토글을 활성화합니다.
+
+    <img src="/images/step6/6-2-step72-rotation-complete.png" alt="Automatic rotation 활성화" class="guide-img-sm" />
+
 73. **Rotation schedule** 섹션에서 다음을 설정합니다:
     - **Schedule expression builder** 라디오 선택
     - **Time unit**: `Days` 선택
@@ -1167,7 +1287,12 @@ aws secretsmanager update-secret \
 
 77. [[Next]] 버튼을 클릭합니다.
 78. **Review** 페이지에서 설정을 확인합니다.
+
+    <img src="/images/step6/6-2-step78-rotation-success.png" alt="Review 페이지" class="guide-img-sm" />
+
 79. [[Store]] 버튼을 클릭합니다.
+
+    <img src="/images/step6/6-2-step79-store-complete.png" alt="Store 완료" class="guide-img-sm" />
 
 > [!OUTPUT]
 > 녹색 배너로 "You successfully stored the secret starter/prod/rds-auto-rotate" 메시지가 표시됩니다.  
@@ -1192,11 +1317,16 @@ aws secretsmanager update-secret \
 > **CloudWatch Log Group**은 Lambda가 처음 실행될 때 자동 생성됩니다.  
 > 로테이션 실패 시 이 로그를 확인하면 원인을 파악할 수 있습니다.  
 > Lambda를 삭제해도 Log Group은 남아있으므로, 리소스 정리 시 별도로 삭제해야 합니다.
+>
+> <img src="/images/step6/6-2-step79-auto-resources.png" alt="자동 생성 리소스" class="guide-img-sm" />
 
 ### 로테이션 결과 확인
 
 80. Secrets 목록에서 `starter/prod/rds-auto-rotate`를 클릭하여 상세 페이지로 이동합니다.
 81. **Rotation configuration** 섹션을 확인합니다.
+
+    <img src="/images/step6/6-2-step81-rotation-status.png" alt="Rotation configuration" class="guide-img-sm" />
+
 82. **Rotation status**가 `Enabled`로 표시되는지 확인합니다.
 83. **Last rotated date**에 날짜/시간이 표시되면 첫 번째 로테이션이 완료된 것입니다.
 
@@ -1204,6 +1334,9 @@ aws secretsmanager update-secret \
 > 첫 번째 로테이션 완료까지 1~2분 소요될 수 있습니다. 페이지를 새로고침하여 확인하세요.
 
 84. **Secret value** 섹션에서 [[Retrieve secret value]]를 클릭합니다.
+
+    <img src="/images/step6/6-2-step84-verify-rotation.png" alt="변경된 비밀번호 확인" class="guide-img-sm" />
+
 85. `password` 값이 이전과 다른 자동 생성된 비밀번호로 변경되었는지 확인합니다.
 
 > [!OUTPUT]
@@ -1360,6 +1493,8 @@ aws secretsmanager update-secret \
     - **Tag key**: `Session`, **Tag value**: `6-2`
 4. [[Search resources]] 버튼을 클릭합니다.
 
+    <img src="/images/step6/6-2-cleanup4-tag-editor.png" alt="Tag Editor 검색 결과" class="guide-img-sm" />
+
 > [!OUTPUT]
 > 이 실습에서 생성한 리소스 목록이 표시됩니다 (Secrets Manager 비밀 등).
 
@@ -1382,6 +1517,8 @@ aws secretsmanager delete-secret \
   --force-delete-without-recovery \
   --region ap-northeast-2
 ```
+
+<img src="/images/step6/6-2-cleanup5-secret-delete.png" alt="비밀 즉시 삭제" class="guide-img-sm" />
 
 > [!OUTPUT]
 >
@@ -1411,6 +1548,10 @@ aws secretsmanager delete-secret \
   --region ap-northeast-2
 ```
 
+<img src="/images/step6/6-2-cleanup7-secret-deleted.png" alt="세 번째 비밀 삭제" class="guide-img-sm" />
+
+<img src="/images/step6/6-2-cleanup7-secret-deleted2.png" alt="비밀 삭제 완료 확인" class="guide-img-sm" />
+
 ---
 
 ### 단계 3: 콘솔에서 비밀 삭제 (대안)
@@ -1437,8 +1578,15 @@ CLI를 사용하지 않는 경우 콘솔에서 삭제합니다.
 14. 상단 검색창에 `Lambda`를 입력하고 **Lambda** 서비스를 선택합니다.
 15. Functions 목록에서 `SecretsManagermysql-rotation-lambda` 함수를 클릭합니다.
 16. 우측 상단의 **Actions** 드롭다운을 클릭합니다.
+
+    <img src="/images/step6/6-2-cleanup16-lambda-delete.png" alt="Lambda Actions 메뉴" class="guide-img-sm" />
+
 17. [[Delete]]을 선택합니다.
 18. 확인 팝업에서 `confirm`를 입력하고 [[Delete]] 버튼을 클릭합니다.
+
+    <img src="/images/step6/6-2-cleanup18-lambda-deleted.png" alt="Lambda 삭제 완료" class="guide-img-sm" />
+
+    <img src="/images/step6/6-2-cleanup18-lambda-deleted2.png" alt="Lambda 삭제 확인" class="guide-img-sm" />
 
 > [!OUTPUT]
 > "Successfully deleted function: SecretsManagermysql-rotation-lambda" 메시지가 표시됩니다.
@@ -1452,7 +1600,14 @@ CLI를 사용하지 않는 경우 콘솔에서 삭제합니다.
 21. 검색창에 `SecretsManager`를 입력합니다.
 22. `/aws/lambda/SecretsManagermysql-rotation-lambda` 로그 그룹을 선택합니다 (체크박스 클릭).
 23. **Actions** → [[Delete log group(s)]]를 클릭합니다.
+
+    <img src="/images/step6/6-2-cleanup23-log-delete.png" alt="Log Group 삭제" class="guide-img-sm" />
+
 24. 확인 팝업에서 [[Delete]]를 클릭합니다.
+
+    <img src="/images/step6/6-2-cleanup24-log-deleted.png" alt="Log Group 삭제 완료" class="guide-img-sm" />
+
+    <img src="/images/step6/6-2-cleanup24-log-deleted2.png" alt="Log Group 삭제 확인" class="guide-img-sm" />
 
 > [!OUTPUT]
 > 로그 그룹이 삭제됩니다.
@@ -1472,13 +1627,24 @@ CLI를 사용하지 않는 경우 콘솔에서 삭제합니다.
 >
 > - CloudFormation → Stacks → `SecretsManagerRDSMySQLRotation...` 스택 선택 → [[Delete stack]]
 > - NESTED 스택이 있으면 상위 스택만 삭제하면 하위도 자동 삭제됩니다.
+>
+> <img src="/images/step6/6-2-cleanup-stack1.png" alt="CloudFormation 스택 확인" class="guide-img-sm" />
+>
+> <img src="/images/step6/6-2-cleanup-stack2.png" alt="CloudFormation 스택 삭제" class="guide-img-sm" />
 
 25. 상단 검색창에 `IAM`을 입력하고 **IAM** 서비스를 선택합니다.
 26. 왼쪽 메뉴에서 **Roles**를 선택합니다.
 27. 검색창에 `SecretsManager`를 입력합니다.
+
+    <img src="/images/step6/6-2-cleanup27-iam-role.png" alt="IAM Role 검색" class="guide-img-sm" />
+
 28. `SecretsManagermysql-rotation-lambda` 관련 Role을 선택합니다 (체크박스 클릭).
 29. [[Delete]] 버튼을 클릭합니다.
 30. 확인 필드에 Role 이름을 입력하고 [[Delete]] 버튼을 클릭합니다.
+
+    <img src="/images/step6/6-2-cleanup30-role-deleted1.png" alt="Role 삭제 확인" class="guide-img-sm" />
+
+    <img src="/images/step6/6-2-cleanup30-role-deleted2.png" alt="Role 삭제 완료" class="guide-img-sm" />
 
 > [!OUTPUT]
 > Role이 삭제됩니다.
@@ -1491,7 +1657,14 @@ CLI를 사용하지 않는 경우 콘솔에서 삭제합니다.
 32. 왼쪽 메뉴에서 **Endpoints**를 클릭합니다.
 33. `starter-secretsmanager-endpoint`를 선택합니다 (체크박스 클릭).
 34. **Actions** → [[Delete VPC endpoints]]를 클릭합니다.
+
+    <img src="/images/step6/6-2-cleanup34-vpc-endpoint.png" alt="VPC Endpoint 삭제" class="guide-img-sm" />
+
 35. 확인 필드에 `delete`를 입력하고 [[Delete]] 버튼을 클릭합니다.
+
+    <img src="/images/step6/6-2-cleanup35-endpoint-deleted1.png" alt="Endpoint 삭제 확인" class="guide-img-sm" />
+
+    <img src="/images/step6/6-2-cleanup35-endpoint-deleted2.png" alt="Endpoint 삭제 완료" class="guide-img-sm" />
 
 > [!OUTPUT]
 > Endpoint 상태가 "Deleting"으로 변경됩니다. 몇 분 후 목록에서 사라집니다.
@@ -1503,7 +1676,14 @@ CLI를 사용하지 않는 경우 콘솔에서 삭제합니다.
 36. 상단 검색창에 `CloudFormation`을 입력하고 선택합니다.
 37. Stacks 목록에서 `step6-rds-rotation-lab`을 선택합니다.
 38. [[Delete]] 버튼을 클릭합니다.
+
+    <img src="/images/step6/6-2-cleanup38-cfn-delete.png" alt="CloudFormation 스택 삭제" class="guide-img-sm" />
+
 39. 확인 팝업에서 [[Delete stack]]을 클릭합니다.
+
+    <img src="/images/step6/6-2-cleanup39-cfn-confirm1.png" alt="스택 삭제 확인" class="guide-img-sm" />
+
+    <img src="/images/step6/6-2-cleanup39-cfn-confirm2.png" alt="스택 삭제 진행" class="guide-img-sm" />
 
 > [!OUTPUT]
 > 스택 상태가 `DELETE_IN_PROGRESS`로 변경됩니다. RDS 삭제 포함 5~10분 소요됩니다.  
@@ -1521,6 +1701,9 @@ CLI를 사용하지 않는 경우 콘솔에서 삭제합니다.
 40. 상단 검색창에 `Resource Groups & Tag Editor`를 입력하고 선택합니다.
 41. 왼쪽 메뉴에서 **Tag Editor**를 선택합니다.
 42. Regions: `ap-northeast-2`, Tag key: `Session`, Tag value: `6-2`로 검색합니다.
+
+    <img src="/images/step6/6-2-cleanup42-tag-search.png" alt="Tag Editor 최종 확인" class="guide-img-sm" />
+
 43. 검색 결과가 없으면 모든 리소스가 정리된 것입니다.
 
 > [!TIP]
@@ -1534,6 +1717,8 @@ aws secretsmanager list-secrets \
   --output table \
   --region ap-northeast-2
 ```
+
+<img src="/images/step6/6-2-cleanup44-tag-final.png" alt="최종 확인" class="guide-img-sm" />
 
 > [!OUTPUT]
 > 즉시 삭제한 경우: 결과가 비어있습니다 (모든 비밀 삭제 완료).  
