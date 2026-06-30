@@ -749,14 +749,14 @@ Git commit & push (GitHub Public Repo)
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│              KMS ↔ 비밀 관리 서비스 관계                      │
+│              KMS ↔ 비밀 관리 서비스 관계                    │
 │                                                             │
 │  [SSM Parameter Store - SecureString]                       │
 │       │                                                     │
 │       │ 저장 시: KMS 키(alias/aws/ssm)로 암호화             │
 │       │ 조회 시: withDecryption=true → KMS로 복호화         │
 │       │                                                     │
-│       └──→ KMS (alias/aws/ssm) — AWS 관리형 키, 무료       │
+│       └──→ KMS (alias/aws/ssm) — AWS 관리형 키, 무료        │
 │                                                             │
 │  [Secrets Manager]                                          │
 │       │                                                     │
