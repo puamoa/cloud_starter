@@ -23,7 +23,8 @@ learningObjectives:
 ## 1. LLM(Large Language Model)이란?
 
 > [!CONCEPT] LLM의 정의와 동작 원리
-> **LLM**(대규모 언어 모델)은 방대한 텍스트 데이터로 학습된 딥러닝 모델로, 자연어를 이해하고 생성할 수 있습니다. "다음에 올 가장 적절한 단어를 예측"하는 방식으로 동작하며, 수십억~수조 개의 파라미터를 가집니다.
+> **LLM**(대규모 언어 모델)은 방대한 텍스트 데이터로 학습된 딥러닝 모델로, 자연어를 이해하고 생성할 수 있습니다.  
+> "다음에 올 가장 적절한 단어를 예측"하는 방식으로 동작하며, 수십억~수조 개의 파라미터를 가집니다.
 
 ### 핵심 용어 정리
 
@@ -94,7 +95,8 @@ LLM 내부 처리:
 ## 2. Transformer 아키텍처 간단 설명
 
 > [!CONCEPT] Transformer와 Self-Attention
-> **Transformer**는 2017년 "Attention Is All You Need" 논문에서 제안된 딥러닝 아키텍처입니다. **Self-Attention** 메커니즘을 통해 입력 시퀀스의 모든 위치 간 관계를 동시에 파악하며, 이전의 RNN/LSTM보다 병렬 처리에 유리합니다.
+> **Transformer**는 2017년 "Attention Is All You Need" 논문에서 제안된 딥러닝 아키텍처입니다.  
+> **Self-Attention** 메커니즘을 통해 입력 시퀀스의 모든 위치 간 관계를 동시에 파악하며, 이전의 RNN/LSTM보다 병렬 처리에 유리합니다.
 
 ### 주요 용어
 
@@ -161,7 +163,9 @@ Self-Attention:
 ## 3. 토큰 개념
 
 > [!CONCEPT] 토큰과 비용 계산
-> **토큰**(Token)은 LLM이 텍스트를 처리하는 기본 단위입니다. 단어, 단어의 일부, 또는 문자가 될 수 있습니다. 영어는 약 1단어 ≈ 1.3토큰, 한국어는 약 1글자 ≈ 1~2토큰입니다. 토큰 수가 비용과 처리 시간을 결정합니다.
+> **토큰**(Token)은 LLM이 텍스트를 처리하는 기본 단위입니다.  
+> 단어, 단어의 일부, 또는 문자가 될 수 있습니다.  
+> 영어는 약 1단어 ≈ 1.3토큰, 한국어는 약 1글자 ≈ 1~2토큰입니다. 토큰 수가 비용과 처리 시간을 결정합니다.
 
 ### 주요 용어
 
@@ -199,7 +203,8 @@ Self-Attention:
 | GPT-4o mini       | $0.15               | $0.60               | 128K            |
 
 > [!NOTE]
-> 위 가격은 2026년 6월 기준 On-Demand 가격입니다. 최신 가격은 [Amazon Bedrock 요금 페이지](https://aws.amazon.com/bedrock/pricing/)에서 확인하세요.  
+> 위 가격은 2026년 6월 기준 On-Demand 가격입니다. 
+ > 최신 가격은 [Amazon Bedrock 요금 페이지](https://aws.amazon.com/bedrock/pricing/)에서 확인하세요.  
 > Batch Inference 사용 시 50% 할인이 적용됩니다.
 
 ### 컨텍스트 윈도우
@@ -229,7 +234,9 @@ Self-Attention:
 ## 4. Foundation Model
 
 > [!CONCEPT] Foundation Model이란
-> **Foundation Model**(기반 모델)은 대규모 데이터로 사전 학습된 범용 AI 모델입니다. 특정 작업에 특화되지 않고, 다양한 작업에 적용할 수 있는 기반을 제공합니다. 이 위에 Fine-tuning이나 Prompt Engineering으로 특정 용도에 맞게 활용합니다.
+> **Foundation Model**(기반 모델)은 대규모 데이터로 사전 학습된 범용 AI 모델입니다.  
+> 특정 작업에 특화되지 않고, 다양한 작업에 적용할 수 있는 기반을 제공합니다.  
+> 이 위에 Fine-tuning이나 Prompt Engineering으로 특정 용도에 맞게 활용합니다.
 
 ### 주요 용어
 
@@ -335,7 +342,8 @@ Prompt Engineering:
 ## 6. RAG (Retrieval Augmented Generation)
 
 > [!CONCEPT] RAG 패턴의 동작 방식
-> **RAG**는 LLM의 답변 생성 전에 외부 지식 저장소에서 관련 정보를 검색(Retrieve)하여 프롬프트에 포함시키는 패턴입니다. LLM의 학습 데이터에 없는 최신 정보나 기업 내부 문서를 활용할 수 있게 합니다.
+> **RAG**는 LLM의 답변 생성 전에 외부 지식 저장소에서 관련 정보를 검색(Retrieve)하여 프롬프트에 포함시키는 패턴입니다.  
+> LLM의 학습 데이터에 없는 최신 정보나 기업 내부 문서를 활용할 수 있게 합니다.
 
 ### 주요 용어
 
@@ -405,7 +413,8 @@ Prompt Engineering:
 ## 7. Temperature / Top-P 파라미터
 
 > [!CONCEPT] Temperature와 Top-P 파라미터
-> **Temperature**와 **Top-P**는 LLM의 출력 다양성(창의성)을 제어하는 파라미터입니다. Temperature가 높으면 더 창의적이고 다양한 답변을, 낮으면 더 일관되고 예측 가능한 답변을 생성합니다.
+> **Temperature**와 **Top-P**는 LLM의 출력 다양성(창의성)을 제어하는 파라미터입니다.  
+> Temperature가 높으면 더 창의적이고 다양한 답변을, 낮으면 더 일관되고 예측 가능한 답변을 생성합니다.
 
 ### 주요 용어
 
@@ -459,7 +468,8 @@ Temperature = 1.0 (창의적):
 ## 8. AI 에이전트와 도구 사용 (Agentic AI)
 
 > [!CONCEPT] AI 에이전트란
-> **AI 에이전트**는 단순히 질문에 답하는 것을 넘어, 목표를 달성하기 위해 스스로 계획을 세우고, 도구를 사용하고, 반복적으로 행동하는 AI 시스템입니다. 2025~2026년 AI 발전의 핵심 방향입니다.
+> **AI 에이전트**는 단순히 질문에 답하는 것을 넘어, 목표를 달성하기 위해 스스로 계획을 세우고, 도구를 사용하고, 반복적으로 행동하는 AI 시스템입니다.  
+> 2025~2026년 AI 발전의 핵심 방향입니다.
 
 ### 주요 용어
 
@@ -517,7 +527,8 @@ Claude의 처리 과정:
 ## 9. 프롬프트 캐싱과 비용 최적화
 
 > [!CONCEPT] 프롬프트 캐싱
-> **프롬프트 캐싱**은 반복되는 시스템 프롬프트나 긴 컨텍스트를 캐시하여 비용을 최대 90% 절감하는 기술입니다. Amazon Bedrock과 Anthropic API 모두 지원합니다.
+> **프롬프트 캐싱**은 반복되는 시스템 프롬프트나 긴 컨텍스트를 캐시하여 비용을 최대 90% 절감하는 기술입니다.  
+> Amazon Bedrock과 Anthropic API 모두 지원합니다.
 
 ### 비용 최적화 전략
 
@@ -549,7 +560,9 @@ Claude의 처리 과정:
 ## 10. AI 서비스 비교 (Bedrock vs SageMaker vs OpenAI API)
 
 > [!CONCEPT] Bedrock, SageMaker, OpenAI 비교
-> AWS에서 AI를 활용하는 방법은 여러 가지입니다. **Bedrock**은 다양한 Foundation Model을 API로 즉시 사용하는 서비스이고, **SageMaker**는 ML 모델을 직접 학습·배포하는 플랫폼입니다. **OpenAI API**는 외부 서비스로 GPT 모델을 사용합니다.
+> AWS에서 AI를 활용하는 방법은 여러 가지입니다.  
+> **Bedrock**은 다양한 Foundation Model을 API로 즉시 사용하는 서비스이고, **SageMaker**는 ML 모델을 직접 학습·배포하는 플랫폼입니다.  
+> **OpenAI API**는 외부 서비스로 GPT 모델을 사용합니다.
 
 ### 주요 용어
 
@@ -633,7 +646,3 @@ Claude의 처리 과정:
 ## 다음 단계
 
 이 이론을 바탕으로 **Session 1: Bedrock Playground에서 프롬프트 엔지니어링 체험** 실습에서 직접 AI 모델을 사용해봅니다.
-
-```
-
-```
