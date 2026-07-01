@@ -595,6 +595,26 @@ export const curriculum: WeekCurriculum[] = [
     ],
     difficulty: 'beginner',
   },
+  {
+    week: 13,
+    title: '웹 개발자의 AWS 성장 로드맵',
+    description:
+      '기초 실습을 마친 후 컨테이너, CI/CD 고도화, IaC, 모니터링 등 실무 수준으로 확장하기 위한 이론과 설계 가이드입니다.',
+    sessions: [
+      {
+        session: 0,
+        type: 'theory',
+        title: '웹 개발자의 AWS 성장 로드맵',
+        hasContent: true,
+        markdownPath: '/content/step13-next/13-0-next-roadmap.md',
+        description:
+          '컨테이너(ECS/EKS), CI/CD 고도화, IaC(CDK/Terraform), 모니터링, 서버리스 심화, 보안 심화',
+        awsServices: [],
+        estimatedCost: '무료 (이론)',
+      },
+    ],
+    difficulty: 'advanced',
+  },
 ];
 
 export const sessionTypeConfig = {
