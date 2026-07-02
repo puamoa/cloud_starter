@@ -20,6 +20,21 @@ prerequisites:
 >
 > Amazon Bedrock Playground와 Claude 모델이 서울 리전에서 지원됩니다.
 
+> [!WARNING]
+> **비용 주의: Bedrock의 3rd-party 모델(Claude 등)은 크레딧이 적용되지 않을 수 있습니다.**
+>
+> Claude 등 Anthropic 모델은 AWS Marketplace를 통해 과금되므로, 일반 프로모셔널 크레딧으로는 차감되지 않을 수 있습니다.  
+> 청구서에 "Amazon Web Services, Inc. - Marketplace charges"로 표시되며, 소액이라도 **실제 결제**가 발생할 수 있습니다.
+>
+> | 크레딧 유형 | 3rd-party 모델(Claude) 적용 여부 |
+> | ----------- | ------------------------------- |
+> | AWS Activate 크레딧 (스타트업) | ✅ 적용 가능 |
+> | 일반 프로모셔널 크레딧 | ❌ 대부분 미적용 |
+> | 교육용/이벤트 크레딧 | ⚠️ 약관에 따라 상이 |
+>
+> **⚠️⚠️프리티어 계정이 아니거나 크레딧 적용이 불확실한 경우, 이 실습을 건너뛰는 것을 권장합니다.⚠️⚠️**  
+> 본인 크레딧의 "eligible services" 약관을 반드시 확인한 후 진행하세요.
+
 이 실습에서는 Amazon Bedrock Playground를 사용하여 프롬프트 엔지니어링의 핵심 기법을 학습합니다.  
 효과적인 프롬프트 작성 방법을 익히고, 다양한 프롬프팅 기법을 실습하여 생성형 AI의 응답 품질을 최적화하는 방법을 배웁니다.
 
