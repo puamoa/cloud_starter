@@ -23,7 +23,7 @@ export const siteConfig = {
 
   // 교과목개요
   courseOverview:
-    'VPC 네트워크 설계부터 EC2, RDS, S3, ALB, CI/CD, 서버리스까지 AWS 핵심 서비스를 단계별로 직접 구축하며 배우는 실습 중심 가이드입니다. 최종적으로 3-Tier 아키텍처를 완성합니다.',
+    "VPC 네트워크 설계부터 EC2, RDS, S3, ALB, CI/CD, 서버리스까지 AWS 핵심 서비스를 단계별로 직접 구축하며 배우는 실습 중심 가이드입니다. 최종적으로 3-Tier 아키텍처를 완성합니다. Spring Legacy(MVC) 예시는 KB IT's Your Life 교육과정 소스·출력화면 기반으로 작성되었습니다.",
 
   // 수업목표
   courseObjectives: [
