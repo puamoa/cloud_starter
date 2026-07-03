@@ -808,6 +808,10 @@ spring:
 
 ### 방법 B: 기존 Spring MVC 프로젝트 (Boot가 아닌 경우)
 
+> [!NOTE]
+> Spring Legacy(MVC) 예시는 **KB IT's Your Life** 교육과정 소스·출력화면 기반으로 작성되었습니다.  
+> 다른 환경에서는 패키지명, 설정 방식 등을 본인 프로젝트에 맞게 조정하세요.
+
 **build.gradle에 의존성 추가:**
 
 ```groovy

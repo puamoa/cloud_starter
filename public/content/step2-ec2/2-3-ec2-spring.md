@@ -73,6 +73,10 @@ estimatedCost: 크레딧 내 사용 가능 (비용 발생 가능)
 >
 > 이 실습에서는 두 방식을 모두 다룹니다. 본인 프로젝트에 맞는 방법을 선택하세요.
 
+> [!NOTE]
+> 이 가이드의 Spring Legacy(MVC) 예시는 **KB IT's Your Life** 교육과정 소스·출력화면 기반으로 작성되었습니다.  
+> 다른 교육과정이나 개인 프로젝트에서는 패키지명, 설정 방식 등이 다를 수 있으므로 본인 환경에 맞게 조정하세요.
+
 > [!TIP]
 > **Spring Boot도 외부 Tomcat에 WAR로 배포할 수 있습니다.**  
 > `SpringBootServletInitializer`를 상속하고 packaging을 `war`로 변경하면 됩니다.  
