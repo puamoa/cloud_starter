@@ -487,6 +487,54 @@ RDBMS (여러 테이블):          DynamoDB (단일 테이블):
 
 ---
 
+## 📚 참고: Spring에서 Amazon DynamoDB 사용하기
+
+> [!NOTE]
+> 이 실습(Step 10)에서는 서버리스 조합(Lambda + API Gateway + DynamoDB)을 학습하지만,  
+> 기존 Spring 프로젝트에서도 Amazon DynamoDB를 사용할 수 있습니다. 참고 수준으로 소개합니다.
+
+### Spring + Amazon DynamoDB 연동 방식
+
+AWS SDK for Java v2의 `DynamoDbClient` 또는 `DynamoDbEnhancedClient`를 사용하여 Spring에서 직접 Amazon DynamoDB를 조작할 수 있습니다.
+
+```groovy
+// build.gradle
+dependencies {
+    implementation 'software.amazon.awssdk:dynamodb'
+    implementation 'software.amazon.awssdk:dynamodb-enhanced'  // JPA 스타일 매핑
+}
+```
+
+```java
+// DynamoDbEnhancedClient 사용 예시 (JPA 스타일)
+@DynamoDbBean
+public class Item {
+    private String id;
+    private String name;
+    private Integer price;
+
+    @DynamoDbPartitionKey
+    public String getId() { return id; }
+    // getter/setter ...
+}
+```
+
+### 언제 Spring + Amazon DynamoDB를 선택할까?
+
+| 상황 | 권장 조합 |
+| ---- | --------- |
+| 서버리스 풀 스택, 간단한 API | Lambda + API Gateway + Amazon DynamoDB |
+| 기존 Spring 프로젝트에서 일부 데이터만 NoSQL로 | Spring + Amazon DynamoDB (SDK) |
+| Spring에서 관계형 + NoSQL 혼합 | Spring + Amazon RDS + Amazon DynamoDB |
+| 복잡한 비즈니스 로직 + 트랜잭션 | Spring + Amazon RDS (DynamoDB 부적합) |
+
+> [!TIP]
+> Spring + Amazon DynamoDB 조합은 **가능**하지만, 대부분의 웹 서비스에서는 Amazon RDS(관계형)가 더 적합합니다.  
+> Amazon DynamoDB는 대규모 트래픽, 단순 키 기반 조회, 서버리스 아키텍처에서 진가를 발휘합니다.  
+> "관계가 복잡한 데이터"에는 Amazon RDS를, "빠른 조회와 확장이 필요한 데이터"에는 Amazon DynamoDB를 선택하세요.
+
+---
+
 ## 다음 단계
 
 이 이론을 바탕으로 **Session 1: DynamoDB 테이블 생성 및 핵심 개념** 실습에서 NoSQL 데이터베이스를 직접 다뤄봅니다.
