@@ -23,6 +23,8 @@ Amazon RDS(관계형 DB)와의 차이를 이해하고, 테이블을 생성하여
 > 이 실습은 독립적으로 진행할 수 있습니다.  
 > AWS 계정만 있으면 바로 시작할 수 있습니다. 이 실습 수준(수십~수백 건 요청)에서는 비용이 미미합니다.
 
+<img src="/images/architecture/step10-2-serverless-architecture.png" alt="Step 10 서버리스 아키텍처 전체 구성도 (이 실습에서는 DynamoDB 부분을 다룹니다)" class="guide-img-lg" />
+
 ### 실습 흐름
 
 ```

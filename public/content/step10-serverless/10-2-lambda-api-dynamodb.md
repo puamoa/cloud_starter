@@ -26,6 +26,8 @@ API Gateway를 통해 외부에서 호출할 수 있는 CRUD API를 배포합니
 > 이 실습은 Step 10-1에서 생성한 `Items` 테이블을 사용합니다.  
 > 테이블이 없다면 태스크 0에서 생성합니다.
 
+<img src="/images/architecture/step10-2-serverless-architecture.png" alt="Step 10-2 서버리스 API 아키텍처 (EC2 기반 vs 서버리스 비교)" class="guide-img-lg" />
+
 ---
 
 ## 태스크 0: 선행 리소스 확인
