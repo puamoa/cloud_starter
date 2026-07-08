@@ -81,9 +81,9 @@ EC2 (항상 실행):
 Lambda (실행 시만):
 비용 █ █ ███ █ ██ █                   요청 시만 과금
      0시                            24시
-     (트래픽 없으면 $0)
+     (트래픽 없으면 과금 없음)
 
-Lambda 무료 티어: 월 100만 요청 + 40만 GB-초 무료
+Lambda 무료 한도: 월 100만 요청 + 40만 GB-초 (무료 플랜 적용 여부에 따라 달라짐)
 ```
 
 ---
@@ -403,7 +403,7 @@ RDBMS (여러 테이블):          DynamoDB (단일 테이블):
 
 ---
 
-## 7. Lambda 실행 모델
+## 7. AWS Lambda 실행 모델과 서버리스 API 아키텍처
 
 > [!CONCEPT] Lambda 실행 모델과 제약
 > **Lambda**는 이벤트에 의해 트리거되어 함수를 실행하는 서비스입니다. 실행 환경은 AWS가 자동으로 생성·관리하며, 동시 요청 수에 따라 자동으로 확장됩니다. 실행 시간과 메모리에 제한이 있습니다.
@@ -454,6 +454,11 @@ RDBMS (여러 테이블):          DynamoDB (단일 테이블):
 | **환경 변수**      | 4KB                          |
 | **페이로드**       | 동기 6MB / 비동기 256KB      |
 
+> [!TIP]
+> **Durable Functions (2025년 추가):**  
+> 일반 Lambda는 최대 15분이지만, Durable Functions를 사용하면 최대 1년까지 장시간 워크플로우를 실행할 수 있습니다.  
+> 상태를 자동으로 관리하며, 실패 시 자동 복구됩니다. 이 실습에서는 사용하지 않습니다.
+
 ### Lambda + API Gateway + DynamoDB 아키텍처
 
 ```
@@ -467,8 +472,38 @@ RDBMS (여러 테이블):          DynamoDB (단일 테이블):
 • 완전 서버리스 (서버 관리 제로)
 • 자동 확장 (수천 동시 요청 처리)
 • 사용한 만큼만 과금
-• 트래픽 없으면 비용 $0
+• 트래픽 없으면 과금 없음
 ```
+
+> [!CONCEPT] Amazon API Gateway의 역할
+> **API Gateway**는 클라이언트의 HTTP 요청을 받아 Lambda 함수로 전달하는 "문 앞의 안내원" 역할입니다.
+>
+> - **URL 라우팅**: `/items`, `/items/{id}` 등 경로별로 다른 처리
+> - **HTTP 메서드 분기**: GET, POST, DELETE 등을 구분
+> - **인증/인가**: API 키, IAM, Cognito 등으로 접근 제어
+> - **속도 제한**: 초당 요청 수 제한 (Throttling)
+> - **CORS 처리**: 브라우저의 교차 출처 요청 허용
+>
+> API Gateway에는 **REST API**(리소스/메서드 구조)와 **HTTP API**(간단한 프록시)가 있습니다.
+> Step 10-2에서는 REST API를 사용합니다.
+
+> [!CONCEPT] Lambda Proxy Integration
+> **Lambda Proxy Integration**은 API Gateway가 HTTP 요청의 모든 정보(메서드, 경로, 헤더, 본문, 쿼리 파라미터)를 Lambda의 `event` 객체로 그대로 전달하는 방식입니다.
+>
+> Lambda 함수는 다음 형식의 응답을 반환해야 합니다:
+>
+> ```json
+> {
+>   "statusCode": 200,
+>   "headers": { "Content-Type": "application/json" },
+>   "body": "{\"message\": \"success\"}"
+> }
+> ```
+>
+> Proxy Integration을 사용하지 않으면 요청/응답 매핑 템플릿을 직접 설정해야 하므로,
+> 특별한 이유가 없다면 Proxy Integration을 사용합니다.
+
+````
 
 ---
 
@@ -483,6 +518,7 @@ RDBMS (여러 테이블):          DynamoDB (단일 테이블):
 | CAP 정리              | C, A, P 중 2개만 동시 만족 가능              |
 | Eventually Consistent | 시간이 지나면 모든 노드가 일관된 상태 도달   |
 | DynamoDB              | PK+SK 기반 설계, Access Pattern 중심         |
+| API Gateway           | HTTP 요청을 Lambda로 라우팅하는 관문         |
 | Lambda                | 이벤트 기반 함수 실행, 최대 15분, 자동 확장  |
 
 ---
@@ -490,7 +526,7 @@ RDBMS (여러 테이블):          DynamoDB (단일 테이블):
 ## 📚 참고: Spring에서 Amazon DynamoDB 사용하기
 
 > [!NOTE]
-> 이 실습(Step 10)에서는 서버리스 조합(Lambda + API Gateway + DynamoDB)을 학습하지만,  
+> 이 실습(Step 10)에서는 서버리스 조합(Lambda + API Gateway + DynamoDB)을 학습하지만,
 > 기존 Spring 프로젝트에서도 Amazon DynamoDB를 사용할 수 있습니다. 참고 수준으로 소개합니다.
 
 ### Spring + Amazon DynamoDB 연동 방식
@@ -503,7 +539,7 @@ dependencies {
     implementation 'software.amazon.awssdk:dynamodb'
     implementation 'software.amazon.awssdk:dynamodb-enhanced'  // JPA 스타일 매핑
 }
-```
+````
 
 ```java
 // DynamoDbEnhancedClient 사용 예시 (JPA 스타일)
@@ -521,12 +557,12 @@ public class Item {
 
 ### 언제 Spring + Amazon DynamoDB를 선택할까?
 
-| 상황 | 권장 조합 |
-| ---- | --------- |
-| 서버리스 풀 스택, 간단한 API | Lambda + API Gateway + Amazon DynamoDB |
-| 기존 Spring 프로젝트에서 일부 데이터만 NoSQL로 | Spring + Amazon DynamoDB (SDK) |
-| Spring에서 관계형 + NoSQL 혼합 | Spring + Amazon RDS + Amazon DynamoDB |
-| 복잡한 비즈니스 로직 + 트랜잭션 | Spring + Amazon RDS (DynamoDB 부적합) |
+| 상황                                           | 권장 조합                              |
+| ---------------------------------------------- | -------------------------------------- |
+| 서버리스 풀 스택, 간단한 API                   | Lambda + API Gateway + Amazon DynamoDB |
+| 기존 Spring 프로젝트에서 일부 데이터만 NoSQL로 | Spring + Amazon DynamoDB (SDK)         |
+| Spring에서 관계형 + NoSQL 혼합                 | Spring + Amazon RDS + Amazon DynamoDB  |
+| 복잡한 비즈니스 로직 + 트랜잭션                | Spring + Amazon RDS (DynamoDB 부적합)  |
 
 > [!TIP]
 > Spring + Amazon DynamoDB 조합은 **가능**하지만, 대부분의 웹 서비스에서는 Amazon RDS(관계형)가 더 적합합니다.  
