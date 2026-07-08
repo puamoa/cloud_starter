@@ -192,7 +192,7 @@ DynamoDB 테이블의 Primary Key는 두 가지 유형이 있습니다:
 > 사용한 만큼만 과금되며, 트래픽이 없으면 $0입니다.  
 > 이 실습 수준(수십~수백 건)에서는 비용이 미미합니다.
 >
-> **주의:** On-demand 모드는 요청에 대한 무료 티어가 적용되지 않습니다 (저장 25GB만 Always Free).  
+> **주의:** On-demand 모드는 요청에 대한 무료 한도가 적용되지 않습니다 (저장 25GB만 무료).  
 > Provisioned 모드(25 RCU + 25 WCU)를 사용하면 월 약 2억 요청까지 무료이지만, 학습 목적에서는 On-demand가 관리가 편합니다.  
 > 자세한 요금은 [Amazon DynamoDB 요금 페이지](https://aws.amazon.com/dynamodb/pricing/)를 확인하세요.
 
@@ -209,7 +209,7 @@ AWS 콘솔에서 DynamoDB 테이블을 생성합니다.
 1. AWS Management Console에 로그인합니다.
 2. 리전을 **Asia Pacific (Seoul) ap-northeast-2**로 설정합니다.
 
-    <img src="/images/common/region-check.png" alt="리전 확인" class="guide-img-sm" />
+<img src="/images/common/region-check.png" alt="리전 확인" class="guide-img-sm" />
 
 > [!TIP]
 > 일부 AWS 서비스(IAM, CloudFront, Route 53 등)는 **글로벌 서비스**이므로 리전 선택 드롭다운이 비활성화되거나 "Global"로 표시됩니다.  
@@ -230,20 +230,20 @@ AWS 콘솔에서 DynamoDB 테이블을 생성합니다.
 > 학습 목적으로 각 설정의 의미를 확인하기 위해 **Customize settings**를 선택합니다.
 
 8. **Table class** 섹션:
-    - **DynamoDB Standard**를 선택합니다 (기본값).
+   - **DynamoDB Standard**를 선택합니다 (기본값).
 
 > [!TIP]
 > **Table class 옵션:**
 >
-> | 클래스 | 설명 | 적합 사례 |
-> | ------ | ---- | --------- |
-> | **DynamoDB Standard** | 범용. 읽기/쓰기 비용 중심 | 자주 접근하는 데이터 (대부분의 경우) |
+> | 클래스                   | 설명                                | 적합 사례                               |
+> | ------------------------ | ----------------------------------- | --------------------------------------- |
+> | **DynamoDB Standard**    | 범용. 읽기/쓰기 비용 중심           | 자주 접근하는 데이터 (대부분의 경우)    |
 > | **DynamoDB Standard-IA** | 저장 비용 저렴, 읽기/쓰기 비용 높음 | 드물게 접근하는 데이터 (로그, 아카이브) |
 >
 > 이 실습에서는 **Standard**를 사용합니다.
 
 9. **Read/write capacity settings** 섹션:
-    - **Capacity mode**: **On-demand**를 선택합니다.
+   - **Capacity mode**: **On-demand**를 선택합니다.
 
 > [!NOTE]
 > On-demand를 선택하면 아래에 **Maximum table throughput** (선택사항)과 **Warm throughput** 섹션이 표시됩니다.  
@@ -268,11 +268,11 @@ AWS 콘솔에서 DynamoDB 테이블을 생성합니다.
 > [!NOTE]
 > 암호화 옵션:
 >
-> | 옵션 | 비용 | 설명 |
-> | ---- | ---- | ---- |
-> | **AWS owned key** (기본) | 무료 | DynamoDB가 관리하는 키로 자동 암호화 |
-> | AWS managed key | KMS 비용 발생 | 사용자 계정의 KMS 키 사용 |
-> | Customer managed key | KMS 비용 발생 | 직접 생성·관리하는 KMS 키 |
+> | 옵션                     | 비용          | 설명                                 |
+> | ------------------------ | ------------- | ------------------------------------ |
+> | **AWS owned key** (기본) | 무료          | DynamoDB가 관리하는 키로 자동 암호화 |
+> | AWS managed key          | KMS 비용 발생 | 사용자 계정의 KMS 키 사용            |
+> | Customer managed key     | KMS 비용 발생 | 직접 생성·관리하는 KMS 키            |
 >
 > 학습 환경에서는 **AWS owned key**를 유지합니다.
 
@@ -306,7 +306,7 @@ AWS 콘솔에서 DynamoDB 테이블을 생성합니다.
 
 > [!WARNING]
 > 테이블 이름은 대소문자를 구분합니다. `Items`와 `items`는 다른 테이블입니다.  
-> 이후 실습(Step 10-2)에서 이 테이블을 사용하므로 정확히 `Items`로 생성하세요.  
+> 이후 실습(Step 10-2)에서 이 테이블을 사용하므로 정확히 `Items`로 생성하세요.
 
 > [!NOTE]
 > 초보자 실수 주의: Partition key 타입을 **String**으로 설정하세요.  
@@ -318,18 +318,18 @@ AWS 콘솔에서 DynamoDB 테이블을 생성합니다.
 16. 생성된 `Items` 테이블을 클릭합니다.
 17. **Settings** 탭의 **General information** 섹션에서 다음을 확인합니다:
 
-| 항목                     | 값                                                       |
-| ------------------------ | -------------------------------------------------------- |
-| Partition key            | id (S)                                                   |
-| Sort key                 | -                                                        |
-| Capacity mode            | On-demand                                                |
-| Table status             | Active                                                   |
-| Item count               | 0                                                        |
-| Table size               | 0 bytes                                                  |
-| Point-in-time recovery   | Off                                                      |
-| Deletion protection      | Off                                                      |
-| Resource-based policy    | Not active                                               |
-| Amazon Resource Name     | arn:aws:dynamodb:ap-northeast-2:xxxxxxxxxxxx:table/Items  |
+| 항목                   | 값                                                       |
+| ---------------------- | -------------------------------------------------------- |
+| Partition key          | id (S)                                                   |
+| Sort key               | -                                                        |
+| Capacity mode          | On-demand                                                |
+| Table status           | Active                                                   |
+| Item count             | 0                                                        |
+| Table size             | 0 bytes                                                  |
+| Point-in-time recovery | Off                                                      |
+| Deletion protection    | Off                                                      |
+| Resource-based policy  | Not active                                               |
+| Amazon Resource Name   | arn:aws:dynamodb:ap-northeast-2:xxxxxxxxxxxx:table/Items |
 
 > [!NOTE]
 > 테이블 상세 페이지에서는 **Settings**, **Indexes**, **Monitor**, **Global tables**, **Backups** 등 다양한 탭이 표시됩니다.  
@@ -342,7 +342,7 @@ AWS 콘솔에서 DynamoDB 테이블을 생성합니다.
 > [!TIP]
 > **Amazon DynamoDB 비용 안내:**
 >
-> - 이 실습에서 생성하는 테이블과 데이터 수준에서는 비용이 거의 발생하지 않습니다 ($0.01 미만 예상). 
+> - 이 실습에서 생성하는 테이블과 데이터 수준에서는 비용이 거의 발생하지 않습니다 ($0.01 미만 예상).
 > - 단, 인덱스(GSI) 추가, 대량 데이터 저장, 높은 트래픽 등 설계에 따라 비용이 달라질 수 있습니다.
 > - On-demand 모드는 요청당 과금, Provisioned 모드는 설정한 용량 기준 과금입니다.
 > - 정확한 요금은 [Amazon DynamoDB 요금 페이지](https://aws.amazon.com/dynamodb/pricing/)를 확인하세요.
@@ -437,11 +437,11 @@ AWS 콘솔에서 DynamoDB 테이블을 생성합니다.
 > [!OUTPUT]
 > Items returned: 3
 >
-> | id | name | price | category |
-> | --- | --- | --- | --- |
-> | item-001 | 노트북 | 1200000 | 전자제품 |
-> | item-002 | 키보드 | 150000 | 전자제품 |
-> | item-003 | 프로그래밍 책 | 35000 | 도서 |
+> | id       | name          | price   | category |
+> | -------- | ------------- | ------- | -------- |
+> | item-001 | 노트북        | 1200000 | 전자제품 |
+> | item-002 | 키보드        | 150000  | 전자제품 |
+> | item-003 | 프로그래밍 책 | 35000   | 도서     |
 
 ### 특정 항목 조회 (Query)
 
@@ -462,11 +462,13 @@ AWS 콘솔에서 DynamoDB 테이블을 생성합니다.
 > **항목 수정 방법:**
 >
 > **방법 1: Edit item 페이지에서 수정**
+>
 > - 항목의 `id` 링크를 클릭하거나, 체크박스 선택 후 **Actions** → [[Edit item]]
 > - Edit item 페이지에서 **Form** 뷰(속성별 개별 수정) 또는 **JSON view**(전체 JSON 편집)로 수정
 > - 수정 후 [[Save and close]] 클릭
 >
 > **방법 2: 목록에서 인라인 수정 (연필 아이콘)**
+>
 > - 항목 목록에서 수정할 속성 값 옆의 ✏️ (연필) 아이콘을 클릭
 > - "Edit Number" 또는 "Edit String" 팝업이 나타남
 > - 값을 수정하고 [[Save]] 클릭 (페이지 이동 없이 즉시 수정)
@@ -570,11 +572,13 @@ aws dynamodb scan \
 > 프로덕션에서는 가능한 `query`를 사용하고, `scan`은 피하세요.
 
 > [!TIP]
-> CLI 출력이 길어서 `(END)`로 멈추거나 `:`가 표시되면 페이저(less)가 활성화된 것입니다.  
+> CLI 출력이 길어서 `(END)`로 멈추거나 `:`가 표시되면 페이저(less)가 활성화된 것입니다.
+>
 > - **스페이스바**: 다음 페이지로 이동
 > - **q**: 페이저 종료 (터미널로 복귀)
 >
 > 페이저를 비활성화하려면 명령어 실행 전에 다음을 설정하세요:
+>
 > ```bash
 > export AWS_PAGER=""
 > ```
@@ -719,12 +723,12 @@ aws dynamodb get-item \
 > [!NOTE]
 > Default settings를 선택하면 아래 기본값이 자동 적용됩니다:
 >
-> | 설정 | 기본값 |
-> | ---- | ------ |
-> | Table class | DynamoDB Standard |
-> | Capacity mode | On-demand |
-> | Encryption | AWS owned key |
-> | Deletion protection | Off |
+> | 설정                | 기본값            |
+> | ------------------- | ----------------- |
+> | Table class         | DynamoDB Standard |
+> | Capacity mode       | On-demand         |
+> | Encryption          | AWS owned key     |
+> | Deletion protection | Off               |
 >
 > 태스크 3에서 각 옵션의 의미를 이미 학습했으므로, 여기서는 기본값으로 빠르게 생성합니다.
 
@@ -1003,7 +1007,7 @@ PK: deviceId (고유한 디바이스 ID)
 
 > [!NOTE]
 > **다음 세션 안내**  
-> Step 10-2에서는 AWS Lambda 함수를 생성하고, Amazon API Gateway와 Amazon DynamoDB를 연동하여 서버리스 REST API를 구축합니다.   
+> Step 10-2에서는 AWS Lambda 함수를 생성하고, Amazon API Gateway와 Amazon DynamoDB를 연동하여 서버리스 REST API를 구축합니다.  
 > `Items` 테이블을 그대로 사용하므로 삭제하지 마세요.
 
 ---
@@ -1014,19 +1018,19 @@ PK: deviceId (고유한 디바이스 ID)
 > Amazon DynamoDB는 이 실습 수준에서 비용이 거의 발생하지 않습니다.  
 > 다만, 인덱스(GSI) 추가나 대량 데이터 적재 시 비용이 달라질 수 있으므로 방치하지 마세요.
 >
-> | 리소스                    | 예상 비용 | 비고                      |
-> | ------------------------- | --------- | ------------------------- |
+> | 리소스                    | 예상 비용 | 비고                                    |
+> | ------------------------- | --------- | --------------------------------------- |
 > | Items 테이블 (On-demand)  | 미미      | 트래픽 없으면 요청 비용 $0, 저장만 과금 |
 > | Orders 테이블 (On-demand) | 미미      | 트래픽 없으면 요청 비용 $0, 저장만 과금 |
-> | 저장된 데이터 (수 KB)     | 미미      | 25GB 이하 시 저장 비용 무료 (Always Free) |
+> | 저장된 데이터 (수 KB)     | 미미      | 25GB 이하 시 저장 비용 무료             |
 
 ### 옵션 선택: 유지 vs 삭제
 
-| 옵션 | 설명 | 비용 | 권장 대상 |
-| ---- | ---- | ---- | --------- |
+| 옵션                     | 설명                     | 비용 | 권장 대상           |
+| ------------------------ | ------------------------ | ---- | ------------------- |
 | 옵션 A: 전체 유지 (권장) | Items + Orders 모두 유지 | 미미 | Step 10-2 진행 예정 |
-| 옵션 B: Orders만 삭제 | Orders 삭제, Items 유지 | 미미 | 정리하고 싶은 경우 |
-| 옵션 C: 전체 삭제 | Items + Orders 모두 삭제 | $0 | 실습 완전 종료 |
+| 옵션 B: Orders만 삭제    | Orders 삭제, Items 유지  | 미미 | 정리하고 싶은 경우  |
+| 옵션 C: 전체 삭제        | Items + Orders 모두 삭제 | 없음 | 실습 완전 종료      |
 
 > [!WARNING]
 > `Items` 테이블은 다음 실습(Step 10-2: Lambda + API Gateway + DynamoDB)에서 사용합니다.  
@@ -1048,8 +1052,8 @@ PK: deviceId (고유한 디바이스 ID)
 1. 상단 검색창에 `Resource Groups & Tag Editor`를 입력하고 선택합니다.
 2. 왼쪽 메뉴에서 **Tag Editor**를 선택합니다.
 3. 다음 조건으로 검색합니다:
-    - **Regions**: `ap-northeast-2`
-    - **Tag key**: `Session`, **Tag value**: `10-1`
+   - **Regions**: `ap-northeast-2`
+   - **Tag key**: `Session`, **Tag value**: `10-1`
 4. [[Search resources]] 버튼을 클릭합니다.
 
 > [!OUTPUT]
@@ -1063,9 +1067,11 @@ PK: deviceId (고유한 디바이스 ID)
 6. 왼쪽 메뉴에서 **Tables**를 클릭합니다.
 7. 테이블 목록에서 `Orders`를 클릭합니다.
 8. 우측 상단의 [[Delete]] 버튼을 클릭합니다.
-9. 확인 입력란에 `delete`를 입력합니다.
-10. ☐ **Create a backup of this table before deleting it** 체크를 해제합니다.
-11. [[Delete table]] 버튼을 클릭합니다.
+9. 삭제 대화상자에서 다음을 확인합니다:
+   - ✅ **Delete all CloudWatch alarms for Orders** (기본 체크, 유지)
+   - ☐ **Create an on-demand backup of Orders before deletion** (체크 해제 유지)
+10. 확인 입력란에 `confirm`을 입력합니다.
+11. [[Delete]]를 클릭합니다.
 
 > [!OUTPUT]
 > "Table is being deleted" 메시지가 표시되고, 잠시 후 목록에서 사라집니다.
@@ -1124,19 +1130,21 @@ Items와 Orders 테이블을 모두 삭제합니다.
 
 ### 단계 1: Items 테이블 삭제
 
-1. 상단 검색창에 `DynamoDB`를 입력하고 **DynamoDB** 서비스를 선택합니다.
-2. 왼쪽 메뉴에서 **Tables**를 클릭합니다.
-3. 테이블 목록에서 `Items`를 클릭합니다.
-4. 우측 상단의 [[Delete]] 버튼을 클릭합니다.
-5. 확인 입력란에 `delete`를 입력합니다.
-6. ☐ **Create a backup of this table before deleting it** 체크를 해제합니다.
-7. [[Delete table]] 버튼을 클릭합니다.
+18. 상단 검색창에 `DynamoDB`를 입력하고 **DynamoDB** 서비스를 선택합니다.
+19. 왼쪽 메뉴에서 **Tables**를 클릭합니다.
+20. 테이블 목록에서 `Items`를 클릭합니다.
+21. 우측 상단의 [[Delete]] 버튼을 클릭합니다.
+22. 삭제 대화상자에서 다음을 확인합니다:
+    - ✅ **Delete all CloudWatch alarms for Items** (기본 체크, 유지)
+    - ☐ **Create an on-demand backup of Items before deletion** (체크 해제 유지)
+23. 확인 입력란에 `confirm`을 입력합니다.
+24. [[Delete]]를 클릭합니다.
 
 ---
 
 ### 단계 2: Orders 테이블 삭제
 
-8. 같은 방법으로 `Orders` 테이블도 삭제합니다.
+25. 같은 방법으로 `Orders` 테이블도 삭제합니다.
 
 **또는 CLI로 일괄 삭제:**
 
@@ -1149,9 +1157,9 @@ aws dynamodb delete-table --table-name Orders --region ap-northeast-2
 
 ### 단계 3: Tag Editor로 최종 확인
 
-9. 상단 검색창에 `Resource Groups & Tag Editor`를 입력하고 선택합니다.
-10. 왼쪽 메뉴에서 **Tag Editor**를 선택합니다.
-11. Tag key: `Session`, Value: `10-1`로 검색합니다.
-12. 검색 결과가 없으면 모든 리소스가 정리된 것입니다.
+26. 상단 검색창에 `Resource Groups & Tag Editor`를 입력하고 선택합니다.
+27. 왼쪽 메뉴에서 **Tag Editor**를 선택합니다.
+28. Tag key: `Session`, Value: `10-1`로 검색합니다.
+29. 검색 결과가 없으면 모든 리소스가 정리된 것입니다.
 
 ✅ 옵션 C 완료: 모든 테이블을 삭제했습니다.
