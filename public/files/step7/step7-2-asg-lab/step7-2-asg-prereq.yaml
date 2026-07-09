@@ -1,42 +1,142 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: 'ASG Lab Prerequisites - VPC, Public Subnets (2 AZ), IGW, ALB, Target Group, Security Groups'
+Description: >
+  Step 7-2 Auto Scaling Lab Prerequisites.
+  Creates VPC, Public Subnets (2 AZs), IGW, Route Table, ALB, Target Group, Security Groups.
 
+# =============================================================================
+# Metadata - CloudFormation 콘솔에서 파라미터 입력 화면의 그룹과 순서를 지정합니다.
+# =============================================================================
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: 'Required Settings (Check Before Create)'
+        Parameters:
+          - ProjectName
+          - KeyPairName
+          - AppPort
+          - SSHAccessCidr
+      - Label:
+          default: 'Network CIDR (Keep Default)'
+        Parameters:
+          - VpcCidr
+          - PublicSubnetACidr
+          - PublicSubnetCCidr
+      - Label:
+          default: 'Tags (Keep Default)'
+        Parameters:
+          - CreatedByTag
+          - StepTag
+          - SessionTag
+
+# =============================================================================
+# Parameters - 스택 생성 시 사용자가 입력하거나 기본값을 사용할 수 있는 파라미터입니다.
+# =============================================================================
 Parameters:
+  # 리소스 이름 접두사 (예: asg-lab -> asg-lab-vpc, asg-lab-alb)
+  ProjectName:
+    Type: String
+    Default: asg-lab
+    Description: Resource name prefix
+    AllowedPattern: '[a-zA-Z][a-zA-Z0-9-]*'
+    ConstraintDescription: Must start with a letter, only letters, numbers, and hyphens allowed
+    MinLength: 1
+    MaxLength: 20
+
+  # EC2에 SSH 접속할 때 사용할 기존 Key Pair 이름
   KeyPairName:
     Type: AWS::EC2::KeyPair::KeyName
     Description: Name of an existing EC2 Key Pair for SSH access
 
+  # EC2에서 애플리케이션이 실행되는 포트
+  # Spring Boot: 8080 (기본값), Nginx: 80
+  AppPort:
+    Type: Number
+    Default: 8080
+    Description: Application port (Spring Boot=8080, Nginx=80)
+    AllowedValues:
+      - 80
+      - 8080
+
+  # SSH 접근을 허용할 IP 대역
+  SSHAccessCidr:
+    Type: String
+    Default: '0.0.0.0/0'
+    Description: SSH(22) access CIDR. Restrict to your IP recommended (e.g. 203.0.113.50/32)
+
+  # VPC CIDR 블록
+  VpcCidr:
+    Type: String
+    Default: '10.0.0.0/16'
+    Description: VPC CIDR block
+
+  # Public Subnet A (ap-northeast-2a) CIDR
+  PublicSubnetACidr:
+    Type: String
+    Default: '10.0.1.0/24'
+    Description: Public Subnet A CIDR (ap-northeast-2a)
+
+  # Public Subnet C (ap-northeast-2c) CIDR
+  PublicSubnetCCidr:
+    Type: String
+    Default: '10.0.2.0/24'
+    Description: Public Subnet C CIDR (ap-northeast-2c)
+
+  # 태그 값들
+  CreatedByTag:
+    Type: String
+    Default: cloudformation
+    Description: CreatedBy tag value
+
+  StepTag:
+    Type: String
+    Default: step7
+    Description: Step tag value
+
+  SessionTag:
+    Type: String
+    Default: '7-2'
+    Description: Session tag value
+
+# =============================================================================
+# Resources - 생성할 AWS 리소스
+# 이 스택은 ALB까지 포함합니다. Auto Scaling Group은 실습에서 수동 생성합니다.
+# =============================================================================
 Resources:
+  # ---------------------------------------------------------------------------
   # VPC
+  # ---------------------------------------------------------------------------
   VPC:
     Type: AWS::EC2::VPC
     Properties:
-      CidrBlock: 10.0.0.0/16
+      CidrBlock: !Ref VpcCidr
       EnableDnsSupport: true
       EnableDnsHostnames: true
       Tags:
         - Key: Name
-          Value: asg-lab-vpc
+          Value: !Sub '${ProjectName}-vpc'
         - Key: CreatedBy
-          Value: cloudformation
+          Value: !Ref CreatedByTag
         - Key: Step
-          Value: step7
+          Value: !Ref StepTag
         - Key: Session
-          Value: '7-2'
+          Value: !Ref SessionTag
 
+  # ---------------------------------------------------------------------------
   # Internet Gateway
+  # ---------------------------------------------------------------------------
   InternetGateway:
     Type: AWS::EC2::InternetGateway
     Properties:
       Tags:
         - Key: Name
-          Value: asg-lab-igw
+          Value: !Sub '${ProjectName}-igw'
         - Key: CreatedBy
-          Value: cloudformation
+          Value: !Ref CreatedByTag
         - Key: Step
-          Value: step7
+          Value: !Ref StepTag
         - Key: Session
-          Value: '7-2'
+          Value: !Ref SessionTag
 
   AttachGateway:
     Type: AWS::EC2::VPCGatewayAttachment
@@ -44,56 +144,62 @@ Resources:
       VpcId: !Ref VPC
       InternetGatewayId: !Ref InternetGateway
 
+  # ---------------------------------------------------------------------------
   # Public Subnet 1 (AZ-a)
+  # ---------------------------------------------------------------------------
   PublicSubnet1:
     Type: AWS::EC2::Subnet
     Properties:
       VpcId: !Ref VPC
-      CidrBlock: 10.0.1.0/24
+      CidrBlock: !Ref PublicSubnetACidr
       AvailabilityZone: !Select [0, !GetAZs '']
       MapPublicIpOnLaunch: true
       Tags:
         - Key: Name
-          Value: asg-lab-public-subnet-1
+          Value: !Sub '${ProjectName}-public-subnet-1'
         - Key: CreatedBy
-          Value: cloudformation
+          Value: !Ref CreatedByTag
         - Key: Step
-          Value: step7
+          Value: !Ref StepTag
         - Key: Session
-          Value: '7-2'
+          Value: !Ref SessionTag
 
-  # Public Subnet 2 (AZ-c)
+  # ---------------------------------------------------------------------------
+  # Public Subnet 2 (AZ-c) - ALB는 최소 2개 AZ에 배치해야 합니다.
+  # ---------------------------------------------------------------------------
   PublicSubnet2:
     Type: AWS::EC2::Subnet
     Properties:
       VpcId: !Ref VPC
-      CidrBlock: 10.0.2.0/24
+      CidrBlock: !Ref PublicSubnetCCidr
       AvailabilityZone: !Select [2, !GetAZs '']
       MapPublicIpOnLaunch: true
       Tags:
         - Key: Name
-          Value: asg-lab-public-subnet-2
+          Value: !Sub '${ProjectName}-public-subnet-2'
         - Key: CreatedBy
-          Value: cloudformation
+          Value: !Ref CreatedByTag
         - Key: Step
-          Value: step7
+          Value: !Ref StepTag
         - Key: Session
-          Value: '7-2'
+          Value: !Ref SessionTag
 
-  # Public Route Table
+  # ---------------------------------------------------------------------------
+  # Route Table + 라우팅 규칙 + 서브넷 연결
+  # ---------------------------------------------------------------------------
   PublicRouteTable:
     Type: AWS::EC2::RouteTable
     Properties:
       VpcId: !Ref VPC
       Tags:
         - Key: Name
-          Value: asg-lab-public-rt
+          Value: !Sub '${ProjectName}-public-rt'
         - Key: CreatedBy
-          Value: cloudformation
+          Value: !Ref CreatedByTag
         - Key: Step
-          Value: step7
+          Value: !Ref StepTag
         - Key: Session
-          Value: '7-2'
+          Value: !Ref SessionTag
 
   PublicRoute:
     Type: AWS::EC2::Route
@@ -115,11 +221,13 @@ Resources:
       SubnetId: !Ref PublicSubnet2
       RouteTableId: !Ref PublicRouteTable
 
-  # ALB Security Group
+  # ---------------------------------------------------------------------------
+  # ALB Security Group - 인터넷에서 HTTP(80) 트래픽을 허용합니다.
+  # ---------------------------------------------------------------------------
   ALBSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupDescription: Security group for ALB
+      GroupDescription: Allow HTTP from internet to ALB
       VpcId: !Ref VPC
       SecurityGroupIngress:
         - IpProtocol: tcp
@@ -129,48 +237,54 @@ Resources:
           Description: HTTP from anywhere
       Tags:
         - Key: Name
-          Value: asg-lab-alb-sg
+          Value: !Sub '${ProjectName}-alb-sg'
         - Key: CreatedBy
-          Value: cloudformation
+          Value: !Ref CreatedByTag
         - Key: Step
-          Value: step7
+          Value: !Ref StepTag
         - Key: Session
-          Value: '7-2'
+          Value: !Ref SessionTag
 
-  # EC2 Security Group
+  # ---------------------------------------------------------------------------
+  # EC2 Security Group - ALB에서 오는 AppPort 트래픽만 허용합니다.
+  # SSH는 SSHAccessCidr에서 허용합니다.
+  # ---------------------------------------------------------------------------
   EC2SecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupDescription: Security group for EC2 instances
+      GroupDescription: Allow AppPort from ALB and SSH access
       VpcId: !Ref VPC
       SecurityGroupIngress:
         - IpProtocol: tcp
-          FromPort: 8080
-          ToPort: 8080
+          FromPort: !Ref AppPort
+          ToPort: !Ref AppPort
           SourceSecurityGroupId: !Ref ALBSecurityGroup
-          Description: Application port from ALB
+          Description: Application port from ALB only
         - IpProtocol: tcp
           FromPort: 22
           ToPort: 22
-          CidrIp: 0.0.0.0/0
-          Description: SSH
+          CidrIp: !Ref SSHAccessCidr
+          Description: SSH access
       Tags:
         - Key: Name
-          Value: asg-lab-ec2-sg
+          Value: !Sub '${ProjectName}-ec2-sg'
         - Key: CreatedBy
-          Value: cloudformation
+          Value: !Ref CreatedByTag
         - Key: Step
-          Value: step7
+          Value: !Ref StepTag
         - Key: Session
-          Value: '7-2'
+          Value: !Ref SessionTag
 
-  # Target Group
+  # ---------------------------------------------------------------------------
+  # Target Group - ALB가 트래픽을 전달할 대상 그룹입니다.
+  # Auto Scaling Group이 이 Target Group에 인스턴스를 자동 등록합니다.
+  # ---------------------------------------------------------------------------
   TargetGroup:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties:
-      Name: starter-app-tg
+      Name: !Sub '${ProjectName}-tg'
       Protocol: HTTP
-      Port: 8080
+      Port: !Ref AppPort
       VpcId: !Ref VPC
       TargetType: instance
       HealthCheckProtocol: HTTP
@@ -181,19 +295,22 @@ Resources:
       UnhealthyThresholdCount: 2
       Tags:
         - Key: Name
-          Value: asg-lab-tg
+          Value: !Sub '${ProjectName}-tg'
         - Key: CreatedBy
-          Value: cloudformation
+          Value: !Ref CreatedByTag
         - Key: Step
-          Value: step7
+          Value: !Ref StepTag
         - Key: Session
-          Value: '7-2'
+          Value: !Ref SessionTag
 
-  # Application Load Balancer
+  # ---------------------------------------------------------------------------
+  # Application Load Balancer - Internet-facing ALB입니다.
+  # 2개 AZ(Public Subnet)에 걸쳐 배치됩니다.
+  # ---------------------------------------------------------------------------
   ALB:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
     Properties:
-      Name: asg-lab-alb
+      Name: !Sub '${ProjectName}-alb'
       Scheme: internet-facing
       Type: application
       Subnets:
@@ -203,15 +320,17 @@ Resources:
         - !Ref ALBSecurityGroup
       Tags:
         - Key: Name
-          Value: asg-lab-alb
+          Value: !Sub '${ProjectName}-alb'
         - Key: CreatedBy
-          Value: cloudformation
+          Value: !Ref CreatedByTag
         - Key: Step
-          Value: step7
+          Value: !Ref StepTag
         - Key: Session
-          Value: '7-2'
+          Value: !Ref SessionTag
 
-  # ALB Listener
+  # ---------------------------------------------------------------------------
+  # ALB Listener - HTTP:80으로 들어오는 요청을 Target Group으로 전달합니다.
+  # ---------------------------------------------------------------------------
   ALBListener:
     Type: AWS::ElasticLoadBalancingV2::Listener
     Properties:
@@ -222,25 +341,51 @@ Resources:
         - Type: forward
           TargetGroupArn: !Ref TargetGroup
 
+# =============================================================================
+# Outputs - 스택 생성 후 확인할 수 있는 주요 값입니다.
+# Auto Scaling Group 생성 시 Target Group ARN과 서브넷 ID가 필요합니다.
+# =============================================================================
 Outputs:
   VPCId:
     Description: VPC ID
     Value: !Ref VPC
+    Export:
+      Name: !Sub '${ProjectName}-vpc-id'
+
   PublicSubnet1Id:
-    Description: Public Subnet 1 ID
+    Description: Public Subnet 1 ID (AZ-a)
     Value: !Ref PublicSubnet1
+    Export:
+      Name: !Sub '${ProjectName}-public-subnet-1-id'
+
   PublicSubnet2Id:
-    Description: Public Subnet 2 ID
+    Description: Public Subnet 2 ID (AZ-c)
     Value: !Ref PublicSubnet2
+    Export:
+      Name: !Sub '${ProjectName}-public-subnet-2-id'
+
   ALBSecurityGroupId:
     Description: ALB Security Group ID
     Value: !Ref ALBSecurityGroup
+    Export:
+      Name: !Sub '${ProjectName}-alb-sg-id'
+
   EC2SecurityGroupId:
     Description: EC2 Security Group ID
     Value: !Ref EC2SecurityGroup
+    Export:
+      Name: !Sub '${ProjectName}-ec2-sg-id'
+
   TargetGroupArn:
-    Description: Target Group ARN
+    Description: Target Group ARN (use in Auto Scaling Group)
     Value: !Ref TargetGroup
+    Export:
+      Name: !Sub '${ProjectName}-tg-arn'
+
   ALBDNSName:
     Description: ALB DNS Name
     Value: !GetAtt ALB.DNSName
+
+  AppPort:
+    Description: Application listening port
+    Value: !Ref AppPort

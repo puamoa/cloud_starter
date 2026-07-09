@@ -1,100 +1,217 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: 'ALB Lab Prerequisites - VPC, Public Subnets (2 AZ), IGW, EC2 Instance with Nginx'
+Description: >
+  Step 7-1 ALB Lab Prerequisites.
+  Creates VPC, Public Subnets (2 AZs), IGW, Route Table, Security Group, EC2 Instance with Nginx.
 
+# =============================================================================
+# Metadata - CloudFormation 콘솔에서 파라미터 입력 화면의 그룹과 순서를 지정합니다.
+# 사용자가 스택을 생성할 때 어떤 값을 먼저 확인해야 하는지 시각적으로 안내합니다.
+# =============================================================================
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: 'Required Settings (Check Before Create)'
+        Parameters:
+          - ProjectName
+          - KeyPairName
+          - AppPort
+          - SSHAccessCidr
+      - Label:
+          default: 'Network CIDR (Keep Default)'
+        Parameters:
+          - VpcCidr
+          - PublicSubnetACidr
+          - PublicSubnetCCidr
+      - Label:
+          default: 'Tags (Keep Default)'
+        Parameters:
+          - CreatedByTag
+          - StepTag
+          - SessionTag
+
+# =============================================================================
+# Parameters - 스택 생성 시 사용자가 입력하거나 기본값을 사용할 수 있는 파라미터입니다.
+# 기본값이 세팅되어 있으므로 대부분 변경 없이 생성 가능합니다.
+# =============================================================================
 Parameters:
+  # 리소스 이름 접두사 (예: alb-lab -> alb-lab-vpc, alb-lab-ec2-sg)
+  ProjectName:
+    Type: String
+    Default: alb-lab
+    Description: Resource name prefix
+    AllowedPattern: '[a-zA-Z][a-zA-Z0-9-]*'
+    ConstraintDescription: Must start with a letter, only letters, numbers, and hyphens allowed
+    MinLength: 1
+    MaxLength: 20
+
+  # EC2에 SSH 접속할 때 사용할 기존 Key Pair 이름
   KeyPairName:
     Type: AWS::EC2::KeyPair::KeyName
     Description: Name of an existing EC2 Key Pair for SSH access
 
+  # EC2에서 애플리케이션이 실행되는 포트
+  # Spring Boot: 8080 (기본값), Nginx: 80
+  AppPort:
+    Type: Number
+    Default: 8080
+    Description: Application port (Spring Boot=8080, Nginx=80)
+    AllowedValues:
+      - 80
+      - 8080
+
+  # SSH 접근을 허용할 IP 대역. 보안을 위해 본인 IP로 제한하는 것을 권장합니다.
+  # 예: 203.0.113.50/32 (본인 IP만 허용)
+  SSHAccessCidr:
+    Type: String
+    Default: '0.0.0.0/0'
+    Description: SSH(22) access CIDR. Restrict to your IP recommended (e.g. 203.0.113.50/32)
+
+  # VPC CIDR 블록. 기본값은 10.0.0.0/16 (65,536개 IP)
+  VpcCidr:
+    Type: String
+    Default: '10.0.0.0/16'
+    Description: VPC CIDR block
+
+  # Public Subnet A (ap-northeast-2a) CIDR. ALB와 EC2가 배치됩니다.
+  PublicSubnetACidr:
+    Type: String
+    Default: '10.0.1.0/24'
+    Description: Public Subnet A CIDR (ap-northeast-2a)
+
+  # Public Subnet C (ap-northeast-2c) CIDR. ALB의 두 번째 AZ에 사용됩니다.
+  PublicSubnetCCidr:
+    Type: String
+    Default: '10.0.2.0/24'
+    Description: Public Subnet C CIDR (ap-northeast-2c)
+
+  # 태그: 리소스 생성자 식별
+  CreatedByTag:
+    Type: String
+    Default: cloudformation
+    Description: CreatedBy tag value
+
+  # 태그: 어떤 Step에서 생성한 리소스인지 식별
+  StepTag:
+    Type: String
+    Default: step7
+    Description: Step tag value
+
+  # 태그: 어떤 Session에서 생성한 리소스인지 식별
+  SessionTag:
+    Type: String
+    Default: '7-1'
+    Description: Session tag value
+
+# =============================================================================
+# Resources - 생성할 AWS 리소스
+# VPC > IGW > Subnet(2개) > Route Table > Security Group > EC2 순서로 정의합니다.
+# =============================================================================
 Resources:
-  # VPC
+  # ---------------------------------------------------------------------------
+  # VPC - 실습용 가상 네트워크. 모든 리소스가 이 VPC 안에 생성됩니다.
+  # ---------------------------------------------------------------------------
   VPC:
     Type: AWS::EC2::VPC
     Properties:
-      CidrBlock: 10.0.0.0/16
+      CidrBlock: !Ref VpcCidr
       EnableDnsSupport: true
       EnableDnsHostnames: true
       Tags:
         - Key: Name
-          Value: alb-lab-vpc
+          Value: !Sub '${ProjectName}-vpc'
         - Key: CreatedBy
-          Value: cloudformation
+          Value: !Ref CreatedByTag
         - Key: Step
-          Value: step7
+          Value: !Ref StepTag
         - Key: Session
-          Value: '7-1'
+          Value: !Ref SessionTag
 
-  # Internet Gateway
+  # ---------------------------------------------------------------------------
+  # Internet Gateway - VPC가 인터넷과 통신하기 위한 관문입니다.
+  # Internet-facing ALB를 사용하려면 반드시 필요합니다.
+  # ---------------------------------------------------------------------------
   InternetGateway:
     Type: AWS::EC2::InternetGateway
     Properties:
       Tags:
         - Key: Name
-          Value: alb-lab-igw
+          Value: !Sub '${ProjectName}-igw'
         - Key: CreatedBy
-          Value: cloudformation
+          Value: !Ref CreatedByTag
         - Key: Step
-          Value: step7
+          Value: !Ref StepTag
         - Key: Session
-          Value: '7-1'
+          Value: !Ref SessionTag
 
+  # IGW를 VPC에 연결합니다. 연결하지 않으면 IGW가 있어도 인터넷 통신이 안 됩니다.
   AttachGateway:
     Type: AWS::EC2::VPCGatewayAttachment
     Properties:
       VpcId: !Ref VPC
       InternetGatewayId: !Ref InternetGateway
 
-  # Public Subnet 1 (AZ-a)
+  # ---------------------------------------------------------------------------
+  # Public Subnet 1 (AZ-a) - EC2 인스턴스가 배치되는 서브넷입니다.
+  # MapPublicIpOnLaunch: true → 이 서브넷에 생성된 EC2에 자동으로 Public IP 부여
+  # ---------------------------------------------------------------------------
   PublicSubnet1:
     Type: AWS::EC2::Subnet
     Properties:
       VpcId: !Ref VPC
-      CidrBlock: 10.0.1.0/24
+      CidrBlock: !Ref PublicSubnetACidr
       AvailabilityZone: !Select [0, !GetAZs '']
       MapPublicIpOnLaunch: true
       Tags:
         - Key: Name
-          Value: alb-lab-public-subnet-1
+          Value: !Sub '${ProjectName}-public-subnet-1'
         - Key: CreatedBy
-          Value: cloudformation
+          Value: !Ref CreatedByTag
         - Key: Step
-          Value: step7
+          Value: !Ref StepTag
         - Key: Session
-          Value: '7-1'
+          Value: !Ref SessionTag
 
-  # Public Subnet 2 (AZ-c)
+  # ---------------------------------------------------------------------------
+  # Public Subnet 2 (AZ-c) - ALB는 최소 2개 AZ에 배치해야 합니다.
+  # EC2가 없어도 ALB 배치를 위해 두 번째 AZ 서브넷이 필요합니다.
+  # ---------------------------------------------------------------------------
   PublicSubnet2:
     Type: AWS::EC2::Subnet
     Properties:
       VpcId: !Ref VPC
-      CidrBlock: 10.0.2.0/24
+      CidrBlock: !Ref PublicSubnetCCidr
       AvailabilityZone: !Select [2, !GetAZs '']
       MapPublicIpOnLaunch: true
       Tags:
         - Key: Name
-          Value: alb-lab-public-subnet-2
+          Value: !Sub '${ProjectName}-public-subnet-2'
         - Key: CreatedBy
-          Value: cloudformation
+          Value: !Ref CreatedByTag
         - Key: Step
-          Value: step7
+          Value: !Ref StepTag
         - Key: Session
-          Value: '7-1'
+          Value: !Ref SessionTag
 
-  # Public Route Table
+  # ---------------------------------------------------------------------------
+  # Route Table - 서브넷의 트래픽 경로를 정의합니다.
+  # 0.0.0.0/0 → IGW 규칙을 추가하여 인터넷으로 나갈 수 있게 합니다.
+  # ---------------------------------------------------------------------------
   PublicRouteTable:
     Type: AWS::EC2::RouteTable
     Properties:
       VpcId: !Ref VPC
       Tags:
         - Key: Name
-          Value: alb-lab-public-rt
+          Value: !Sub '${ProjectName}-public-rt'
         - Key: CreatedBy
-          Value: cloudformation
+          Value: !Ref CreatedByTag
         - Key: Step
-          Value: step7
+          Value: !Ref StepTag
         - Key: Session
-          Value: '7-1'
+          Value: !Ref SessionTag
 
+  # 모든 외부 트래픽(0.0.0.0/0)을 IGW로 보내는 라우팅 규칙
   PublicRoute:
     Type: AWS::EC2::Route
     DependsOn: AttachGateway
@@ -103,50 +220,62 @@ Resources:
       DestinationCidrBlock: 0.0.0.0/0
       GatewayId: !Ref InternetGateway
 
+  # Subnet 1에 Route Table을 연결합니다.
   PublicSubnet1RouteTableAssociation:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
       SubnetId: !Ref PublicSubnet1
       RouteTableId: !Ref PublicRouteTable
 
+  # Subnet 2에 Route Table을 연결합니다.
   PublicSubnet2RouteTableAssociation:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
       SubnetId: !Ref PublicSubnet2
       RouteTableId: !Ref PublicRouteTable
 
-  # EC2 Security Group
+  # ---------------------------------------------------------------------------
+  # EC2 Security Group - EC2 인스턴스의 인바운드 트래픽을 제어합니다.
+  # SSH(22)와 애플리케이션 포트(AppPort)를 허용합니다.
+  # 실습 중 태스크 6에서 AppPort의 Source를 ALB SG로 변경합니다.
+  # ---------------------------------------------------------------------------
   EC2SecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupDescription: Security group for EC2 instances in ALB lab
+      GroupDescription: Allow SSH and application port access
       VpcId: !Ref VPC
       SecurityGroupIngress:
         - IpProtocol: tcp
           FromPort: 22
           ToPort: 22
-          CidrIp: 0.0.0.0/0
-          Description: SSH
+          CidrIp: !Ref SSHAccessCidr
+          Description: SSH access
         - IpProtocol: tcp
-          FromPort: 8080
-          ToPort: 8080
+          FromPort: !Ref AppPort
+          ToPort: !Ref AppPort
           CidrIp: 0.0.0.0/0
-          Description: Application port
+          Description: Application port access
       Tags:
         - Key: Name
-          Value: alb-lab-ec2-sg
+          Value: !Sub '${ProjectName}-ec2-sg'
         - Key: CreatedBy
-          Value: cloudformation
+          Value: !Ref CreatedByTag
         - Key: Step
-          Value: step7
+          Value: !Ref StepTag
         - Key: Session
-          Value: '7-1'
+          Value: !Ref SessionTag
 
-  # EC2 Instance with Nginx
+  # ---------------------------------------------------------------------------
+  # EC2 Instance - Nginx를 설치하여 웹 서버를 구동합니다.
+  # UserData 스크립트가 인스턴스 시작 시 자동으로 Nginx를 설치/설정합니다.
+  # AppPort 파라미터에 따라 Nginx 리스닝 포트가 결정됩니다.
+  # ---------------------------------------------------------------------------
   EC2Instance:
     Type: AWS::EC2::Instance
     Properties:
       InstanceType: t2.micro
+      # SSM Parameter Store에서 최신 Amazon Linux 2023 AMI ID를 자동으로 가져옵니다.
+      # 리전에 관계없이 항상 최신 AMI를 사용할 수 있습니다.
       ImageId: !Sub '{{resolve:ssm:/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-x86_64}}'
       KeyName: !Ref KeyPairName
       SubnetId: !Ref PublicSubnet1
@@ -155,37 +284,65 @@ Resources:
       UserData:
         Fn::Base64: !Sub |
           #!/bin/bash
+          # Nginx 설치 및 설정 스크립트
           yum update -y
           yum install -y nginx
+
+          # AppPort가 80이 아닌 경우 Nginx 설정을 변경합니다.
+          if [ "${AppPort}" != "80" ]; then
+            sed -i 's/listen       80;/listen       ${AppPort};/' /etc/nginx/nginx.conf
+            sed -i 's/listen       \[::]:80;/listen       [::]:${AppPort};/' /etc/nginx/nginx.conf
+          fi
+
           systemctl start nginx
           systemctl enable nginx
-          # Configure nginx to listen on port 8080
-          sed -i 's/listen       80;/listen       8080;/' /etc/nginx/nginx.conf
-          sed -i 's/listen       \[::]:80;/listen       [::]:8080;/' /etc/nginx/nginx.conf
-          systemctl restart nginx
       Tags:
         - Key: Name
-          Value: alb-lab-ec2
+          Value: !Sub '${ProjectName}-ec2'
         - Key: CreatedBy
-          Value: cloudformation
+          Value: !Ref CreatedByTag
         - Key: Step
-          Value: step7
+          Value: !Ref StepTag
         - Key: Session
-          Value: '7-1'
+          Value: !Ref SessionTag
 
+# =============================================================================
+# Outputs - 스택 생성 후 확인할 수 있는 주요 값입니다.
+# 다른 스택에서 참조하거나, 실습 중 콘솔에서 빠르게 확인할 때 사용합니다.
+# =============================================================================
 Outputs:
   VPCId:
     Description: VPC ID
     Value: !Ref VPC
+    Export:
+      Name: !Sub '${ProjectName}-vpc-id'
+
   PublicSubnet1Id:
-    Description: Public Subnet 1 ID
+    Description: Public Subnet 1 ID (AZ-a)
     Value: !Ref PublicSubnet1
+    Export:
+      Name: !Sub '${ProjectName}-public-subnet-1-id'
+
   PublicSubnet2Id:
-    Description: Public Subnet 2 ID
+    Description: Public Subnet 2 ID (AZ-c)
     Value: !Ref PublicSubnet2
+    Export:
+      Name: !Sub '${ProjectName}-public-subnet-2-id'
+
   EC2SecurityGroupId:
     Description: EC2 Security Group ID
     Value: !Ref EC2SecurityGroup
+    Export:
+      Name: !Sub '${ProjectName}-ec2-sg-id'
+
   EC2InstanceId:
     Description: EC2 Instance ID
     Value: !Ref EC2Instance
+
+  EC2PublicIP:
+    Description: EC2 Public IP Address
+    Value: !GetAtt EC2Instance.PublicIp
+
+  AppPort:
+    Description: Application listening port
+    Value: !Ref AppPort
