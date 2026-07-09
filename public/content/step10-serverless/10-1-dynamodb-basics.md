@@ -210,20 +210,25 @@ AWS 콘솔에서 DynamoDB 테이블을 생성합니다.
 
 1. AWS Management Console에 로그인합니다.
 2. 리전을 **Asia Pacific (Seoul) ap-northeast-2**로 설정합니다.
-
-<img src="/images/common/region-check.png" alt="리전 확인" class="guide-img-sm" />
+   <img src="/images/common/region-check.png" alt="리전 확인" class="guide-img-sm" />
 
 > [!TIP]
 > 일부 AWS 서비스(IAM, CloudFront, Route 53 등)는 **글로벌 서비스**이므로 리전 선택 드롭다운이 비활성화되거나 "Global"로 표시됩니다.  
 > 이 실습에서 사용하는 서비스는 리전 기반이므로 반드시 올바른 리전이 선택되어 있는지 확인하세요.
 
 3. 상단 검색창에 `DynamoDB`를 입력하고 선택합니다.
+    <img src="/images/step10/10-1-step3-dynamodb-console.png" alt="DynamoDB 콘솔 검색" class="guide-img-sm" />
+
 4. 왼쪽 메뉴에서 **Tables**를 클릭합니다.
+    <img src="/images/step10/10-1-step4-tables-menu.png" alt="Tables 메뉴" class="guide-img-sm" />
+
 5. [[Create table]]을 클릭합니다.
 6. 다음을 설정합니다:
    - **Table name**: `Items`
    - **Partition key**: `id` (타입: **String**)
    - **Sort key**: 비워둡니다 (단순 기본 키 사용)
+
+    <img src="/images/step10/10-1-step6-table-settings.png" alt="테이블 기본 설정" class="guide-img-sm" />
 
 7. **Table settings** 섹션에서 **Customize settings**를 선택합니다.
 
@@ -231,8 +236,9 @@ AWS 콘솔에서 DynamoDB 테이블을 생성합니다.
 > **Default settings**를 선택하면 아래 세부 항목들이 숨겨지고 기본값으로 생성됩니다.  
 > 학습 목적으로 각 설정의 의미를 확인하기 위해 **Customize settings**를 선택합니다.
 
-8. **Table class** 섹션:
-   - **DynamoDB Standard**를 선택합니다 (기본값).
+8.  **Table class** 섹션: - **DynamoDB Standard**를 선택합니다 (기본값).
+
+    <img src="/images/step10/10-1-step8-table-class.png" alt="Table class 설정" class="guide-img-sm" />
 
 > [!TIP]
 > **Table class 옵션:**
@@ -244,8 +250,8 @@ AWS 콘솔에서 DynamoDB 테이블을 생성합니다.
 >
 > 이 실습에서는 **Standard**를 사용합니다.
 
-9. **Read/write capacity settings** 섹션:
-   - **Capacity mode**: **On-demand**를 선택합니다.
+9.  **Read/write capacity settings** 섹션:
+    - **Capacity mode**: **On-demand**를 선택합니다.
 
 > [!NOTE]
 > On-demand를 선택하면 아래에 **Maximum table throughput** (선택사항)과 **Warm throughput** 섹션이 표시됩니다.  
@@ -259,6 +265,8 @@ AWS 콘솔에서 DynamoDB 테이블을 생성합니다.
 
 10. **Secondary indexes** 섹션:
     - 이 실습에서는 인덱스를 추가하지 않습니다. 기본값(No indexes)을 유지합니다.
+
+    <img src="/images/step10/10-1-step10-secondary-indexes.png" alt="Secondary indexes 설정" class="guide-img-sm" />
 
 > [!TIP]
 > GSI(Global Secondary Index)를 추가하면 파티션 키가 아닌 속성으로도 쿼리할 수 있습니다.  
@@ -281,6 +289,8 @@ AWS 콘솔에서 DynamoDB 테이블을 생성합니다.
 12. **Deletion protection** 섹션:
     - 기본값(꺼짐)을 유지합니다.
 
+    <img src="/images/step10/10-1-step12-deletion-protection.png" alt="Deletion protection 설정" class="guide-img-sm" />
+
 > [!TIP]
 > Deletion protection을 켜면 실수로 테이블을 삭제하는 것을 방지합니다.  
 > 프로덕션 환경에서는 권장하지만, 학습 환경에서는 삭제 편의를 위해 꺼둡니다.
@@ -294,6 +304,8 @@ AWS 콘솔에서 DynamoDB 테이블을 생성합니다.
     - **Key**: `Session`, **Value**: `10-1`
 
 15. [[Create table]] 버튼을 클릭합니다.
+
+    <img src="/images/step10/10-1-step15-create-table-button.png" alt="Create table 버튼" class="guide-img-sm" />
 
 > [!OUTPUT]
 > 테이블 상태가 "Creating"에서 "Active"로 변경됩니다 (약 10~30초 소요).
@@ -318,6 +330,9 @@ AWS 콘솔에서 DynamoDB 테이블을 생성합니다.
 ### 테이블 상세 정보 확인
 
 16. 생성된 `Items` 테이블을 클릭합니다.
+
+    <img src="/images/step10/10-1-step16-table-detail.png" alt="테이블 상세 정보" class="guide-img-sm" />
+
 17. **Settings** 탭의 **General information** 섹션에서 다음을 확인합니다:
 
 | 항목                   | 값                                                       |
@@ -364,9 +379,14 @@ AWS 콘솔에서 DynamoDB 테이블을 생성합니다.
 
 ### 항목 생성 (Create)
 
-18. `Items` 테이블 상세 페이지에서 **Explore table items**를 클릭합니다.
+18. `Items` 테이블 상세 페이지에서 [[Explore table items]]를 클릭합니다.
+    <img src="/images/step10/10-1-step18-explore-items.png" alt="Explore table items" class="guide-img-sm" />
+
 19. [[Create item]]을 클릭합니다.
+    <img src="/images/step10/10-1-step19-create-item.png" alt="Create item" class="guide-img-sm" />
 20. **JSON view**를 활성화합니다.
+    <img src="/images/step10/10-1-step20-json-view.png" alt="JSON view 활성화" class="guide-img-sm" />
+
 21. 다음 JSON을 입력합니다:
 
 ```json
@@ -390,6 +410,7 @@ AWS 콘솔에서 DynamoDB 테이블을 생성합니다.
 ```
 
 22. [[Create item]]을 클릭합니다.
+    <img src="/images/step10/10-1-step22-create-item-confirm.png" alt="Create item 완료" class="guide-img-sm" />
 
 > [!CONCEPT] DynamoDB 데이터 타입
 >
@@ -416,6 +437,8 @@ AWS 콘솔에서 DynamoDB 테이블을 생성합니다.
 }
 ```
 
+<img src="/images/step10/10-1-step23-item002-json.png" alt="item-002 생성 (JSON view)" class="guide-img-sm" />
+
 ```json
 {
   "id": { "S": "item-003" },
@@ -426,6 +449,8 @@ AWS 콘솔에서 DynamoDB 테이블을 생성합니다.
 }
 ```
 
+<img src="/images/step10/10-1-step23-item003-json.png" alt="item-003 생성 (JSON view)" class="guide-img-sm" />
+
 > [!NOTE]
 > 각 항목이 서로 다른 속성을 가질 수 있습니다.  
 > item-001에는 `inStock`, item-002에는 `color`, item-003에는 `author`가 있습니다.  
@@ -434,6 +459,7 @@ AWS 콘솔에서 DynamoDB 테이블을 생성합니다.
 ### 항목 조회 (Scan)
 
 24. **Explore table items** 페이지에서 [[Run]]을 클릭합니다 (기본 Scan).
+    <img src="/images/step10/10-1-step24-scan-result.png" alt="Scan 조회 결과 (3개 항목)" class="guide-img-sm" />
 25. 3개의 항목이 표시됩니다.
 
 > [!OUTPUT]
@@ -449,6 +475,7 @@ AWS 콘솔에서 DynamoDB 테이블을 생성합니다.
 
 26. **Scan or query items** 섹션에서 **Query**를 선택합니다.
 27. **Partition key (id)**: `item-001` 입력
+    <img src="/images/step10/10-1-step27-query-partition-key.png" alt="Query - Partition key 입력" class="guide-img-sm" />
 28. [[Run]]을 클릭합니다.
 
 > [!OUTPUT]
@@ -458,7 +485,10 @@ AWS 콘솔에서 DynamoDB 테이블을 생성합니다.
 
 29. 항목 목록에서 `item-001`을 클릭합니다.
 30. `price` 속성의 값을 `1100000`으로 변경합니다.
+    <img src="/images/step10/10-1-step30-update-price.png" alt="price 값 변경" class="guide-img-sm" />
+
 31. [[Save and close]]를 클릭합니다.
+    <img src="/images/step10/10-1-step31-save-close.png" alt="Save and close" class="guide-img-sm" />
 
 > [!TIP]
 > **항목 수정 방법:**
@@ -469,11 +499,15 @@ AWS 콘솔에서 DynamoDB 테이블을 생성합니다.
 > - Edit item 페이지에서 **Form** 뷰(속성별 개별 수정) 또는 **JSON view**(전체 JSON 편집)로 수정
 > - 수정 후 [[Save and close]] 클릭
 >
+> <img src="/images/step10/10-1-step31-edit-item-page.png" alt="Edit item 페이지" class="guide-img-sm" />
+>
 > **방법 2: 목록에서 인라인 수정 (연필 아이콘)**
 >
 > - 항목 목록에서 수정할 속성 값 옆의 ✏️ (연필) 아이콘을 클릭
 > - "Edit Number" 또는 "Edit String" 팝업이 나타남
 > - 값을 수정하고 [[Save]] 클릭 (페이지 이동 없이 즉시 수정)
+>
+> <img src="/images/step10/10-1-step31-inline-edit.png" alt="인라인 수정 (연필 아이콘)" class="guide-img-sm" />
 >
 > 간단한 값 1개만 바꿀 때는 연필 아이콘, 여러 속성을 동시에 수정하거나 속성을 추가/삭제할 때는 Edit item 페이지를 사용하세요.
 
@@ -481,7 +515,11 @@ AWS 콘솔에서 DynamoDB 테이블을 생성합니다.
 
 32. 항목 목록에서 `item-003`을 체크박스로 선택합니다.
 33. **Actions** → [[Delete items]]를 클릭합니다.
+    <img src="/images/step10/10-1-step33-delete-select.png" alt="항목 선택 후 Delete items" class="guide-img-sm" />
+
 34. 확인 대화상자에서 [[Delete]]를 클릭합니다.
+    <img src="/images/step10/10-1-step34-delete-confirm.png" alt="삭제 확인" class="guide-img-sm" />
+    <img src="/images/step10/10-1-step34-delete-result.png" alt="삭제 완료 (2개 항목 남음)" class="guide-img-sm" />
 
 > [!OUTPUT]
 > "1 item(s) deleted" 메시지가 표시됩니다.  
@@ -516,6 +554,8 @@ aws dynamodb put-item \
   --region ap-northeast-2
 ```
 
+<img src="/images/step10/10-1-step35-cli-put-item.png" alt="CLI put-item 실행 결과" class="guide-img-sm" />
+
 > [!OUTPUT]
 > 성공 시 출력이 없습니다 (HTTP 200 반환).  
 > `--return-values ALL_OLD`를 추가하면 이전 값을 반환합니다.
@@ -530,6 +570,8 @@ aws dynamodb get-item \
   --key '{"id": {"S": "item-004"}}' \
   --region ap-northeast-2
 ```
+
+<img src="/images/step10/10-1-step36-cli-get-item.png" alt="CLI get-item 실행 결과" class="guide-img-sm" />
 
 > [!OUTPUT]
 >
@@ -554,6 +596,8 @@ aws dynamodb scan \
   --table-name Items \
   --region ap-northeast-2
 ```
+
+<img src="/images/step10/10-1-step37-cli-scan.png" alt="CLI scan 실행 결과" class="guide-img-sm" />
 
 > [!OUTPUT]
 >
@@ -597,6 +641,8 @@ aws dynamodb query \
   --region ap-northeast-2
 ```
 
+<img src="/images/step10/10-1-step38-cli-query.png" alt="CLI query 실행 결과" class="guide-img-sm" />
+
 > [!OUTPUT]
 >
 > ```json
@@ -632,6 +678,8 @@ aws dynamodb update-item \
   --region ap-northeast-2
 ```
 
+<img src="/images/step10/10-1-step39-cli-update-item.png" alt="CLI update-item 실행 결과" class="guide-img-sm" />
+
 > [!OUTPUT]
 >
 > ```json
@@ -662,6 +710,8 @@ aws dynamodb delete-item \
   --region ap-northeast-2
 ```
 
+<img src="/images/step10/10-1-step40-cli-delete-item.png" alt="CLI delete-item 실행 결과" class="guide-img-sm" />
+
 > [!OUTPUT]
 >
 > ```json
@@ -684,6 +734,8 @@ aws dynamodb get-item \
   --key '{"id": {"S": "item-004"}}' \
   --region ap-northeast-2
 ```
+
+<img src="/images/step10/10-1-step41-cli-verify-delete.png" alt="CLI 삭제 확인 (빈 객체 반환)" class="guide-img-sm" />
 
 > [!OUTPUT]
 >
@@ -715,10 +767,14 @@ aws dynamodb get-item \
 
 42. Amazon DynamoDB 콘솔 왼쪽 메뉴에서 **Tables**를 클릭합니다.
 43. [[Create table]]을 클릭합니다.
+    <img src="/images/step10/10-1-step43-create-orders-table.png" alt="Orders 테이블 Create table" class="guide-img-sm" />
+
 44. 다음을 설정합니다:
     - **Table name**: `Orders`
     - **Partition key**: `userId` (타입: **String**)
     - **Sort key**: `createdAt` (타입: **String**)
+
+    <img src="/images/step10/10-1-step44-orders-settings.png" alt="Orders 테이블 설정" class="guide-img-sm" />
 
 45. **Table settings**: **Default settings**를 선택합니다.
 
@@ -739,6 +795,7 @@ aws dynamodb get-item \
     - `Step` = `step10`
     - `Session` = `10-1`
 47. [[Create table]] 버튼을 클릭합니다.
+    <img src="/images/step10/10-1-step47-orders-created.png" alt="Orders 테이블 생성 완료" class="guide-img-sm" />
 
 > [!OUTPUT]
 >
@@ -798,6 +855,10 @@ aws dynamodb put-item --table-name Orders --item '{
 }' --region ap-northeast-2
 ```
 
+<img src="/images/step10/10-1-step48-put-items-cli.png" alt="CLI 테스트 데이터 입력 (user-1)" class="guide-img-sm" />
+
+<img src="/images/step10/10-1-step48-put-items-cli-2.png" alt="CLI 테스트 데이터 입력 (user-2)" class="guide-img-sm" />
+
 > [!NOTE]
 > 각 명령어를 한 줄씩 붙여넣고 실행합니다. 성공 시 출력이 없습니다.  
 > 5건 모두 실행하세요 (user-1: 3건, user-2: 2건).
@@ -813,6 +874,8 @@ aws dynamodb query \
   --expression-attribute-values '{":uid": {"S": "user-1"}}' \
   --region ap-northeast-2
 ```
+
+<img src="/images/step10/10-1-step49-query-user1.png" alt="Query - user-1 전체 주문 조회" class="guide-img-sm" />
 
 > [!OUTPUT]
 >
@@ -845,6 +908,8 @@ aws dynamodb query \
   --region ap-northeast-2
 ```
 
+<img src="/images/step10/10-1-step50-query-between.png" alt="Query - BETWEEN 범위 조회" class="guide-img-sm" />
+
 > [!OUTPUT]
 >
 > ```json
@@ -870,6 +935,14 @@ aws dynamodb query \
   --max-items 2 \
   --region ap-northeast-2
 ```
+
+<img src="/images/step10/10-1-step51-query-reverse.png" alt="Query - 역순 조회 (최신 2건)" class="guide-img-sm" />
+
+> [!TIP]
+> 결과에 `"NextToken": "eyJ..."` 같은 긴 문자열이 보일 수 있습니다.  
+> 이것은 **페이지네이션 토큰**입니다. `--max-items`로 결과를 제한하면, 나머지 항목을 가져올 수 있는 토큰이 반환됩니다.  
+> 다음 페이지를 조회하려면 `--starting-token <NextToken값>`을 추가하면 됩니다.  
+> 이 실습에서는 무시해도 됩니다.
 
 > [!OUTPUT]
 >
@@ -940,7 +1013,7 @@ DynamoDB에서는 **어떤 쿼리가 필요한지 먼저 정의**하고, 그에 
 ```
 테이블: ServiceData
 ┌──────────────┬──────────────────┬──────────────────────┐
-│ PK           │ SK               │ 기타 속성             │
+│ PK           │ SK               │ 기타 속성            │
 ├──────────────┼──────────────────┼──────────────────────┤
 │ USER#user-1  │ PROFILE          │ name, email, ...     │
 │ USER#user-1  │ ORDER#2025-01-10 │ total, status, ...   │
@@ -1057,6 +1130,7 @@ PK: deviceId (고유한 디바이스 ID)
    - **Regions**: `ap-northeast-2`
    - **Tag key**: `Session`, **Tag value**: `10-1`
 4. [[Search resources]] 버튼을 클릭합니다.
+    <img src="/images/step10/10-1-cleanup4-tag-editor.png" alt="Tag Editor 검색 결과" class="guide-img-sm" />
 
 > [!OUTPUT]
 > Items 테이블과 Orders 테이블이 표시됩니다.
@@ -1069,11 +1143,15 @@ PK: deviceId (고유한 디바이스 ID)
 6. 왼쪽 메뉴에서 **Tables**를 클릭합니다.
 7. 테이블 목록에서 `Orders`를 클릭합니다.
 8. 우측 상단의 [[Delete]] 버튼을 클릭합니다.
+    <img src="/images/step10/10-1-cleanup8-delete-orders.png" alt="Orders 테이블 삭제" class="guide-img-sm" />
 9. 삭제 대화상자에서 다음을 확인합니다:
    - ✅ **Delete all CloudWatch alarms for Orders** (기본 체크, 유지)
    - ☐ **Create an on-demand backup of Orders before deletion** (체크 해제 유지)
 10. 확인 입력란에 `confirm`을 입력합니다.
+    <img src="/images/step10/10-1-cleanup10-delete-confirm.png" alt="삭제 확인 (confirm 입력)" class="guide-img-sm" />
+
 11. [[Delete]]를 클릭합니다.
+    <img src="/images/step10/10-1-cleanup11-delete-cli.png" alt="삭제 완료" class="guide-img-sm" />
 
 > [!OUTPUT]
 > "Table is being deleted" 메시지가 표시되고, 잠시 후 목록에서 사라집니다.
@@ -1085,6 +1163,8 @@ aws dynamodb delete-table \
   --table-name Orders \
   --region ap-northeast-2
 ```
+
+<img src="/images/step10/10-1-cleanup11-cli-delete-table.png" alt="CLI delete-table 실행" class="guide-img-sm" />
 
 ---
 
@@ -1098,6 +1178,8 @@ aws dynamodb delete-table \
 ```bash
 aws dynamodb list-tables --region ap-northeast-2
 ```
+
+<img src="/images/step10/10-1-cleanup13-cli-list-tables.png" alt="CLI list-tables 확인" class="guide-img-sm" />
 
 > [!OUTPUT]
 >
@@ -1114,6 +1196,7 @@ aws dynamodb list-tables --region ap-northeast-2
 14. 상단 검색창에 `Resource Groups & Tag Editor`를 입력하고 선택합니다.
 15. 왼쪽 메뉴에서 **Tag Editor**를 선택합니다.
 16. 동일 조건으로 재검색합니다 (Tag key: `Session`, Value: `10-1`).
+    <img src="/images/step10/10-1-cleanup16-tag-editor-verify.png" alt="Tag Editor 최종 확인 (Items만 표시)" class="guide-img-sm" />
 17. `Items` 테이블만 표시되면 정상입니다.
 
 > [!TIP]
@@ -1162,6 +1245,7 @@ aws dynamodb delete-table --table-name Orders --region ap-northeast-2
 26. 상단 검색창에 `Resource Groups & Tag Editor`를 입력하고 선택합니다.
 27. 왼쪽 메뉴에서 **Tag Editor**를 선택합니다.
 28. Tag key: `Session`, Value: `10-1`로 검색합니다.
+    <img src="/images/step10/10-1-cleanup28-tag-editor-final.png" alt="Tag Editor 최종 확인 (결과 없음)" class="guide-img-sm" />
 29. 검색 결과가 없으면 모든 리소스가 정리된 것입니다.
 
 ✅ 옵션 C 완료: 모든 테이블을 삭제했습니다.
