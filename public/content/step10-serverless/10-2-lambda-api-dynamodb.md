@@ -36,8 +36,7 @@ API Gateway를 통해 외부에서 호출할 수 있는 CRUD API를 배포합니
 
 1. AWS Management Console에 로그인합니다.
 2. 리전을 **Asia Pacific (Seoul) ap-northeast-2**로 설정합니다.
-
-<img src="/images/common/region-check.png" alt="리전 확인" class="guide-img-sm" />
+   <img src="/images/common/region-check.png" alt="리전 확인" class="guide-img-sm" />
 
 > [!TIP]
 > 일부 AWS 서비스(IAM, CloudFront, Route 53 등)는 **글로벌 서비스**이므로 리전 선택 드롭다운이 비활성화되거나 "Global"로 표시됩니다.  
@@ -45,6 +44,7 @@ API Gateway를 통해 외부에서 호출할 수 있는 CRUD API를 배포합니
 
 3. 상단 검색창에 `DynamoDB`를 입력하고 선택합니다.
 4. 왼쪽 메뉴에서 **Tables**를 클릭합니다.
+   <img src="/images/step10/10-2-step4-dynamodb-tables.png" alt="DynamoDB Tables 메뉴" class="guide-img-sm" />
 5. `Items` 테이블이 있는지 확인합니다.
 
 ### 테이블이 없는 경우 — 여기서 생성
@@ -83,6 +83,8 @@ aws dynamodb describe-table \
   --query "Table.{Name:TableName,Status:TableStatus,PK:KeySchema}" \
   --region ap-northeast-2
 ```
+
+<img src="/images/step10/10-2-step11-cli-describe-table.png" alt="CLI describe-table 실행 결과" class="guide-img-sm" />
 
 > [!OUTPUT]
 >
@@ -169,12 +171,16 @@ Amazon DynamoDB와 연동할 AWS Lambda 함수를 생성합니다.
 ### 함수 생성 단계
 
 12. 상단 검색창에 `Lambda`를 입력하고 선택합니다.
+    <img src="/images/step10/10-2-step12-lambda-console.png" alt="Lambda 콘솔" class="guide-img-sm" />
+
 13. 왼쪽 메뉴에서 **Functions**를 클릭합니다.
 14. [[Create a function]]을 클릭합니다.
+    <img src="/images/step10/10-2-step14-create-function.png" alt="Create a function" class="guide-img-sm" />
 15. **Author from scratch**를 선택합니다 (기본 선택됨).
 16. **Basic information**을 설정합니다:
     - **Function name**: `starter-dynamodb-api`
     - **Runtime**: **Node.js** 최신 버전 선택 (예: Node.js 24.x)
+      <img src="/images/step10/10-2-step16-basic-info.png" alt="Lambda Basic information 설정" class="guide-img-sm" />
 
 > [!NOTE]
 > **Custom settings** 섹션이 표시되지만 변경하지 않습니다.  
@@ -182,10 +188,13 @@ Amazon DynamoDB와 연동할 AWS Lambda 함수를 생성합니다.
 > **Permissions**도 기본값 그대로 — Lambda가 자동으로 CloudWatch Logs 권한이 포함된 실행 역할을 생성합니다.
 
 17. [[Create function]]을 클릭합니다.
+    <img src="/images/step10/10-2-step17-getting-started.png" alt="Lambda 함수 생성 완료" class="guide-img-sm" />
 
 > [!OUTPUT]
 > "Successfully created the function starter-dynamodb-api" 메시지가 표시됩니다.  
 > **Getting started** 팝업이 나타나면 [[Dismiss]]를 클릭하여 닫습니다.
+>
+> <img src="/images/step10/10-2-step17-function-created.png" alt="Getting started 팝업 — Dismiss 클릭" class="guide-img-sm" />
 
 ### IAM Role에 Amazon DynamoDB 권한 추가
 
@@ -193,6 +202,7 @@ Lambda가 DynamoDB에 접근하려면 IAM 권한이 필요합니다.
 
 18. 함수 상세 페이지에서 **Configuration** 탭을 클릭합니다.
 19. 왼쪽 메뉴에서 **Permissions**를 클릭합니다.
+    <img src="/images/step10/10-2-step19-permissions-tab.png" alt="Configuration → Permissions" class="guide-img-sm" />
 20. **Execution role** 섹션에서 Role name 링크를 클릭합니다 (IAM 콘솔로 이동).
 
 > [!TIP]
@@ -201,9 +211,13 @@ Lambda가 DynamoDB에 접근하려면 IAM 권한이 필요합니다.
 > DynamoDB, S3 등 다른 서비스에 접근하려면 해당 권한을 추가해야 합니다.
 
 21. IAM Role 페이지에서 [[Add permissions]] → [[Attach policies]]를 클릭합니다.
+    <img src="/images/step10/10-2-step21-attach-policies.png" alt="Add permissions → Attach policies" class="guide-img-sm" />
 22. 검색창에 `DynamoDB`를 입력합니다.
 23. **AmazonDynamoDBFullAccess**를 체크합니다.
+    <img src="/images/step10/10-2-step23-dynamodb-fullaccess.png" alt="AmazonDynamoDBFullAccess 선택" class="guide-img-sm" />
+
 24. [[Add permissions]]를 클릭합니다.
+    <img src="/images/step10/10-2-step24-policy-attached.png" alt="정책 연결 완료" class="guide-img-sm" />
 
 > [!OUTPUT]
 > "Policy AmazonDynamoDBFullAccess has been attached to role" 메시지가 표시됩니다.
@@ -213,11 +227,16 @@ Lambda가 DynamoDB에 접근하려면 IAM 권한이 필요합니다.
 25. 브라우저의 뒤로가기로 Lambda 함수 페이지로 돌아갑니다.
 26. **Configuration** 탭 → 왼쪽 메뉴에서 **Tags**를 클릭합니다.
 27. [[Manage tags]]를 클릭합니다.
+    <img src="/images/step10/10-2-step27-manage-tags.png" alt="Manage tags 클릭" class="guide-img-sm" />
+
 28. 다음 태그를 추가합니다:
     - **Key**: `CreatedBy`, **Value**: `admin-user`
     - **Key**: `Step`, **Value**: `step10`
     - **Key**: `Session`, **Value**: `10-2`
+      <img src="/images/step10/10-2-step28-tags-added.png" alt="태그 추가" class="guide-img-sm" />
+
 29. [[Save]]를 클릭합니다.
+    <img src="/images/step10/10-2-step29-tags-saved.png" alt="태그 저장 완료" class="guide-img-sm" />
 
 > [!WARNING]
 > `AmazonDynamoDBFullAccess`는 학습용으로 사용합니다.  
@@ -262,6 +281,7 @@ AWS SDK v3의 `@aws-sdk/client-dynamodb`를 사용하여 Amazon DynamoDB CRUD AP
 
 30. Lambda 함수 페이지에서 **Code** 탭을 선택합니다.
 31. `index.mjs` 파일의 내용을 아래 코드로 교체합니다:
+    <img src="/images/step10/10-2-step31-code-editor.png" alt="Lambda 코드 에디터" class="guide-img-sm" />
 
 ```javascript
 // index.mjs - Lambda + DynamoDB CRUD API
@@ -466,6 +486,7 @@ function response(statusCode, body) {
 ```
 
 32. [[Deploy]]를 클릭하여 코드를 배포합니다.
+    <img src="/images/step10/10-2-step32-deploy.png" alt="Deploy 클릭" class="guide-img-sm" />
 
 > [!OUTPUT]
 > "Successfully updated the function starter-dynamodb-api" 메시지가 표시됩니다.
@@ -488,6 +509,7 @@ function response(statusCode, body) {
 
 33. Lambda 함수 페이지에서 **Test** 탭을 선택합니다.
 34. **Test event action**에서 **Create new event**가 선택되어 있는지 확인합니다.
+    <img src="/images/step10/10-2-step34-test-event-action.png" alt="Test event action - Create new event" class="guide-img-sm" />
 35. 다음을 설정합니다:
     - **Invocation type**: Synchronous (기본값)
     - **Event name**: `test-create-item`
@@ -517,6 +539,7 @@ function response(statusCode, body) {
 
 36. [[Save]]를 클릭합니다.
 37. [[Test]]를 클릭합니다.
+    <img src="/images/step10/10-2-step37-test-post-result.png" alt="POST /items 테스트 결과" class="guide-img-sm" />
 
 > [!OUTPUT]
 > **Execution result: succeeded**
@@ -529,9 +552,16 @@ function response(statusCode, body) {
 > }
 > ```
 
+> [!TIP]
+> DynamoDB 콘솔에서 `Items` 테이블의 **Explore table items**를 확인하면
+> Lambda에서 생성한 항목이 실제로 반영된 것을 볼 수 있습니다.
+>
+> <img src="/images/step10/10-2-step37-dynamodb-confirm.png" alt="DynamoDB 콘솔에서 항목 확인" class="guide-img-sm" />
+
 ### GET /items 테스트 — 전체 조회
 
 38. **Create new event**를 선택하고 새 이벤트를 생성합니다:
+    <img src="/images/step10/10-2-step38-test-get-all.png" alt="GET /items 테스트 이벤트 설정" class="guide-img-sm" />
     - **Invocation type**: Synchronous (기본값)
     - **Event name**: `test-get-all-items`
     - **Event sharing settings**: Private (기본값)
@@ -548,6 +578,7 @@ function response(statusCode, body) {
     ```
 
 39. [[Save]]를 클릭한 뒤 [[Test]]를 클릭합니다.
+    <img src="/images/step10/10-2-step39-test-get-all-result.png" alt="GET /items 테스트 결과" class="guide-img-sm" />
 
 > [!OUTPUT]
 > **Execution result: succeeded**
@@ -562,6 +593,7 @@ function response(statusCode, body) {
 ### GET /items/{id} 테스트 — 단건 조회
 
 40. **Create new event**를 선택하고 새 이벤트를 생성합니다:
+    <img src="/images/step10/10-2-step40-test-get-item.png" alt="GET /items/{id} 테스트 이벤트 설정" class="guide-img-sm" />
     - **Invocation type**: Synchronous (기본값)
     - **Event name**: `test-get-item`
     - **Event sharing settings**: Private (기본값)
@@ -578,6 +610,7 @@ function response(statusCode, body) {
     ```
 
 41. [[Save]]를 클릭한 뒤 [[Test]]를 클릭합니다.
+    <img src="/images/step10/10-2-step41-test-get-item-result.png" alt="GET /items/{id} 테스트 결과" class="guide-img-sm" />
 
 > [!OUTPUT]
 > **Execution result: succeeded**
@@ -592,6 +625,7 @@ function response(statusCode, body) {
 ### DELETE /items/{id} 테스트 — 항목 삭제
 
 42. **Create new event**를 선택하고 새 이벤트를 생성합니다:
+    <img src="/images/step10/10-2-step42-test-delete.png" alt="DELETE /items/{id} 테스트 이벤트 설정" class="guide-img-sm" />
     - **Invocation type**: Synchronous (기본값)
     - **Event name**: `test-delete-item`
     - **Event sharing settings**: Private (기본값)
@@ -608,6 +642,7 @@ function response(statusCode, body) {
     ```
 
 43. [[Save]]를 클릭한 뒤 [[Test]]를 클릭합니다.
+    <img src="/images/step10/10-2-step43-test-delete-result.png" alt="DELETE /items/{id} 테스트 결과" class="guide-img-sm" />
 
 > [!OUTPUT]
 > **Execution result: succeeded**
@@ -618,10 +653,6 @@ function response(statusCode, body) {
 >   "body": "{\"message\":\"Item deleted\",\"item\":{\"id\":\"item-101\",\"name\":\"무선 이어폰\"}}"
 > }
 > ```
-
-> [!TIP]
-> DynamoDB 콘솔에서 `Items` 테이블의 **Explore table items**를 확인하면
-> Lambda에서 생성/삭제한 항목이 실제로 반영된 것을 볼 수 있습니다.
 
 ✅ **태스크 완료** — Lambda 테스트 이벤트로 Amazon DynamoDB CRUD 동작을 확인했습니다.
 
