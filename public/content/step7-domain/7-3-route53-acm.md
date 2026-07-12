@@ -21,6 +21,19 @@ estimatedCost: Route 53 Hosted Zone 월 과금 + 도메인 구매 비용
 ACM(AWS Certificate Manager)으로 무료 SSL 인증서를 발급받아 HTTPS를
 적용할 준비를 합니다.
 
+### Step 7 전체 구성
+
+| 세션                | 주제               | 핵심 리소스                     |
+| ------------------- | ------------------ | ------------------------------- |
+| 7-1                 | ALB + Target Group | 트래픽 분산, Health Check       |
+| 7-2                 | Auto Scaling Group | 자동 확장/축소, Launch Template |
+| **7-3 (이번 실습)** | Route 53 + ACM     | 도메인 연결, HTTPS 인증서       |
+
+```
+7-1: ALB 생성        →    7-2: ASG로 자동 확장     →    7-3: 도메인 + HTTPS 적용
+(수동 EC2 등록)           (EC2 자동 생성/삭제)          (커스텀 도메인 + SSL)
+```
+
 ### 실습 흐름
 
 ```
