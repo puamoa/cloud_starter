@@ -1,6 +1,6 @@
 ---
 title: 'GitHub Actions로 프론트엔드/백엔드 자동 배포'
-week: 8
+week: 9
 session: 1
 awsServices:
   - Amazon EC2

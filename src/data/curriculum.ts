@@ -410,46 +410,16 @@ export const curriculum: WeekCurriculum[] = [
   },
   {
     week: 8,
-    title: 'GitHub Actions 자동 배포',
-    description:
-      '프론트엔드와 백엔드를 각각 별도 GitHub 리포지토리로 운영하고, push만으로 EC2에 자동 배포되는 파이프라인을 구축합니다.',
-    sessions: [
-      {
-        session: 0,
-        type: 'theory',
-        title: 'CI/CD 파이프라인 이론',
-        hasContent: true,
-        markdownPath: '/content/step8-cicd/8-0-cicd-concepts.md',
-        description: 'CI/CD 개념, 배포 전략, Git Flow, 환경 분리, IaC, GitOps',
-        awsServices: [],
-        estimatedCost: '무료 (이론)',
-      },
-      {
-        session: 1,
-        type: 'lab',
-        title: 'GitHub Actions로 프론트엔드/백엔드 자동 배포',
-        hasContent: true,
-        markdownPath: '/content/step8-cicd/8-1-github-actions.md',
-        description:
-          '프론트/백엔드 별도 레포 구성, GitHub Secrets 설정, 각각의 빌드→배포 워크플로우',
-        awsServices: ['Amazon EC2', 'Amazon RDS'],
-        estimatedCost: '프리티어',
-      },
-    ],
-    difficulty: 'advanced',
-  },
-  {
-    week: 9,
     title: '3-Tier 아키텍처 통합 배포',
     description:
-      'Step 0~8에서 배운 모든 것을 통합하여 Vue.js + Spring Boot + RDS 3-Tier 서비스를 완성합니다. 프론트엔드와 백엔드를 별도 리포지토리로 운영하며 각각 독립 배포합니다.',
+      'Step 0~7에서 배운 모든 것을 통합하여 Vue.js + Spring Boot + RDS 3-Tier 서비스를 완성합니다. 프론트엔드와 백엔드를 별도 리포지토리로 운영하며 각각 독립 배포합니다.',
     sessions: [
       {
         session: 0,
         type: 'theory',
         title: '웹 아키텍처 설계 패턴 이론',
         hasContent: true,
-        markdownPath: '/content/step9-3tier/9-0-architecture-concepts.md',
+        markdownPath: '/content/step8-3tier/8-0-architecture-concepts.md',
         description:
           '모놀리식 vs 마이크로서비스, N-Tier, REST API, Stateless, 캐싱, 메시지 큐',
         awsServices: [],
@@ -460,7 +430,7 @@ export const curriculum: WeekCurriculum[] = [
         type: 'lab',
         title: '전체 아키텍처 설계 및 인프라 구축',
         hasContent: true,
-        markdownPath: '/content/step9-3tier/9-1-architecture-infra.md',
+        markdownPath: '/content/step8-3tier/8-1-architecture-infra.md',
         description:
           '3-Tier 아키텍처 설계, 프론트/백엔드 별도 레포 생성, CloudFormation으로 VPC/RDS/S3 환경 구축',
         awsServices: ['Amazon VPC', 'Amazon RDS', 'Amazon S3'],
@@ -469,22 +439,21 @@ export const curriculum: WeekCurriculum[] = [
       {
         session: 2,
         type: 'lab',
-        title: 'Vue.js 프론트엔드 배포 (S3 + CloudFront + CI/CD)',
+        title: 'Vue.js 프론트엔드 배포 (S3 + CloudFront)',
         hasContent: true,
-        markdownPath: '/content/step9-3tier/9-2-frontend-deploy.md',
+        markdownPath: '/content/step8-3tier/8-2-frontend-deploy.md',
         description:
-          '프론트엔드 레포에서 빌드, S3 정적 호스팅, CloudFront CDN, GitHub Actions 자동 배포',
+          '프론트엔드 레포에서 빌드, S3 정적 호스팅, CloudFront CDN 배포',
         awsServices: ['Amazon S3', 'Amazon CloudFront'],
         estimatedCost: '크레딧 내 사용 가능 (비용 발생 가능)',
       },
       {
         session: 3,
         type: 'lab',
-        title: 'Spring Boot 백엔드 배포 (EC2 + ALB + CI/CD)',
+        title: 'Spring Boot 백엔드 배포 (EC2 + ALB)',
         hasContent: true,
-        markdownPath: '/content/step9-3tier/9-3-backend-deploy.md',
-        description:
-          '백엔드 레포에서 빌드, EC2 배포, ALB 연결, GitHub Actions 자동 배포',
+        markdownPath: '/content/step8-3tier/8-3-backend-deploy.md',
+        description: '백엔드 레포에서 빌드, EC2 배포, ALB 연결',
         awsServices: ['Amazon EC2', 'Elastic Load Balancing'],
         estimatedCost: '크레딧 내 사용 가능 (비용 발생 가능)',
       },
@@ -493,11 +462,64 @@ export const curriculum: WeekCurriculum[] = [
         type: 'lab',
         title: '전체 연동 확인 및 리소스 정리',
         hasContent: true,
-        markdownPath: '/content/step9-3tier/9-4-integration-cleanup.md',
+        markdownPath: '/content/step8-3tier/8-4-integration-cleanup.md',
         description:
           '프론트↔백엔드↔DB 연동 테스트, 도메인 연결, 전체 리소스 정리 체크리스트',
         awsServices: ['Amazon Route 53', 'AWS Certificate Manager'],
         estimatedCost: '무료 (정리 작업)',
+      },
+    ],
+    difficulty: 'advanced',
+  },
+  {
+    week: 9,
+    title: 'CI/CD와 컨테이너 배포',
+    description:
+      '수동 배포의 불편함을 GitHub Actions로 자동화하고, Docker 컨테이너로 패키징하여 ECS Fargate에 배포하는 전체 흐름을 학습합니다.',
+    sessions: [
+      {
+        session: 0,
+        type: 'theory',
+        title: 'CI/CD + 컨테이너 이론',
+        hasContent: true,
+        markdownPath: '/content/step9-cicd/9-0-cicd-concepts.md',
+        description:
+          'CI/CD 개념, 배포 전략, Git Flow, Docker 기초, 이미지/컨테이너, ECS/Fargate 개요',
+        awsServices: [],
+        estimatedCost: '무료 (이론)',
+      },
+      {
+        session: 1,
+        type: 'lab',
+        title: 'GitHub Actions → EC2 직접 배포 (Docker 없이)',
+        hasContent: true,
+        markdownPath: '/content/step9-cicd/9-1-github-actions.md',
+        description:
+          'GitHub Actions 워크플로우 작성, SSH 배포, 프론트/백엔드 자동 빌드·배포',
+        awsServices: ['Amazon EC2', 'Amazon RDS'],
+        estimatedCost: '프리티어',
+      },
+      {
+        session: 2,
+        type: 'lab',
+        title: 'Docker 빌드 + Amazon ECR Push',
+        hasContent: false,
+        markdownPath: '/content/step9-cicd/9-2-docker-ecr.md',
+        description:
+          'Dockerfile 작성, 로컬 Docker 빌드/실행, Amazon ECR 리포지토리 생성, 이미지 Push',
+        awsServices: ['Amazon ECR'],
+        estimatedCost: '크레딧 내 사용 가능 (ECR 스토리지 소액)',
+      },
+      {
+        session: 3,
+        type: 'lab',
+        title: 'GitHub Actions → ECR → ECS Fargate 배포',
+        hasContent: false,
+        markdownPath: '/content/step9-cicd/9-3-ecs-fargate-deploy.md',
+        description:
+          'ECS 클러스터/서비스 생성, Task Definition, ALB 연동, GitHub Actions 자동 배포',
+        awsServices: ['Amazon ECS', 'AWS Fargate', 'Elastic Load Balancing'],
+        estimatedCost: '크레딧 내 사용 가능 (Fargate vCPU/메모리 과금)',
       },
     ],
     difficulty: 'advanced',

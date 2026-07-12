@@ -1,6 +1,6 @@
 ---
 title: 'Spring Boot 백엔드 배포 (EC2 + ALB + CI/CD)'
-week: 9
+week: 8
 session: 3
 awsServices:
   - Amazon EC2
