@@ -1,6 +1,6 @@
 ---
 title: 'Vue.js 프론트엔드 배포 (S3 + CloudFront)'
-week: 9
+week: 8
 session: 2
 awsServices:
   - Amazon S3

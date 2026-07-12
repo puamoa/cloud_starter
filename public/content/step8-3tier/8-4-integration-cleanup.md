@@ -1,6 +1,6 @@
 ---
 title: '전체 연동 확인 및 리소스 정리'
-week: 9
+week: 8
 session: 4
 awsServices:
   - Amazon Route 53

@@ -1,6 +1,6 @@
 ---
 title: 'CI/CD 파이프라인 이론'
-week: 8
+week: 9
 session: 0
 type: theory
 learningObjectives:

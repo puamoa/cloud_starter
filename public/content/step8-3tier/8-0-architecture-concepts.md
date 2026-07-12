@@ -1,6 +1,6 @@
 ---
 title: '웹 아키텍처 설계 패턴 이론'
-week: 9
+week: 8
 session: 0
 type: theory
 learningObjectives:
