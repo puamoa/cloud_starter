@@ -1,11 +1,10 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: >
   Step 7-1 ALB Lab Prerequisites.
-  Creates VPC, Public Subnets (2 AZs), IGW, Route Table, Security Group, EC2 Instance with Nginx.
+  Creates VPC, Public Subnets (2 AZs), IGW, Route Table, Security Group, 2 EC2 Instances with Nginx.
 
 # =============================================================================
 # Metadata - CloudFormation 콘솔에서 파라미터 입력 화면의 그룹과 순서를 지정합니다.
-# 사용자가 스택을 생성할 때 어떤 값을 먼저 확인해야 하는지 시각적으로 안내합니다.
 # =============================================================================
 Metadata:
   AWS::CloudFormation::Interface:
@@ -32,7 +31,6 @@ Metadata:
 
 # =============================================================================
 # Parameters - 스택 생성 시 사용자가 입력하거나 기본값을 사용할 수 있는 파라미터입니다.
-# 기본값이 세팅되어 있으므로 대부분 변경 없이 생성 가능합니다.
 # =============================================================================
 Parameters:
   # 리소스 이름 접두사 (예: alb-lab -> alb-lab-vpc, alb-lab-ec2-sg)
@@ -51,65 +49,61 @@ Parameters:
     Description: Name of an existing EC2 Key Pair for SSH access
 
   # EC2에서 애플리케이션이 실행되는 포트
-  # Spring Boot: 8080 (기본값), Nginx: 80
+  # 이 실습에서는 Nginx를 사용하므로 80이 기본값입니다.
   AppPort:
     Type: Number
-    Default: 8080
-    Description: Application port (Spring Boot=8080, Nginx=80)
+    Default: 80
+    Description: Application port (Nginx default=80)
     AllowedValues:
       - 80
       - 8080
 
   # SSH 접근을 허용할 IP 대역. 보안을 위해 본인 IP로 제한하는 것을 권장합니다.
-  # 예: 203.0.113.50/32 (본인 IP만 허용)
   SSHAccessCidr:
     Type: String
     Default: '0.0.0.0/0'
     Description: SSH(22) access CIDR. Restrict to your IP recommended (e.g. 203.0.113.50/32)
 
-  # VPC CIDR 블록. 기본값은 10.0.0.0/16 (65,536개 IP)
+  # VPC CIDR 블록
   VpcCidr:
     Type: String
     Default: '10.0.0.0/16'
     Description: VPC CIDR block
 
-  # Public Subnet A (ap-northeast-2a) CIDR. ALB와 EC2가 배치됩니다.
+  # Public Subnet A (ap-northeast-2a) CIDR
   PublicSubnetACidr:
     Type: String
     Default: '10.0.1.0/24'
     Description: Public Subnet A CIDR (ap-northeast-2a)
 
-  # Public Subnet C (ap-northeast-2c) CIDR. ALB의 두 번째 AZ에 사용됩니다.
+  # Public Subnet C (ap-northeast-2c) CIDR
   PublicSubnetCCidr:
     Type: String
     Default: '10.0.2.0/24'
     Description: Public Subnet C CIDR (ap-northeast-2c)
 
-  # 태그: 리소스 생성자 식별
+  # 태그 값들
   CreatedByTag:
     Type: String
     Default: cloudformation
     Description: CreatedBy tag value
 
-  # 태그: 어떤 Step에서 생성한 리소스인지 식별
   StepTag:
     Type: String
     Default: step7
     Description: Step tag value
 
-  # 태그: 어떤 Session에서 생성한 리소스인지 식별
   SessionTag:
     Type: String
     Default: '7-1'
     Description: Session tag value
 
 # =============================================================================
-# Resources - 생성할 AWS 리소스
-# VPC > IGW > Subnet(2개) > Route Table > Security Group > EC2 순서로 정의합니다.
+# Resources
 # =============================================================================
 Resources:
   # ---------------------------------------------------------------------------
-  # VPC - 실습용 가상 네트워크. 모든 리소스가 이 VPC 안에 생성됩니다.
+  # VPC
   # ---------------------------------------------------------------------------
   VPC:
     Type: AWS::EC2::VPC
@@ -128,8 +122,7 @@ Resources:
           Value: !Ref SessionTag
 
   # ---------------------------------------------------------------------------
-  # Internet Gateway - VPC가 인터넷과 통신하기 위한 관문입니다.
-  # Internet-facing ALB를 사용하려면 반드시 필요합니다.
+  # Internet Gateway
   # ---------------------------------------------------------------------------
   InternetGateway:
     Type: AWS::EC2::InternetGateway
@@ -144,7 +137,6 @@ Resources:
         - Key: Session
           Value: !Ref SessionTag
 
-  # IGW를 VPC에 연결합니다. 연결하지 않으면 IGW가 있어도 인터넷 통신이 안 됩니다.
   AttachGateway:
     Type: AWS::EC2::VPCGatewayAttachment
     Properties:
@@ -152,8 +144,7 @@ Resources:
       InternetGatewayId: !Ref InternetGateway
 
   # ---------------------------------------------------------------------------
-  # Public Subnet 1 (AZ-a) - EC2 인스턴스가 배치되는 서브넷입니다.
-  # MapPublicIpOnLaunch: true → 이 서브넷에 생성된 EC2에 자동으로 Public IP 부여
+  # Public Subnet 1 (AZ-a) - EC2 #1이 배치됩니다.
   # ---------------------------------------------------------------------------
   PublicSubnet1:
     Type: AWS::EC2::Subnet
@@ -173,8 +164,7 @@ Resources:
           Value: !Ref SessionTag
 
   # ---------------------------------------------------------------------------
-  # Public Subnet 2 (AZ-c) - ALB는 최소 2개 AZ에 배치해야 합니다.
-  # EC2가 없어도 ALB 배치를 위해 두 번째 AZ 서브넷이 필요합니다.
+  # Public Subnet 2 (AZ-c) - EC2 #2가 배치됩니다.
   # ---------------------------------------------------------------------------
   PublicSubnet2:
     Type: AWS::EC2::Subnet
@@ -194,8 +184,7 @@ Resources:
           Value: !Ref SessionTag
 
   # ---------------------------------------------------------------------------
-  # Route Table - 서브넷의 트래픽 경로를 정의합니다.
-  # 0.0.0.0/0 → IGW 규칙을 추가하여 인터넷으로 나갈 수 있게 합니다.
+  # Route Table + 라우팅 규칙 + 서브넷 연결
   # ---------------------------------------------------------------------------
   PublicRouteTable:
     Type: AWS::EC2::RouteTable
@@ -211,7 +200,6 @@ Resources:
         - Key: Session
           Value: !Ref SessionTag
 
-  # 모든 외부 트래픽(0.0.0.0/0)을 IGW로 보내는 라우팅 규칙
   PublicRoute:
     Type: AWS::EC2::Route
     DependsOn: AttachGateway
@@ -220,14 +208,12 @@ Resources:
       DestinationCidrBlock: 0.0.0.0/0
       GatewayId: !Ref InternetGateway
 
-  # Subnet 1에 Route Table을 연결합니다.
   PublicSubnet1RouteTableAssociation:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
       SubnetId: !Ref PublicSubnet1
       RouteTableId: !Ref PublicRouteTable
 
-  # Subnet 2에 Route Table을 연결합니다.
   PublicSubnet2RouteTableAssociation:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
@@ -235,9 +221,8 @@ Resources:
       RouteTableId: !Ref PublicRouteTable
 
   # ---------------------------------------------------------------------------
-  # EC2 Security Group - EC2 인스턴스의 인바운드 트래픽을 제어합니다.
-  # SSH(22)와 애플리케이션 포트(AppPort)를 허용합니다.
-  # 실습 중 태스크 6에서 AppPort의 Source를 ALB SG로 변경합니다.
+  # EC2 Security Group
+  # SSH + AppPort를 허용합니다.
   # ---------------------------------------------------------------------------
   EC2SecurityGroup:
     Type: AWS::EC2::SecurityGroup
@@ -266,16 +251,14 @@ Resources:
           Value: !Ref SessionTag
 
   # ---------------------------------------------------------------------------
-  # EC2 Instance - Nginx를 설치하여 웹 서버를 구동합니다.
-  # UserData 스크립트가 인스턴스 시작 시 자동으로 Nginx를 설치/설정합니다.
-  # AppPort 파라미터에 따라 Nginx 리스닝 포트가 결정됩니다.
+  # EC2 Instance 1 (AZ-a)
+  # Nginx를 설치하고 인스턴스 ID + AZ를 표시하는 페이지를 생성합니다.
+  # ALB 트래픽 분산 시 어느 인스턴스에 요청이 갔는지 눈으로 확인할 수 있습니다.
   # ---------------------------------------------------------------------------
-  EC2Instance:
+  EC2Instance1:
     Type: AWS::EC2::Instance
     Properties:
       InstanceType: t2.micro
-      # SSM Parameter Store에서 최신 Amazon Linux 2023 AMI ID를 자동으로 가져옵니다.
-      # 리전에 관계없이 항상 최신 AMI를 사용할 수 있습니다.
       ImageId: !Sub '{{resolve:ssm:/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-x86_64}}'
       KeyName: !Ref KeyPairName
       SubnetId: !Ref PublicSubnet1
@@ -284,21 +267,138 @@ Resources:
       UserData:
         Fn::Base64: !Sub |
           #!/bin/bash
-          # Nginx 설치 및 설정 스크립트
+          # ============================================================
+          # EC2 UserData - Nginx 설치 + 인스턴스 식별 페이지 생성
+          # ALB가 트래픽을 분산할 때 어느 EC2에 요청이 갔는지 확인용
+          # ============================================================
+
           yum update -y
           yum install -y nginx
 
-          # AppPort가 80이 아닌 경우 Nginx 설정을 변경합니다.
+          # AppPort가 80이 아닌 경우 Nginx 리스닝 포트 변경
           if [ "${AppPort}" != "80" ]; then
             sed -i 's/listen       80;/listen       ${AppPort};/' /etc/nginx/nginx.conf
             sed -i 's/listen       \[::]:80;/listen       [::]:${AppPort};/' /etc/nginx/nginx.conf
           fi
 
+          # IMDSv2 토큰 획득 후 인스턴스 메타데이터 조회
+          TOKEN=$(curl -s -X PUT "http://169.254.169.254/latest/api/token" \
+            -H "X-aws-ec2-metadata-token-ttl-seconds: 21600")
+          INSTANCE_ID=$(curl -s -H "X-aws-ec2-metadata-token: $TOKEN" \
+            http://169.254.169.254/latest/meta-data/instance-id)
+          AZ=$(curl -s -H "X-aws-ec2-metadata-token: $TOKEN" \
+            http://169.254.169.254/latest/meta-data/placement/availability-zone)
+          PRIVATE_IP=$(curl -s -H "X-aws-ec2-metadata-token: $TOKEN" \
+            http://169.254.169.254/latest/meta-data/local-ipv4)
+
+          # 인스턴스 식별 HTML 페이지 생성
+          cat > /usr/share/nginx/html/index.html <<EOF
+          <!DOCTYPE html>
+          <html>
+          <head><title>ALB Lab</title>
+          <style>
+            body { font-family: Arial, sans-serif; text-align: center; padding: 50px; background: #f0f8ff; }
+            .card { background: white; border-radius: 10px; padding: 30px; max-width: 500px; margin: 0 auto; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+            .instance-id { color: #2563eb; font-size: 1.2em; font-weight: bold; }
+            .az { color: #059669; }
+          </style>
+          </head>
+          <body>
+            <div class="card">
+              <h1>Hello from ALB Lab!</h1>
+              <p class="instance-id">Instance: $INSTANCE_ID</p>
+              <p class="az">AZ: $AZ</p>
+              <p>Private IP: $PRIVATE_IP</p>
+              <p>Port: ${AppPort}</p>
+              <hr>
+              <p><small>Refresh to see ALB load balancing in action</small></p>
+            </div>
+          </body>
+          </html>
+          EOF
+
+          # Health Check 엔드포인트 (200 OK 반환)
+          mkdir -p /usr/share/nginx/html/health
+          echo "OK" > /usr/share/nginx/html/health/index.html
+
           systemctl start nginx
           systemctl enable nginx
       Tags:
         - Key: Name
-          Value: !Sub '${ProjectName}-ec2'
+          Value: !Sub '${ProjectName}-ec2-1'
+        - Key: CreatedBy
+          Value: !Ref CreatedByTag
+        - Key: Step
+          Value: !Ref StepTag
+        - Key: Session
+          Value: !Ref SessionTag
+
+  # ---------------------------------------------------------------------------
+  # EC2 Instance 2 (AZ-c)
+  # Instance 1과 동일한 설정. 다른 AZ에 배치하여 고가용성을 시연합니다.
+  # ---------------------------------------------------------------------------
+  EC2Instance2:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: t2.micro
+      ImageId: !Sub '{{resolve:ssm:/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-x86_64}}'
+      KeyName: !Ref KeyPairName
+      SubnetId: !Ref PublicSubnet2
+      SecurityGroupIds:
+        - !Ref EC2SecurityGroup
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          yum update -y
+          yum install -y nginx
+
+          if [ "${AppPort}" != "80" ]; then
+            sed -i 's/listen       80;/listen       ${AppPort};/' /etc/nginx/nginx.conf
+            sed -i 's/listen       \[::]:80;/listen       [::]:${AppPort};/' /etc/nginx/nginx.conf
+          fi
+
+          TOKEN=$(curl -s -X PUT "http://169.254.169.254/latest/api/token" \
+            -H "X-aws-ec2-metadata-token-ttl-seconds: 21600")
+          INSTANCE_ID=$(curl -s -H "X-aws-ec2-metadata-token: $TOKEN" \
+            http://169.254.169.254/latest/meta-data/instance-id)
+          AZ=$(curl -s -H "X-aws-ec2-metadata-token: $TOKEN" \
+            http://169.254.169.254/latest/meta-data/placement/availability-zone)
+          PRIVATE_IP=$(curl -s -H "X-aws-ec2-metadata-token: $TOKEN" \
+            http://169.254.169.254/latest/meta-data/local-ipv4)
+
+          cat > /usr/share/nginx/html/index.html <<EOF
+          <!DOCTYPE html>
+          <html>
+          <head><title>ALB Lab</title>
+          <style>
+            body { font-family: Arial, sans-serif; text-align: center; padding: 50px; background: #f0fff0; }
+            .card { background: white; border-radius: 10px; padding: 30px; max-width: 500px; margin: 0 auto; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+            .instance-id { color: #dc2626; font-size: 1.2em; font-weight: bold; }
+            .az { color: #059669; }
+          </style>
+          </head>
+          <body>
+            <div class="card">
+              <h1>Hello from ALB Lab!</h1>
+              <p class="instance-id">Instance: $INSTANCE_ID</p>
+              <p class="az">AZ: $AZ</p>
+              <p>Private IP: $PRIVATE_IP</p>
+              <p>Port: ${AppPort}</p>
+              <hr>
+              <p><small>Refresh to see ALB load balancing in action</small></p>
+            </div>
+          </body>
+          </html>
+          EOF
+
+          mkdir -p /usr/share/nginx/html/health
+          echo "OK" > /usr/share/nginx/html/health/index.html
+
+          systemctl start nginx
+          systemctl enable nginx
+      Tags:
+        - Key: Name
+          Value: !Sub '${ProjectName}-ec2-2'
         - Key: CreatedBy
           Value: !Ref CreatedByTag
         - Key: Step
@@ -307,8 +407,7 @@ Resources:
           Value: !Ref SessionTag
 
 # =============================================================================
-# Outputs - 스택 생성 후 확인할 수 있는 주요 값입니다.
-# 다른 스택에서 참조하거나, 실습 중 콘솔에서 빠르게 확인할 때 사용합니다.
+# Outputs
 # =============================================================================
 Outputs:
   VPCId:
@@ -335,13 +434,21 @@ Outputs:
     Export:
       Name: !Sub '${ProjectName}-ec2-sg-id'
 
-  EC2InstanceId:
-    Description: EC2 Instance ID
-    Value: !Ref EC2Instance
+  EC2Instance1Id:
+    Description: EC2 Instance 1 ID (AZ-a)
+    Value: !Ref EC2Instance1
 
-  EC2PublicIP:
-    Description: EC2 Public IP Address
-    Value: !GetAtt EC2Instance.PublicIp
+  EC2Instance1PublicIP:
+    Description: EC2 Instance 1 Public IP
+    Value: !GetAtt EC2Instance1.PublicIp
+
+  EC2Instance2Id:
+    Description: EC2 Instance 2 ID (AZ-c)
+    Value: !Ref EC2Instance2
+
+  EC2Instance2PublicIP:
+    Description: EC2 Instance 2 Public IP
+    Value: !GetAtt EC2Instance2.PublicIp
 
   AppPort:
     Description: Application listening port
