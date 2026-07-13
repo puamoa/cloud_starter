@@ -22,6 +22,8 @@ Metadata:
           - VpcCidr
           - PublicSubnetACidr
           - PublicSubnetCCidr
+          - PrivateSubnetACidr
+          - PrivateSubnetCCidr
       - Label:
           default: 'Tags (Keep Default)'
         Parameters:
@@ -82,6 +84,18 @@ Parameters:
     Default: '10.0.2.0/24'
     Description: Public Subnet C CIDR (ap-northeast-2c)
 
+  # Private Subnet A (ap-northeast-2a) CIDR
+  PrivateSubnetACidr:
+    Type: String
+    Default: '10.0.11.0/24'
+    Description: Private Subnet A CIDR (ap-northeast-2a)
+
+  # Private Subnet C (ap-northeast-2c) CIDR
+  PrivateSubnetCCidr:
+    Type: String
+    Default: '10.0.12.0/24'
+    Description: Private Subnet C CIDR (ap-northeast-2c)
+
   # 태그 값들
   CreatedByTag:
     Type: String
@@ -103,7 +117,7 @@ Parameters:
 # =============================================================================
 Resources:
   # ---------------------------------------------------------------------------
-  # VPC
+  # VPC - 실습용 가상 네트워크. 모든 리소스가 이 VPC 안에 생성됩니다.
   # ---------------------------------------------------------------------------
   VPC:
     Type: AWS::EC2::VPC
@@ -122,7 +136,8 @@ Resources:
           Value: !Ref SessionTag
 
   # ---------------------------------------------------------------------------
-  # Internet Gateway
+  # Internet Gateway - VPC가 인터넷과 통신하기 위한 관문입니다.
+  # Internet-facing ALB를 사용하려면 반드시 필요합니다.
   # ---------------------------------------------------------------------------
   InternetGateway:
     Type: AWS::EC2::InternetGateway
@@ -137,6 +152,7 @@ Resources:
         - Key: Session
           Value: !Ref SessionTag
 
+  # IGW를 VPC에 연결합니다. 연결하지 않으면 IGW가 있어도 인터넷 통신이 안 됩니다.
   AttachGateway:
     Type: AWS::EC2::VPCGatewayAttachment
     Properties:
@@ -145,6 +161,7 @@ Resources:
 
   # ---------------------------------------------------------------------------
   # Public Subnet 1 (AZ-a) - EC2 #1이 배치됩니다.
+  # MapPublicIpOnLaunch: true → 이 서브넷에 생성된 EC2에 자동으로 Public IP 부여
   # ---------------------------------------------------------------------------
   PublicSubnet1:
     Type: AWS::EC2::Subnet
@@ -165,6 +182,7 @@ Resources:
 
   # ---------------------------------------------------------------------------
   # Public Subnet 2 (AZ-c) - EC2 #2가 배치됩니다.
+  # ALB는 최소 2개 AZ에 배치해야 하므로 두 번째 서브넷이 필요합니다.
   # ---------------------------------------------------------------------------
   PublicSubnet2:
     Type: AWS::EC2::Subnet
@@ -184,7 +202,47 @@ Resources:
           Value: !Ref SessionTag
 
   # ---------------------------------------------------------------------------
-  # Route Table + 라우팅 규칙 + 서브넷 연결
+  # Private Subnet 1 (AZ-a) - 향후 RDS 등 내부 리소스 배치용
+  # 인터넷에서 직접 접근 불가. IGW 라우팅 없음.
+  # ---------------------------------------------------------------------------
+  PrivateSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: !Ref PrivateSubnetACidr
+      AvailabilityZone: !Select [0, !GetAZs '']
+      Tags:
+        - Key: Name
+          Value: !Sub '${ProjectName}-private-subnet-1'
+        - Key: CreatedBy
+          Value: !Ref CreatedByTag
+        - Key: Step
+          Value: !Ref StepTag
+        - Key: Session
+          Value: !Ref SessionTag
+
+  # ---------------------------------------------------------------------------
+  # Private Subnet 2 (AZ-c) - Multi-AZ 구성을 위한 두 번째 Private Subnet
+  # ---------------------------------------------------------------------------
+  PrivateSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: !Ref PrivateSubnetCCidr
+      AvailabilityZone: !Select [2, !GetAZs '']
+      Tags:
+        - Key: Name
+          Value: !Sub '${ProjectName}-private-subnet-2'
+        - Key: CreatedBy
+          Value: !Ref CreatedByTag
+        - Key: Step
+          Value: !Ref StepTag
+        - Key: Session
+          Value: !Ref SessionTag
+
+  # ---------------------------------------------------------------------------
+  # Route Table - 서브넷의 트래픽 경로를 정의합니다.
+  # 0.0.0.0/0 → IGW 규칙을 추가하여 인터넷으로 나갈 수 있게 합니다.
   # ---------------------------------------------------------------------------
   PublicRouteTable:
     Type: AWS::EC2::RouteTable
@@ -200,6 +258,7 @@ Resources:
         - Key: Session
           Value: !Ref SessionTag
 
+  # 모든 외부 트래픽(0.0.0.0/0)을 IGW로 보내는 라우팅 규칙
   PublicRoute:
     Type: AWS::EC2::Route
     DependsOn: AttachGateway
@@ -208,12 +267,14 @@ Resources:
       DestinationCidrBlock: 0.0.0.0/0
       GatewayId: !Ref InternetGateway
 
+  # Subnet 1에 Route Table을 연결합니다.
   PublicSubnet1RouteTableAssociation:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
       SubnetId: !Ref PublicSubnet1
       RouteTableId: !Ref PublicRouteTable
 
+  # Subnet 2에 Route Table을 연결합니다.
   PublicSubnet2RouteTableAssociation:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
@@ -221,8 +282,9 @@ Resources:
       RouteTableId: !Ref PublicRouteTable
 
   # ---------------------------------------------------------------------------
-  # EC2 Security Group
-  # SSH + AppPort를 허용합니다.
+  # EC2 Security Group - EC2 인스턴스의 인바운드 트래픽을 제어합니다.
+  # SSH(22)와 애플리케이션 포트(AppPort)를 허용합니다.
+  # 실습 중 태스크 6에서 AppPort의 Source를 ALB SG로 변경하여 직접 접근을 차단합니다.
   # ---------------------------------------------------------------------------
   EC2SecurityGroup:
     Type: AWS::EC2::SecurityGroup
@@ -349,14 +411,21 @@ Resources:
       UserData:
         Fn::Base64: !Sub |
           #!/bin/bash
+          # ============================================================
+          # EC2 UserData - Nginx 설치 + 인스턴스 식별 페이지 생성
+          # Instance 1과 동일한 로직. 배경색만 다르게 설정하여 구분합니다.
+          # ============================================================
+
           yum update -y
           yum install -y nginx
 
+          # AppPort가 80이 아닌 경우 Nginx 리스닝 포트 변경
           if [ "${AppPort}" != "80" ]; then
             sed -i 's/listen       80;/listen       ${AppPort};/' /etc/nginx/nginx.conf
             sed -i 's/listen       \[::]:80;/listen       [::]:${AppPort};/' /etc/nginx/nginx.conf
           fi
 
+          # IMDSv2 토큰 획득 후 인스턴스 메타데이터 조회
           TOKEN=$(curl -s -X PUT "http://169.254.169.254/latest/api/token" \
             -H "X-aws-ec2-metadata-token-ttl-seconds: 21600")
           INSTANCE_ID=$(curl -s -H "X-aws-ec2-metadata-token: $TOKEN" \
@@ -427,6 +496,18 @@ Outputs:
     Value: !Ref PublicSubnet2
     Export:
       Name: !Sub '${ProjectName}-public-subnet-2-id'
+
+  PrivateSubnet1Id:
+    Description: Private Subnet 1 ID (AZ-a)
+    Value: !Ref PrivateSubnet1
+    Export:
+      Name: !Sub '${ProjectName}-private-subnet-1-id'
+
+  PrivateSubnet2Id:
+    Description: Private Subnet 2 ID (AZ-c)
+    Value: !Ref PrivateSubnet2
+    Export:
+      Name: !Sub '${ProjectName}-private-subnet-2-id'
 
   EC2SecurityGroupId:
     Description: EC2 Security Group ID
