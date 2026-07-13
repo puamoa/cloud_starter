@@ -2,7 +2,7 @@
 
 ## 개요
 
-이 CloudFormation 템플릿(`step7-2-asg-prereq.yaml`)은 Step 7-2 Auto Scaling 실습에 필요한 VPC, ALB, Target Group, Security Group을 자동으로 생성합니다.  
+이 CloudFormation 템플릿(`step7-3-asg-prereq.yaml`)은 Step 7-2 Auto Scaling 실습에 필요한 VPC, ALB, Target Group, Security Group을 자동으로 생성합니다.  
 Auto Scaling Group, Launch Template은 실습에서 수동으로 생성합니다.
 
 > Step 7-1에서 ALB를 유지한 경우 이 템플릿을 사용하지 않아도 됩니다.
@@ -90,8 +90,8 @@ ALB (asg-lab-alb) → 두 Public Subnet에 걸쳐 배치
 
 1. AWS Management Console → CloudFormation 서비스
 2. **Create stack** → **With new resources (standard)**
-3. **Choose an existing template** → **Upload a template file** → `step7-2-asg-prereq.yaml` 업로드
-4. **Stack name**: `step7-2-asg-prereq`
+3. **Choose an existing template** → **Upload a template file** → `step7-3-asg-prereq.yaml` 업로드
+4. **Stack name**: `step7-3-asg-prereq`
 5. **Parameters**:
    - `KeyPairName`: 기존 Key Pair 선택 (필수)
    - `AppPort`: 80 (기본값, Nginx)
