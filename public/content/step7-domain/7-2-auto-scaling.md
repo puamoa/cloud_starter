@@ -94,11 +94,7 @@ Step 7-1을 진행하지 않은 경우, 아래 CloudFormation 템플릿으로 AL
 트래픽이 증가할 때 수동으로 EC2를 추가하는 방식의 문제점:
 
 ```
-
-```
-
 수동 확장:
-
 1. 모니터링 → CPU 90% 감지 (사람이 확인)
 2. EC2 콘솔 접속 → 인스턴스 생성 (5~10분)
 3. 앱 배포 + 설정 (10~20분)
@@ -106,15 +102,12 @@ Step 7-1을 진행하지 않은 경우, 아래 CloudFormation 템플릿으로 AL
 5. 트래픽 감소 → 인스턴스 종료 (잊어버리면 비용 낭비)
 
 총 소요 시간: 20~30분 (그 사이 서비스 장애 가능)
-
 ```
 
 ### Auto Scaling의 자동 확장
 
 ```
-
 자동 확장:
-
 1. CloudWatch → CPU 70% 초과 감지 (자동)
 2. ASG → Launch Template으로 인스턴스 자동 생성 (2~3분)
 3. User Data로 앱 자동 배포 (자동)
@@ -122,27 +115,24 @@ Step 7-1을 진행하지 않은 경우, 아래 CloudFormation 템플릿으로 AL
 5. 트래픽 감소 → 인스턴스 자동 종료 (자동)
 
 총 소요 시간: 2~5분 (무중단)
-
 ```
 
 ### ASG 구성 요소
 
 ```
-
 Auto Scaling Group (ASG)
 ├── Launch Template (인스턴스 설정 템플릿)
-│ ├── AMI (OS 이미지)
-│ ├── Instance Type (t2.micro)
-│ ├── Key Pair
-│ ├── Security Group
-│ └── User Data (시작 스크립트)
+│   ├── AMI (OS 이미지)
+│   ├── Instance Type (t2.micro)
+│   ├── Key Pair
+│   ├── Security Group
+│   └── User Data (시작 스크립트)
 ├── Scaling Policy (확장/축소 규칙)
-│ ├── Target Tracking (CPU 평균 70% 유지)
-│ ├── Step Scaling (단계별 확장)
-│ └── Scheduled (예약 확장)
+│   ├── Target Tracking (CPU 평균 70% 유지)
+│   ├── Step Scaling (단계별 확장)
+│   └── Scheduled (예약 확장)
 └── ALB Target Group (트래픽 분산)
-
-````
+```
 
 | 구성 요소              | 역할                                                  |
 | ---------------------- | ----------------------------------------------------- |
@@ -215,81 +205,70 @@ Launch Template은 ASG가 새 인스턴스를 생성할 때 사용할 설정을 
 
 ```bash
 #!/bin/bash
-# Auto Scaling Launch Template - User Data Script
-set -e
+# ASG Launch Template - Nginx + 인스턴스 식별 페이지
+# 7-1 CloudFormation UserData와 동일한 구성
 
-# 시스템 업데이트
-yum update -y
+dnf update -y
+dnf install -y nginx
 
-# Java 17 설치
-yum install -y java-17-amazon-corretto-headless
+# IMDSv2 토큰 획득 후 인스턴스 메타데이터 조회
+TOKEN=$(curl -s -X PUT "http://169.254.169.254/latest/api/token" \
+  -H "X-aws-ec2-metadata-token-ttl-seconds: 21600")
+INSTANCE_ID=$(curl -s -H "X-aws-ec2-metadata-token: $TOKEN" \
+  http://169.254.169.254/latest/meta-data/instance-id)
+AZ=$(curl -s -H "X-aws-ec2-metadata-token: $TOKEN" \
+  http://169.254.169.254/latest/meta-data/placement/availability-zone)
+PRIVATE_IP=$(curl -s -H "X-aws-ec2-metadata-token: $TOKEN" \
+  http://169.254.169.254/latest/meta-data/local-ipv4)
 
-# 애플리케이션 디렉토리 생성
-mkdir -p /opt/app
-cd /opt/app
-
-# S3에서 JAR 파일 다운로드 (본인의 S3 버킷으로 변경)
-aws s3 cp s3://my-app-deploy-bucket/app.jar /opt/app/app.jar
-
-# systemd 서비스 파일 생성
-cat > /etc/systemd/system/starter-app.service << 'EOF'
-[Unit]
-Description=Spring Boot Starter Application
-After=network.target
-
-[Service]
-Type=simple
-User=ec2-user
-ExecStart=/usr/bin/java -jar /opt/app/app.jar --server.port=8080
-Restart=always
-RestartSec=10
-
-[Install]
-WantedBy=multi-user.target
+# 인스턴스 식별 HTML 페이지 생성
+cat > /usr/share/nginx/html/index.html <<EOF
+<!DOCTYPE html>
+<html>
+<head><title>ASG Lab</title>
+<style>
+  body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
+  .card { background: white; border-radius: 10px; padding: 30px; max-width: 500px;
+          margin: 0 auto; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+  .instance-id { color: #2563eb; font-size: 1.2em; font-weight: bold; }
+  .az { color: #059669; }
+</style>
+</head>
+<body>
+  <div class="card">
+    <h1>Hello from ASG!</h1>
+    <p class="instance-id">Instance: $INSTANCE_ID</p>
+    <p class="az">AZ: $AZ</p>
+    <p>Private IP: $PRIVATE_IP</p>
+    <hr>
+    <p><small>Refresh to see load balancing across ASG instances</small></p>
+  </div>
+</body>
+</html>
 EOF
 
-# 서비스 시작
-systemctl daemon-reload
-systemctl enable starter-app
-systemctl start starter-app
-````
+# Health Check 엔드포인트
+mkdir -p /usr/share/nginx/html/health
+echo "OK" > /usr/share/nginx/html/health/index.html
+
+systemctl start nginx
+systemctl enable nginx
+```
 
 > [!CONCEPT] User Data란?
 >
-> User Data는 EC2 인스턴스가 **최초 시작될 때 한 번** 실행되는 스크립트입니다.
+> User Data는 Amazon EC2 인스턴스가 **최초 시작될 때 한 번** 실행되는 스크립트입니다.
 > ASG가 새 인스턴스를 생성할 때마다 이 스크립트가 자동 실행되어:
 >
-> 1. Java를 설치하고
-> 2. S3에서 애플리케이션 JAR를 다운로드하고
-> 3. systemd 서비스로 등록하여 자동 시작합니다.
+> - Nginx를 설치하고
+> - 인스턴스 식별 페이지를 생성하고
+> - Health Check 엔드포인트를 만듭니다.
 >
-> 이를 통해 사람의 개입 없이 새 인스턴스가 자동으로 서비스를 시작합니다.
+> 이를 통해 사람의 개입 없이 새 인스턴스가 자동으로 서비스를 시작합니다.  
+> 단, **최초 부팅 시 1번만 실행**되므로 설치 시간(1~2분)이 인스턴스 시작 시간에 포함됩니다.  
+> 태스크 6에서 커스텀 AMI를 사용하면 이 시간을 단축할 수 있습니다.
 
-> [!WARNING]
-> User Data에서 S3 버킷 이름(`my-app-deploy-bucket`)을 본인의 버킷으로 변경하세요.
-> EC2 IAM Role에 S3 읽기 권한(`s3:GetObject`)이 있어야 합니다.
-> JAR 파일이 없는 경우, 간단한 Nginx 설치로 대체할 수 있습니다:
->
-> ```bash
-> #!/bin/bash
-> yum update -y
-> yum install -y nginx
-> systemctl start nginx
-> systemctl enable nginx
-> ```
-
-> [!TIP]
-> 초보자라면 먼저 Nginx User Data로 실습하는 것을 권장합니다.
-> S3 버킷, IAM Role 설정 없이 바로 동작을 확인할 수 있어 디버깅이 쉽습니다.
-> Nginx 사용 시 Target Group의 Health Check 포트를 `80`으로, 경로를 `/`로 변경하세요.
-
-### IAM Instance Profile (선택)
-
-13. **IAM instance profile**: EC2 Role을 선택합니다 (S3 접근 권한 필요).
-    - S3에서 JAR를 다운로드하려면 `AmazonS3ReadOnlyAccess` 정책이 필요합니다.
-    - Nginx만 사용하는 경우 이 설정은 생략 가능합니다.
-
-14. [[Create launch template]]을 클릭합니다.
+13. [[Create launch template]]을 클릭합니다.
 
 > [!OUTPUT]
 > Launch Template이 생성되었습니다:
@@ -579,7 +558,70 @@ http://your-alb-dns-name.ap-northeast-2.elb.amazonaws.com
 
 ---
 
-## 태스크 6: 스케일 아웃 테스트 (선택)
+## 태스크 6: Launch Template 버전 업 (커스텀 AMI)
+
+현재 Launch Template v1은 공식 AMI + UserData로 앱을 설치합니다.  
+UserData는 인스턴스 **최초 부팅 시 1번만 실행**되므로, 인스턴스가 시작될 때마다 설치 시간이 소요됩니다.
+
+이번 태스크에서는 이미 앱이 설치된 EC2에서 **커스텀 AMI**를 생성하고, Launch Template의 새 버전(v2)에 적용하여 시작 시간을 단축합니다.
+
+### UserData vs 커스텀 AMI 비교
+
+| 항목               | UserData (v1)          | 커스텀 AMI (v2)                       |
+| ------------------ | ---------------------- | ------------------------------------- |
+| 인스턴스 시작 시간 | 2~5분 (설치 시간 포함) | 30초~1분 (이미 설치됨)                |
+| 유지보수           | 스크립트 수정으로 변경 | AMI를 다시 생성해야 함                |
+| 적합한 경우        | 설정이 자주 바뀔 때    | 앱이 안정적이고 빠른 시작이 필요할 때 |
+
+> [!CONCEPT] 커스텀 AMI란?
+>
+> - 실행 중인 Amazon EC2에서 **이미지(AMI)**를 생성하면, 그 시점의 OS + 설치된 소프트웨어 + 설정이 모두 포함됩니다.
+> - 이 AMI로 새 인스턴스를 시작하면 처음부터 동일한 상태로 바로 실행됩니다.
+> - EC2 콘솔 → 인스턴스 선택 → **Actions** → **Image and templates** → **Create image**로 생성합니다.
+
+### 커스텀 AMI 생성
+
+61. EC2 콘솔 → **Instances**에서 ASG가 생성한 인스턴스 중 하나를 선택합니다.
+62. **Actions** → **Image and templates** → **Create image**를 클릭합니다.
+63. 다음을 설정합니다:
+    - **Image name**: `starter-app-ami-v1`
+    - **Image description**: (비워둡니다)
+    - **No reboot**: ✅ 체크 (인스턴스를 재부팅하지 않고 이미지 생성)
+    - 나머지: 기본값 유지
+64. [[Create image]]를 클릭합니다.
+65. 왼쪽 메뉴 **Images** → **AMIs**에서 생성 상태를 확인합니다.
+    - Status: `pending` → `available` (2~5분 소요)
+
+> [!WARNING]
+> AMI Status가 `available`이 될 때까지 기다린 후 다음 단계를 진행하세요.
+
+### Launch Template 새 버전 생성
+
+66. EC2 콘솔 → **Instances** → **Launch Templates**로 이동합니다.
+67. `starter-app-lt`를 선택하고 **Actions** → **Modify template (Create new version)**을 클릭합니다.
+68. **Source template version**: 기존 버전을 선택합니다.
+69. **Application and OS Images (AMI)** 섹션에서:
+    - **My AMIs** 탭을 클릭합니다.
+    - `starter-app-ami-v1`을 선택합니다.
+70. **Advanced details** → **User Data**: 내용을 비웁니다 (AMI에 이미 포함되어 있으므로 불필요).
+71. [[Create template version]]을 클릭합니다.
+
+### ASG에 새 버전 적용
+
+72. EC2 콘솔 → **Auto Scaling** → **Auto Scaling Groups**로 이동합니다.
+73. `starter-app-asg`를 선택하고 **Details** 탭의 [[Edit]]을 클릭합니다.
+74. **Launch template** → **Version**: `Latest`로 변경합니다.
+75. [[Update]]를 클릭합니다.
+
+> [!TIP]
+> Version을 `Latest`로 설정하면, Launch Template의 새 버전이 생성될 때마다 ASG가 자동으로 최신 버전을 사용합니다.  
+> 이후 스케일 아웃으로 새로 생성되는 인스턴스부터 커스텀 AMI가 적용됩니다.
+
+✅ **태스크 완료** — 커스텀 AMI로 Launch Template v2를 생성하고 ASG에 적용했습니다.
+
+---
+
+## 태스크 7: 스케일 아웃 테스트 (선택)
 
 > [!WARNING]
 > 이 태스크는 선택 사항입니다. CPU 부하를 발생시켜 Scale Out을 테스트합니다.
@@ -600,7 +642,7 @@ ssh -i your-key.pem ec2-user@<instance-public-ip>
 
 ```bash
 # Amazon Linux 2023
-sudo yum install -y stress
+sudo dnf install -y stress
 ```
 
 60. CPU 부하를 발생시킵니다:
@@ -672,6 +714,90 @@ aws autoscaling describe-scaling-activities \
 > ```
 
 ✅ **태스크 완료** — CPU 부하를 통해 Scale Out/In 동작을 확인했습니다.
+
+---
+
+## 🎯 셀프 미션: 본인 앱으로 Launch Template 구성 (선택)
+
+태스크 6에서 배운 Launch Template 버전 업을 활용하여, Nginx 대신 **본인의 Spring Boot 또는 Spring Legacy 앱**으로 ASG를 구성해보세요.
+
+### 미션 목표
+
+- Launch Template v3를 생성하여 본인 앱이 자동 배포되도록 구성합니다.
+- ASG의 인스턴스가 자동으로 앱을 실행하고, ALB Health Check를 통과해야 합니다.
+
+### 힌트: UserData 작성 가이드
+
+**Spring Boot (JAR 배포):**
+
+```bash
+#!/bin/bash
+dnf update -y
+dnf install -y java-17-amazon-corretto-headless
+
+# JAR 파일을 S3에서 다운로드 (본인 S3 버킷으로 변경)
+aws s3 cp s3://<버킷명>/app.jar /opt/app/app.jar
+
+# systemd 서비스 등록
+cat > /etc/systemd/system/app.service << 'EOF'
+[Unit]
+Description=Spring Boot App
+After=network.target
+[Service]
+ExecStart=/usr/bin/java -jar /opt/app/app.jar --server.port=80
+Restart=always
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl daemon-reload
+systemctl enable app
+systemctl start app
+```
+
+**Spring Legacy (WAR + Tomcat 배포):**
+
+```bash
+#!/bin/bash
+dnf update -y
+dnf install -y java-17-amazon-corretto tomcat
+
+# WAR 파일을 S3에서 다운로드
+aws s3 cp s3://<버킷명>/app.war /usr/share/tomcat/webapps/ROOT.war
+
+systemctl enable tomcat
+systemctl start tomcat
+```
+
+### 체크리스트
+
+- [ ] EC2 IAM Role에 `AmazonS3ReadOnlyAccess` 정책 추가
+- [ ] S3에 JAR/WAR 파일 업로드 완료
+- [ ] Health Check 경로를 앱에 맞게 변경 (예: `/actuator/health`)
+- [ ] Target Group 포트를 앱 포트에 맞게 변경 (8080 또는 80)
+- [ ] ALB DNS로 접속 시 본인 앱 화면 확인
+
+> [!TIP]
+> 커스텀 AMI 방식도 활용할 수 있습니다:
+>
+> - EC2에 직접 SSH 접속 → 앱 설치·설정 완료 → AMI 생성
+> - Launch Template 새 버전에 커스텀 AMI 적용 + UserData 비움
+> - UserData 방식보다 시작 시간이 빠르고 안정적입니다.
+
+---
+
+## 마무리
+
+이 실습에서 다음을 성공적으로 수행했습니다:
+
+- Launch Template을 생성하여 인스턴스 설정을 템플릿화했습니다.
+- Auto Scaling Group을 생성하고 ALB Target Group과 연동했습니다.
+- Target Tracking 스케일링 정책으로 CPU 기반 자동 확장/축소를 설정했습니다.
+- ASG가 인스턴스를 자동 생성하고 Target Group에 자동 등록하는 것을 확인했습니다.
+- Launch Template 버전 업을 통해 커스텀 AMI를 적용하는 방법을 학습했습니다.
+
+> [!TIP]
+> 다음 실습(Step 7-3)에서는 Route 53으로 도메인을 연결하고 ACM 인증서로 HTTPS를 적용합니다.
 
 ---
 

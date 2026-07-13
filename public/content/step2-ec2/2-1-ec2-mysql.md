@@ -1623,7 +1623,7 @@ ssh -i ~/Downloads/my-keypair.pem ec2-user@<Public-IP>
 
 ---
 
-### 🎯 셀프 미션: MySQL 포트로 NACL 차단/복구 테스트
+## 🎯 셀프 미션: MySQL 포트로 NACL 차단/복구 테스트
 
 > [!NOTE]
 > **미션 목표**: SSH와 동일한 방식으로 MySQL(3306) 포트에 대해 NACL 차단/복구를 직접 수행해 보세요.
