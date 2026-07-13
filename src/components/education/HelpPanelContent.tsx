@@ -245,6 +245,25 @@ export const HelpPanelContent: React.FC<HelpPanelContentProps> = ({
               });
             }
           }
+
+          // 셀프 미션 추출
+          const missionRegex = /^##\s+🎯\s+셀프\s*미션\s*(\d*)[\s:]*(.+)$/gm;
+          let missionMatch;
+          while ((missionMatch = missionRegex.exec(mainContent)) !== null) {
+            const missionNumber = missionMatch[1];
+            const missionTitle = missionMatch[2].trim();
+            const title = missionNumber
+              ? `셀프 미션 ${missionNumber}: ${missionTitle}`
+              : `셀프 미션: ${missionTitle}`;
+            toc.push({
+              id: missionNumber
+                ? `self-mission-${missionNumber}`
+                : 'self-mission',
+              title,
+              level: 2,
+              emoji: '🎯',
+            });
+          }
         }
 
         // 4. 리소스 정리 섹션

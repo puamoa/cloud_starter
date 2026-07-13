@@ -1,7 +1,7 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: >
   Step 7-2 Auto Scaling Lab Prerequisites.
-  Creates VPC, Public Subnets (2 AZs), IGW, Route Table, ALB, Target Group, Security Groups.
+  Creates VPC, Public/Private Subnets (2 AZs), IGW, Route Table, ALB, Target Group, Security Groups.
 
 # =============================================================================
 # Metadata - CloudFormation 콘솔에서 파라미터 입력 화면의 그룹과 순서를 지정합니다.
@@ -22,6 +22,8 @@ Metadata:
           - VpcCidr
           - PublicSubnetACidr
           - PublicSubnetCCidr
+          - PrivateSubnetACidr
+          - PrivateSubnetCCidr
       - Label:
           default: 'Tags (Keep Default)'
         Parameters:
@@ -49,16 +51,16 @@ Parameters:
     Description: Name of an existing EC2 Key Pair for SSH access
 
   # EC2에서 애플리케이션이 실행되는 포트
-  # Spring Boot: 8080 (기본값), Nginx: 80
+  # 이 실습에서는 Nginx를 사용하므로 80이 기본값입니다.
   AppPort:
     Type: Number
-    Default: 8080
-    Description: Application port (Spring Boot=8080, Nginx=80)
+    Default: 80
+    Description: Application port (Nginx default=80)
     AllowedValues:
       - 80
       - 8080
 
-  # SSH 접근을 허용할 IP 대역
+  # SSH 접근을 허용할 IP 대역. 보안을 위해 본인 IP로 제한하는 것을 권장합니다.
   SSHAccessCidr:
     Type: String
     Default: '0.0.0.0/0'
@@ -82,6 +84,18 @@ Parameters:
     Default: '10.0.2.0/24'
     Description: Public Subnet C CIDR (ap-northeast-2c)
 
+  # Private Subnet A (ap-northeast-2a) CIDR
+  PrivateSubnetACidr:
+    Type: String
+    Default: '10.0.11.0/24'
+    Description: Private Subnet A CIDR (ap-northeast-2a)
+
+  # Private Subnet C (ap-northeast-2c) CIDR
+  PrivateSubnetCCidr:
+    Type: String
+    Default: '10.0.12.0/24'
+    Description: Private Subnet C CIDR (ap-northeast-2c)
+
   # 태그 값들
   CreatedByTag:
     Type: String
@@ -104,7 +118,7 @@ Parameters:
 # =============================================================================
 Resources:
   # ---------------------------------------------------------------------------
-  # VPC
+  # VPC - 실습용 가상 네트워크. 모든 리소스가 이 VPC 안에 생성됩니다.
   # ---------------------------------------------------------------------------
   VPC:
     Type: AWS::EC2::VPC
@@ -123,7 +137,7 @@ Resources:
           Value: !Ref SessionTag
 
   # ---------------------------------------------------------------------------
-  # Internet Gateway
+  # Internet Gateway - VPC가 인터넷과 통신하기 위한 관문입니다.
   # ---------------------------------------------------------------------------
   InternetGateway:
     Type: AWS::EC2::InternetGateway
@@ -138,6 +152,7 @@ Resources:
         - Key: Session
           Value: !Ref SessionTag
 
+  # IGW를 VPC에 연결합니다.
   AttachGateway:
     Type: AWS::EC2::VPCGatewayAttachment
     Properties:
@@ -145,7 +160,8 @@ Resources:
       InternetGatewayId: !Ref InternetGateway
 
   # ---------------------------------------------------------------------------
-  # Public Subnet 1 (AZ-a)
+  # Public Subnet 1 (AZ-a) - ALB와 EC2가 배치됩니다.
+  # MapPublicIpOnLaunch: true → 이 서브넷에 생성된 EC2에 자동으로 Public IP 부여
   # ---------------------------------------------------------------------------
   PublicSubnet1:
     Type: AWS::EC2::Subnet
@@ -185,7 +201,46 @@ Resources:
           Value: !Ref SessionTag
 
   # ---------------------------------------------------------------------------
-  # Route Table + 라우팅 규칙 + 서브넷 연결
+  # Private Subnet 1 (AZ-a) - 향후 RDS 등 내부 리소스 배치용
+  # ---------------------------------------------------------------------------
+  PrivateSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: !Ref PrivateSubnetACidr
+      AvailabilityZone: !Select [0, !GetAZs '']
+      Tags:
+        - Key: Name
+          Value: !Sub '${ProjectName}-private-subnet-1'
+        - Key: CreatedBy
+          Value: !Ref CreatedByTag
+        - Key: Step
+          Value: !Ref StepTag
+        - Key: Session
+          Value: !Ref SessionTag
+
+  # ---------------------------------------------------------------------------
+  # Private Subnet 2 (AZ-c) - Multi-AZ 구성을 위한 두 번째 Private Subnet
+  # ---------------------------------------------------------------------------
+  PrivateSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: !Ref PrivateSubnetCCidr
+      AvailabilityZone: !Select [2, !GetAZs '']
+      Tags:
+        - Key: Name
+          Value: !Sub '${ProjectName}-private-subnet-2'
+        - Key: CreatedBy
+          Value: !Ref CreatedByTag
+        - Key: Step
+          Value: !Ref StepTag
+        - Key: Session
+          Value: !Ref SessionTag
+
+  # ---------------------------------------------------------------------------
+  # Route Table - 서브넷의 트래픽 경로를 정의합니다.
+  # 0.0.0.0/0 → IGW 규칙을 추가하여 인터넷으로 나갈 수 있게 합니다.
   # ---------------------------------------------------------------------------
   PublicRouteTable:
     Type: AWS::EC2::RouteTable
@@ -201,6 +256,7 @@ Resources:
         - Key: Session
           Value: !Ref SessionTag
 
+  # 모든 외부 트래픽(0.0.0.0/0)을 IGW로 보내는 라우팅 규칙
   PublicRoute:
     Type: AWS::EC2::Route
     DependsOn: AttachGateway
@@ -209,12 +265,14 @@ Resources:
       DestinationCidrBlock: 0.0.0.0/0
       GatewayId: !Ref InternetGateway
 
+  # Subnet 1에 Route Table을 연결합니다.
   PublicSubnet1RouteTableAssociation:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
       SubnetId: !Ref PublicSubnet1
       RouteTableId: !Ref PublicRouteTable
 
+  # Subnet 2에 Route Table을 연결합니다.
   PublicSubnet2RouteTableAssociation:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
@@ -278,6 +336,7 @@ Resources:
   # ---------------------------------------------------------------------------
   # Target Group - ALB가 트래픽을 전달할 대상 그룹입니다.
   # Auto Scaling Group이 이 Target Group에 인스턴스를 자동 등록합니다.
+  # Health Check 경로: /health/ (Nginx UserData에서 자동 생성)
   # ---------------------------------------------------------------------------
   TargetGroup:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
@@ -288,7 +347,7 @@ Resources:
       VpcId: !Ref VPC
       TargetType: instance
       HealthCheckProtocol: HTTP
-      HealthCheckPath: /
+      HealthCheckPath: /health/
       HealthCheckIntervalSeconds: 30
       HealthCheckTimeoutSeconds: 5
       HealthyThresholdCount: 3
@@ -343,7 +402,7 @@ Resources:
 
 # =============================================================================
 # Outputs - 스택 생성 후 확인할 수 있는 주요 값입니다.
-# Auto Scaling Group 생성 시 Target Group ARN과 서브넷 ID가 필요합니다.
+# Auto Scaling Group 생성 시 Target Group ARN, 서브넷 ID, SG ID가 필요합니다.
 # =============================================================================
 Outputs:
   VPCId:
@@ -363,6 +422,18 @@ Outputs:
     Value: !Ref PublicSubnet2
     Export:
       Name: !Sub '${ProjectName}-public-subnet-2-id'
+
+  PrivateSubnet1Id:
+    Description: Private Subnet 1 ID (AZ-a)
+    Value: !Ref PrivateSubnet1
+    Export:
+      Name: !Sub '${ProjectName}-private-subnet-1-id'
+
+  PrivateSubnet2Id:
+    Description: Private Subnet 2 ID (AZ-c)
+    Value: !Ref PrivateSubnet2
+    Export:
+      Name: !Sub '${ProjectName}-private-subnet-2-id'
 
   ALBSecurityGroupId:
     Description: ALB Security Group ID

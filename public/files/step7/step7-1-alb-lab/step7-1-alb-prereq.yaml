@@ -334,8 +334,8 @@ Resources:
           # ALB가 트래픽을 분산할 때 어느 EC2에 요청이 갔는지 확인용
           # ============================================================
 
-          yum update -y
-          yum install -y nginx
+          dnf update -y
+          dnf install -y nginx
 
           # AppPort가 80이 아닌 경우 Nginx 리스닝 포트 변경
           if [ "${AppPort}" != "80" ]; then
@@ -416,8 +416,8 @@ Resources:
           # Instance 1과 동일한 로직. 배경색만 다르게 설정하여 구분합니다.
           # ============================================================
 
-          yum update -y
-          yum install -y nginx
+          dnf update -y
+          dnf install -y nginx
 
           # AppPort가 80이 아닌 경우 Nginx 리스닝 포트 변경
           if [ "${AppPort}" != "80" ]; then

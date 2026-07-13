@@ -1085,6 +1085,8 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
         id = 'cleanup';
       } else if (text.includes('📚') || text.includes('참고')) {
         id = 'reference';
+      } else if (text.includes('🎯') || text.includes('셀프 미션')) {
+        id = 'self-mission';
       } else {
         // 리소스 정리 하위 섹션 (## 1단계:, ## 2단계:)
         const stepMatch = text.match(/(?:(\d+)단계|단계\s+(\d+))/);
