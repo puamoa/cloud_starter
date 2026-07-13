@@ -1,7 +1,7 @@
 ---
 title: '도메인 구매부터 HTTPS 인증서 발급까지'
 week: 7
-session: 2
+session: 1
 awsServices:
   - Amazon Route 53
   - AWS Certificate Manager
@@ -25,12 +25,12 @@ ACM(AWS Certificate Manager)으로 무료 SSL 인증서를 발급받아 HTTPS를
 
 | 세션                | 주제               | 핵심 리소스                     |
 | ------------------- | ------------------ | ------------------------------- |
-| 7-1                 | ALB + Target Group | 트래픽 분산, Health Check       |
-| 7-2                 | Auto Scaling Group | 자동 확장/축소, Launch Template |
-| **7-3 (이번 실습)** | Route 53 + ACM     | 도메인 연결, HTTPS 인증서       |
+| **7-1 (이번 실습)** | Route 53 + ACM     | 도메인 연결, HTTPS 인증서       |
+| 7-2                 | ALB + Target Group | 트래픽 분산, Health Check       |
+| 7-3                 | Auto Scaling Group | 자동 확장/축소, Launch Template |
 
 ```
-7-1: ALB 생성        →    7-2: 도메인 + HTTPS 적용  →    7-3: ASG로 자동 확장
+7-1: 도메인 + HTTPS     →    7-2: ALB 생성 + 도메인 연결  →    7-3: ASG로 자동 확장
 (수동 EC2 등록)           (커스텀 도메인 + SSL)          (EC2 자동 생성/삭제)
 ```
 
@@ -301,76 +301,85 @@ dig @8.8.8.8 NS yourdomain.com
 
 ---
 
-## 태스크 4: A 레코드 설정
+## 태스크 4: A 레코드 설정 (NS 전파 확인)
 
-도메인을 EC2 인스턴스의 IP 주소에 연결합니다.
+NS 변경이 전파되었는지 확인하기 위해, 도메인을 Amazon EC2 Public IP에 연결하고 브라우저에서 접속해봅니다.
 
-### 루트 도메인 A 레코드 생성
+> [!NOTE]
+> 이 태스크는 NS 전파 완료 후에 테스트할 수 있습니다.  
+> 아직 전파가 안 됐다면 태스크 5(ACM 인증서)를 먼저 진행하고 돌아와도 됩니다.
 
-26. Route 53 → Hosted zones → 도메인을 클릭합니다.
-27. [[Create record]]를 클릭합니다.
-28. 다음을 설정합니다:
+### EC2 준비
 
-- **Record name**: (비워두면 루트 도메인, 예: `yourdomain.com`)
-- **Record type**: **A – Routes traffic to an IPv4 address**
-- **Value**: EC2 인스턴스의 Public IP (예: `3.35.xxx.xxx`)
-- **TTL (seconds)**: `300`
-- **Routing policy**: Simple routing
+**옵션 A: 기존 EC2가 있는 경우**
 
-29. [[Create records]]를 클릭합니다.
+이전 차시에서 생성한 Amazon EC2가 실행 중이라면 해당 Public IP를 사용합니다.
 
-### 서브도메인 A 레코드 생성 (api.yourdomain.com)
+**옵션 B: EC2가 없는 경우**
 
-30. [[Create record]]를 다시 클릭합니다.
-31. 다음을 설정합니다:
+간단하게 Nginx EC2 1대를 생성합니다:
 
-- **Record name**: `api` (→ `api.yourdomain.com`이 됨)
-- **Record type**: **A**
-- **Value**: EC2 인스턴스의 Public IP (Spring Boot 서버)
-- **TTL (seconds)**: `300`
+26. EC2 콘솔 → [[Launch instances]]를 클릭합니다.
+27. 다음을 설정합니다:
+    - **Name**: `route53-test`
+    - **AMI**: Amazon Linux 2023 (기본 선택)
+    - **Instance type**: t2.micro
+    - **Key pair**: 기존 Key Pair 선택
+    - **Network settings**: Public IP 자동 할당 활성화, HTTP(80) 허용
+    - **Advanced details → User Data**:
 
-32. [[Create records]]를 클릭합니다.
+```bash
+#!/bin/bash
+dnf install -y nginx
+systemctl start nginx
+systemctl enable nginx
+```
 
-### 추가 서브도메인 예시
+28. [[Launch instance]]를 클릭합니다.
+29. 인스턴스가 Running 상태가 되면 **Public IPv4 address**를 복사합니다.
 
-| Record name | Type  | Value          | 용도                          |
-| ----------- | ----- | -------------- | ----------------------------- |
-| (빈값)      | A     | 3.35.xxx.xxx   | 루트 도메인 (yourdomain.com)  |
-| `api`       | A     | 3.35.xxx.xxx   | API 서버 (api.yourdomain.com) |
-| `www`       | CNAME | yourdomain.com | www 리다이렉트                |
-| `dev`       | A     | 3.36.xxx.xxx   | 개발 서버                     |
+### A 레코드 생성
 
-> [!CONCEPT] A 레코드 vs CNAME 레코드
+30. Route 53 콘솔 → **Hosted zones** → 도메인을 클릭합니다.
+31. [[Create record]]를 클릭합니다.
+32. 다음을 설정합니다:
+    - **Record name**: 비워둡니다 (루트 도메인)
+    - **Record type**: **A – Routes traffic to an IPv4 address**
+    - **Value**: EC2 Public IP (예: `3.35.xxx.xxx`)
+    - **TTL**: `300`
+    - **Routing policy**: Simple routing
+33. [[Create records]]를 클릭합니다.
+
+### 도메인 접속 확인
+
+34. 브라우저에서 `http://내도메인.shop`(구매한 도메인)으로 접속합니다.
+    - Nginx 기본 페이지 또는 본인 앱이 표시되면 **NS 전파 + A 레코드 설정 성공**입니다.
+
+```bash
+# CLI로 확인
+nslookup 내도메인.shop
+dig A 내도메인.shop
+```
+
+> [!TROUBLESHOOTING]
+> | 증상 | 원인 | 해결 |
+> |------|------|------|
+> | 접속 안 됨 (DNS 응답 없음) | NS 전파 미완료 | 30분~수 시간 대기 후 재시도 |
+> | DNS 응답은 있으나 연결 안 됨 | EC2 SG에서 80 포트 미허용 | Security Group Inbound 확인 |
+> | 이전 DNS가 응답 | 로컬 DNS 캐시 | `nslookup` 또는 시크릿 모드로 확인 |
+
+> [!CONCEPT] A 레코드 vs CNAME vs Alias
 >
 > - **A 레코드**: 도메인 → IP 주소 매핑. 루트 도메인에 사용 가능.
 > - **CNAME 레코드**: 도메인 → 다른 도메인 매핑. 루트 도메인에는 사용 불가.
-> - **Alias 레코드** (Route 53 전용): 루트 도메인에서도 AWS 리소스(ALB, CloudFront 등)를 가리킬 수 있는 특수 레코드.
-
-### DNS 확인
-
-```bash
-# A 레코드 확인
-dig A yourdomain.com
-dig A api.yourdomain.com
-
-# 또는 nslookup
-nslookup yourdomain.com
-```
-
-> [!OUTPUT]
->
-> ```
-> yourdomain.com.     300     IN      A       3.35.xxx.xxx
-> api.yourdomain.com. 300     IN      A       3.35.xxx.xxx
-> ```
+> - **Alias 레코드** (Route 53 전용): 루트 도메인에서도 ALB, CloudFront 등 AWS 리소스를 가리킬 수 있는 특수 레코드.  
+>   다음 실습(7-2 ALB)에서 A 레코드를 ALB Alias로 변경합니다.
 
 > [!TIP]
-> EC2의 Public IP는 인스턴스를 중지/시작하면 변경됩니다.
-> 고정 IP가 필요하면 **Elastic IP**를 할당하여 연결하세요.
-> 또는 ALB(Application Load Balancer)를 사용하면 IP 변경 걱정 없이
-> Alias 레코드로 연결할 수 있습니다.
+> Amazon EC2의 Public IP는 인스턴스를 중지/시작하면 변경됩니다.  
+> 다음 실습(7-2)에서 ALB를 사용하면 IP 변경 걱정 없이 Alias 레코드로 연결할 수 있습니다.
 
-✅ **태스크 완료** — 루트 도메인과 서브도메인의 A 레코드를 설정했습니다.
+✅ **태스크 완료** — A 레코드를 설정하고 도메인으로 접속을 확인했습니다.
 
 ---
 
@@ -474,6 +483,10 @@ Value: _xyz789ghi012.acm-validations.aws.
 ## 태스크 7: 인증서 활용 방법 안내
 
 발급받은 ACM 인증서는 다음 AWS 서비스에 연결하여 HTTPS를 적용합니다.
+
+> [!NOTE]
+> 이 태스크에서는 **활용 방법을 안내**만 합니다.  
+> 실제로 ALB에 HTTPS를 적용하는 것은 **다음 실습(7-2 ALB)**에서 진행합니다.
 
 > [!NOTE]
 > ACM 인증서는 EC2에 직접 설치할 수 없습니다. 반드시 ALB, CloudFront,

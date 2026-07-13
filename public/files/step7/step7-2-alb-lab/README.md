@@ -2,7 +2,7 @@
 
 ## 개요
 
-이 CloudFormation 템플릿(`step7-1-alb-prereq.yaml`)은 Step 7-1 ALB 실습에 필요한 VPC 네트워크 환경과 EC2 인스턴스 2대(Nginx)를 자동으로 생성합니다.  
+이 CloudFormation 템플릿(`step7-2-alb-prereq.yaml`)은 Step 7-1 ALB 실습에 필요한 VPC 네트워크 환경과 EC2 인스턴스 2대(Nginx)를 자동으로 생성합니다.  
 ALB, Target Group, ALB Security Group은 실습에서 수동으로 생성합니다.
 
 > 이미 실습용 VPC와 EC2가 있다면 이 템플릿을 사용하지 않아도 됩니다.

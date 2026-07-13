@@ -376,24 +376,25 @@ export const curriculum: WeekCurriculum[] = [
       {
         session: 1,
         type: 'lab',
-        title: 'ALB 생성 및 Target Group 구성',
-        hasContent: true,
-        markdownPath: '/content/step7-domain/7-1-alb-target-group.md',
-        description:
-          'Application Load Balancer 생성, Target Group 설정, Health Check, EC2 연결',
-        awsServices: ['Elastic Load Balancing'],
-        estimatedCost: '크레딧 내 사용 가능 (비용 발생 가능)',
-      },
-      {
-        session: 2,
-        type: 'lab',
         title: '도메인 구매부터 HTTPS 인증서 발급까지',
         hasContent: true,
-        markdownPath: '/content/step7-domain/7-2-route53-acm.md',
+        markdownPath: '/content/step7-domain/7-1-route53-acm.md',
         description:
           'cafe24 도메인 구매, Route 53 Hosted Zone, ACM DNS 검증, ALB에 HTTPS 적용',
         awsServices: ['Amazon Route 53', 'AWS Certificate Manager'],
         estimatedCost: 'Route 53 Hosted Zone 월 $0.50 + 도메인 구매 비용',
+      },
+      {
+        session: 2,
+        type: 'lab',
+        title: 'ALB 생성 및 Target Group 구성',
+        hasContent: true,
+        markdownPath: '/content/step7-domain/7-2-alb-target-group.md',
+        description:
+          'Application Load Balancer 생성, Target Group 설정, Health Check, EC2 연결, HTTPS 적용',
+        awsServices: ['Elastic Load Balancing'],
+        estimatedCost:
+          '비용 발생 (ALB 시간당 + EC2 시간당 과금, 무료 플랜 적용 여부에 따라 다름)',
       },
       {
         session: 3,
