@@ -109,7 +109,7 @@ Parameters:
 
   SessionTag:
     Type: String
-    Default: '7-1'
+    Default: '7-2'
     Description: Session tag value
 
 # =============================================================================
