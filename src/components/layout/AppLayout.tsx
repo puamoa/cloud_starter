@@ -93,6 +93,41 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
     };
   }, []);
 
+  // 사이드바 열려있을 때 현재 활성 항목으로 스크롤
+  useEffect(() => {
+    if (navigationOpen) {
+      const timer = setTimeout(() => {
+        const activeLink =
+          document.querySelector(
+            '[data-testid="side-navigation"] a[aria-current="page"]',
+          ) || document.querySelector('nav a[aria-current="page"]');
+        if (activeLink) {
+          // 메인 콘텐츠 스크롤 방지: 사이드바 내에서만 스크롤
+          const navPanel = activeLink.closest(
+            '[class*="navigation-panel"], [class*="drawer-content"], nav',
+          );
+          if (navPanel) {
+            // overflow auto/scroll을 가진 스크롤 가능한 부모 찾기
+            let scrollContainer: Element | null = activeLink.parentElement;
+            while (scrollContainer && scrollContainer !== document.body) {
+              const style = window.getComputedStyle(scrollContainer);
+              if (style.overflowY === 'auto' || style.overflowY === 'scroll') {
+                break;
+              }
+              scrollContainer = scrollContainer.parentElement;
+            }
+            if (scrollContainer && scrollContainer !== document.body) {
+              const linkTop = (activeLink as HTMLElement).offsetTop;
+              scrollContainer.scrollTop =
+                linkTop - scrollContainer.clientHeight / 2;
+            }
+          }
+        }
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [currentPath, navigationOpen]);
+
   const toggleTheme = () => {
     setTheme(theme === 'light' ? 'dark' : 'light');
   };

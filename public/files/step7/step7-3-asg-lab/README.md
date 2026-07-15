@@ -1,11 +1,11 @@
-# Step 7-2: Auto Scaling Lab Prerequisites - CloudFormation 템플릿
+# Step 7-3: Auto Scaling Lab Prerequisites - CloudFormation 템플릿
 
 ## 개요
 
-이 CloudFormation 템플릿(`step7-3-asg-prereq.yaml`)은 Step 7-2 Auto Scaling 실습에 필요한 VPC, ALB, Target Group, Security Group을 자동으로 생성합니다.  
+이 CloudFormation 템플릿(`step7-3-asg-prereq.yaml`)은 Step 7-3 Auto Scaling 실습에 필요한 VPC, ALB, Target Group, Security Group을 자동으로 생성합니다.  
 Auto Scaling Group, Launch Template은 실습에서 수동으로 생성합니다.
 
-> Step 7-1에서 ALB를 유지한 경우 이 템플릿을 사용하지 않아도 됩니다.
+> Step 7-2에서 ALB를 유지한 경우 이 템플릿을 사용하지 않아도 됩니다.
 
 ---
 
@@ -20,7 +20,7 @@ Auto Scaling Group, Launch Template은 실습에서 수동으로 생성합니다
 | Private Subnet 2   | `asg-lab-private-subnet-2` | 10.0.12.0/24, ap-northeast-2c        |
 | Internet Gateway   | `asg-lab-igw`              | VPC에 자동 연결                      |
 | Public Route Table | `asg-lab-public-rt`        | 0.0.0.0/0 → IGW 경로 포함            |
-| ALB Security Group | `asg-lab-alb-sg`           | HTTP(80) 허용                        |
+| ALB Security Group | `asg-lab-alb-sg`           | HTTP(80), HTTPS(443) 허용            |
 | EC2 Security Group | `asg-lab-ec2-sg`           | ALB에서 AppPort만 허용, SSH 허용     |
 | Target Group       | `asg-lab-tg`               | HTTP:AppPort, Health Check: /health/ |
 | ALB                | `asg-lab-alb`              | Internet-facing, 2 AZ                |
@@ -45,7 +45,7 @@ Auto Scaling Group, Launch Template은 실습에서 수동으로 생성합니다
 | `PrivateSubnetCCidr` | `10.0.12.0/24`   | Private Subnet 2 CIDR (ap-northeast-2c)  |
 | `CreatedByTag`       | `cloudformation` | CreatedBy 태그 값                        |
 | `StepTag`            | `step7`          | Step 태그 값                             |
-| `SessionTag`         | `7-2`            | Session 태그 값                          |
+| `SessionTag`         | `7-3`            | Session 태그 값                          |
 
 ---
 
@@ -71,10 +71,11 @@ ALB (asg-lab-alb) → 두 Public Subnet에 걸쳐 배치
 
 ### ALB Security Group (`asg-lab-alb-sg`)
 
-| 방향     | 포트 | 프로토콜 | Source    | 설명               |
-| -------- | ---- | -------- | --------- | ------------------ |
-| Inbound  | 80   | TCP      | 0.0.0.0/0 | HTTP from anywhere |
-| Outbound | All  | All      | 0.0.0.0/0 | 모든 아웃바운드    |
+| 방향     | 포트 | 프로토콜 | Source    | 설명                |
+| -------- | ---- | -------- | --------- | ------------------- |
+| Inbound  | 80   | TCP      | 0.0.0.0/0 | HTTP from anywhere  |
+| Inbound  | 443  | TCP      | 0.0.0.0/0 | HTTPS from anywhere |
+| Outbound | All  | All      | 0.0.0.0/0 | 모든 아웃바운드     |
 
 ### EC2 Security Group (`asg-lab-ec2-sg`)
 
@@ -129,7 +130,7 @@ ALB (asg-lab-alb) → 두 Public Subnet에 걸쳐 배치
 ## 삭제 방법
 
 ```
-삭제 순서: Auto Scaling Group → Launch Template → CloudFormation 스택
+삭제 순서: Auto Scaling Group → Launch Template → AMI + 스냅샷 → ALB → Target Group → CloudFormation 스택
 ```
 
 > ⚠️ Auto Scaling Group이 남아있으면 스택 삭제 시 Target Group 삭제가 실패합니다.  
