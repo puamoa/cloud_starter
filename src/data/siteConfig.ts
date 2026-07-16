@@ -47,7 +47,7 @@ export const siteConfig = {
 export const publishConfig = {
   // 공개할 step 번호 목록
   // 새 step 작업이 완료되면 여기에 번호를 추가하고 재배포하세요
-  publishedSteps: [0, 1, 2, 3, 4, 5, 6, 10, 11, 12, 13] as number[],
+  publishedSteps: [0, 1, 2, 3, 4, 5, 6, 7, 10, 11, 12, 13] as number[],
 };
 
 // 조합된 문자열 헬퍼

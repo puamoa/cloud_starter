@@ -50,20 +50,20 @@ Amazon EC2에서 Spring 애플리케이션이 `aws` 프로필로 기동되어, *
 
 ## 미션 조건
 
-| 항목 | 요구사항 |
-|------|----------|
-| Amazon EC2 | t3.micro, Amazon Linux 2023 또는 Ubuntu |
-| DB | Amazon EC2 내부 MySQL **또는** Amazon RDS MySQL (택 1) |
-| 비밀 관리 | DB 접속 정보를 **코드/설정 파일에 하드코딩하지 않을 것** |
-| IAM | Amazon EC2에 IAM Role을 연결하여 Access Key 없이 동작할 것 |
-| 프로필 | `spring.profiles.active=aws`로 실행할 것 |
-| 확인 | 브라우저 또는 curl로 API 응답 확인 |
+| 항목       | 요구사항                                                   |
+| ---------- | ---------------------------------------------------------- |
+| Amazon EC2 | t3.micro, Amazon Linux 2023 또는 Ubuntu                    |
+| DB         | Amazon EC2 내부 MySQL **또는** Amazon RDS MySQL (택 1)     |
+| 비밀 관리  | DB 접속 정보를 **코드/설정 파일에 하드코딩하지 않을 것**   |
+| IAM        | Amazon EC2에 IAM Role을 연결하여 Access Key 없이 동작할 것 |
+| 프로필     | `spring.profiles.active=aws`로 실행할 것                   |
+| 확인       | 브라우저 또는 curl로 API 응답 확인                         |
 
 ---
 
 ## DB 옵션별 가이드
 
-### 옵션 A: Amazon Amazon EC2 내부에 MySQL 설치 (간단, 크레딧 최소 사용)
+### 옵션 A: Amazon EC2 내부에 MySQL 설치 (간단, 크레딧 최소 사용)
 
 이 방식은 Amazon EC2 하나에 앱 + DB를 모두 올리는 구성입니다.
 
@@ -76,12 +76,12 @@ Amazon EC2에서 Spring 애플리케이션이 `aws` 프로필로 기동되어, *
 > - DB URL에서 host는 `localhost`가 됩니다.
 > - Parameter Store에 저장할 값 예시:
 >
-> | 파라미터 | 값 |
-> |----------|-----|
-> | `/starter/prod/db/driver` | `net.sf.log4jdbc.sql.jdbcapi.DriverSpy` |
-> | `/starter/prod/db/url` | `jdbc:log4jdbc:mysql://localhost:3306/scoula_db` |
-> | `/starter/prod/db/username` | `admin` |
-> | `/starter/prod/db/password` | (본인이 설정한 비밀번호) |
+> | 파라미터                    | 값                                               |
+> | --------------------------- | ------------------------------------------------ |
+> | `/starter/prod/db/driver`   | `net.sf.log4jdbc.sql.jdbcapi.DriverSpy`          |
+> | `/starter/prod/db/url`      | `jdbc:log4jdbc:mysql://localhost:3306/scoula_db` |
+> | `/starter/prod/db/username` | `admin`                                          |
+> | `/starter/prod/db/password` | (본인이 설정한 비밀번호)                         |
 >
 > - Amazon EC2에 MySQL 설치 후 DB 스키마와 테이블을 생성해야 합니다.
 
@@ -101,16 +101,16 @@ Amazon EC2에서 Spring 애플리케이션이 `aws` 프로필로 기동되어, *
 > - **DB 비밀번호는 Secrets Manager에 저장**하면 6-2에서 배운 내용을 적용할 수 있습니다.
 > - Parameter Store에 저장할 값 예시:
 >
-> | 파라미터 | 값 |
-> |----------|-----|
-> | `/starter/prod/db/driver` | `com.mysql.cj.jdbc.Driver` |
-> | `/starter/prod/db/url` | `jdbc:mysql://my-rds.xxxx.rds.amazonaws.com:3306/scoula_db` |
-> | `/starter/prod/db/username` | `admin` |
+> | 파라미터                    | 값                                                          |
+> | --------------------------- | ----------------------------------------------------------- |
+> | `/starter/prod/db/driver`   | `com.mysql.cj.jdbc.Driver`                                  |
+> | `/starter/prod/db/url`      | `jdbc:mysql://my-rds.xxxx.rds.amazonaws.com:3306/scoula_db` |
+> | `/starter/prod/db/username` | `admin`                                                     |
 >
 > - Secrets Manager에 저장할 값:
 >
-> | 비밀 이름 | 값 |
-> |-----------|-----|
+> | 비밀 이름                  | 값                         |
+> | -------------------------- | -------------------------- |
 > | `starter/prod/db-password` | Amazon RDS 마스터 비밀번호 |
 >
 > - `AwsDataSourceConfig`에서 password만 Secrets Manager에서 가져오도록 수정이 필요합니다.
@@ -220,6 +220,7 @@ Amazon EC2에서 Spring 애플리케이션이 `aws` 프로필로 기동되어, *
 
 > [!TIP]
 > **참고할 실습 가이드:**
+>
 > - Amazon EC2 생성 → **Step 2-0 ~ 2-1** (VPC + EC2 생성)
 > - Security Group 설정 → **Step 1-2** (Security Group으로 인스턴스 방화벽 구성)
 > - Amazon EC2에 MySQL 설치 → **Step 2-1** (Amazon EC2에 MySQL 직접 설치)
@@ -233,6 +234,7 @@ Amazon EC2에서 Spring 애플리케이션이 `aws` 프로필로 기동되어, *
 
 > [!TIP]
 > **참고할 실습 가이드:**
+>
 > - Parameter Store 생성 (콘솔/CLI) → **Step 6-1 태스크 3~4**
 > - Secrets Manager 생성 → **Step 6-2 태스크 2~3**
 > - 드라이버와 URL 쌍 맞추기 → **Step 6-0** "JDBC 드라이버 이해" 섹션
@@ -246,6 +248,7 @@ Amazon EC2에서 Spring 애플리케이션이 `aws` 프로필로 기동되어, *
 
 > [!TIP]
 > **참고할 실습 가이드:**
+>
 > - IAM 정책/Role 생성 및 Amazon EC2 연결 → **Step 6-1 태스크 6**
 > - Secrets Manager 권한 추가 시 Action에 `secretsmanager:GetSecretValue` 추가
 
@@ -259,6 +262,7 @@ Amazon EC2에서 Spring 애플리케이션이 `aws` 프로필로 기동되어, *
 
 > [!TIP]
 > **참고할 실습 가이드:**
+>
 > - Spring Boot JAR 배포 → **Step 2-3** (Amazon EC2에 Spring 애플리케이션 배포)
 > - Spring MVC WAR 배포 → **Step 2-3** (Tomcat WAR 배포 섹션)
 > - S3를 통한 파일 전송 → **Step 5-1 ~ 5-2** (Amazon S3 버킷 + Spring S3 연동)
@@ -283,15 +287,15 @@ Amazon EC2에서 Spring 애플리케이션이 `aws` 프로필로 기동되어, *
 > [!TIP]
 > 막히면 아래 힌트를 참고하세요. 에러 메시지별로 정리했습니다.
 
-| 에러 | 원인 | 참고 |
-|------|------|------|
-| `Unable to locate credentials` | IAM Role이 Amazon EC2에 연결되지 않음 | 6-1 태스크 6 참고 |
-| `AccessDeniedException: ssm:GetParametersByPath` | IAM 정책에 SSM 권한 없음 | 6-1 태스크 6 IAM 정책 JSON 참고 |
-| `DriverSpy claims to not accept jdbcUrl` | driver와 URL 불일치 | 6-0 "JDBC 드라이버 이해" 섹션 참고 |
-| `Access denied for user` | DB 계정 정보 불일치 | Parameter Store 값과 실제 DB 계정 일치 확인 |
-| `Communications link failure` | Amazon EC2에서 DB 접속 불가 | Security Group에서 3306 허용 확인, Amazon RDS는 같은 VPC인지 확인 |
-| `Unknown database` | DB 스키마 미생성 | MySQL 접속 후 `CREATE DATABASE` 실행 |
-| `Connection refused (port 8080)` | 앱 미실행 또는 포트 미개방 | Security Group에서 8080 허용, 앱 로그 확인 |
+| 에러                                             | 원인                                  | 참고                                                              |
+| ------------------------------------------------ | ------------------------------------- | ----------------------------------------------------------------- |
+| `Unable to locate credentials`                   | IAM Role이 Amazon EC2에 연결되지 않음 | 6-1 태스크 6 참고                                                 |
+| `AccessDeniedException: ssm:GetParametersByPath` | IAM 정책에 SSM 권한 없음              | 6-1 태스크 6 IAM 정책 JSON 참고                                   |
+| `DriverSpy claims to not accept jdbcUrl`         | driver와 URL 불일치                   | 6-0 "JDBC 드라이버 이해" 섹션 참고                                |
+| `Access denied for user`                         | DB 계정 정보 불일치                   | Parameter Store 값과 실제 DB 계정 일치 확인                       |
+| `Communications link failure`                    | Amazon EC2에서 DB 접속 불가           | Security Group에서 3306 허용 확인, Amazon RDS는 같은 VPC인지 확인 |
+| `Unknown database`                               | DB 스키마 미생성                      | MySQL 접속 후 `CREATE DATABASE` 실행                              |
+| `Connection refused (port 8080)`                 | 앱 미실행 또는 포트 미개방            | Security Group에서 8080 허용, 앱 로그 확인                        |
 
 ---
 
@@ -299,12 +303,12 @@ Amazon EC2에서 Spring 애플리케이션이 `aws` 프로필로 기동되어, *
 
 미션 완료 후 비용 방지를 위해 리소스를 정리하세요:
 
-| 리소스 | 비용 | 정리 방법 |
-|--------|------|-----------|
-| Amazon EC2 (t3.micro) | 시간당 약 $0.013 (크레딧 차감) | 사용 안 할 때 중지, 완료 후 종료 |
-| Amazon RDS (옵션 B) | 시간당 과금 | 스냅샷 생성 후 삭제 권장 |
-| Parameter Store | 무료 | 유지해도 비용 없음 |
-| Secrets Manager | $0.40/비밀/월 | `--force-delete-without-recovery`로 즉시 삭제 |
+| 리소스                | 비용                           | 정리 방법                                     |
+| --------------------- | ------------------------------ | --------------------------------------------- |
+| Amazon EC2 (t3.micro) | 시간당 약 $0.013 (크레딧 차감) | 사용 안 할 때 중지, 완료 후 종료              |
+| Amazon RDS (옵션 B)   | 시간당 과금                    | 스냅샷 생성 후 삭제 권장                      |
+| Parameter Store       | 무료                           | 유지해도 비용 없음                            |
+| Secrets Manager       | $0.40/비밀/월                  | `--force-delete-without-recovery`로 즉시 삭제 |
 
 > [!WARNING]
 > Amazon RDS를 사용한 경우 반드시 정리하세요. 중지해도 7일 후 자동 재시작됩니다.
