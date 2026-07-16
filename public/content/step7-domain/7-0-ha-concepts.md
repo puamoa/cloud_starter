@@ -17,6 +17,14 @@ learningObjectives:
 
 # 고가용성과 확장 전략 이론
 
+### Step 7 전체 아키텍처
+
+<img src="/images/step7/7-0-architecture.png" alt="Step 7 전체 아키텍처" class="guide-img-md" />
+
+> [!NOTE]
+> 위 아키텍처는 프로덕션 권장 구성(EC2를 Private Subnet에 배치)을 보여줍니다.  
+> 이 실습에서는 학습 편의를 위해 Public Subnet에 EC2를 배치합니다.
+
 ---
 
 ## 1. 고가용성(HA)이란?
@@ -38,7 +46,7 @@ learningObjectives:
 | **SPOF (Single Point of Failure)**   | 장애 시 전체 시스템이 중단되는 단일 지점                         | 단일 AZ, 단일 인스턴스        |
 | **로드밸런서 (Load Balancer)**       | 트래픽을 여러 서버에 분산하여 부하를 균등하게 배분하는 장치      | ALB, NLB                      |
 | **Health Check**                     | 로드밸런서가 대상 서버의 정상 동작 여부를 주기적으로 확인하는 것 | Target Group Health Check     |
-| **Auto Scaling**                     | 트래픽에 따라 서버 수를 자동으로 늘리거나 줄이는 기능            | Amazon EC2 Auto Scaling Group        |
+| **Auto Scaling**                     | 트래픽에 따라 서버 수를 자동으로 늘리거나 줄이는 기능            | Amazon EC2 Auto Scaling Group |
 | **수평 확장 (Scale Out)**            | 서버 수를 늘려 처리 능력을 확장                                  | 인스턴스 추가                 |
 | **수직 확장 (Scale Up)**             | 서버 사양(CPU, 메모리)을 높여 처리 능력을 확장                   | 인스턴스 타입 변경            |
 | **DNS (Domain Name System)**         | 도메인 이름을 IP 주소로 변환하는 시스템                          | Amazon Route 53               |
@@ -113,13 +121,13 @@ learningObjectives:
 
 ### AWS 주요 서비스 SLA
 
-| 서비스       | SLA           | 미달 시 보상  |
-| ------------ | ------------- | ------------- |
-| Amazon EC2          | 99.99% (리전) | 10~30% 크레딧 |
+| 서비스                     | SLA           | 미달 시 보상  |
+| -------------------------- | ------------- | ------------- |
+| Amazon EC2                 | 99.99% (리전) | 10~30% 크레딧 |
 | Amazon Amazon RDS Multi-AZ | 99.95%        | 10~25% 크레딧 |
-| Amazon S3           | 99.9%         | 10~25% 크레딧 |
-| AWS Lambda       | 99.95%        | 10~25% 크레딧 |
-| Amazon CloudFront   | 99.9%         | 10~25% 크레딧 |
+| Amazon S3                  | 99.9%         | 10~25% 크레딧 |
+| AWS Lambda                 | 99.95%        | 10~25% 크레딧 |
+| Amazon CloudFront          | 99.9%         | 10~25% 크레딧 |
 
 ---
 
@@ -161,14 +169,14 @@ SPOF를 제거한 아키텍처:
 
 ### AWS에서 SPOF 제거 방법
 
-| SPOF      | 해결 방법               | AWS 서비스          |
-| --------- | ----------------------- | ------------------- |
-| 단일 Amazon EC2  | 다중 인스턴스 + LB      | ALB + ASG           |
-| 단일 AZ   | Multi-AZ 배포           | 서브넷 분산         |
-| 단일 DB   | Multi-AZ + Read Replica | Amazon Amazon RDS Multi-AZ        |
-| 단일 리전 | 멀티 리전 배포          | Amazon Route 53 Failover   |
-| DNS       | 관리형 DNS 사용         | Amazon Route 53 (100% SLA) |
-| NAT       | AZ별 NAT Gateway        | NAT Gateway per AZ  |
+| SPOF            | 해결 방법               | AWS 서비스                 |
+| --------------- | ----------------------- | -------------------------- |
+| 단일 Amazon EC2 | 다중 인스턴스 + LB      | ALB + ASG                  |
+| 단일 AZ         | Multi-AZ 배포           | 서브넷 분산                |
+| 단일 DB         | Multi-AZ + Read Replica | Amazon Amazon RDS Multi-AZ |
+| 단일 리전       | 멀티 리전 배포          | Amazon Route 53 Failover   |
+| DNS             | 관리형 DNS 사용         | Amazon Route 53 (100% SLA) |
+| NAT             | AZ별 NAT Gateway        | NAT Gateway per AZ         |
 
 ---
 
@@ -217,7 +225,7 @@ SPOF를 제거한 아키텍처:
 | **비용**      | 비선형 증가           | 선형 증가             |
 | **복잡도**    | 낮음 (코드 변경 없음) | 높음 (상태 관리 필요) |
 | **가용성**    | SPOF 유지             | 이중화 자동 확보      |
-| **적합 사례** | Amazon RDS, 단일 DB          | 웹서버, API 서버      |
+| **적합 사례** | Amazon RDS, 단일 DB   | 웹서버, API 서버      |
 
 ---
 
