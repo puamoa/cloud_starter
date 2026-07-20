@@ -19,6 +19,10 @@ estimatedCost: 크레딧 내 사용 가능 (비용 발생 가능)
 이 실습에서는 Vue.js 프론트엔드를 생성하고, Amazon S3 + Amazon CloudFront로 배포합니다.
 GitHub Actions를 통해 코드를 push하면 자동으로 빌드 및 배포되는 파이프라인을 구축합니다.
 
+### Step 8 전체 아키텍처
+
+<img src="/images/step8/8-architecture.png" alt="Step 8 3-Tier 아키텍처" class="guide-img-lg" />
+
 > [!NOTE]
 > Step 8-1에서 생성한 AWS CloudFormation Outputs 값이 필요합니다:
 >
