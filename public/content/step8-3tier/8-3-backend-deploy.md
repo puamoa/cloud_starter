@@ -6,25 +6,25 @@ awsServices:
   - Amazon EC2
   - Elastic Load Balancing
 learningObjectives:
-  - Spring Boot 프로젝트에 RDS 연동 코드를 작성할 수 있습니다.
-  - EC2에 Spring Boot를 배포하고 ALB와 연결할 수 있습니다.
+  - Spring Boot 프로젝트에 Amazon RDS 연동 코드를 작성할 수 있습니다.
+  - Amazon EC2에 Spring Boot를 배포하고 ALB와 연결할 수 있습니다.
   - SSM Parameter Store로 비밀값을 관리할 수 있습니다.
   - GitHub Actions로 백엔드 자동 배포를 구성할 수 있습니다.
 prerequisites:
-  - Step 9-1 완료 (인프라 구축)
+  - Step 8-1 완료 (인프라 구축)
   - Java 17 + Gradle (로컬)
 estimatedCost: 크레딧 내 사용 가능 (비용 발생 가능)
 ---
 
-이 실습에서는 Spring Boot 백엔드를 생성하고, RDS MySQL과 연동한 후,
-EC2에 배포하여 ALB와 연결합니다. GitHub Actions로 자동 배포 파이프라인도 구축합니다.
+이 실습에서는 Spring Boot 백엔드를 생성하고, Amazon RDS MySQL과 연동한 후,
+Amazon EC2에 배포하여 ALB와 연결합니다. GitHub Actions로 자동 배포 파이프라인도 구축합니다.
 
 > [!NOTE]
-> Step 9-1에서 생성한 CloudFormation Outputs 값이 필요합니다:
+> Step 8-1에서 생성한 AWS CloudFormation Outputs 값이 필요합니다:
 >
 > - **RDSEndpoint**: 데이터베이스 연결 주소
 > - **ALBTargetGroupArn**: EC2 등록 대상
-> - **EC2SecurityGroupId**: EC2 인스턴스에 적용할 보안 그룹
+> - **EC2SecurityGroupId**: Amazon EC2 인스턴스에 적용할 보안 그룹
 
 ---
 
@@ -50,8 +50,8 @@ cd ~/3tier-project/my-backend
 >
 > - **Spring Boot (JAR)**: `./gradlew clean bootJar` 또는 `./gradlew build -x test`로 빌드 가능
 > - **Spring MVC (WAR)**: `./gradlew build -x test`로 WAR 빌드 가능
-> - `application.properties`(또는 `.yml`)의 DB 접속 정보를 RDS 엔드포인트로 변경
-> - CORS 설정에 CloudFront 도메인 추가 필요
+> - `application.properties`(또는 `.yml`)의 DB 접속 정보를 Amazon RDS 엔드포인트로 변경
+> - CORS 설정에 Amazon CloudFront 도메인 추가 필요
 >
 > **DB 접속 정보 변경 예시:**
 >
@@ -62,7 +62,7 @@ cd ~/3tier-project/my-backend
 > jdbc.password=1234
 > ```
 
-방법 A를 선택했다면 **태스크 3: CRUD API** 부분은 건너뛰고, **태스크 4: CORS 설정**과 **태스크 5: EC2 배포**로 이동하세요.
+방법 A를 선택했다면 **태스크 3: CRUD API** 부분은 건너뛰고, **태스크 4: CORS 설정**과 **태스크 5: Amazon EC2 배포**로 이동하세요.
 
 ---
 
@@ -133,10 +133,10 @@ my-backend/
 
 ### 2-1. SSM Parameter Store에 비밀값 저장
 
-EC2에서 RDS 접속 정보를 안전하게 관리하기 위해 SSM Parameter Store를 사용합니다.
+Amazon EC2에서 Amazon RDS 접속 정보를 안전하게 관리하기 위해 SSM Parameter Store를 사용합니다.
 
 ```bash
-# RDS 엔드포인트 저장
+# Amazon RDS 엔드포인트 저장
 aws ssm put-parameter \
   --name "/my-3tier-app/db/endpoint" \
   --value "my-3tier-app-db.xxxx.ap-northeast-2.rds.amazonaws.com" \
@@ -167,7 +167,7 @@ aws ssm put-parameter \
 
 ### 2-2. RDS에 데이터베이스 생성
 
-EC2에서 RDS에 접속하여 데이터베이스를 생성합니다 (EC2 생성 후 실행):
+Amazon EC2에서 Amazon RDS에 접속하여 데이터베이스를 생성합니다 (EC2 생성 후 실행):
 
 ```bash
 # EC2에 SSH 접속 후
@@ -228,15 +228,15 @@ management:
 > systemd 서비스 파일에서 SSM Parameter Store의 값을 환경 변수로 설정합니다.
 > 이렇게 하면 코드에 비밀값이 포함되지 않아 안전합니다.
 
-✅ **태스크 완료** — RDS 연동 설정을 완료하고 SSM Parameter Store에 비밀값을 저장했습니다.
+✅ **태스크 완료** — Amazon RDS 연동 설정을 완료하고 SSM Parameter Store에 비밀값을 저장했습니다.
 
 > [!TROUBLESHOOTING]
 > | 증상 | 원인 | 해결 방법 |
 > |------|------|-----------|
 > | `ParameterAlreadyExists` 에러 | 동일 이름의 파라미터 이미 존재 | `--overwrite` 플래그 추가하여 재실행 |
-> | EC2에서 RDS 접속 실패 (`Can't connect`) | Security Group 미허용 또는 RDS 미생성 | RDS-SG에서 EC2-SG의 3306 포트 허용 확인 |
+> | Amazon EC2에서 Amazon RDS 접속 실패 (`Can't connect`) | Security Group 미허용 또는 RDS 미생성 | RDS-SG에서 EC2-SG의 3306 포트 허용 확인 |
 > | `Access denied for user 'admin'` | 비밀번호 오류 | SSM에 저장한 비밀번호와 RDS 생성 시 설정한 비밀번호 일치 확인 |
-> | `Unknown database 'myapp'` | 데이터베이스 미생성 | EC2에서 RDS 접속 후 `CREATE DATABASE myapp` 실행 |
+> | `Unknown database 'myapp'` | 데이터베이스 미생성 | Amazon EC2에서 Amazon RDS 접속 후 `CREATE DATABASE myapp` 실행 |
 
 > [!NOTE]
 > SSM Parameter Store의 Standard 파라미터는 무료입니다 (리전당 10,000개까지).
@@ -395,7 +395,7 @@ public class ItemController {
 
 ## 태스크 4: CORS 설정
 
-CloudFront 도메인에서 API를 호출할 수 있도록 CORS를 설정합니다.
+Amazon CloudFront 도메인에서 API를 호출할 수 있도록 CORS를 설정합니다.
 
 ### 4-1. WebConfig 클래스 생성
 
@@ -436,16 +436,16 @@ app:
 ```
 
 > [!WARNING]
-> `allowed-origins`에 Step 9-2에서 생성한 CloudFront 도메인을 입력하세요.
+> `allowed-origins`에 Step 8-2에서 생성한 Amazon CloudFront 도메인을 입력하세요.
 > 로컬 개발 시에는 `http://localhost:5173` (Vite 기본 포트)도 추가합니다.
 > 프로덕션에서는 `*` 대신 정확한 도메인을 지정하는 것이 보안상 좋습니다.
 
-✅ **태스크 완료** — CloudFront 도메인에서 API 호출을 허용하는 CORS를 설정했습니다.
+✅ **태스크 완료** — Amazon CloudFront 도메인에서 API 호출을 허용하는 CORS를 설정했습니다.
 
 > [!TROUBLESHOOTING]
 > | 증상 | 원인 | 해결 방법 |
 > |------|------|-----------|
-> | 브라우저에서 CORS 에러 | `allowed-origins`에 프론트엔드 도메인 미포함 | CloudFront 도메인을 `https://` 포함하여 정확히 추가 |
+> | 브라우저에서 CORS 에러 | `allowed-origins`에 프론트엔드 도메인 미포함 | Amazon CloudFront 도메인을 `https://` 포함하여 정확히 추가 |
 > | `localhost`에서 CORS 에러 | `http://localhost:5173` 미추가 | 개발 환경 URL도 `allowed-origins`에 포함 |
 > | OPTIONS 요청 실패 (Preflight) | `allowedMethods`에 `OPTIONS` 미포함 | `"GET", "POST", "PUT", "DELETE", "OPTIONS"` 모두 포함 확인 |
 > | 배포 후 CORS 에러 (로컬은 정상) | `application.yml`의 CORS 설정이 환경변수로 주입 안 됨 | EC2의 환경변수 또는 `application.yml` 직접 수정 |
@@ -456,9 +456,9 @@ app:
 
 ---
 
-## 태스크 5: EC2 배포 + ALB Target Group 등록
+## 태스크 5: Amazon EC2 배포 + ALB Target Group 등록
 
-### 5-1. EC2 인스턴스 생성
+### 5-1. Amazon EC2 인스턴스 생성
 
 5. AWS Console → **EC2** → [[Launch instances]]
 6. 다음과 같이 설정합니다:
@@ -588,7 +588,7 @@ sudo journalctl -u spring-app -f
 9. AWS Console → **EC2** → **Target Groups**로 이동합니다.
 10. `my-3tier-app-tg`를 클릭합니다.
 11. **Targets** 탭 → [[Register targets]]를 클릭합니다.
-12. 방금 생성한 EC2 인스턴스를 선택합니다.
+12. 방금 생성한 Amazon EC2 인스턴스를 선택합니다.
 13. **Port**: `8080`
 14. [[Include as pending below]] → [[Register pending targets]]
 
@@ -607,7 +607,7 @@ sudo journalctl -u spring-app -f
 > Health Check 경로는 `/actuator/health`로 설정되어 있습니다.
 > 약 30초~1분 후 상태를 확인하세요.
 
-✅ **태스크 완료** — EC2에 Spring Boot를 배포하고 ALB Target Group에 등록했습니다.
+✅ **태스크 완료** — Amazon EC2에 Spring Boot를 배포하고 ALB Target Group에 등록했습니다.
 
 > [!TROUBLESHOOTING]
 > | 증상 | 원인 | 해결 방법 |
@@ -619,7 +619,7 @@ sudo journalctl -u spring-app -f
 > | ALB Health Check 경로 불일치 | Target Group의 Health Check 경로 설정 오류 | Target Group → Health checks → `/actuator/health` 확인 |
 
 > [!TIP]
-> EC2에서 앱 로그를 실시간으로 확인하려면:
+> Amazon EC2에서 앱 로그를 실시간으로 확인하려면:
 >
 > ```bash
 > sudo journalctl -u spring-app -f
@@ -631,26 +631,26 @@ sudo journalctl -u spring-app -f
 
 ## 태스크 6: GitHub Actions CI/CD
 
-코드를 push하면 자동으로 빌드 → EC2 배포 → Health Check가 실행되는 파이프라인을 구축합니다.
+코드를 push하면 자동으로 빌드 → Amazon EC2 배포 → Health Check가 실행되는 파이프라인을 구축합니다.
 
 ### 6-1. GitHub Secrets 설정
 
 GitHub → `my-backend` 리포지토리 → **Settings** → **Secrets and variables** → **Actions**
 
-| Secret Name             | 값                                |
-| ----------------------- | --------------------------------- |
-| `AWS_ACCESS_KEY_ID`     | IAM Access Key ID (S3 업로드용)   |
-| `AWS_SECRET_ACCESS_KEY` | IAM Secret Access Key             |
-| `AWS_REGION`            | `ap-northeast-2`                  |
-| `S3_DEPLOY_BUCKET`      | JAR 업로드용 S3 버킷명            |
-| `EC2_INSTANCE_ID`       | EC2 인스턴스 ID (SSM 명령 실행용) |
+| Secret Name             | 값                                       |
+| ----------------------- | ---------------------------------------- |
+| `AWS_ACCESS_KEY_ID`     | IAM Access Key ID (S3 업로드용)          |
+| `AWS_SECRET_ACCESS_KEY` | IAM Secret Access Key                    |
+| `AWS_REGION`            | `ap-northeast-2`                         |
+| `S3_DEPLOY_BUCKET`      | JAR 업로드용 S3 버킷명                   |
+| `EC2_INSTANCE_ID`       | Amazon EC2 인스턴스 ID (SSM 명령 실행용) |
 
-> [!CONCEPT] Private Subnet EC2에 배포하는 방법
-> Private Subnet의 EC2에는 SSH로 직접 접속할 수 없습니다.
+> [!CONCEPT] Private Subnet Amazon EC2에 배포하는 방법
+> Private Subnet의 Amazon EC2에는 SSH로 직접 접속할 수 없습니다.
 > 대신 다음 방식으로 배포합니다:
 >
-> 1. GitHub Actions에서 JAR을 S3에 업로드
-> 2. SSM Run Command로 EC2에서 S3 다운로드 + 재시작 명령 실행
+> - GitHub Actions에서 JAR을 Amazon S3에 업로드
+> - SSM Run Command로 Amazon EC2에서 Amazon S3 다운로드 + 재시작 명령 실행
 >
 > 이 방식은 SSH 키 관리가 불필요하고 보안상 더 안전합니다.
 
@@ -710,7 +710,7 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
 
-      # 6. JAR 파일을 S3에 업로드
+      # 6. JAR 파일을 Amazon S3에 업로드
       - name: Upload JAR to S3
         run: |
           JAR_FILE=$(ls build/libs/*.jar | head -1)
@@ -764,13 +764,13 @@ GitHub → **Actions** 탭에서 워크플로우 실행을 확인합니다.
 > | 증상 | 원인 | 해결 방법 |
 > |------|------|-----------|
 > | `Upload failed: NoSuchBucket` | S3 버킷명 Secret 오류 | `S3_DEPLOY_BUCKET` Secret 값이 실제 버킷명과 일치하는지 확인 |
-> | `SSM SendCommand failed` | EC2 인스턴스 ID 오류 또는 IAM 권한 부족 | `EC2_INSTANCE_ID` 확인, GitHub Actions IAM에 `ssm:SendCommand` 권한 추가 |
+> | `SSM SendCommand failed` | Amazon EC2 인스턴스 ID 오류 또는 IAM 권한 부족 | `EC2_INSTANCE_ID` 확인, GitHub Actions IAM에 `ssm:SendCommand` 권한 추가 |
 > | `CommandInvocationStatus: Failed` | EC2에서 명령 실행 실패 | EC2에서 수동으로 같은 명령 실행하여 에러 확인 |
 > | `aws ssm wait` 타임아웃 | SSM Agent 미설치 또는 EC2 미실행 | EC2 상태 확인, Amazon Linux 2023은 SSM Agent 기본 설치됨 |
 > | Gradle 빌드 실패 (GitHub Actions) | Java 버전 불일치 | `setup-java`의 `java-version`이 프로젝트와 일치하는지 확인 |
 
 > [!NOTE]
-> Private Subnet의 EC2에 SSM Run Command를 사용하려면 EC2가 SSM 서비스에 접근할 수 있어야 합니다.
+> Private Subnet의 Amazon EC2에 SSM Run Command를 사용하려면 Amazon EC2가 SSM 서비스에 접근할 수 있어야 합니다.
 > NAT Gateway가 있으면 자동으로 가능하고, 없다면 VPC Endpoint(ssm, ssmmessages, ec2messages)가 필요합니다.
 
 ---
@@ -805,17 +805,17 @@ GitHub → **Actions** 탭에서 워크플로우 실행을 확인합니다.
 > [!WARNING]
 > Status가 `unhealthy`인 경우 확인사항:
 >
-> 1. EC2에서 `sudo systemctl status spring-app`으로 앱 실행 상태 확인
-> 2. `curl http://localhost:8080/actuator/health`로 로컬 Health Check
-> 3. Security Group에서 8080 포트가 ALB-SG에서 허용되는지 확인
-> 4. `sudo journalctl -u spring-app -n 50`으로 에러 로그 확인
+> - EC2에서 `sudo systemctl status spring-app`으로 앱 실행 상태 확인
+> - `curl http://localhost:8080/actuator/health`로 로컬 Health Check
+> - Security Group에서 8080 포트가 ALB-SG에서 허용되는지 확인
+> - `sudo journalctl -u spring-app -n 50`으로 에러 로그 확인
 
 ### 7-2. ALB를 통한 API 테스트
 
 ALB DNS Name으로 API를 호출합니다:
 
 ```bash
-# ALB DNS Name (CloudFormation Outputs에서 확인)
+# ALB DNS Name (AWS CloudFormation Outputs에서 확인)
 ALB_DNS="my-3tier-app-alb-xxx.ap-northeast-2.elb.amazonaws.com"
 
 # Health Check
@@ -860,7 +860,7 @@ curl -X DELETE http://$ALB_DNS/api/items/1
 ### 7-4. RDS 데이터 확인
 
 ```bash
-# EC2에서 RDS 접속
+# Amazon EC2에서 Amazon RDS 접속
 mysql -h my-3tier-app-db.xxxx.ap-northeast-2.rds.amazonaws.com -u admin -p
 
 # 데이터 확인
@@ -888,8 +888,8 @@ EXIT;
 
 > [!WARNING]
 > 이 세션에서 생성한 리소스를 지금 삭제하지 마세요!
-> Step 9-4에서 전체 연동 확인 후 정리합니다.
-> **Step 9-4에서 전체 정리합니다.**
+> Step 8-4에서 전체 연동 확인 후 정리합니다.
+> **Step 8-4에서 전체 정리합니다.**
 
 ### 이 세션에서 추가 생성한 리소스
 
@@ -900,7 +900,7 @@ EXIT;
 | IAM Role       | EC2용 SSM 읽기 역할   | 무료        | 무료         | -                              |
 
 > [!TIP]
-> EC2 인스턴스가 프리티어 대상(계정 생성 12개월 이내)이라면 t2.micro는 월 750시간 무료입니다.
-> 프리티어가 만료된 경우 EC2도 시간당 비용이 발생하므로 실습 후 빠르게 정리하세요.
+> Amazon EC2 인스턴스가 프리티어 대상(계정 생성 12개월 이내)이라면 t2.micro는 월 750시간 무료입니다.
+> 프리티어가 만료된 경우 Amazon EC2도 시간당 비용이 발생하므로 실습 후 빠르게 정리하세요.
 
-✅ **실습 종료**: Step 9-4에서 전체 연동을 확인하고 리소스를 정리합니다.
+✅ **실습 종료**: Step 8-4에서 전체 연동을 확인하고 리소스를 정리합니다.

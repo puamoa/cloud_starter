@@ -1,0 +1,92 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  Step 8 - Frontend Stack.
+  S3 Bucket with static website hosting for Vue.js SPA. Independent of VPC (no imports needed).
+
+# =============================================================================
+# Metadata
+# =============================================================================
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: 'Project Settings'
+        Parameters:
+          - ProjectName
+
+# =============================================================================
+# Parameters
+# =============================================================================
+Parameters:
+  ProjectName:
+    Type: String
+    Default: my-3tier-app
+    Description: Project name used as resource naming prefix
+
+# =============================================================================
+# Resources
+# =============================================================================
+Resources:
+  # ============================================================
+  # Amazon S3 버킷 (프론트엔드 정적 호스팅)
+  # - Vue.js SPA의 빌드 결과물(HTML/CSS/JS)을 호스팅합니다.
+  # - SPA 라우팅을 위해 ErrorDocument도 index.html로 설정합니다.
+  # - Public Read 정책으로 인터넷에서 직접 접근 가능합니다.
+  # ============================================================
+  FrontendBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub '${ProjectName}-frontend-${AWS::AccountId}'
+      WebsiteConfiguration:
+        IndexDocument: index.html
+        ErrorDocument: index.html
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: false
+        BlockPublicPolicy: false
+        IgnorePublicAcls: false
+        RestrictPublicBuckets: false
+      Tags:
+        - Key: Name
+          Value: !Sub '${ProjectName}-frontend-bucket'
+        - Key: CreatedBy
+          Value: cloudformation
+        - Key: Step
+          Value: step8
+        - Key: Session
+          Value: '8-1'
+
+  # Amazon S3 버킷 정책 - 모든 사용자가 객체를 읽을 수 있도록 허용
+  FrontendBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref FrontendBucket
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: PublicReadGetObject
+            Effect: Allow
+            Principal: '*'
+            Action: 's3:GetObject'
+            Resource: !Sub '${FrontendBucket.Arn}/*'
+
+# =============================================================================
+# 출력값
+# =============================================================================
+Outputs:
+  S3BucketName:
+    Description: S3 Frontend Bucket Name
+    Value: !Ref FrontendBucket
+    Export:
+      Name: !Sub '${ProjectName}-s3-bucket-name'
+
+  S3WebsiteURL:
+    Description: S3 Static Website URL
+    Value: !GetAtt FrontendBucket.WebsiteURL
+    Export:
+      Name: !Sub '${ProjectName}-s3-website-url'
+
+  S3BucketArn:
+    Description: S3 Bucket ARN (for CloudFront OAC or CI/CD)
+    Value: !GetAtt FrontendBucket.Arn
+    Export:
+      Name: !Sub '${ProjectName}-s3-bucket-arn'
