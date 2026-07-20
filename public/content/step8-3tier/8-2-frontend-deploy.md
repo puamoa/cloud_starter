@@ -641,7 +641,7 @@ https://d1234abcdef.cloudfront.net
 | `AWS_SECRET_ACCESS_KEY`      | IAM Secret Access Key                                                  |
 | `AWS_REGION`                 | `ap-northeast-2`                                                       |
 | `S3_BUCKET_NAME`             | CloudFormation Output의 S3BucketName                                   |
-| `CLOUDFRONT_DISTRIBUTION_ID` | Amazon CloudFront 배포 ID                                                     |
+| `CLOUDFRONT_DISTRIBUTION_ID` | Amazon CloudFront 배포 ID                                              |
 | `VITE_API_URL`               | ALB DNS Name (예: `http://my-3tier-app-alb-xxx.elb.amazonaws.com/api`) |
 
 ### 6-3. GitHub Actions 워크플로우 작성
@@ -781,6 +781,72 @@ git push origin main
 
 ---
 
+## 태스크 7: Amazon CloudFront에 커스텀 도메인 연결 (선택)
+
+> [!NOTE]
+> 이 태스크는 Step 7-1에서 Amazon Route 53 Hosted Zone과 ACM 인증서를 발급한 경우에 진행합니다.  
+> 도메인이 없다면 Amazon CloudFront 기본 URL(`d1234abcdef.cloudfront.net`)로 사용해도 됩니다.
+
+Step 7-1에서 발급한 ACM 인증서를 Amazon CloudFront에 연결하고,  
+Amazon Route 53 A 레코드를 추가하여 `app.mydomain.shop` 같은 커스텀 도메인으로 접속할 수 있도록 합니다.
+
+### 7-1. ACM 인증서 확인 (us-east-1)
+
+> [!WARNING]
+> Amazon CloudFront에 사용할 인증서는 반드시 **us-east-1 (버지니아 북부)** 리전에서 발급해야 합니다.  
+> Step 7-1에서 서울 리전(ap-northeast-2)에만 발급했다면, us-east-1에서 추가 발급이 필요합니다.
+
+1. AWS Console → ACM (Certificate Manager) → 리전: **us-east-1** 선택
+2. `mydomain.shop` 또는 `*.mydomain.shop` 인증서가 `Issued` 상태인지 확인합니다.
+3. 없다면 Step 7-1과 동일한 방법으로 us-east-1에서 인증서를 요청합니다 (DNS 검증).
+
+### 7-2. Amazon CloudFront에 도메인 + 인증서 연결
+
+4. AWS Console → Amazon CloudFront → Distributions → 배포 선택
+5. [[Edit]]를 클릭합니다.
+6. **Alternate domain name (CNAME)** 섹션에서 [[Add item]]을 클릭합니다.
+7. 도메인을 입력합니다: `app.mydomain.shop` (본인 도메인으로 변경)
+8. **Custom SSL certificate**: 드롭다운에서 us-east-1에서 발급한 인증서를 선택합니다.
+9. [[Save changes]]를 클릭합니다.
+
+> [!TIP]
+> 서브도메인 예시:
+>
+> | 용도       | 도메인 예시         | 대상                       |
+> | ---------- | ------------------- | -------------------------- |
+> | 프론트엔드 | `app.mydomain.shop` | Amazon CloudFront          |
+> | 백엔드 API | `api.mydomain.shop` | ALB (Step 7-2에서 설정)    |
+> | 메인       | `mydomain.shop`     | Amazon CloudFront 또는 ALB |
+
+### 7-3. Amazon Route 53 A 레코드 추가
+
+10. AWS Console → Amazon Route 53 → Hosted zones → 도메인 클릭
+11. [[Create record]]를 클릭합니다.
+12. 다음을 설정합니다:
+    - **Record name**: `app` (결과: `app.mydomain.shop`)
+    - **Record type**: `A`
+    - **Alias**: ✅ ON
+    - **Route traffic to**: **Alias to CloudFront distribution**
+    - Distribution 선택: 해당 Amazon CloudFront 배포 선택
+13. [[Create records]]를 클릭합니다.
+
+### 7-4. 커스텀 도메인 접속 확인
+
+14. 브라우저에서 `https://app.mydomain.shop`으로 접속합니다.
+    - 🔒 자물쇠 아이콘 + Vue.js 화면이 표시되면 성공입니다.
+
+> [!TROUBLESHOOTING]
+> | 증상 | 원인 | 해결 방법 |
+> |------|------|-----------|
+> | ERR_SSL_PROTOCOL_ERROR | 인증서 미연결 또는 리전 오류 | us-east-1 인증서 확인 |
+> | 403 Forbidden | CNAME 미설정 | CloudFront Alternate domain name 확인 |
+> | DNS 접속 안 됨 | Route 53 레코드 미생성 | A 레코드 Alias 확인 |
+> | "Your connection is not private" | 인증서 도메인 불일치 | ACM 인증서 도메인이 `*.mydomain.shop` 또는 `app.mydomain.shop` 포함하는지 확인 |
+
+✅ **태스크 완료** — Amazon CloudFront에 커스텀 도메인과 HTTPS를 적용했습니다.
+
+---
+
 # 🗑️ 리소스 정리
 
 > [!WARNING]
@@ -790,11 +856,11 @@ git push origin main
 
 ### 이 세션에서 생성한 리소스 목록
 
-| 리소스                  | 이름/식별자                  | 시간당 비용 | 월 비용 추정         |
-| ----------------------- | ---------------------------- | ----------- | -------------------- |
+| 리소스                         | 이름/식별자                  | 시간당 비용 | 월 비용 추정         |
+| ------------------------------ | ---------------------------- | ----------- | -------------------- |
 | Amazon CloudFront Distribution | `d1234abcdef.cloudfront.net` | 요청 기반   | ~$1 미만 (실습 수준) |
-| IAM User                | `github-actions-frontend`    | 무료        | 무료                 |
-| GitHub Secrets          | 6개                          | 무료        | 무료                 |
+| IAM User                       | `github-actions-frontend`    | 무료        | 무료                 |
+| GitHub Secrets                 | 6개                          | 무료        | 무료                 |
 
 > [!NOTE]
 > Amazon CloudFront는 월 1,000만 요청 + 1TB 전송까지 프리티어에 포함됩니다.

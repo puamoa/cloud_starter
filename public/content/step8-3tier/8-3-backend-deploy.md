@@ -64,6 +64,20 @@ cd ~/3tier-project/my-backend
 
 방법 A를 선택했다면 **태스크 3: CRUD API** 부분은 건너뛰고, **태스크 4: CORS 설정**과 **태스크 5: Amazon EC2 배포**로 이동하세요.
 
+> [!TIP]
+> **방법 A에서 Spring Boot vs Spring MVC 배포 차이:**
+>
+> | 항목         | Spring Boot (JAR)         | Spring MVC (WAR)                |
+> | ------------ | ------------------------- | ------------------------------- |
+> | 빌드 명령    | `./gradlew clean bootJar` | `./gradlew clean build -x test` |
+> | 결과물       | `build/libs/*.jar`        | `build/libs/*.war`              |
+> | EC2 실행     | `java -jar app.jar`       | Tomcat에 WAR 배포               |
+> | 포트         | 8080 (내장 Tomcat)        | 8080 (외부 Tomcat)              |
+> | systemd      | spring-app.service        | tomcat.service                  |
+> | Health Check | `/actuator/health`        | `/` 또는 `/health`              |
+>
+> 태스크 5에서 본인 방식에 맞는 가이드를 따르세요.
+
 ---
 
 ### 방법 B: 새 프로젝트 생성 (Spring Boot)
@@ -73,15 +87,28 @@ cd ~/3tier-project/my-backend
 1. 브라우저에서 [https://start.spring.io](https://start.spring.io)에 접속합니다.
 2. 다음과 같이 설정합니다:
 
-| 설정        | 값                     |
-| ----------- | ---------------------- |
-| Project     | Gradle - Groovy        |
-| Language    | Java                   |
-| Spring Boot | 3.2.x (최신 안정 버전) |
-| Group       | com.example            |
-| Artifact    | my-backend             |
-| Packaging   | Jar                    |
-| Java        | 17                     |
+| 설정        | 값                                        |
+| ----------- | ----------------------------------------- |
+| Project     | Gradle - Groovy                           |
+| Language    | Java                                      |
+| Spring Boot | 최신 안정 버전 (예: `4.0.6` 또는 `3.5.x`) |
+| Group       | com.example                               |
+| Artifact    | my-backend                                |
+| Packaging   | Jar                                       |
+| Java        | 17                                        |
+
+> [!TIP]
+> **Spring Boot 버전 선택 가이드:**
+>
+> | 상황                     | 권장 버전                              |
+> | ------------------------ | -------------------------------------- |
+> | 새 프로젝트 시작         | 4.x (최신 안정 버전, SNAPSHOT/RC 제외) |
+> | 기존 3.x 프로젝트 유지   | 3.5.x (호환성 유지)                    |
+> | KB IT's Your Life 레거시 | Spring MVC 5.x (방법 A로 진행)         |
+>
+> Spring Boot 3.x/4.x 모두 **Java 17 이상**을 요구합니다.  
+> 4.x와 3.x는 Jackson, Security 기본값 등이 달라 기존 3.x 코드와 호환성 문제가 있을 수 있습니다.  
+> 기존 프로젝트가 있다면 같은 메이저 버전을 유지하세요.
 
 3. **Dependencies**에서 다음을 추가합니다:
    - Spring Web
@@ -499,7 +526,11 @@ app:
 aws ssm start-session --target INSTANCE_ID --region ap-northeast-2
 
 # Java 17 설치
-sudo dnf install -y java-17-amazon-corretto-headless
+sudo dnf install -y java-17-amazon-corretto-devel
+
+# JAVA_HOME 설정
+echo 'export JAVA_HOME=/usr/lib/jvm/java-17-amazon-corretto' | sudo tee -a /etc/profile.d/java.sh
+source /etc/profile.d/java.sh
 
 # Java 버전 확인
 java -version
@@ -544,6 +575,7 @@ After=network.target
 User=ec2-user
 WorkingDirectory=/home/ec2-user/app
 ExecStart=/home/ec2-user/app/start.sh
+Environment=JAVA_OPTS=-Xms256m -Xmx512m
 Restart=on-failure
 RestartSec=10
 StandardOutput=journal
@@ -557,10 +589,12 @@ sudo systemctl daemon-reload
 sudo systemctl enable spring-app
 ```
 
-### 5-5. 로컬에서 JAR 빌드 및 EC2 전송
+### 5-5. 로컬에서 빌드 및 EC2 전송
+
+**Spring Boot (JAR) 방식:**
 
 ```bash
-# 로컬에서 빌드
+# 로컬에서 빌드 (Permission denied 시: chmod +x ./gradlew)
 cd ~/3tier-project/my-backend
 ./gradlew clean bootJar
 
@@ -569,6 +603,51 @@ scp -i ~/.ssh/my-key.pem \
   build/libs/my-backend-0.0.1-SNAPSHOT.jar \
   ec2-user@EC2_PUBLIC_IP:/home/ec2-user/app/app.jar
 ```
+
+**Spring MVC (WAR + Tomcat) 방식:**
+
+```bash
+# 로컬에서 빌드
+cd ~/3tier-project/my-backend
+./gradlew clean build -x test
+
+# WAR 파일을 EC2로 전송
+scp -i ~/.ssh/my-key.pem \
+  build/libs/my-backend-0.0.1-SNAPSHOT.war \
+  ec2-user@EC2_PUBLIC_IP:/home/ec2-user/app/app.war
+```
+
+> [!TIP]
+> **Spring MVC (WAR) 사용 시 추가 작업:**
+>
+> Amazon EC2에 Tomcat을 설치하고 WAR를 배포해야 합니다:
+>
+> ```bash
+> # Tomcat 설치 (Amazon Linux 2023)
+> sudo dnf install -y tomcat
+>
+> # WAR 파일을 Tomcat webapps에 복사
+> sudo cp /home/ec2-user/app/app.war /usr/share/tomcat/webapps/ROOT.war
+>
+> # Tomcat 시작
+> sudo systemctl enable tomcat
+> sudo systemctl start tomcat
+> ```
+>
+> Tomcat은 기본 8080 포트에서 실행됩니다.  
+> 위 systemd 서비스(spring-app.service) 대신 Tomcat 서비스를 사용합니다.  
+> Health Check 경로도 앱에 맞게 변경하세요 (예: `/` 또는 `/health`).
+
+> [!NOTE]
+> **어떤 방식을 선택해야 하나요?**
+>
+> | 방식                  | 적합한 경우                               |
+> | --------------------- | ----------------------------------------- |
+> | **Spring Boot (JAR)** | 새 프로젝트, 내장 Tomcat 사용 (권장)      |
+> | **Spring MVC (WAR)**  | KB IT's Your Life 등 기존 레거시 프로젝트 |
+>
+> Spring Boot JAR이 배포가 간단하고 관리가 쉽습니다.  
+> 기존 WAR 프로젝트가 있다면 그대로 사용하되, 장기적으로는 JAR 전환을 권장합니다.
 
 ### 5-6. EC2에서 애플리케이션 시작
 

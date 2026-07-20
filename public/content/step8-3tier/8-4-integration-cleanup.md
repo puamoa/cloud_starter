@@ -33,11 +33,11 @@ estimatedCost: 무료 (정리 작업)
 ```
 사용자 브라우저
     ↓ HTTPS
-CloudFront (d1234abcdef.cloudfront.net)
+CloudFront (app.mydomain.shop 또는 d1234abcdef.cloudfront.net)
     ↓ HTTP
 S3 (Vue.js 정적 파일)
     ↓ API 호출 (Axios)
-ALB (my-3tier-app-alb-xxx.elb.amazonaws.com)
+ALB (api.mydomain.shop 또는 my-3tier-app-alb-xxx.elb.amazonaws.com)
     ↓ HTTP:8080
 EC2 (Spring Boot)
     ↓ JDBC:3306
@@ -46,9 +46,13 @@ Amazon RDS MySQL (Private Subnet)
 
 ### 1-2. 프론트엔드 → 백엔드 연동 확인
 
-1. 브라우저에서 Amazon CloudFront URL에 접속합니다:
+1. 브라우저에서 접속합니다:
 
 ```
+# 커스텀 도메인이 있는 경우 (Step 8-2 태스크 7 완료 시)
+https://app.mydomain.shop
+
+# 커스텀 도메인이 없는 경우
 https://d1234abcdef.cloudfront.net
 ```
 
@@ -227,27 +231,27 @@ git push origin main
 └───────────┬─────────────────────────────────┬───────────────────────┘
             │                                 │
             ▼                                 ▼
-┌───────────────────────┐       ┌─────────────────────────────────────┐
-│  CloudFront (CDN)     │       │  ALB (HTTPS 종료)                    │
+┌────────────────────────┐       ┌─────────────────────────────────────┐
+│  CloudFront (CDN)      │       │  ALB (HTTPS 종료)                   │
 │  - HTTPS 자동 적용     │       │  - Health Check                     │
-│  - 전 세계 엣지 캐싱   │       │  - 트래픽 분산                       │
+│  - 전 세계 엣지 캐싱   │       │  - 트래픽 분산                      │
 │  - SPA 라우팅 지원     │       │  - Public Subnet                    │
-└───────────┬───────────┘       └───────────────┬─────────────────────┘
+└───────────┬────────────┘       └───────────────┬─────────────────────┘
             │                                   │
             ▼                                   ▼
-┌───────────────────────┐       ┌─────────────────────────────────────┐
-│  S3 Bucket            │       │  EC2 (Spring Boot)                   │
-│  - Vue.js 빌드 파일    │       │  - REST API                         │
-│  - 정적 웹 호스팅      │       │  - SSM에서 비밀값 로드               │
-│  - GitHub Actions 배포 │       │  - GitHub Actions 배포               │
-└───────────────────────┘       └───────────────┬─────────────────────┘
+┌─────────────────────────┐       ┌─────────────────────────────────────┐
+│  S3 Bucket              │       │  EC2 (Spring Boot)                  │
+│  - Vue.js 빌드 파일     │       │  - REST API                         │
+│  - 정적 웹 호스팅       │       │  - SSM에서 비밀값 로드              │
+│  - GitHub Actions 배포  │       │  - GitHub Actions 배포              │
+└─────────────────────────┘       └───────────────┬─────────────────────┘
                                                 │
                                                 ▼
                                 ┌─────────────────────────────────────┐
-                                │  Amazon RDS MySQL (Private Subnet)          │
-                                │  - 외부 접근 차단                     │
-                                │  - Amazon EC2에서만 접근 가능                │
-                                │  - 자동 백업                         │
+                                │  Amazon RDS MySQL (Private Subnet)  │
+                                │  - 외부 접근 차단                   │
+                                │  - Amazon EC2에서만 접근 가능       │
+                                │  - 자동 백업                        │
                                 └─────────────────────────────────────┘
 ```
 
@@ -257,7 +261,7 @@ git push origin main
 | ------------ | ------------------- | -------------------- | ------------------------------ |
 | 프론트엔드   | S3 + CloudFront     | Vue.js SPA 호스팅    | GitHub Actions → S3 sync       |
 | API 서버     | EC2 + ALB           | Spring Boot REST API | GitHub Actions → SCP → systemd |
-| 데이터베이스 | Amazon RDS MySQL           | 데이터 영구 저장     | CloudFormation                 |
+| 데이터베이스 | Amazon RDS MySQL    | 데이터 영구 저장     | CloudFormation                 |
 | 네트워크     | VPC + Subnets       | 네트워크 격리        | CloudFormation                 |
 | 보안         | Security Groups     | 접근 제어            | CloudFormation                 |
 | 비밀 관리    | SSM Parameter Store | DB 비밀번호 등       | AWS CLI                        |
@@ -652,26 +656,26 @@ aws ec2 describe-addresses \
 
 ### 전체 정리 체크리스트
 
-| #   | 리소스                  | 삭제 완료 | 월 비용 (방치 시) | 프리티어       |
-| --- | ----------------------- | --------- | ----------------- | -------------- |
-| 1   | Auto Scaling Group      | ☐         | EC2 비용 발생     | -              |
-| 2   | ALB + Target Group      | ☐         | **~$16/월**       | ❌ 미포함      |
-| 3   | NAT Gateway             | ☐         | **~$32/월**       | ❌ 미포함      |
-| 4   | Elastic IP              | ☐         | ~$3.6/월          | ❌ 미포함      |
-| 5   | RDS Instance            | ☐         | **~$12/월**       | ✅ 750시간/월  |
-| 6   | EC2 Instances           | ☐         | ~$8/월            | ✅ 750시간/월  |
+| #   | 리소스                         | 삭제 완료 | 월 비용 (방치 시) | 프리티어       |
+| --- | ------------------------------ | --------- | ----------------- | -------------- |
+| 1   | Auto Scaling Group             | ☐         | EC2 비용 발생     | -              |
+| 2   | ALB + Target Group             | ☐         | **~$16/월**       | ❌ 미포함      |
+| 3   | NAT Gateway                    | ☐         | **~$32/월**       | ❌ 미포함      |
+| 4   | Elastic IP                     | ☐         | ~$3.6/월          | ❌ 미포함      |
+| 5   | RDS Instance                   | ☐         | **~$12/월**       | ✅ 750시간/월  |
+| 6   | EC2 Instances                  | ☐         | ~$8/월            | ✅ 750시간/월  |
 | 7   | Amazon CloudFront Distribution | ☐         | ~$1 미만          | ✅ 1000만 요청 |
-| 8   | S3 Buckets              | ☐         | ~$0.01            | ✅ 5GB         |
-| 9   | SSM Parameters          | ☐         | 무료              | ✅             |
-| 10  | Security Groups         | ☐         | 무료              | ✅             |
-| 11  | DB Subnet Group         | ☐         | 무료              | ✅             |
-| 12  | VPC + Subnets           | ☐         | 무료              | ✅             |
-| 13  | DynamoDB Tables         | ☐         | 무료 (On-demand)  | ✅             |
-| 14  | CloudFormation Stacks   | ☐         | 무료              | ✅             |
-| 15  | ACM Certificates        | ☐         | 무료              | ✅             |
-| 16  | Route 53 Records        | ☐         | $0.50/월 (Zone)   | ❌             |
-| 17  | IAM Users/Roles         | ☐         | 무료              | ✅             |
-| 18  | 최종 비용 확인          | ☐         | -                 | -              |
+| 8   | S3 Buckets                     | ☐         | ~$0.01            | ✅ 5GB         |
+| 9   | SSM Parameters                 | ☐         | 무료              | ✅             |
+| 10  | Security Groups                | ☐         | 무료              | ✅             |
+| 11  | DB Subnet Group                | ☐         | 무료              | ✅             |
+| 12  | VPC + Subnets                  | ☐         | 무료              | ✅             |
+| 13  | DynamoDB Tables                | ☐         | 무료 (On-demand)  | ✅             |
+| 14  | CloudFormation Stacks          | ☐         | 무료              | ✅             |
+| 15  | ACM Certificates               | ☐         | 무료              | ✅             |
+| 16  | Route 53 Records               | ☐         | $0.50/월 (Zone)   | ❌             |
+| 17  | IAM Users/Roles                | ☐         | 무료              | ✅             |
+| 18  | 최종 비용 확인                 | ☐         | -                 | -              |
 
 > [!CONCEPT] 리소스 정리의 중요성
 >

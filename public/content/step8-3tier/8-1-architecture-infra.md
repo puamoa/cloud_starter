@@ -21,12 +21,32 @@ estimatedCost: 크레딧 내 사용 가능 (비용 발생 가능)
 전체 아키텍처를 설계하고, AWS CloudFormation으로 인프라를 한 번에
 구축합니다.
 
+> [!CONCEPT] Step 0~7의 기술이 Step 8에서 어떻게 합쳐지는가?
+>
+> | 이전 Step | 배운 기술                    | Step 8에서의 역할                          |
+> | --------- | ---------------------------- | ------------------------------------------ |
+> | Step 1    | Amazon VPC, Subnet, SG       | 3-Tier 네트워크 기반 (Public/Private 분리) |
+> | Step 2    | Amazon EC2                   | Spring Boot 백엔드 서버 실행               |
+> | Step 3    | NAT Gateway                  | Private Subnet → 인터넷 통신 (패키지 설치) |
+> | Step 4    | Amazon RDS                   | MySQL 데이터베이스 (Private Subnet 배치)   |
+> | Step 5    | Amazon S3, Amazon CloudFront | Vue.js 프론트엔드 정적 호스팅 + CDN        |
+> | Step 6    | SSM Parameter Store          | DB 비밀번호 안전하게 관리                  |
+> | Step 7    | ALB, Route 53, ACM           | 로드밸런싱 + 커스텀 도메인 + HTTPS         |
+>
+> **Step 8에서 새로 배우는 것:**
+>
+> - AWS CloudFormation 스택 분리 전략 (계층별 독립 관리)
+> - Cross-stack Reference (`Export`/`ImportValue`)
+> - 프론트엔드/백엔드 별도 리포지토리 운영
+> - Amazon CloudFront + 커스텀 도메인 HTTPS 연결
+> - 전체 아키텍처를 한눈에 설계하고 구축하는 실무 경험
+
 > [!NOTE]
 > Step 8은 4개의 세션으로 구성됩니다:
 >
 > - 8-1: 아키텍처 설계 + 인프라 구축 (현재)
 > - 8-2: Vue.js 프론트엔드 배포 (S3 + CloudFront)
-> - 8-3: Spring Boot 백엔드 배포 (EC2 + ALB + CI/CD)
+> - 8-3: Spring Boot 백엔드 배포 (EC2 + ALB)
 > - 8-4: 전체 연동 확인 + 리소스 정리
 
 ---
@@ -131,6 +151,29 @@ my-backend/           ← Spring Boot 프로젝트
 ## 태스크 2: GitHub 리포지토리 2개 생성
 
 프론트엔드와 백엔드를 별도 리포지토리로 관리합니다.
+
+> [!NOTE]
+> **소스 코드 옵션을 선택하세요:**
+>
+> | 옵션                           | 대상                                             | 설명                                       |
+> | ------------------------------ | ------------------------------------------------ | ------------------------------------------ |
+> | **옵션 A: 기존 프로젝트 사용** | Step 2~6에서 만든 Spring Boot/Vue.js가 있는 경우 | 기존 코드를 새 레포에 옮겨서 사용          |
+> | **옵션 B: 새로 시작**          | 처음부터 만들거나 기존 코드가 없는 경우          | 이 가이드에서 제공하는 보일러플레이트 사용 |
+>
+> 어떤 옵션이든 최종 결과물(3-Tier 연동)은 동일합니다.
+
+> [!TIP]
+> **옵션 A (기존 프로젝트)를 선택한 경우:**
+>
+> - 기존 Spring Boot 프로젝트를 `my-backend` 레포에 push합니다.
+> - 기존 Vue.js 프로젝트를 `my-frontend` 레포에 push합니다.
+> - 이후 태스크에서 DB 접속 정보나 API URL만 환경에 맞게 변경하면 됩니다.
+> - Step 8-3에서 Amazon RDS 연동 코드와 CORS 설정만 추가/확인합니다.
+>
+> **옵션 B (새로 시작)를 선택한 경우:**
+>
+> - 아래 가이드를 따라 레포를 생성합니다.
+> - Step 8-2에서 Vue.js 프로젝트를, Step 8-3에서 Spring Boot 프로젝트를 처음부터 생성합니다.
 
 ### 2-1. my-frontend 리포지토리 생성
 
