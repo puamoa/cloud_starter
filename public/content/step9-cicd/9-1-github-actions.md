@@ -22,6 +22,20 @@ estimatedCost: 프리티어 (GitHub Actions Public 리포 무료, Private 월 20
 EC2에 배포하는 CI/CD 파이프라인을 구축합니다.  
 프론트엔드(Vue.js)와 백엔드(Spring)를 **별도 리포지토리**로 운영하며 각각의 배포 워크플로우를 작성합니다.
 
+> [!CONCEPT] Step 8 → Step 9: 무엇이 바뀌는가?
+> Step 8에서는 **수동 배포**를 했습니다. 이제 그 과정을 **자동화**합니다:
+>
+> | 단계          | Step 8 (수동)                  | Step 9 (자동)              |
+> | ------------- | ------------------------------ | -------------------------- |
+> | 백엔드 빌드   | 로컬에서 `./gradlew bootJar`   | GitHub Actions가 자동 빌드 |
+> | EC2 전송      | `scp`로 JAR 수동 복사          | SSH 또는 SSM으로 자동 배포 |
+> | 프론트 빌드   | 로컬에서 `npm run build`       | GitHub Actions가 자동 빌드 |
+> | S3 업로드     | `aws s3 sync` 수동 실행        | push만 하면 자동 sync      |
+> | 서비스 재시작 | SSH 접속 → `systemctl restart` | 워크플로우가 자동 재시작   |
+>
+> **인프라(VPC, ALB, Amazon RDS, Amazon S3)는 Step 8 그대로 유지**합니다.  
+> 코드를 배포하는 **방법만** 수동에서 자동으로 바뀝니다.
+
 > [!NOTE]
 > 이 실습에는 Amazon EC2 인스턴스(SSH 접속 가능)와 GitHub 리포지토리 2개가 필요합니다.
 >
@@ -61,10 +75,10 @@ Workflow (워크플로우)
 
 > [!CONCEPT] GitHub Actions의 동작 방식
 >
-> 1. `.github/workflows/` 디렉토리에 YAML 파일을 작성합니다.
-> 2. 지정한 이벤트(push, PR 등)가 발생하면 워크플로우가 자동 실행됩니다.
-> 3. GitHub이 제공하는 가상 머신(Runner)에서 스텝이 순차적으로 실행됩니다.
-> 4. 모든 스텝이 성공하면 워크플로우가 완료됩니다.
+> - `.github/workflows/` 디렉토리에 YAML 파일을 작성합니다.
+> - 지정한 이벤트(push, PR 등)가 발생하면 워크플로우가 자동 실행됩니다.
+> - GitHub이 제공하는 가상 머신(Runner)에서 스텝이 순차적으로 실행됩니다.
+> - 모든 스텝이 성공하면 워크플로우가 완료됩니다.
 >
 > Public 리포지토리는 무료, Private 리포지토리는 월 2,000분 무료입니다.
 

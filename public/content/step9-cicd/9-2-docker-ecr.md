@@ -22,6 +22,19 @@ estimatedCost: 프리티어 (Amazon ECR 500MB/월 무료, GitHub Actions Public 
 Amazon ECR(Elastic Container Registry)에 Push하는 전체 과정을 학습합니다.
 GitHub Actions로 자동화하여 코드 Push만으로 이미지가 빌드·배포되는 파이프라인을 구축합니다.
 
+> [!CONCEPT] Step 9-1 → Step 9-2: 무엇이 바뀌는가?
+> 9-1에서는 JAR 파일을 직접 EC2에 배포했습니다. 이제 Docker로 **컨테이너화**합니다:
+>
+> | 항목           | 9-1 (JAR 직접 배포)   | 9-2 (Docker 컨테이너)              |
+> | -------------- | --------------------- | ---------------------------------- |
+> | 빌드 결과물    | `.jar` 파일           | Docker 이미지                      |
+> | 실행 환경 의존 | EC2에 Java 설치 필요  | 이미지에 Java 포함 (어디서든 실행) |
+> | 배포 대상      | 특정 EC2에 SCP        | Amazon ECR에 Push (어디서든 Pull)  |
+> | 환경 일관성    | 서버마다 다를 수 있음 | 이미지 = 동일 환경 보장            |
+>
+> **Step 9-3에서 이 이미지를 Amazon ECS Fargate(서버리스)에 배포합니다.**  
+> EC2를 직접 관리하지 않아도 됩니다.
+
 > [!NOTE]
 > Step 9-3에서 이 이미지를 Amazon ECS Fargate에 배포합니다.  
 > 이번 세션에서는 **이미지 빌드와 레지스트리 Push**에 집중합니다.
@@ -84,7 +97,7 @@ Spring Boot 애플리케이션을 Docker 이미지로 만들기 위한 Dockerfil
 
 ### Multi-stage 빌드 Dockerfile
 
-프로젝트 루트에 `Dockerfile`을 생성합니다:
+`my-backend` 리포지토리(Step 8-3에서 생성)의 프로젝트 루트에 `Dockerfile`을 생성합니다:
 
 ```dockerfile
 # ============================================================
@@ -135,6 +148,17 @@ ENTRYPOINT ["java", "-jar", "app.jar"]
 > 최종 이미지에는 빌드 도구(Gradle)가 포함되지 않아 크기가 **4분의 1**로 줄어듭니다.  
 > 보안 측면에서도 불필요한 도구가 없어 공격 면적(Attack Surface)이 줄어듭니다.
 
+> [!TIP]
+> **Java 버전 선택:**
+>
+> | Spring Boot 버전      | 최소 Java | Dockerfile 베이스 이미지                              |
+> | --------------------- | --------- | ----------------------------------------------------- |
+> | 3.x                   | Java 17   | `gradle:8.10-jdk17` + `eclipse-temurin:17-jre-alpine` |
+> | 4.x                   | Java 17   | `gradle:8.10-jdk17` + `eclipse-temurin:17-jre-alpine` |
+> | 4.x (Java 21 사용 시) | Java 21   | `gradle:8.10-jdk21` + `eclipse-temurin:21-jre-alpine` |
+>
+> 본인 프로젝트의 `build.gradle`에서 `sourceCompatibility`를 확인하고 맞는 버전을 사용하세요.
+
 ### .dockerignore 작성
 
 불필요한 파일이 이미지에 포함되지 않도록 `.dockerignore`를 생성합니다:
@@ -155,7 +179,12 @@ docker-compose*.yml
 
 ### 이미지 빌드
 
-1. 터미널에서 프로젝트 루트 디렉토리로 이동합니다.
+1. 터미널에서 `my-backend` 프로젝트 루트 디렉토리로 이동합니다.
+
+```bash
+cd ~/3tier-project/my-backend
+```
+
 2. Docker 이미지를 빌드합니다:
 
 ```bash

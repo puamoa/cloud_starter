@@ -20,6 +20,19 @@ estimatedCost: 프리티어 (Amazon S3 5GB, Amazon CloudFront 1TB/월 무료)
 Amazon S3에 배포한 뒤 Amazon CloudFront 캐시를 자동 무효화하는 파이프라인을 구축합니다.
 Step 9-3에서 배포한 백엔드(Amazon ECS Fargate)와 연동하여 **3-Tier 아키텍처 전체 CI/CD를 완성**합니다.
 
+> [!CONCEPT] Step 8-2 → Step 9-4: 무엇이 바뀌는가?
+> Step 8-2에서는 프론트엔드를 **수동으로** 빌드하고 업로드했습니다:
+>
+> | 단계       | Step 8-2 (수동)                        | Step 9-4 (자동)                |
+> | ---------- | -------------------------------------- | ------------------------------ |
+> | 빌드       | 로컬에서 `npm run build`               | GitHub Actions가 자동 빌드     |
+> | S3 업로드  | `aws s3 sync dist/ s3://...` 수동 실행 | push만 하면 자동 sync          |
+> | CloudFront | 콘솔에서 Invalidation 수동 생성        | 워크플로우가 자동 Invalidation |
+> | 환경변수   | `.env.production` 수동 편집            | GitHub Secrets에서 자동 주입   |
+>
+> **Amazon S3 버킷과 Amazon CloudFront는 Step 8 그대로 유지**합니다.  
+> 배포 과정만 수동에서 자동으로 바뀝니다.
+
 > [!NOTE]
 > Step 8-2에서 수동으로 빌드 → Amazon S3 업로드 → Amazon CloudFront 설정을 했다면,  
 > 이번 세션에서는 그 과정을 **GitHub Actions로 완전 자동화**합니다.
@@ -98,9 +111,9 @@ Invalidation 실행하면:
 
 ## 태스크 2: GitHub Secrets 설정
 
-프론트엔드 리포지토리에 AWS 인증 정보와 배포 대상을 등록합니다.
+프론트엔드 리포지토리(`my-frontend`)에 AWS 인증 정보와 배포 대상을 등록합니다.
 
-1. 프론트엔드 GitHub 리포지토리 → **Settings** → **Secrets and variables** → **Actions**로 이동합니다.
+1. `my-frontend` GitHub 리포지토리 → **Settings** → **Secrets and variables** → **Actions**로 이동합니다.
 2. [[New repository secret]]을 클릭하여 다음 시크릿을 추가합니다:
 
 | Name                         | Value                                | 설명                              |
@@ -150,7 +163,7 @@ VITE_API_BASE_URL=http://placeholder-will-be-replaced
 
 ### GitHub Actions 워크플로우 작성
 
-4. 프론트엔드 프로젝트에 `.github/workflows/deploy-frontend.yml`을 생성합니다:
+4. `my-frontend` 프로젝트에 `.github/workflows/deploy-frontend.yml`을 생성합니다:
 
 ```yaml
 name: Deploy Frontend to S3 + CloudFront
@@ -172,7 +185,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
 
       # 의존성 설치
