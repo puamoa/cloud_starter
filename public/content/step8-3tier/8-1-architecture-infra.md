@@ -21,6 +21,11 @@ estimatedCost: 크레딧 내 사용 가능 (비용 발생 가능)
 전체 아키텍처를 설계하고, AWS CloudFormation으로 인프라를 한 번에
 구축합니다.
 
+> [!WARNING]
+> 이 실습에서는 **시간당 비용이 발생하는 리소스**(NAT Gateway, ALB, Amazon RDS)를 생성합니다.  
+> 실습 후 반드시 리소스를 정리하세요 (Step 8-4에서 안내).  
+> 문서에 표시된 비용 금액은 **작성 시점 기준 참고 값**이며, 실제 요금은 리전, 환율, AWS 정책 변경에 따라 상이할 수 있습니다.
+
 > [!CONCEPT] Step 0~7의 기술이 Step 8에서 어떻게 합쳐지는가?
 >
 > | 이전 Step | 배운 기술                    | Step 8에서의 역할                          |
@@ -58,11 +63,11 @@ estimatedCost: 크레딧 내 사용 가능 (비용 발생 가능)
 웹 애플리케이션을 3개의 독립적인 계층으로 분리하는 설계 패턴입니다.
 각 계층은 독립적으로 확장하고 관리할 수 있습니다.
 
-| 계층                          | 역할               | 기술 스택    | AWS 서비스           |
-| ----------------------------- | ------------------ | ------------ | -------------------- |
-| **Presentation** (프론트엔드) | 사용자 인터페이스  | Vue.js (SPA) | S3 + CloudFront      |
-| **Application** (백엔드)      | 비즈니스 로직, API | Spring Boot  | EC2 + ALB            |
-| **Data** (데이터베이스)       | 데이터 저장/관리   | MySQL        | RDS (Private Subnet) |
+| 계층                          | 역할               | 기술 스택    | AWS 서비스           | 실습 차시 |
+| ----------------------------- | ------------------ | ------------ | -------------------- | --------- |
+| **Presentation** (프론트엔드) | 사용자 인터페이스  | Vue.js (SPA) | S3 + CloudFront      | 8-2       |
+| **Application** (백엔드)      | 비즈니스 로직, API | Spring Boot  | EC2 + ALB            | 8-3       |
+| **Data** (데이터베이스)       | 데이터 저장/관리   | MySQL        | RDS (Private Subnet) | 8-1       |
 
 ### 전체 아키텍처 다이어그램
 
@@ -216,6 +221,128 @@ git clone https://github.com/YOUR_USERNAME/my-backend.git
 > 리포지토리를 Public으로 생성하면 GitHub Actions를 무제한 무료로 사용할 수 있습니다.  
 > Private 리포지토리는 월 2,000분까지 무료입니다.
 
+### 2-4. 기존 프로젝트를 새 레포에 push (옵션 A)
+
+기존 Spring Boot/Vue.js 프로젝트가 로컬에 있는 경우, 새로 만든 레포에 push합니다.
+
+**백엔드 (Spring Boot 또는 Spring MVC):**
+
+```bash
+cd ~/기존-백엔드-프로젝트
+
+# 기존 git 이력 제거 (새 레포로 시작)
+rm -rf .git
+
+# 새 레포로 초기화
+git init
+git remote add origin https://github.com/YOUR_USERNAME/my-backend.git
+
+# 원격 레포의 README, .gitignore 가져오기
+git pull origin main --allow-unrelated-histories
+
+# 전체 커밋 및 push
+git add .
+git commit -m "feat: initial backend project"
+git push origin main
+```
+
+**프론트엔드 (Vue.js):**
+
+```bash
+cd ~/기존-프론트엔드-프로젝트
+
+rm -rf .git
+git init
+git remote add origin https://github.com/YOUR_USERNAME/my-frontend.git
+git pull origin main --allow-unrelated-histories
+git add .
+git commit -m "feat: initial frontend project"
+git push origin main
+```
+
+> [!WARNING]
+> `rm -rf .git`은 기존 git 이력을 완전히 삭제합니다.  
+> 기존 이력을 보존하고 싶다면 `rm -rf .git` 대신 `git remote set-url origin <새 URL>`로 원격 주소만 변경하세요.
+
+> [!TIP]
+> `--allow-unrelated-histories` 옵션은 README가 있는 원격 레포와 로컬 프로젝트의 이력이 다를 때 병합을 허용합니다.  
+> 충돌이 발생하면 README 파일만 선택하고 커밋하면 됩니다.
+
+### 2-5. .gitignore와 환경 변수 설정 확인
+
+GitHub에서 레포 생성 시 선택한 `.gitignore` 템플릿(Node, Gradle)은 환경 변수 파일을 자동으로 무시합니다.  
+배포에 필요한 설정 파일이 누락되지 않도록 확인합니다.
+
+**백엔드 — `.gitignore` 확인:**
+
+7. `.gitignore` 파일을 열고 다음이 포함되어 있는지 확인합니다:
+
+```gitignore
+# Gradle 기본 .gitignore에 포함된 항목
+.gradle/
+build/
+!gradle/wrapper/gradle-wrapper.jar
+
+# 환경 변수 / 비밀값 (추가 권장)
+.env
+application-local.yml
+```
+
+8. `application.yml`(또는 `application.properties`)은 `.gitignore`에 **포함하지 않습니다**:
+   - DB 접속 정보는 환경 변수(`${DB_ENDPOINT}`)로 주입하므로 코드에 비밀값이 없습니다.
+   - 환경 변수 값 자체는 SSM Parameter Store에서 관리합니다.
+
+> [!NOTE]
+> `application.yml`에 하드코딩된 비밀번호가 있다면 환경 변수로 교체한 후 push하세요.  
+> Step 8-3 태스크 2에서 SSM Parameter Store를 사용하여 비밀값을 안전하게 관리합니다.
+
+**프론트엔드 — `.gitignore` 확인:**
+
+9. `.gitignore`에 다음이 포함되어 있는지 확인합니다:
+
+```gitignore
+# Node 기본 .gitignore에 포함된 항목
+node_modules/
+dist/
+
+# 환경 변수 (로컬 개발용만 무시)
+.env.local
+.env.*.local
+```
+
+10. `.env.development`와 `.env.production`은 `.gitignore`에 **포함하지 않습니다**:
+    - 이 파일에는 API URL만 있고 비밀값이 없습니다.
+    - GitHub Actions 빌드 시 이 파일의 값을 사용합니다.
+
+> [!WARNING]
+> `.env.local`은 로컬 전용이므로 git에 포함하지 않습니다.  
+> `.env.production`은 빌드에 필요하므로 **반드시 git에 포함**해야 합니다.  
+> 만약 `VITE_API_URL`을 GitHub Secrets로 주입하는 경우에는 `.env.production`이 없어도 됩니다 (Step 8-2 태스크 6 참조).
+
+11. 설정 확인 후 커밋합니다:
+
+```bash
+# 백엔드
+cd ~/3tier-project/my-backend
+git add .gitignore
+git commit -m "chore: update .gitignore"
+git push origin main
+
+# 프론트엔드
+cd ~/3tier-project/my-frontend
+git add .gitignore
+git commit -m "chore: update .gitignore"
+git push origin main
+```
+
+> [!NOTE]
+> 환경 변수(DB 접속 정보, API URL 등)의 실제 값 설정과 관리 방법은 이후 세션에서 다룹니다:
+>
+> - **백엔드**: Step 8-3 태스크 2(SSM Parameter Store) 및 태스크 6(GitHub Secrets로 `application.properties` 주입)
+> - **프론트엔드**: Step 8-2 태스크 2(`.env.production` 작성) 및 태스크 6(GitHub Secrets로 `VITE_API_URL` 주입)
+>
+> 지금은 `.gitignore` 설정만 확인하고 넘어가세요.
+
 ✅ **태스크 완료** — GitHub에 `my-frontend`와 `my-backend` 리포지토리를 생성했습니다.
 
 ---
@@ -243,12 +370,14 @@ Step 0~7에서 수동으로 만들었던 모든 인프라를 AWS CloudFormation 
 
 ### 3-1. Network 스택 생성 (VPC + 서브넷 + SG)
 
-7. AWS Console에서 **CloudFormation** 서비스로 이동합니다.
-8. [[Create stack]] → **With new resources (standard)**를 클릭합니다.
-9. **Template source**: `Upload a template file` → `step8-network.yaml` 업로드
-10. [[Next]]를 클릭합니다.
-11. **Stack name**: `step8-network`
-12. 파라미터를 설정합니다:
+7. 상단 검색창에 `CloudFormation`을 입력하고 **CloudFormation** 서비스를 선택합니다.
+8. [[Create stack]] 드롭다운을 클릭한 후 **With new resources (standard)**를 선택합니다.
+9. **Prerequisite - Prepare template**에서 `Choose an existing template`을 선택합니다.
+10. **Specify template**에서 `Upload a template file`을 선택합니다.
+11. [[Choose file]] 버튼을 클릭하고 다운로드한 `step8-network.yaml` 파일을 선택합니다.
+12. [[Next]] 버튼을 클릭합니다.
+13. **Stack name**에 `step8-network`를 입력합니다.
+14. **Parameters** 섹션에서 다음을 설정합니다:
 
 | 파라미터         | 값             | 설명                                               |
 | ---------------- | -------------- | -------------------------------------------------- |
@@ -262,8 +391,16 @@ Step 0~7에서 수동으로 만들었던 모든 인프라를 AWS CloudFormation 
 > 단, Private Subnet의 Amazon EC2에서 인터넷 접근(패키지 설치, SSM)이 불가합니다.  
 > 이 실습에서는 `Yes`를 권장합니다.
 
-13. [[Next]] → [[Next]] → [[Submit]]을 클릭합니다.
-14. Status가 `CREATE_COMPLETE`가 될 때까지 기다립니다 (약 2~3분).
+15. [[Next]] 버튼을 클릭합니다.
+16. **Configure stack options** 페이지에서 추가 설정 없이 [[Next]] 버튼을 클릭합니다.
+17. **Review and create** 페이지에서 Stack name, Parameters 설정 내용을 확인합니다.
+18. [[Submit]] 버튼을 클릭합니다.
+19. **Events** 탭에서 리소스 생성 진행 상태를 확인합니다.
+20. Status가 `CREATE_COMPLETE`로 변경될 때까지 기다립니다 (약 2~3분).
+
+> [!OUTPUT]
+> Stacks 목록에서 `step8-network`의 Status가 `CREATE_COMPLETE` (녹색)로 표시됩니다.
+> Events 탭에서 VPC, Subnet, IGW, NAT Gateway, Route Table, Security Group 등이 순서대로 생성된 것을 확인할 수 있습니다.
 
 ### 3-2. Data 스택 생성 (Amazon RDS)
 
@@ -271,23 +408,29 @@ Step 0~7에서 수동으로 만들었던 모든 인프라를 AWS CloudFormation 
 > Network 스택이 `CREATE_COMPLETE` 상태여야 Data 스택을 생성할 수 있습니다.  
 > Network 스택의 Export 값을 Import하기 때문입니다.
 
-15. [[Create stack]] → `step8-data.yaml` 업로드
-16. **Stack name**: `step8-data`
-17. 파라미터를 설정합니다:
+21. [[Create stack]] 드롭다운 → **With new resources (standard)**를 선택합니다.
+22. `Upload a template file` → `step8-data.yaml` 파일을 선택합니다.
+23. [[Next]] 버튼을 클릭합니다.
+24. **Stack name**에 `step8-data`를 입력합니다.
+25. **Parameters** 섹션에서 다음을 설정합니다:
 
-| 파라미터         | 값               | 설명                           |
-| ---------------- | ---------------- | ------------------------------ |
-| ProjectName      | `my-3tier-app`   | Network 스택과 동일해야 함     |
-| DBMasterUsername | `admin`          | Amazon RDS 관리자 계정         |
-| DBMasterPassword | `MyPassword123!` | Amazon RDS 비밀번호 (8자 이상) |
-| DBInstanceClass  | `db.t3.micro`    | Amazon RDS 인스턴스 타입       |
+| 파라미터         | 값               | 설명                               |
+| ---------------- | ---------------- | ---------------------------------- |
+| ProjectName      | `my-3tier-app`   | Network 스택과 동일해야 함         |
+| DBName           | `myapp`          | 초기 데이터베이스 이름 (자동 생성) |
+| DBMasterUsername | `admin`          | Amazon RDS 관리자 계정             |
+| DBMasterPassword | `MyPassword123!` | Amazon RDS 비밀번호 (8자 이상)     |
+| DBInstanceClass  | `db.t3.micro`    | Amazon RDS 인스턴스 타입           |
 
 > [!WARNING]
 > DBMasterPassword는 실습용으로 간단하게 설정하지만, 실제 프로젝트에서는 **반드시 강력한 비밀번호**를 사용하세요.  
 > 이 비밀번호는 Step 8-3에서 SSM Parameter Store에 저장하여 안전하게 관리합니다.
 
-18. [[Next]] → [[Next]] → [[Submit]]을 클릭합니다.
-19. Status가 `CREATE_COMPLETE`가 될 때까지 기다립니다 (약 **8~10분**, Amazon RDS 생성 소요).
+26. [[Next]] 버튼을 클릭합니다.
+27. **Configure stack options** 페이지에서 [[Next]] 버튼을 클릭합니다.
+28. **Review and create** 페이지에서 Parameters(특히 비밀번호)를 확인합니다.
+29. [[Submit]] 버튼을 클릭합니다.
+30. Status가 `CREATE_COMPLETE`가 될 때까지 기다립니다 (약 **8~10분**, Amazon RDS 생성 소요).
 
 > [!TIP]
 > Amazon RDS 생성이 가장 오래 걸립니다 (약 8~10분).  
@@ -300,20 +443,26 @@ Step 0~7에서 수동으로 만들었던 모든 인프라를 AWS CloudFormation 
 > Frontend 스택은 VPC와 독립적입니다 (Amazon S3는 글로벌 서비스).  
 > Network 스택 완료를 기다릴 필요 없이 바로 생성할 수 있습니다.
 
-20. [[Create stack]] → `step8-frontend.yaml` 업로드
-21. **Stack name**: `step8-frontend`
-22. **ProjectName**: `my-3tier-app` (동일)
-23. [[Next]] → [[Next]] → [[Submit]]을 클릭합니다.
-24. Status가 `CREATE_COMPLETE`가 될 때까지 기다립니다 (약 1분).
+31. [[Create stack]] 드롭다운 → **With new resources (standard)**를 선택합니다.
+32. `Upload a template file` → `step8-frontend.yaml` 파일을 선택합니다.
+33. [[Next]] 버튼을 클릭합니다.
+34. **Stack name**에 `step8-frontend`를 입력합니다.
+35. **Parameters** 섹션에서 **ProjectName**을 `my-3tier-app`으로 설정합니다 (4개 스택 모두 동일).
+36. [[Next]] 버튼을 클릭합니다.
+37. **Configure stack options** 페이지에서 [[Next]] 버튼을 클릭합니다.
+38. **Review and create** 페이지에서 확인 후 [[Submit]] 버튼을 클릭합니다.
+39. Status가 `CREATE_COMPLETE`가 될 때까지 기다립니다 (약 1분).
 
 ### 3-4. Backend 스택 생성 (ALB)
 
 > [!WARNING]
 > Network 스택이 `CREATE_COMPLETE` 상태여야 합니다 (VPC, Subnet, SG를 Import).
 
-25. [[Create stack]] → `step8-backend.yaml` 업로드
-26. **Stack name**: `step8-backend`
-27. 파라미터를 설정합니다:
+40. [[Create stack]] 드롭다운 → **With new resources (standard)**를 선택합니다.
+41. `Upload a template file` → `step8-backend.yaml` 파일을 선택합니다.
+42. [[Next]] 버튼을 클릭합니다.
+43. **Stack name**에 `step8-backend`를 입력합니다.
+44. **Parameters** 섹션에서 다음을 설정합니다:
 
 | 파라미터        | 값                 | 설명                       |
 | --------------- | ------------------ | -------------------------- |
@@ -321,12 +470,14 @@ Step 0~7에서 수동으로 만들었던 모든 인프라를 AWS CloudFormation 
 | AppPort         | `8080`             | Spring Boot 기본 포트      |
 | HealthCheckPath | `/actuator/health` | Health Check 경로          |
 
-28. [[Next]] → [[Next]] → [[Submit]]을 클릭합니다.
-29. Status가 `CREATE_COMPLETE`가 될 때까지 기다립니다 (약 2~3분).
+45. [[Next]] 버튼을 클릭합니다.
+46. **Configure stack options** 페이지에서 [[Next]] 버튼을 클릭합니다.
+47. **Review and create** 페이지에서 확인 후 [[Submit]] 버튼을 클릭합니다.
+48. Status가 `CREATE_COMPLETE`가 될 때까지 기다립니다 (약 2~3분).
 
 ### 3-5. 전체 스택 상태 확인
 
-30. AWS CloudFormation 콘솔에서 4개 스택 모두 `CREATE_COMPLETE` 상태인지 확인합니다:
+49. AWS CloudFormation 콘솔에서 4개 스택 모두 `CREATE_COMPLETE` 상태인지 확인합니다:
 
 | 스택 이름        | 상태               | 소요 시간 |
 | ---------------- | ------------------ | --------- |
@@ -462,6 +613,46 @@ AWS CloudFormation이 생성한 리소스를 확인합니다.
 
 ---
 
+## 셀프 미션: Amazon RDS 초기 데이터베이스 구성 (Spring Legacy 사용자)
+
+> [!NOTE]
+> 이 미션은 기존 Spring MVC(WAR) 프로젝트를 사용하며, 초기 테이블과 데이터가 담긴 `.sql` 파일이 있는 경우에 진행합니다.  
+> Spring Boot + `ddl-auto: update`를 사용하는 경우에는 건너뛰어도 됩니다 (앱 시작 시 자동 생성).
+
+### 미션 목표
+
+AWS CloudFormation으로 생성된 Amazon RDS에 기존 프로젝트의 테이블 구조와 초기 데이터를 적용합니다.
+
+### 힌트
+
+- Private Subnet의 Amazon RDS에 접근하려면 **같은 VPC의 Amazon EC2**가 필요합니다.
+- Step 8-3에서 EC2를 생성하지만, 미리 해보고 싶다면 직접 EC2를 생성하세요.
+- Amazon EC2 생성 시: Private Subnet 배치, `ec2-sg` 적용, SSM Session Manager용 IAM Role 연결
+- **IAM Role 필수**: SSM Session Manager로 접속하려면 EC2에 `AmazonSSMManagedInstanceCore` 정책이 포함된 IAM Role을 연결해야 합니다. IAM → Roles → Create role → AWS service: EC2 → `AmazonSSMManagedInstanceCore` 정책 연결 → EC2 생성 시 IAM instance profile에 선택
+- MySQL 클라이언트 설치: `sudo dnf install -y mariadb105`
+- SQL 파일 전송: 로컬 → Amazon S3 → Amazon EC2 (Private Subnet이므로 SCP 직접 불가)
+
+### 진행 순서
+
+1. Amazon EC2 인스턴스를 Private Subnet에 생성합니다 (Step 8-3 태스크 5 참고).
+2. SSM Session Manager로 Amazon EC2에 접속합니다.
+3. MySQL 클라이언트를 설치합니다.
+4. `.sql` 파일을 Amazon S3 경유로 Amazon EC2에 전송합니다.
+5. Amazon RDS에 접속하여 SQL을 실행합니다.
+6. 테이블과 데이터가 정상 생성되었는지 확인합니다.
+
+```bash
+# 예시: EC2에서 RDS 접속 후 SQL 실행
+mysql -h my-3tier-app-db.xxxx.ap-northeast-2.rds.amazonaws.com \
+  -u admin -p myapp < /home/ec2-user/schema.sql
+```
+
+> [!TIP]
+> 이 미션을 Step 8-3 이전에 진행하면, 8-3에서 생성하는 Amazon EC2를 그대로 재사용할 수 있습니다.  
+> 미리 만들어둔 Amazon EC2를 8-3의 Target Group에 등록하면 됩니다.
+
+---
+
 # 🗑️ 리소스 정리
 
 > [!WARNING]
@@ -486,7 +677,8 @@ AWS CloudFormation이 생성한 리소스를 확인합니다.
 >
 > ※ 위 금액은 작성 시점 기준 참고 값이며, 실제 요금은 리전, 환율, AWS 정책 변경에 따라 상이할 수 있습니다.
 >
-> ⚠️ **모든 리소스를 방치하면 월 ~$64 이상 발생할 수 있습니다!**
+> ⚠️ **모든 리소스를 방치하면 월 ~$64 이상 발생할 수 있습니다!**  
+> (프리티어 적용 여부, 데이터 전송량, 환율 등 조건에 따라 실제 금액은 달라질 수 있습니다.)
 
 > [!TIP]
 > 실습을 하루 안에 완료하기 어렵다면, AWS CloudFormation 스택을 삭제하고 다음 실습 시 다시 생성하는 것이 비용을 절약하는 방법입니다.  

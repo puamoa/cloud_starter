@@ -214,8 +214,10 @@ Service는 Task를 지정된 수만큼 항상 유지하고, ALB와 연동하여 
 
 ### Service 생성
 
-21. Amazon ECS → **Clusters** → `my-3tier-app-cluster` → **Services** 탭을 클릭합니다.
-22. [[Create]]를 클릭합니다.
+21. Amazon ECS 콘솔의 왼쪽 메뉴에서 **Clusters**를 클릭합니다.
+22. `my-3tier-app-cluster`를 클릭합니다.
+23. **Services** 탭을 클릭합니다.
+24. [[Create]]를 클릭합니다.
 
 ### Deployment configuration
 
@@ -282,8 +284,10 @@ Service는 Task를 지정된 수만큼 항상 유지하고, ALB와 연동하여 
 
 ### ALB DNS로 접속
 
-36. AWS Console → Amazon EC2 → **Load Balancers** → ALB의 DNS name을 복사합니다.
-37. 브라우저에서 `http://<ALB DNS Name>/actuator/health`에 접속합니다.
+36. 상단 검색창에 `EC2`를 입력하고 **EC2** 서비스를 선택합니다.
+37. 왼쪽 메뉴에서 **Load Balancers**를 클릭합니다.
+38. ALB(`my-3tier-app-alb`)의 **DNS name**을 복사합니다.
+39. 브라우저에서 `http://<ALB DNS Name>/actuator/health`에 접속합니다.
 
 > [!OUTPUT]
 >
@@ -299,9 +303,10 @@ curl http://<ALB DNS Name>/api/hello
 
 ### CloudWatch Logs 확인
 
-39. AWS Console → **CloudWatch** → **Log groups**로 이동합니다.
-40. `/ecs/my-3tier-app-task` 로그 그룹을 클릭합니다.
-41. 각 Task의 로그 스트림에서 Spring Boot 시작 로그를 확인합니다.
+39. 상단 검색창에 `CloudWatch`를 입력하고 **CloudWatch** 서비스를 선택합니다.
+40. 왼쪽 메뉴에서 **Log groups**를 클릭합니다.
+41. `/ecs/my-3tier-app-task` 로그 그룹을 클릭합니다.
+42. 각 Task의 로그 스트림에서 Spring Boot 시작 로그를 확인합니다.
 
 ✅ **태스크 완료** — Amazon ECS Fargate에서 애플리케이션이 정상 동작하는 것을 확인했습니다.
 
@@ -313,7 +318,9 @@ curl http://<ALB DNS Name>/api/hello
 
 ### 추가 GitHub Secrets
 
-42. GitHub 리포지토리 → Settings → Secrets에 추가합니다:
+42. GitHub 리포지토리 페이지에서 **Settings** 탭을 클릭합니다.
+43. 왼쪽 메뉴에서 **Secrets and variables** → **Actions**를 클릭합니다.
+44. [[New repository secret]]을 클릭하여 다음 시크릿을 추가합니다:
 
 | Name                  | Value                  |
 | --------------------- | ---------------------- |
@@ -452,13 +459,22 @@ git push origin main
 
 ### 삭제 순서
 
-1. Amazon ECS → **Clusters** → `my-3tier-app-cluster` → **Services** 탭
-2. `my-3tier-app-service` 선택 → [[Delete service]]
-3. 확인란에 `delete`를 입력하고 [[Delete]]를 클릭합니다.
-4. **Tasks** 탭에서 모든 Task가 `STOPPED`되는 것을 확인합니다.
-5. Amazon ECS → **Clusters** → `my-3tier-app-cluster` → [[Delete cluster]]
-6. 확인란에 클러스터 이름을 입력하고 [[Delete]]를 클릭합니다.
-7. Amazon ECS → **Task definitions** → `my-3tier-app-task` → 모든 리비전 선택 → **Actions** → **Deregister**
+1. 상단 검색창에 `ECS`를 입력하고 **Elastic Container Service**를 선택합니다.
+2. 왼쪽 메뉴에서 **Clusters**를 클릭합니다.
+3. `my-3tier-app-cluster`를 클릭합니다.
+4. **Services** 탭을 클릭합니다.
+5. `my-3tier-app-service`를 선택합니다.
+6. [[Delete service]]를 클릭합니다.
+7. 확인란에 `delete`를 입력하고 [[Delete]]를 클릭합니다.
+8. **Tasks** 탭에서 모든 Task가 `STOPPED`되는 것을 확인합니다.
+9. 왼쪽 메뉴에서 **Clusters**로 돌아갑니다.
+10. `my-3tier-app-cluster`를 선택합니다.
+11. [[Delete cluster]]를 클릭합니다.
+12. 확인란에 클러스터 이름을 입력하고 [[Delete]]를 클릭합니다.
+13. 왼쪽 메뉴에서 **Task definitions**를 클릭합니다.
+14. `my-3tier-app-task`를 클릭합니다.
+15. 모든 리비전을 체크합니다.
+16. **Actions** 드롭다운을 클릭하고 **Deregister**를 선택합니다.
 
 > [!NOTE]
 > Amazon ECR 리포지토리는 프리티어 500MB 내이므로 유지해도 비용이 발생하지 않습니다.  

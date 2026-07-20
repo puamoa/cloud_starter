@@ -113,8 +113,9 @@ Invalidation 실행하면:
 
 프론트엔드 리포지토리(`my-frontend`)에 AWS 인증 정보와 배포 대상을 등록합니다.
 
-1. `my-frontend` GitHub 리포지토리 → **Settings** → **Secrets and variables** → **Actions**로 이동합니다.
-2. [[New repository secret]]을 클릭하여 다음 시크릿을 추가합니다:
+1. `my-frontend` GitHub 리포지토리 페이지에서 **Settings** 탭을 클릭합니다.
+2. 왼쪽 메뉴에서 **Secrets and variables** → **Actions**를 클릭합니다.
+3. [[New repository secret]]을 클릭하여 다음 시크릿을 추가합니다:
 
 | Name                         | Value                                | 설명                              |
 | ---------------------------- | ------------------------------------ | --------------------------------- |
@@ -394,10 +395,11 @@ Amazon S3 버킷과 Amazon CloudFront Distribution은 Step 8에서 생성한 것
 
 ### Amazon CloudFront 삭제 (필요한 경우)
 
-1. AWS Console → Amazon CloudFront → Distribution 선택
-2. [[Disable]]를 클릭합니다.
-3. Status가 `Disabled`로 변경될 때까지 기다립니다 (5~10분).
-4. [[Delete]]를 클릭합니다.
+1. 상단 검색창에 `CloudFront`를 입력하고 **CloudFront** 서비스를 선택합니다.
+2. Distributions 목록에서 배포를 선택합니다.
+3. [[Disable]]를 클릭합니다.
+4. Status가 `Disabled`로 변경될 때까지 기다립니다 (5~10분).
+5. [[Delete]]를 클릭합니다.
 
 > [!WARNING]
 > Amazon CloudFront는 Disable 후에만 삭제할 수 있습니다.  
@@ -405,9 +407,10 @@ Amazon S3 버킷과 Amazon CloudFront Distribution은 Step 8에서 생성한 것
 
 ### Amazon S3 버킷 삭제 (필요한 경우)
 
-5. AWS Console → Amazon S3 → 버킷 선택
-6. [[Empty]]를 클릭하여 모든 객체를 삭제합니다.
-7. [[Delete]]를 클릭하여 버킷을 삭제합니다.
+5. 상단 검색창에 `S3`를 입력하고 **S3** 서비스를 선택합니다.
+6. Buckets 목록에서 프론트엔드 버킷을 선택합니다.
+7. [[Empty]]를 클릭하여 모든 객체를 삭제합니다.
+8. [[Delete]]를 클릭하여 버킷을 삭제합니다.
 
 > [!NOTE]
 > Step 8 Frontend 스택(`step8-frontend`)을 삭제하면 Amazon S3 버킷도 함께 삭제됩니다.  

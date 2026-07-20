@@ -91,23 +91,25 @@ Frontend (S3)  ──→  언제든 삭제 가능 (독립)
 
 **생성되는 리소스:**
 
-| 리소스             | 이름                            | 설명                         |
-| ------------------ | ------------------------------- | ---------------------------- |
+| 리소스             | 이름                            | 설명                                    |
+| ------------------ | ------------------------------- | --------------------------------------- |
 | DB Parameter Group | `{ProjectName}-db-params`       | timezone=Asia/Seoul, utf8mb4, MySQL 8.4 |
-| DB Subnet Group    | `{ProjectName}-db-subnet-group` | Private Subnet 1 + 2         |
-| RDS MySQL          | `{ProjectName}-db`              | MySQL 8.4, db.t3.micro       |
+| DB Subnet Group    | `{ProjectName}-db-subnet-group` | Private Subnet 1 + 2                    |
+| RDS MySQL          | `{ProjectName}-db`              | MySQL 8.4, db.t3.micro                  |
 
 **파라미터:**
 
-| 파라미터         | 기본값         | 설명                       |
-| ---------------- | -------------- | -------------------------- |
-| ProjectName      | `my-3tier-app` | network 스택과 동일해야 함 |
-| DBMasterUsername | `admin`        | RDS 마스터 사용자          |
-| DBMasterPassword | (필수)         | RDS 비밀번호 (8자 이상)    |
-| DBInstanceClass  | `db.t3.micro`  | 인스턴스 클래스            |
+| 파라미터         | 기본값         | 설명                                           |
+| ---------------- | -------------- | ---------------------------------------------- |
+| ProjectName      | `my-3tier-app` | network 스택과 동일해야 함                     |
+| DBName           | `myapp`        | 초기 데이터베이스 이름 (RDS 생성 시 자동 생성) |
+| DBMasterUsername | `admin`        | RDS 마스터 사용자                              |
+| DBMasterPassword | (필수)         | RDS 비밀번호 (8자 이상)                        |
+| DBInstanceClass  | `db.t3.micro`  | 인스턴스 클래스                                |
 
 **RDS 설정:**
 
+- DBName: `myapp` (스택 생성 시 자동으로 데이터베이스 생성, 별도 CREATE DATABASE 불필요)
 - timezone: `Asia/Seoul`
 - 문자셋: `utf8mb4` (한글 + 이모지 지원)
 - Multi-AZ: false (실습용)

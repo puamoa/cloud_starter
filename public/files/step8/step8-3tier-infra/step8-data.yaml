@@ -16,9 +16,16 @@ Metadata:
       - Label:
           default: 'Database Settings'
         Parameters:
+          - DBName
           - DBMasterUsername
           - DBMasterPassword
           - DBInstanceClass
+      - Label:
+          default: 'Tags (Keep Default)'
+        Parameters:
+          - CreatedByTag
+          - StepTag
+          - SessionTag
 
 # =============================================================================
 # Parameters
@@ -29,6 +36,11 @@ Parameters:
     Type: String
     Default: my-3tier-app
     Description: Project name (must match network stack)
+
+  DBName:
+    Type: String
+    Default: myapp
+    Description: Initial database name (created automatically on RDS creation)
 
   DBMasterUsername:
     Type: String
@@ -46,6 +58,21 @@ Parameters:
     Type: String
     Default: db.t3.micro
     Description: RDS instance class
+
+  CreatedByTag:
+    Type: String
+    Default: cloudformation
+    Description: CreatedBy tag value
+
+  StepTag:
+    Type: String
+    Default: step8
+    Description: Step tag value
+
+  SessionTag:
+    Type: String
+    Default: '8-1'
+    Description: Session tag value
 
 # =============================================================================
 # Resources
@@ -68,11 +95,11 @@ Resources:
         - Key: Name
           Value: !Sub '${ProjectName}-db-params'
         - Key: CreatedBy
-          Value: cloudformation
+          Value: !Ref CreatedByTag
         - Key: Step
-          Value: step8
+          Value: !Ref StepTag
         - Key: Session
-          Value: '8-1'
+          Value: !Ref SessionTag
 
   # ============================================================
   # DB Subnet Group - Amazon RDS를 Private Subnet에 배치합니다.
@@ -89,11 +116,11 @@ Resources:
         - Key: Name
           Value: !Sub '${ProjectName}-db-subnet-group'
         - Key: CreatedBy
-          Value: cloudformation
+          Value: !Ref CreatedByTag
         - Key: Step
-          Value: step8
+          Value: !Ref StepTag
         - Key: Session
-          Value: '8-1'
+          Value: !Ref SessionTag
 
   # ============================================================
   # Amazon RDS MySQL (Private Subnet에 배치)
@@ -110,6 +137,7 @@ Resources:
       DBInstanceClass: !Ref DBInstanceClass
       Engine: mysql
       EngineVersion: '8.4'
+      DBName: !Ref DBName
       MasterUsername: !Ref DBMasterUsername
       MasterUserPassword: !Ref DBMasterPassword
       AllocatedStorage: 20
@@ -126,11 +154,11 @@ Resources:
         - Key: Name
           Value: !Sub '${ProjectName}-rds'
         - Key: CreatedBy
-          Value: cloudformation
+          Value: !Ref CreatedByTag
         - Key: Step
-          Value: step8
+          Value: !Ref StepTag
         - Key: Session
-          Value: '8-1'
+          Value: !Ref SessionTag
 
 # =============================================================================
 # 출력값
@@ -147,6 +175,12 @@ Outputs:
     Value: !GetAtt RDSInstance.Endpoint.Port
     Export:
       Name: !Sub '${ProjectName}-rds-port'
+
+  RDSDBName:
+    Description: Initial database name
+    Value: !Ref DBName
+    Export:
+      Name: !Sub '${ProjectName}-rds-dbname'
 
   DBParameterGroupName:
     Description: DB Parameter Group Name (timezone Asia/Seoul)

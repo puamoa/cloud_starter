@@ -754,10 +754,11 @@ on:
 
 ### GitHub Environments 설정
 
-22. GitHub 리포지토리 → **Settings** → **Environments**
-23. [[New environment]]를 클릭합니다.
-24. **Name**: `production`을 입력하고 [[Configure environment]]를 클릭합니다.
-25. **Environment protection rules**:
+22. GitHub 리포지토리 페이지에서 **Settings** 탭을 클릭합니다.
+23. 왼쪽 메뉴에서 **Environments**를 클릭합니다.
+24. [[New environment]]를 클릭합니다.
+25. **Name**: `production`을 입력하고 [[Configure environment]]를 클릭합니다.
+26. **Environment protection rules**:
 
 - ✅ **Required reviewers**: 프로덕션 배포 전 승인 필요 (선택)
 - ✅ **Wait timer**: 배포 전 대기 시간 설정 (선택)
@@ -885,9 +886,9 @@ feature/xxx (기능 개발)
 
 **비활성화 (워크플로우 유지, 실행만 중단):**
 
-28. GitHub 리포지토리 → **Actions** 탭
+28. GitHub 리포지토리 페이지에서 **Actions** 탭을 클릭합니다.
 29. 왼쪽에서 비활성화할 워크플로우를 선택합니다.
-30. 우측 상단 `...` → [[Disable workflow]]
+30. 우측 상단 `...` → [[Disable workflow]]를 클릭합니다.
 
 **파일 삭제 (완전 제거):**
 
@@ -903,8 +904,9 @@ git push origin main
 
 ### 단계 2: GitHub Secrets 삭제 (선택)
 
-31. GitHub 리포지토리 → **Settings** → **Secrets and variables** → **Actions**
-32. 각 Secret(`EC2_HOST`, `EC2_USER`, `EC2_KEY`, `DB_URL`, `DB_PASSWORD`) 옆의 🗑️ 아이콘을 클릭하여 삭제합니다.
+31. GitHub 리포지토리 페이지에서 **Settings** 탭을 클릭합니다.
+32. 왼쪽 메뉴에서 **Secrets and variables** → **Actions**를 클릭합니다.
+33. 각 Secret(`EC2_HOST`, `EC2_USER`, `EC2_KEY`, `DB_URL`, `DB_PASSWORD`) 옆의 🗑️ 아이콘을 클릭하여 삭제합니다.
 
 > [!NOTE]
 > Secrets는 무료이므로 유지해도 비용이 발생하지 않습니다.  
