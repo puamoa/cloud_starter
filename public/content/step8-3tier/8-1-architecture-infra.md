@@ -66,6 +66,8 @@ estimatedCost: 크레딧 내 사용 가능 (비용 발생 가능)
 
 ### 전체 아키텍처 다이어그램
 
+<img src="/images/step8/8-architecture.png" alt="Step 8 3-Tier 아키텍처" class="guide-img-lg" />
+
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │                        사용자 브라우저                          │

@@ -225,6 +225,8 @@ git push origin main
 
 ### 완성된 3-Tier 아키텍처
 
+<img src="/images/step8/8-architecture.png" alt="Step 8 완성된 3-Tier 아키텍처" class="guide-img-lg" />
+
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
 │                         인터넷                                       │

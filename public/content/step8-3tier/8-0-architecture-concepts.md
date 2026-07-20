@@ -150,6 +150,8 @@ learningObjectives:
 
 ### AWS에서의 3-Tier 구현
 
+<img src="/images/step8/8-architecture.png" alt="Step 8 3-Tier 아키텍처" class="guide-img-lg" />
+
 ```
 ┌───────────────────────────────────────────────────┐
 │  AWS 3-Tier 아키텍처                              │
@@ -222,6 +224,77 @@ learningObjectives:
 │ • 이미지, 폰트                     │ • DB CRUD
 │ • CDN으로 빠른 전송                │ • 외부 API 연동
 ```
+
+### AWS에서 프론트엔드 → 백엔드 API 통신 구성 방식
+
+SPA(Vue.js)가 백엔드 API를 호출할 때, ALB를 외부에 노출할지 숨길지에 따라 3가지 구성이 가능합니다.
+
+> [!CONCEPT] SPA의 API 호출 주체
+> SPA(Single Page Application)에서 API를 호출하는 주체는 **사용자의 브라우저**입니다.  
+> S3에 저장된 Vue.js 파일은 정적 파일일 뿐이고, 브라우저가 JavaScript를 다운받아 실행한 후 axios 등으로 백엔드 API를 호출합니다.  
+> 즉 "S3 → EC2" 통신이 아니라 "브라우저(인터넷) → ALB → EC2" 통신입니다.
+
+| 방식                                         | ALB 유형        | 외부 접근                     | 보안 수준 | CORS                 | 복잡도 |
+| -------------------------------------------- | --------------- | ----------------------------- | --------- | -------------------- | ------ |
+| **A. Internet-facing ALB**                   | Internet-facing | 누구나 ALB DNS로 접근 가능    | 기본      | 필요 (도메인 다름)   | 낮음   |
+| **B. CloudFront + Internet-facing ALB**      | Internet-facing | ALB SG를 CloudFront IP만 허용 | 중간      | 불필요 (같은 도메인) | 중간   |
+| **C. CloudFront VPC Origins + Internal ALB** | Internal        | ALB가 인터넷에 아예 없음      | 높음      | 불필요 (같은 도메인) | 높음   |
+
+**방식 A — Internet-facing ALB (이 실습에서 사용)**
+
+```
+브라우저 → 인터넷 → IGW → ALB(Public Subnet) → EC2(Private Subnet)
+```
+
+- ALB DNS를 Vue.js에서 직접 호출
+- 외부에서 curl/Postman으로 바로 테스트 가능 (학습·디버깅에 유리)
+- CORS 설정 필요 (CloudFront 도메인과 ALB 도메인이 다르므로)
+
+**방식 B — CloudFront 경유 + ALB 접근 제한**
+
+```
+브라우저 → CloudFront → 인터넷 → ALB(Public Subnet)           →   EC2(Private Subnet)
+                                 (ALB SG: CloudFront IP만 허용)
+```
+
+- CloudFront Distribution에 API Behavior 추가 (`/api/*` → ALB Origin)
+- ALB Security Group에 AWS managed prefix list(`com.amazonaws.global.cloudfront.origin-facing`)만 허용
+- 같은 CloudFront 도메인이므로 CORS 불필요
+- ALB DNS를 직접 호출하면 SG에서 차단됨 (우회는 가능하지만 실질적 보호)
+
+**방식 C — CloudFront VPC Origins + Internal ALB (프로덕션 권장)**
+
+```
+브라우저 → CloudFront → (AWS 내부 네트워크) → ALB(Private Subnet) → EC2(Private Subnet)
+```
+
+- ALB를 Internal로 생성 (인터넷에 아예 노출 안 됨)
+- CloudFront VPC Origins 기능으로 AWS 내부망을 통해 연결
+- Cache Policy, Origin Request Policy 별도 설정 필요
+- 가장 안전하지만 설정 복잡도 증가
+
+> [!CONCEPT] CloudFront VPC Origins란?
+> 기존 CloudFront는 Origin(백엔드)이 인터넷에 노출된 경우에만 연결할 수 있었습니다.  
+> **VPC Origins**(2024년 출시)는 CloudFront가 VPC 내부의 Private 리소스(Internal ALB, EC2, NLB 등)에 AWS 내부 네트워크로 직접 연결할 수 있게 해주는 기능입니다.
+>
+> - CloudFront가 VPC에 ENI(네트워크 인터페이스)를 생성하여 Private Subnet의 ALB에 접근
+> - ALB를 인터넷에 노출하지 않아도 됨 → DDoS, 직접 접근 시도를 원천 차단
+> - IGW를 거치지 않으므로 트래픽이 AWS 백본 네트워크만 통과
+>
+> 결과적으로 백엔드 인프라 전체(ALB + EC2 + RDS)를 Private Subnet에 완전히 격리하면서도 CloudFront를 통해 외부 서비스가 가능합니다.
+
+### 어떤 방식을 선택할까?
+
+| 상황                         | 권장 방식   |
+| ---------------------------- | ----------- |
+| 학습/실습, 외부 테스트 필요  | A (이 실습) |
+| 소규모 프로덕션, 간단한 보호 | B           |
+| 대규모 프로덕션, 보안 중시   | C           |
+
+> [!NOTE]
+> 이 실습(Step 8)에서는 **방식 A**를 사용합니다.  
+> ALB가 Internet-facing이므로 외부에서 직접 API를 테스트할 수 있고, 3-Tier 아키텍처 학습에 집중할 수 있습니다.  
+> 프로덕션에서는 방식 B 또는 C로 전환하여 ALB를 외부에 노출하지 않는 것이 좋습니다.
 
 ---
 

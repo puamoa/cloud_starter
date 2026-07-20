@@ -19,6 +19,10 @@ estimatedCost: 크레딧 내 사용 가능 (비용 발생 가능)
 이 실습에서는 Spring Boot 백엔드를 생성하고, Amazon RDS MySQL과 연동한 후,
 Amazon EC2에 배포하여 ALB와 연결합니다. GitHub Actions로 자동 배포 파이프라인도 구축합니다.
 
+### Step 8 전체 아키텍처
+
+<img src="/images/step8/8-architecture.png" alt="Step 8 3-Tier 아키텍처" class="guide-img-lg" />
+
 > [!NOTE]
 > Step 8-1에서 생성한 AWS CloudFormation Outputs 값이 필요합니다:
 >
