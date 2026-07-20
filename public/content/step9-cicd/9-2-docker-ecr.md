@@ -387,8 +387,9 @@ docker push \
 
 ### GitHub Secrets 설정
 
-18. GitHub 리포지토리 → **Settings** → **Secrets and variables** → **Actions**로 이동합니다.
-19. [[New repository secret]]을 클릭하여 다음 시크릿을 추가합니다:
+18. GitHub 리포지토리 페이지에서 **Settings** 탭을 클릭합니다.
+19. 왼쪽 메뉴에서 **Secrets and variables** → **Actions**를 클릭합니다.
+20. [[New repository secret]]을 클릭하여 다음 시크릿을 추가합니다:
 
 | Name                    | Value             | 설명         |
 | ----------------------- | ----------------- | ------------ |

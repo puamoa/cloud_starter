@@ -18,6 +18,12 @@ Metadata:
         Parameters:
           - AppPort
           - HealthCheckPath
+      - Label:
+          default: 'Tags (Keep Default)'
+        Parameters:
+          - CreatedByTag
+          - StepTag
+          - SessionTag
 
 # =============================================================================
 # Parameters
@@ -40,6 +46,21 @@ Parameters:
     Type: String
     Default: /actuator/health
     Description: ALB Health Check path
+
+  CreatedByTag:
+    Type: String
+    Default: cloudformation
+    Description: CreatedBy tag value
+
+  StepTag:
+    Type: String
+    Default: step8
+    Description: Step tag value
+
+  SessionTag:
+    Type: String
+    Default: '8-1'
+    Description: Session tag value
 
 # =============================================================================
 # Resources
@@ -65,11 +86,11 @@ Resources:
         - Key: Name
           Value: !Sub '${ProjectName}-alb'
         - Key: CreatedBy
-          Value: cloudformation
+          Value: !Ref CreatedByTag
         - Key: Step
-          Value: step8
+          Value: !Ref StepTag
         - Key: Session
-          Value: '8-1'
+          Value: !Ref SessionTag
 
   # ============================================================
   # Target Group - ALB가 트래픽을 전달할 대상 그룹
@@ -94,11 +115,11 @@ Resources:
         - Key: Name
           Value: !Sub '${ProjectName}-target-group'
         - Key: CreatedBy
-          Value: cloudformation
+          Value: !Ref CreatedByTag
         - Key: Step
-          Value: step8
+          Value: !Ref StepTag
         - Key: Session
-          Value: '8-1'
+          Value: !Ref SessionTag
 
   # ============================================================
   # Listener - HTTP:80으로 들어오는 요청을 Target Group으로 전달

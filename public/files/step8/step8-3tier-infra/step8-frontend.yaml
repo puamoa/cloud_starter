@@ -13,6 +13,12 @@ Metadata:
           default: 'Project Settings'
         Parameters:
           - ProjectName
+      - Label:
+          default: 'Tags (Keep Default)'
+        Parameters:
+          - CreatedByTag
+          - StepTag
+          - SessionTag
 
 # =============================================================================
 # Parameters
@@ -22,6 +28,21 @@ Parameters:
     Type: String
     Default: my-3tier-app
     Description: Project name used as resource naming prefix
+
+  CreatedByTag:
+    Type: String
+    Default: cloudformation
+    Description: CreatedBy tag value
+
+  StepTag:
+    Type: String
+    Default: step8
+    Description: Step tag value
+
+  SessionTag:
+    Type: String
+    Default: '8-1'
+    Description: Session tag value
 
 # =============================================================================
 # Resources
@@ -49,11 +70,11 @@ Resources:
         - Key: Name
           Value: !Sub '${ProjectName}-frontend-bucket'
         - Key: CreatedBy
-          Value: cloudformation
+          Value: !Ref CreatedByTag
         - Key: Step
-          Value: step8
+          Value: !Ref StepTag
         - Key: Session
-          Value: '8-1'
+          Value: !Ref SessionTag
 
   # Amazon S3 버킷 정책 - 모든 사용자가 객체를 읽을 수 있도록 허용
   FrontendBucketPolicy:

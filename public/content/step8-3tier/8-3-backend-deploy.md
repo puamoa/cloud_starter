@@ -196,20 +196,81 @@ aws ssm put-parameter \
 > `SecureString` 타입은 AWS KMS로 자동 암호화됩니다.
 > 비밀번호, API 키 등 민감한 값은 항상 SecureString을 사용하세요.
 
-### 2-2. RDS에 데이터베이스 생성
+### 2-2. RDS 초기 데이터베이스 및 테이블 설정
 
-Amazon EC2에서 Amazon RDS에 접속하여 데이터베이스를 생성합니다 (EC2 생성 후 실행):
+> [!NOTE]
+> Step 8-1에서 AWS CloudFormation `DBName` 파라미터로 `myapp` 데이터베이스가 **자동 생성**되었습니다.  
+> 별도로 `CREATE DATABASE`를 실행할 필요가 없습니다.  
+> 테이블 생성은 아래 방법 중 본인 프로젝트에 맞는 것을 선택하세요.
+
+**방법 A: Spring Boot — 자동 테이블 생성 (새 프로젝트)**
+
+Spring Boot의 JPA `ddl-auto` 설정으로 앱 시작 시 테이블이 자동 생성됩니다.  
+`application.yml`에서 `ddl-auto: update`를 설정하면 Entity 클래스 기반으로 테이블을 만들어줍니다.  
+별도 SQL 실행이 필요 없습니다.
+
+**방법 B: Spring Boot — schema.sql / data.sql 사용**
+
+초기 테이블 구조와 데이터가 있는 SQL 파일을 프로젝트에 포함하면 앱 시작 시 자동 실행됩니다:
+
+```
+src/main/resources/
+├── schema.sql    ← CREATE TABLE 문 (테이블 구조)
+├── data.sql      ← INSERT 문 (초기 데이터)
+└── application.yml
+```
+
+`application.yml`에 다음을 추가합니다:
+
+```yaml
+spring:
+  sql:
+    init:
+      mode: always # 항상 실행 (최초 1회만 하려면 'embedded')
+      schema-locations: classpath:schema.sql
+      data-locations: classpath:data.sql
+```
+
+> [!WARNING]
+> `mode: always`는 앱을 재시작할 때마다 SQL이 실행됩니다.  
+> 테이블이 이미 존재하면 에러가 발생할 수 있으므로 `CREATE TABLE IF NOT EXISTS`를 사용하세요.  
+> 프로덕션에서는 Flyway나 Liquibase 같은 마이그레이션 도구를 권장합니다.
+
+**방법 C: EC2에서 수동 SQL 실행 (기존 레거시 프로젝트)**
+
+기존 `.sql` 파일이 있고 Spring 자동 초기화를 사용하지 않는 경우, Amazon EC2에서 직접 실행합니다:
 
 ```bash
-# EC2에 SSH 접속 후
+# EC2에 SSM Session Manager로 접속 후
 mysql -h my-3tier-app-db.xxxx.ap-northeast-2.rds.amazonaws.com \
-  -u admin -p
+  -u admin -p myapp
 
-# MySQL 프롬프트에서
-CREATE DATABASE myapp CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-SHOW DATABASES;
+# SQL 파일 실행 (EC2에 파일을 먼저 전송해야 함)
+source /home/ec2-user/schema.sql;
+source /home/ec2-user/data.sql;
+
+# 또는 직접 입력
+CREATE TABLE IF NOT EXISTS items (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(100) NOT NULL,
+  description VARCHAR(500),
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+SHOW TABLES;
 EXIT;
 ```
+
+> [!TIP]
+> SQL 파일을 EC2로 전송하려면 Amazon S3를 경유합니다 (Private Subnet이므로 SCP 불가):
+>
+> ```bash
+> # 로컬에서 S3에 업로드
+> aws s3 cp schema.sql s3://MY_BUCKET/schema.sql
+>
+> # EC2에서 S3에서 다운로드
+> aws s3 cp s3://MY_BUCKET/schema.sql /home/ec2-user/schema.sql
+> ```
 
 ### 2-3. application.yml 설정
 
@@ -491,34 +552,53 @@ app:
 
 ### 5-1. Amazon EC2 인스턴스 생성
 
-5. AWS Console → **EC2** → [[Launch instances]]
-6. 다음과 같이 설정합니다:
+### 5-1. Amazon EC2 인스턴스 생성
 
-| 설정                  | 값                                      |
-| --------------------- | --------------------------------------- |
-| Name                  | `my-3tier-app-server`                   |
-| AMI                   | Amazon Linux 2023                       |
-| Instance type         | `t2.micro` (프리티어)                   |
-| Key pair              | 키 페어 없음 (SSM Session Manager 사용) |
-| VPC                   | `my-3tier-app-vpc`                      |
-| Subnet                | `my-3tier-app-private-subnet-1`         |
-| Auto-assign public IP | Disable                                 |
-| Security group        | `my-3tier-app-ec2-sg` (기존 선택)       |
-
-7. **Advanced details** → **IAM instance profile**:
-   - SSM Session Manager + Parameter Store 읽기 권한이 있는 IAM Role 선택
-   - 필요 정책: `AmazonSSMManagedInstanceCore` + `AmazonSSMReadOnlyAccess`
-
-8. [[Launch instance]]를 클릭합니다.
-
-> [!OUTPUT]
-> "Successfully initiated launch of instance (i-0abc123def456)" 메시지가 표시됩니다.
-> EC2 콘솔 → Instances에서 `my-3tier-app-server`가 `Running` 상태로 변경됩니다 (약 1분 소요).
+1. 상단 검색창에 `EC2`를 입력하고 **EC2** 서비스를 선택합니다.
+2. 왼쪽 메뉴에서 **Instances**를 클릭합니다.
+3. [[Launch instances]] 버튼을 클릭합니다.
+4. **Name and tags** 섹션:
+   - **Name**: `my-3tier-app-server`
+5. **Application and OS Images (Amazon Machine Image)** 섹션:
+   - **AMI**: `Amazon Linux 2023` 선택 (기본 선택됨)
+6. **Instance type** 섹션:
+   - `t2.micro` 선택 (프리티어 대상)
+7. **Key pair (login)** 섹션:
+   - `Proceed without a key pair (Not recommended)` 선택
+   - SSM Session Manager로 접속하므로 SSH 키가 불필요합니다.
+8. **Network settings** 섹션에서 [[Edit]] 버튼을 클릭합니다.
+9. 다음과 같이 설정합니다:
+   - **VPC**: `my-3tier-app-vpc` 선택
+   - **Subnet**: `my-3tier-app-private-subnet-1` 선택
+   - **Auto-assign public IP**: `Disable` 선택
+   - **Firewall (security groups)**: `Select existing security group` 선택
+   - **Common security groups**: `my-3tier-app-ec2-sg` 선택
 
 > [!WARNING]
 > **Auto-assign public IP**를 반드시 `Disable`로 설정하세요.
 > Private Subnet에 배치하므로 Public IP가 필요 없습니다.
-> SSM Session Manager로 접속하므로 SSH Key Pair도 불필요합니다.
+
+10. **Advanced details** 섹션을 펼칩니다.
+11. **IAM instance profile** 드롭다운에서 SSM + Parameter Store 읽기 권한이 있는 IAM Role을 선택합니다.
+    - 필요 정책: `AmazonSSMManagedInstanceCore` + `AmazonSSMReadOnlyAccess`
+    - Role이 없다면 아래 TIP을 참고하여 먼저 생성하세요.
+
+> [!TIP]
+> **IAM Role 생성 방법 (EC2용 SSM 접속 + Parameter Store 읽기):**
+>
+> - IAM → Roles → [[Create role]]
+> - **Trusted entity type**: `AWS service` 선택
+> - **Use case**: `EC2` 선택 → [[Next]]
+> - 검색창에 `SSM`을 입력하고 `AmazonSSMManagedInstanceCore` 체크
+> - 검색창을 지우고 `SSMReadOnly`를 입력하고 `AmazonSSMReadOnlyAccess` 체크
+> - [[Next]] → **Role name**: `my-3tier-app-ec2-role` → [[Create role]]
+> - EC2 생성 화면으로 돌아와서 IAM instance profile에 `my-3tier-app-ec2-role` 선택
+
+12. [[Launch instance]] 버튼을 클릭합니다.
+
+> [!OUTPUT]
+> "Successfully initiated launch of instance (i-0abc123def456)" 메시지가 표시됩니다.
+> EC2 콘솔 → Instances에서 `my-3tier-app-server`가 `Running` 상태로 변경됩니다 (약 1분 소요).
 
 ### 5-2. EC2 초기 설정
 
@@ -668,12 +748,16 @@ sudo journalctl -u spring-app -f
 
 ### 5-7. ALB Target Group에 EC2 등록
 
-9. AWS Console → **EC2** → **Target Groups**로 이동합니다.
-10. `my-3tier-app-tg`를 클릭합니다.
-11. **Targets** 탭 → [[Register targets]]를 클릭합니다.
-12. 방금 생성한 Amazon EC2 인스턴스를 선택합니다.
-13. **Port**: `8080`
-14. [[Include as pending below]] → [[Register pending targets]]
+13. 상단 검색창에 `EC2`를 입력하고 **EC2** 서비스를 선택합니다.
+14. 왼쪽 메뉴에서 **Target Groups**를 클릭합니다.
+15. `my-3tier-app-tg`를 클릭합니다.
+16. **Targets** 탭을 클릭합니다.
+17. [[Register targets]] 버튼을 클릭합니다.
+18. **Available instances**에서 `my-3tier-app-server`를 체크합니다.
+19. **Ports for the selected instances**: `8080` 입력
+20. [[Include as pending below]] 버튼을 클릭합니다.
+21. 하단의 **Review** 섹션에서 인스턴스가 추가된 것을 확인합니다.
+22. [[Register pending targets]] 버튼을 클릭합니다.
 
 > [!OUTPUT]
 > Target Group의 Targets 탭에서 등록된 인스턴스를 확인합니다:
@@ -718,15 +802,16 @@ sudo journalctl -u spring-app -f
 
 ### 6-1. GitHub Secrets 설정
 
-GitHub → `my-backend` 리포지토리 → **Settings** → **Secrets and variables** → **Actions**
-
-| Secret Name             | 값                                       |
-| ----------------------- | ---------------------------------------- |
-| `AWS_ACCESS_KEY_ID`     | IAM Access Key ID (S3 업로드용)          |
-| `AWS_SECRET_ACCESS_KEY` | IAM Secret Access Key                    |
-| `AWS_REGION`            | `ap-northeast-2`                         |
-| `S3_DEPLOY_BUCKET`      | JAR 업로드용 S3 버킷명                   |
-| `EC2_INSTANCE_ID`       | Amazon EC2 인스턴스 ID (SSM 명령 실행용) |
+25. 브라우저에서 GitHub → `my-backend` 리포지토리 페이지로 이동합니다.
+26. **Settings** 탭을 클릭합니다.
+27. 왼쪽 메뉴에서 **Secrets and variables** → **Actions**를 클릭합니다.
+28. [[New repository secret]] 버튼을 클릭합니다.
+29. 다음 Secrets를 하나씩 추가합니다:
+    - **AWS_ACCESS_KEY_ID**: IAM Access Key ID (S3 업로드용)
+    - **AWS_SECRET_ACCESS_KEY**: IAM Secret Access Key
+    - **AWS_REGION**: `ap-northeast-2`
+    - **S3_DEPLOY_BUCKET**: JAR 업로드용 S3 버킷명
+    - **EC2_INSTANCE_ID**: Amazon EC2 인스턴스 ID (SSM 명령 실행용)
 
 > [!CONCEPT] Private Subnet Amazon EC2에 배포하는 방법
 > Private Subnet의 Amazon EC2에는 SSH로 직접 접속할 수 없습니다.
@@ -736,6 +821,39 @@ GitHub → `my-backend` 리포지토리 → **Settings** → **Secrets and varia
 > - SSM Run Command로 Amazon EC2에서 Amazon S3 다운로드 + 재시작 명령 실행
 >
 > 이 방식은 SSH 키 관리가 불필요하고 보안상 더 안전합니다.
+
+> [!TIP]
+> **application.properties를 GitHub Secrets로 관리하는 방법 (선택)**
+>
+> `.gitignore`에 `application.properties`를 추가하고, 빌드 시 GitHub Secrets에서 파일을 생성할 수 있습니다.
+> DB 비밀번호 등 민감 정보가 코드에 노출되지 않아 안전합니다.
+>
+> **1단계: GitHub Secrets에 설정 파일 내용 등록**
+>
+> | Secret Name              | 값                                                 |
+> | ------------------------ | -------------------------------------------------- |
+> | `APPLICATION_PROPERTIES` | `application.properties` 파일 전체 내용 (멀티라인) |
+>
+> **2단계: 워크플로우에서 파일 생성 스텝 추가**
+>
+> ```yaml
+> # application.properties 생성 (Secrets에서 주입)
+> - name: Create application.properties
+>   run: |
+>     mkdir -p src/main/resources
+>     echo "${{ secrets.APPLICATION_PROPERTIES }}" > src/main/resources/application.properties
+> ```
+>
+> **3단계: .gitignore에 추가**
+>
+> ```gitignore
+> # 비밀값이 포함된 설정 파일
+> src/main/resources/application.properties
+> src/main/resources/application.yml
+> ```
+>
+> 이 방식은 Spring MVC(WAR) 프로젝트처럼 SSM Parameter Store를 사용하기 어려운 경우에 유용합니다.
+> Spring Boot 프로젝트에서도 SSM 대신 이 방식을 사용할 수 있습니다.
 
 ### 6-2. GitHub Actions 워크플로우 작성
 
@@ -862,8 +980,8 @@ GitHub → **Actions** 탭에서 워크플로우 실행을 확인합니다.
 
 ### 7-1. ALB Target Group Health Check 확인
 
-15. AWS Console → **EC2** → **Target Groups** → `my-3tier-app-tg`
-16. **Targets** 탭에서 등록된 인스턴스의 Status를 확인합니다:
+23. **EC2** → **Target Groups** → `my-3tier-app-tg`를 클릭합니다.
+24. **Targets** 탭에서 등록된 인스턴스의 Status를 확인합니다:
 
 - `healthy`: 정상 (Health Check 통과)
 - `unhealthy`: 비정상 (로그 확인 필요)
