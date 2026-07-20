@@ -504,7 +504,7 @@ export const curriculum: WeekCurriculum[] = [
         session: 2,
         type: 'lab',
         title: 'Docker 빌드 + Amazon ECR Push',
-        hasContent: false,
+        hasContent: true,
         markdownPath: '/content/step9-cicd/9-2-docker-ecr.md',
         description:
           'Dockerfile 작성, 로컬 Docker 빌드/실행, Amazon ECR 리포지토리 생성, 이미지 Push',
@@ -515,12 +515,23 @@ export const curriculum: WeekCurriculum[] = [
         session: 3,
         type: 'lab',
         title: 'GitHub Actions → ECR → ECS Fargate 배포',
-        hasContent: false,
+        hasContent: true,
         markdownPath: '/content/step9-cicd/9-3-ecs-fargate-deploy.md',
         description:
           'ECS 클러스터/서비스 생성, Task Definition, ALB 연동, GitHub Actions 자동 배포',
         awsServices: ['Amazon ECS', 'AWS Fargate', 'Elastic Load Balancing'],
         estimatedCost: '크레딧 내 사용 가능 (Fargate vCPU/메모리 과금)',
+      },
+      {
+        session: 4,
+        type: 'lab',
+        title: 'Vue.js → S3 + CloudFront 자동 배포',
+        hasContent: true,
+        markdownPath: '/content/step9-cicd/9-4-frontend-s3-cloudfront.md',
+        description:
+          'GitHub Actions로 Vue.js 빌드 → S3 sync → CloudFront Invalidation 자동화, 3-Tier 전체 CI/CD 완성',
+        awsServices: ['Amazon S3', 'Amazon CloudFront'],
+        estimatedCost: '프리티어 (S3 5GB, CloudFront 1TB/월 무료)',
       },
     ],
     difficulty: 'advanced',

@@ -12,19 +12,29 @@ learningObjectives:
   - 프론트엔드와 백엔드를 별도 리포지토리로 운영하고 각각 CI/CD를 구성할 수 있습니다.
 prerequisites:
   - GitHub 계정 및 리포지토리 2개 (프론트엔드/백엔드)
-  - EC2 인스턴스 실행 중 (SSH 접속 가능)
+  - Step 8 인프라 구축 완료 (또는 EC2 인스턴스 실행 중)
   - Spring Boot 또는 Spring MVC 프로젝트
   - Vue.js 프로젝트
 estimatedCost: 프리티어 (GitHub Actions Public 리포 무료, Private 월 2000분 무료)
 ---
 
 이 실습에서는 GitHub Actions를 사용하여 코드를 push하면 자동으로 빌드하고
-EC2에 배포하는 CI/CD 파이프라인을 구축합니다. 프론트엔드(Vue.js)와 백엔드(Spring)를
-**별도 리포지토리**로 운영하며 각각의 배포 워크플로우를 작성합니다.
+EC2에 배포하는 CI/CD 파이프라인을 구축합니다.  
+프론트엔드(Vue.js)와 백엔드(Spring)를 **별도 리포지토리**로 운영하며 각각의 배포 워크플로우를 작성합니다.
 
 > [!NOTE]
-> 이 실습에는 EC2 인스턴스(SSH 접속 가능)와 GitHub 리포지토리 2개가 필요합니다.
-> EC2가 없다면 Step 2를 참조하여 인스턴스를 먼저 생성하세요.
+> 이 실습에는 Amazon EC2 인스턴스(SSH 접속 가능)와 GitHub 리포지토리 2개가 필요합니다.
+>
+> **Step 8 인프라를 재사용하는 경우 (권장):**
+>
+> - Step 8에서 생성한 VPC, ALB, Amazon RDS를 그대로 사용합니다.
+> - Amazon EC2만 Step 8-3에서 생성한 것을 유지하면 됩니다.
+> - AWS CloudFormation 스택(`step8-network`, `step8-data`, `step8-backend`)이 살아있는지 확인하세요.
+>
+> **Step 8 없이 진행하는 경우:**
+>
+> - Amazon EC2가 없다면 Step 2를 참조하여 인스턴스를 먼저 생성하세요.
+> - Amazon RDS가 없다면 Step 4를 참조하여 DB를 생성하세요.
 
 ---
 
@@ -110,8 +120,8 @@ my-backend/               ← 백엔드 전용 리포지토리
 4. [[New repository secret]]을 클릭합니다.
 
 > [!OUTPUT]
-> "New repository secret" 페이지가 표시됩니다.
-> **Name** 필드와 **Secret** 필드가 보입니다.
+> "New repository secret" 페이지가 표시됩니다.  
+> **Name** 필드와 **Secret** 필드가 보입니다.  
 > Name에 Secret 이름을, Secret에 값을 입력하고 [[Add secret]]을 클릭합니다.
 
 ### 필요한 Secrets 목록
@@ -150,7 +160,7 @@ cat ~/.ssh/my-key.pem
 9. **Secret**: EC2 인스턴스의 Public IP (예: `3.35.123.456`)
 
 > [!TIP]
-> EC2에 Elastic IP를 할당하면 인스턴스를 재시작해도 IP가 변경되지 않습니다.
+> EC2에 Elastic IP를 할당하면 인스턴스를 재시작해도 IP가 변경되지 않습니다.  
 > Elastic IP 없이 사용하면 인스턴스 재시작 시 IP가 바뀌어 Secret을 업데이트해야 합니다.
 
 나머지 Secrets(`EC2_USER`, `DB_URL`, `DB_PASSWORD`)도 같은 방식으로 추가합니다.
@@ -164,7 +174,7 @@ cat ~/.ssh/my-key.pem
 > | EC2_HOST에 도메인 입력 후 접속 실패 | DNS 미전파 또는 HTTPS 포트 사용 | IP 주소를 직접 입력하거나 `ping` 으로 확인 |
 
 > [!NOTE]
-> GitHub Secrets는 한 번 저장하면 다시 볼 수 없습니다 (수정만 가능).
+> GitHub Secrets는 한 번 저장하면 다시 볼 수 없습니다 (수정만 가능).  
 > 값을 잘못 입력했다면 Secret을 삭제하고 다시 생성하세요.
 
 ✅ **태스크 완료** — GitHub Secrets에 배포에 필요한 민감 정보를 저장했습니다.
@@ -519,12 +529,13 @@ jobs:
 ```
 
 > [!TIP]
-> `npm ci`는 `npm install`과 달리 `package-lock.json`을 기반으로 정확한 버전을
-> 설치합니다. CI/CD 환경에서는 항상 `npm ci`를 사용하세요.
+> `npm ci`는 `npm install`과 달리 `package-lock.json`을 기반으로 정확한 버전을 설치합니다.  
+> CI/CD 환경에서는 항상 `npm ci`를 사용하세요.  
 > 빌드 결과물의 일관성을 보장합니다.
 
 > [!NOTE]
-> 별도 레포이므로 `working-directory`가 필요 없습니다. 프로젝트 루트에서 바로 `npm ci`, `npm run build`를 실행합니다.
+> 별도 레포이므로 `working-directory`가 필요 없습니다.  
+> 프로젝트 루트에서 바로 `npm ci`, `npm run build`를 실행합니다.
 
 ### 환경 변수 주입 (선택)
 
@@ -550,7 +561,8 @@ Vue.js 빌드 시 API URL 등의 환경 변수를 주입할 수 있습니다:
 > | Nginx reload 실패 | Nginx 설정 파일 문법 오류 | EC2에서 `sudo nginx -t`로 설정 검증 |
 
 > [!NOTE]
-> 별도 레포에서는 `cache-dependency-path`를 지정하지 않아도 됩니다. `package-lock.json`이 루트에 있으므로 자동으로 캐시됩니다.
+> 별도 레포에서는 `cache-dependency-path`를 지정하지 않아도 됩니다.  
+> `package-lock.json`이 루트에 있으므로 자동으로 캐시됩니다.
 
 ✅ **태스크 완료** — Vue.js 프론트엔드 자동 배포 워크플로우를 작성했습니다.
 
@@ -582,7 +594,7 @@ git push origin main
 - 🟡 노란 원: 실행 중
 
 > [!OUTPUT]
-> 모든 스텝이 성공하면 워크플로우 옆에 ✅ 녹색 체크가 표시됩니다.
+> 모든 스텝이 성공하면 워크플로우 옆에 ✅ 녹색 체크가 표시됩니다.  
 > 전체 실행 시간은 보통 1~3분 정도 소요됩니다.
 
 ### 배포 결과 확인
@@ -676,7 +688,7 @@ on:
 ```
 
 > [!TIP]
-> `workflow_dispatch`를 추가하면 Actions 탭에서 [[Run workflow]] 버튼이 나타납니다.
+> `workflow_dispatch`를 추가하면 Actions 탭에서 [[Run workflow]] 버튼이 나타납니다.  
 > 긴급 배포나 특정 환경에 수동 배포할 때 유용합니다.
 
 ### 6-3. 배포 실패 시 Slack/Discord 알림
@@ -826,7 +838,8 @@ feature/xxx (기능 개발)
 # 🗑️ 리소스 정리
 
 > [!NOTE]
-> GitHub Actions는 Public 리포지토리에서 완전 무료이며, Private 리포지토리도 월 2,000분 무료입니다. 별도 비용이 발생하지 않습니다.
+> GitHub Actions는 Public 리포지토리에서 완전 무료이며, Private 리포지토리도 월 2,000분 무료입니다.  
+> 별도 비용이 발생하지 않습니다.
 
 > [!WARNING]
 > **GitHub Actions 비용 (Private 리포지토리만 해당)**
@@ -880,7 +893,8 @@ git push origin main
 32. 각 Secret(`EC2_HOST`, `EC2_USER`, `EC2_KEY`, `DB_URL`, `DB_PASSWORD`) 옆의 🗑️ 아이콘을 클릭하여 삭제합니다.
 
 > [!NOTE]
-> Secrets는 무료이므로 유지해도 비용이 발생하지 않습니다. 보안상 더 이상 사용하지 않는 SSH 키는 삭제하는 것이 좋습니다.
+> Secrets는 무료이므로 유지해도 비용이 발생하지 않습니다.  
+> 보안상 더 이상 사용하지 않는 SSH 키는 삭제하는 것이 좋습니다.
 
 ---
 
