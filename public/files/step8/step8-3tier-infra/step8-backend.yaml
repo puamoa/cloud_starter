@@ -1,0 +1,137 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  Step 8 - Backend Stack.
+  ALB, Target Group, Listener. Imports network values from step8-network stack.
+
+# =============================================================================
+# Metadata
+# =============================================================================
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: 'Project Settings'
+        Parameters:
+          - ProjectName
+      - Label:
+          default: 'Application Settings'
+        Parameters:
+          - AppPort
+          - HealthCheckPath
+
+# =============================================================================
+# Parameters
+# =============================================================================
+Parameters:
+  # Network 스택과 동일한 ProjectName을 사용해야 Import가 동작합니다.
+  ProjectName:
+    Type: String
+    Default: my-3tier-app
+    Description: Project name (must match network stack)
+
+  # Spring Boot 기본 포트
+  AppPort:
+    Type: Number
+    Default: 8080
+    Description: Application port (Spring Boot default 8080)
+
+  # Spring Boot Actuator Health Check 경로
+  HealthCheckPath:
+    Type: String
+    Default: /actuator/health
+    Description: ALB Health Check path
+
+# =============================================================================
+# Resources
+# =============================================================================
+Resources:
+  # ============================================================
+  # Application Load Balancer (Public Subnet에 배치)
+  # - Internet-facing: 인터넷에서 접근 가능
+  # - Network 스택에서 Export한 Public Subnet과 ALB SG를 Import합니다.
+  # ============================================================
+  ApplicationLoadBalancer:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Name: !Sub '${ProjectName}-alb'
+      Type: application
+      Scheme: internet-facing
+      SecurityGroups:
+        - Fn::ImportValue: !Sub '${ProjectName}-alb-sg-id'
+      Subnets:
+        - Fn::ImportValue: !Sub '${ProjectName}-public-subnet-1-id'
+        - Fn::ImportValue: !Sub '${ProjectName}-public-subnet-2-id'
+      Tags:
+        - Key: Name
+          Value: !Sub '${ProjectName}-alb'
+        - Key: CreatedBy
+          Value: cloudformation
+        - Key: Step
+          Value: step8
+        - Key: Session
+          Value: '8-1'
+
+  # ============================================================
+  # Target Group - ALB가 트래픽을 전달할 대상 그룹
+  # - EC2 인스턴스는 Step 8-3에서 수동으로 등록합니다.
+  # - Health Check로 비정상 인스턴스를 자동 제외합니다.
+  # ============================================================
+  ALBTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: !Sub '${ProjectName}-tg'
+      Port: !Ref AppPort
+      Protocol: HTTP
+      VpcId:
+        Fn::ImportValue: !Sub '${ProjectName}-vpc-id'
+      TargetType: instance
+      HealthCheckPath: !Ref HealthCheckPath
+      HealthCheckIntervalSeconds: 30
+      HealthCheckTimeoutSeconds: 5
+      HealthyThresholdCount: 2
+      UnhealthyThresholdCount: 3
+      Tags:
+        - Key: Name
+          Value: !Sub '${ProjectName}-target-group'
+        - Key: CreatedBy
+          Value: cloudformation
+        - Key: Step
+          Value: step8
+        - Key: Session
+          Value: '8-1'
+
+  # ============================================================
+  # Listener - HTTP:80으로 들어오는 요청을 Target Group으로 전달
+  # HTTPS(443)는 ACM 인증서 발급 후 Step 8-4에서 수동 추가합니다.
+  # ============================================================
+  ALBListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      LoadBalancerArn: !Ref ApplicationLoadBalancer
+      Port: 80
+      Protocol: HTTP
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref ALBTargetGroup
+
+# =============================================================================
+# 출력값
+# =============================================================================
+Outputs:
+  ALBDNSName:
+    Description: ALB DNS Name (browser access URL)
+    Value: !GetAtt ApplicationLoadBalancer.DNSName
+    Export:
+      Name: !Sub '${ProjectName}-alb-dns-name'
+
+  ALBTargetGroupArn:
+    Description: ALB Target Group ARN (register EC2 here)
+    Value: !Ref ALBTargetGroup
+    Export:
+      Name: !Sub '${ProjectName}-tg-arn'
+
+  ALBArn:
+    Description: ALB ARN
+    Value: !Ref ApplicationLoadBalancer
+    Export:
+      Name: !Sub '${ProjectName}-alb-arn'

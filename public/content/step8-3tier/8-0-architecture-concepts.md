@@ -11,6 +11,7 @@ learningObjectives:
   - Stateless와 Stateful의 차이를 구분할 수 있습니다.
   - 캐싱 전략(CDN, Redis)을 이해할 수 있습니다.
   - 비동기 처리와 메시지 큐를 이해할 수 있습니다.
+  - IaC 스택 분리 전략과 Cross-stack Reference를 이해할 수 있습니다.
 ---
 
 # 웹 아키텍처 설계 패턴 이론
@@ -382,7 +383,7 @@ Stateless (세션을 외부 저장소에 저장):
 | 항목          | CDN (CloudFront)        | Redis (ElastiCache)   |
 | ------------- | ----------------------- | --------------------- |
 | **대상**      | 정적 콘텐츠             | 동적 데이터           |
-| **위치**      | 엣지 로케이션 (전 세계) | VPC 내부              |
+| **위치**      | 엣지 로케이션 (전 세계) | Amazon VPC 내부       |
 | **프로토콜**  | HTTP/HTTPS              | TCP (Redis 프로토콜)  |
 | **TTL**       | 초~일 단위              | 초~시간 단위          |
 | **무효화**    | Invalidation API        | DEL 명령              |
@@ -484,6 +485,138 @@ public User getUser(Long id) {
 
 ---
 
+## 8. IaC 스택 분리 전략
+
+> [!CONCEPT] 왜 AWS CloudFormation 스택을 나누는가?
+> 하나의 거대한 스택으로 모든 인프라를 관리하면 편해 보이지만, 실무에서는 반드시 문제가 발생합니다.  
+> 스택을 **라이프사이클과 팀 단위**로 분리하면 안전하고 효율적인 인프라 관리가 가능합니다.
+>
+> - 하나의 스택에 모든 것을 넣으면 "파스타 한 그릇"과 같습니다. 면(네트워크) 하나를 빼려고 건드리면 소스(DB)가 쏟아집니다.
+> - 스택을 나누면 "도시락 칸"처럼 밥(네트워크), 반찬(데이터), 국(앱)을 독립적으로 꺼내고 넣을 수 있습니다.
+
+### 스택을 분리하는 3가지 기준
+
+| 기준             | 설명                              | 예시                                         |
+| ---------------- | --------------------------------- | -------------------------------------------- |
+| **라이프사이클** | 변경 빈도가 비슷한 것끼리 묶기    | VPC는 거의 안 바뀜, 앱은 자주 배포           |
+| **팀 단위**      | 각 팀이 독립적으로 관리할 수 있게 | 프론트팀 → S3/CloudFront, 백엔드팀 → ALB/EC2 |
+| **위험도**       | 삭제 시 영향이 큰 것을 격리       | RDS를 별도 스택으로 분리 → 실수 삭제 방지    |
+
+### 실무에서의 스택 분리 예시
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  스택 1: Network (기반 인프라)                              │
+│  VPC, Subnet, IGW, NAT, Route Table, Security Groups        │
+│  변경 빈도: 거의 없음 | 담당: 인프라팀                      │
+├─────────────────────────────────────────────────────────────┤
+│  스택 2: Data (데이터 계층)                                 │
+│  RDS, DB Subnet Group                                       │
+│  변경 빈도: 거의 없음 | 담당: DBA / 백엔드팀                │
+│  ⚠️ DeletionPolicy: Snapshot (실수 삭제 시 복구 가능)       │
+├─────────────────────────────────────────────────────────────┤
+│  스택 3: Frontend (프론트엔드 인프라)                       │
+│  S3 Bucket                                                  │
+│  변경 빈도: 배포마다 | 담당: 프론트엔드팀                   │
+├─────────────────────────────────────────────────────────────┤
+│  스택 4: Backend (백엔드 인프라)                            │
+│  ALB, Target Group, Listener                                │
+│  변경 빈도: 배포마다 | 담당: 백엔드팀                       │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### 의존성과 생성 순서
+
+스택 간에는 **의존 관계**가 있습니다. 네트워크가 없으면 RDS도 ALB도 만들 수 없습니다.
+
+```
+생성 순서 (의존성 순):
+
+  ① Network  ─────────────────────────┐
+       │                               │
+       ▼                               ▼
+  ② Data (RDS)                  ④ Backend (ALB)
+  (VPC, Subnet 참조)            (VPC, Subnet 참조)
+
+  ③ Frontend (S3) ← 독립 (①과 동시에 생성 가능)
+```
+
+| 스택     | 의존하는 값                          | 출처    |
+| -------- | ------------------------------------ | ------- |
+| Network  | 없음 (기반)                          | —       |
+| Data     | VPC ID, Private Subnet ID, EC2 SG ID | Network |
+| Frontend | 없음 (Amazon S3는 VPC 외부 서비스)   | —       |
+| Backend  | VPC ID, Public Subnet ID, ALB SG ID  | Network |
+
+### Cross-stack Reference (스택 간 값 참조)
+
+AWS CloudFormation은 `Export`/`ImportValue`로 스택 간 값을 주고받습니다:
+
+```yaml
+# Network 스택 - 값을 내보냄 (Export)
+Outputs:
+  VPCId:
+    Value: !Ref VPC
+    Export:
+      Name: !Sub '${ProjectName}-vpc-id'
+
+# Data 스택 - 값을 가져옴 (ImportValue)
+Resources:
+  DBSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      SubnetIds:
+        - Fn::ImportValue: !Sub '${ProjectName}-private-subnet-1-id'
+        - Fn::ImportValue: !Sub '${ProjectName}-private-subnet-2-id'
+```
+
+### 삭제 순서 (의존성 역순)
+
+생성의 반대 순서로 삭제해야 합니다. 참조되는 스택을 먼저 삭제하면 에러가 발생합니다.
+
+```
+삭제 순서:
+
+  ④ Backend (ALB)  ──┐
+                      ├──→  ① Network (마지막)
+  ② Data (RDS)     ──┘
+
+  ③ Frontend (S3)  ──→  언제든 삭제 가능 (독립)
+```
+
+> Backend와 Data가 Network의 Export를 Import하므로, 이 두 스택을 먼저 삭제해야 Network를 삭제할 수 있습니다.  
+> Frontend는 다른 스택에 의존하지 않으므로 순서 무관합니다.
+
+> [!TIP]
+> **실무에서의 삭제 실수 방지:**
+>
+> - Amazon RDS 스택에 `DeletionPolicy: Snapshot`을 설정하면 스택 삭제 시 자동으로 스냅샷이 생성됩니다.
+> - Network 스택에 `TerminationProtection`을 활성화하면 실수로 삭제할 수 없습니다.
+> - Tag Editor로 모든 스택 리소스를 한눈에 확인하고 누락 없이 정리할 수 있습니다.
+
+### 하나의 스택 vs 분리된 스택 비교
+
+| 항목            | 단일 스택                  | 분리된 스택                             |
+| --------------- | -------------------------- | --------------------------------------- |
+| **초기 설정**   | 간단 (파일 1개)            | 복잡 (Export/Import 설정)               |
+| **배포 속도**   | 전체 업데이트 (느림)       | 변경된 스택만 업데이트 (빠름)           |
+| **장애 범위**   | 하나 실패 → 전체 롤백      | 해당 스택만 영향                        |
+| **팀 협업**     | 충돌 발생 (같은 파일 수정) | 팀별 독립 관리                          |
+| **삭제 안전성** | RDS 포함 전체 삭제 위험    | 데이터 스택 별도 보호 가능              |
+| **재사용성**    | 불가 (프로젝트 종속)       | Network 스택을 다른 프로젝트에서 재사용 |
+
+> [!NOTE]
+> 이 실습에서는 4개의 스택으로 분리하여 구축합니다:
+>
+> - `step8-network` → 네트워크 기반 (VPC, 서브넷, IGW, NAT, RT, SG)
+> - `step8-data` → 데이터 계층 (DB Subnet Group, Amazon RDS)
+> - `step8-frontend` → 프론트엔드 인프라 (Amazon S3 버킷)
+> - `step8-backend` → 백엔드 인프라 (ALB, Target Group, Listener)
+>
+> Session 8-1에서 이 4개 스택을 순서대로 생성하고, Cross-stack Reference로 연결합니다.
+
+---
+
 ## 핵심 정리
 
 | 개념           | 한 줄 요약                                 |
@@ -496,6 +629,7 @@ public User getUser(Long id) {
 | Stateless      | 서버에 상태 저장 안 함 → 수평 확장 가능    |
 | 캐싱           | CDN(정적) + Redis(동적)으로 응답 속도 향상 |
 | 메시지 큐      | 비동기 처리로 응답 시간 단축, 안정성 확보  |
+| IaC 스택 분리  | 라이프사이클·팀·위험도 기준으로 독립 관리  |
 
 ---
 

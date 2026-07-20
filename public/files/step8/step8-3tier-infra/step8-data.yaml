@@ -1,0 +1,153 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  Step 8 - Data Stack.
+  RDS MySQL with timezone setting, DB Subnet Group. Imports network values from step8-network stack.
+
+# =============================================================================
+# Metadata
+# =============================================================================
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: 'Project Settings'
+        Parameters:
+          - ProjectName
+      - Label:
+          default: 'Database Settings'
+        Parameters:
+          - DBMasterUsername
+          - DBMasterPassword
+          - DBInstanceClass
+
+# =============================================================================
+# Parameters
+# =============================================================================
+Parameters:
+  # Network 스택과 동일한 ProjectName을 사용해야 Import가 동작합니다.
+  ProjectName:
+    Type: String
+    Default: my-3tier-app
+    Description: Project name (must match network stack)
+
+  DBMasterUsername:
+    Type: String
+    Default: admin
+    Description: RDS master username
+
+  # 콘솔에서 마스킹 처리됨 (NoEcho)
+  DBMasterPassword:
+    Type: String
+    NoEcho: true
+    MinLength: 8
+    Description: RDS master password (minimum 8 characters)
+
+  DBInstanceClass:
+    Type: String
+    Default: db.t3.micro
+    Description: RDS instance class
+
+# =============================================================================
+# Resources
+# =============================================================================
+Resources:
+  # ============================================================
+  # DB Parameter Group - timezone을 Asia/Seoul로 설정합니다.
+  # Amazon RDS MySQL은 기본 UTC이므로, 한국 시간으로 변경합니다.
+  # ============================================================
+  DBParameterGroup:
+    Type: AWS::RDS::DBParameterGroup
+    Properties:
+      Family: mysql8.4
+      Description: !Sub '${ProjectName} MySQL 8.4 parameter group with Seoul timezone'
+      Parameters:
+        time_zone: Asia/Seoul
+        character_set_server: utf8mb4
+        collation_server: utf8mb4_unicode_ci
+      Tags:
+        - Key: Name
+          Value: !Sub '${ProjectName}-db-params'
+        - Key: CreatedBy
+          Value: cloudformation
+        - Key: Step
+          Value: step8
+        - Key: Session
+          Value: '8-1'
+
+  # ============================================================
+  # DB Subnet Group - Amazon RDS를 Private Subnet에 배치합니다.
+  # Network 스택에서 Export한 서브넷 ID를 Import합니다.
+  # ============================================================
+  DBSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupDescription: RDS subnet group for private subnets
+      SubnetIds:
+        - Fn::ImportValue: !Sub '${ProjectName}-private-subnet-1-id'
+        - Fn::ImportValue: !Sub '${ProjectName}-private-subnet-2-id'
+      Tags:
+        - Key: Name
+          Value: !Sub '${ProjectName}-db-subnet-group'
+        - Key: CreatedBy
+          Value: cloudformation
+        - Key: Step
+          Value: step8
+        - Key: Session
+          Value: '8-1'
+
+  # ============================================================
+  # Amazon RDS MySQL (Private Subnet에 배치)
+  # - timezone: Asia/Seoul (Parameter Group)
+  # - 문자셋: utf8mb4 (한글 + 이모지 지원)
+  # - Multi-AZ: false (실습용, 프로덕션에서는 true 권장)
+  # - BackupRetentionPeriod: 0 (실습용, 프로덕션에서는 7일 이상 권장)
+  # ============================================================
+  RDSInstance:
+    Type: AWS::RDS::DBInstance
+    DeletionPolicy: Delete
+    Properties:
+      DBInstanceIdentifier: !Sub '${ProjectName}-db'
+      DBInstanceClass: !Ref DBInstanceClass
+      Engine: mysql
+      EngineVersion: '8.4'
+      MasterUsername: !Ref DBMasterUsername
+      MasterUserPassword: !Ref DBMasterPassword
+      AllocatedStorage: 20
+      StorageType: gp3
+      DBParameterGroupName: !Ref DBParameterGroup
+      DBSubnetGroupName: !Ref DBSubnetGroup
+      VPCSecurityGroups:
+        - Fn::ImportValue: !Sub '${ProjectName}-rds-sg-id'
+      MultiAZ: false
+      PubliclyAccessible: false
+      BackupRetentionPeriod: 0
+      DeletionProtection: false
+      Tags:
+        - Key: Name
+          Value: !Sub '${ProjectName}-rds'
+        - Key: CreatedBy
+          Value: cloudformation
+        - Key: Step
+          Value: step8
+        - Key: Session
+          Value: '8-1'
+
+# =============================================================================
+# 출력값
+# =============================================================================
+Outputs:
+  RDSEndpoint:
+    Description: RDS MySQL Endpoint Address
+    Value: !GetAtt RDSInstance.Endpoint.Address
+    Export:
+      Name: !Sub '${ProjectName}-rds-endpoint'
+
+  RDSPort:
+    Description: RDS MySQL Port
+    Value: !GetAtt RDSInstance.Endpoint.Port
+    Export:
+      Name: !Sub '${ProjectName}-rds-port'
+
+  DBParameterGroupName:
+    Description: DB Parameter Group Name (timezone Asia/Seoul)
+    Value: !Ref DBParameterGroup
