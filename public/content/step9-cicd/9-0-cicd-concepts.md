@@ -9,6 +9,7 @@ learningObjectives:
   - 배포 전략(Rolling, Blue-Green, Canary)을 비교할 수 있습니다.
   - 버전 관리 전략(Git Flow, GitHub Flow)을 이해할 수 있습니다.
   - 모노레포와 멀티레포의 차이를 비교하고 적합한 전략을 선택할 수 있습니다.
+  - VM과 컨테이너의 차이를 설명하고, Docker/Amazon ECR/Amazon ECS/AWS Fargate를 이해할 수 있습니다.
   - 환경 분리의 필요성과 구성을 설명할 수 있습니다.
   - Infrastructure as Code 개념을 이해할 수 있습니다.
   - GitOps 원칙을 설명할 수 있습니다.
@@ -215,7 +216,91 @@ learningObjectives:
 
 ---
 
-## 4. 버전 관리 전략
+---
+
+## 4. 컨테이너와 오케스트레이션
+
+> [!CONCEPT] 컨테이너란?
+> **컨테이너**는 애플리케이션과 실행에 필요한 모든 것(코드, 라이브러리, 설정)을 하나의 패키지로 묶는 기술입니다.  
+> VM(가상 머신)과 달리 OS 커널을 공유하므로 가볍고 빠릅니다.
+>
+> - VM은 집 전체를 이사하는 것(OS + 가구 + 짐), 컨테이너는 캐리어 하나에 필요한 것만 넣는 것입니다.
+> - "내 노트북에서 잘 되는데 서버에서 안 돼요" 문제를 근본적으로 해결합니다.
+
+### VM vs 컨테이너
+
+```
+VM (가상 머신):                      컨테이너 (Docker):
+┌───────────────────────┐            ┌─────┐ ┌─────┐ ┌─────┐
+│      App A            │            │App A│ │App B│ │App C│
+├───────────────────────┤            ├─────┤ ├─────┤ ├─────┤
+│   Guest OS (Linux)    │            │Libs │ │Libs │ │Libs │
+├───────────────────────┤            └──┬──┘ └──┬──┘ └──┬──┘
+│     Hypervisor        │               │       │       │
+├───────────────────────┤            ┌──┴───────┴───────┴──┐
+│     Host OS           │            │   Docker Engine     │
+└───────────────────────┘            ├─────────────────────┤
+                                     │   Host OS (공유)    │
+ 시작: 분 단위                       └─────────────────────┘
+ 크기: GB 단위                        시작: 초 단위
+                                     크기: MB 단위
+```
+
+| 항목                | VM                         | 컨테이너                  |
+| ------------------- | -------------------------- | ------------------------- |
+| **격리 수준**       | 완전 격리 (별도 OS)        | 프로세스 격리 (커널 공유) |
+| **시작 시간**       | 분 단위                    | 초 단위                   |
+| **이미지 크기**     | GB                         | MB (수백 MB)              |
+| **리소스 오버헤드** | 높음 (Guest OS 필요)       | 낮음 (커널 공유)          |
+| **밀도**            | 하나의 호스트에 수십 개    | 하나의 호스트에 수백 개   |
+| **적합한 용도**     | 레거시 앱, 다른 OS 필요 시 | 마이크로서비스, CI/CD     |
+
+### Docker 핵심 용어
+
+| 용어           | 설명                                 | 비유             |
+| -------------- | ------------------------------------ | ---------------- |
+| **Dockerfile** | 이미지를 만드는 설정 파일            | 요리 레시피      |
+| **Image**      | 실행 가능한 불변 패키지 (읽기 전용)  | 붕어빵 틀        |
+| **Container**  | 이미지를 실행한 인스턴스 (쓰기 가능) | 구워진 붕어빵    |
+| **Layer**      | 이미지의 각 변경사항 단위 (캐싱)     | 레시피의 각 단계 |
+| **Registry**   | 이미지를 저장·배포하는 저장소        | 앱스토어         |
+| **Tag**        | 이미지의 버전 라벨                   | 앱 버전 (v1.0.0) |
+
+### 컨테이너 오케스트레이션
+
+컨테이너가 많아지면 관리가 복잡해집니다. **오케스트레이션**은 이를 자동화합니다:
+
+| 기능              | 설명                                   |
+| ----------------- | -------------------------------------- |
+| **스케줄링**      | 어떤 서버에서 컨테이너를 실행할지 결정 |
+| **오토 스케일링** | 부하에 따라 컨테이너 수 자동 조절      |
+| **셀프 힐링**     | 죽은 컨테이너를 자동 재시작            |
+| **로드밸런싱**    | 트래픽을 여러 컨테이너에 분산          |
+| **롤링 업데이트** | 무중단으로 새 버전 배포                |
+
+### AWS 컨테이너 서비스
+
+| 서비스          | 역할                                    | 비유                         |
+| --------------- | --------------------------------------- | ---------------------------- |
+| **Amazon ECR**  | Docker 이미지 저장소 (Private Registry) | Docker Hub의 AWS 버전        |
+| **Amazon ECS**  | 컨테이너 오케스트레이션 (AWS 전용)      | 컨테이너 관리 플랫폼         |
+| **AWS Fargate** | 서버리스 컨테이너 실행 환경             | 서버 관리 없이 컨테이너 실행 |
+| **Amazon EKS**  | Kubernetes 관리형 서비스                | 업계 표준 오케스트레이션     |
+
+```
+이미지 저장:  Dockerfile → docker build → Amazon ECR (Push)
+이미지 실행:  Amazon ECR (Pull) → Amazon ECS (Task Definition) → AWS Fargate (실행)
+```
+
+> [!TIP]
+> **이 실습에서는 Amazon ECS + AWS Fargate를 사용합니다.**  
+> Amazon EKS(Kubernetes)는 학습 곡선이 높고 클러스터 비용이 발생하므로,  
+> 소규모~중규모 서비스에 적합한 ECS + Fargate 조합으로 진행합니다.
+> Amazon EKS는 대규모 마이크로서비스(10개+ 서비스) 환경에서 적합합니다.
+
+---
+
+## 5. 버전 관리 전략
 
 ### 주요 용어
 
@@ -356,14 +441,78 @@ jobs:
         working-directory: frontend
 ```
 
+#### 모노레포 + 별도 CI/CD 레포 패턴 (실무 고급)
+
+대규모 팀에서는 소스 코드(모노레포)와 CI/CD 파이프라인(별도 레포)을 분리하기도 합니다.  
+소스 레포에서 변경이 발생하면 `repository_dispatch` 이벤트로 CI/CD 레포의 워크플로우를 트리거합니다.
+
+```
+┌────────────────────────┐            ┌───────────────────────────┐
+│  소스 레포 (모노레포)  │            │  CI/CD 레포 (배포 전용)   │
+│  myorg/my-app          │            │  myorg/my-app-deploy      │
+│                        │  trigger   │                           │
+│  push → workflow ──────┼───────────►│  deploy workflow 실행     │
+│  (repository_dispatch) │            │  - 빌드/테스트/배포       │
+└────────────────────────┘            └───────────────────────────┘
+```
+
+**소스 레포 워크플로우** (변경 감지 → CI/CD 레포에 이벤트 전달):
+
+```yaml
+# 소스 레포: .github/workflows/trigger-deploy.yml
+name: Trigger Deploy
+on:
+  push:
+    branches: [main]
+
+jobs:
+  dispatch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: peter-evans/repository-dispatch@v3
+        with:
+          token: ${{ secrets.DEPLOY_REPO_PAT }}
+          repository: myorg/my-app-deploy
+          event-type: deploy-frontend
+          client-payload: '{"ref": "${{ github.sha }}", "module": "frontend"}'
+```
+
+**CI/CD 레포 워크플로우** (이벤트 수신 → 실제 배포):
+
+```yaml
+# CI/CD 레포: .github/workflows/deploy.yml
+name: Deploy
+on:
+  repository_dispatch:
+    types: [deploy-frontend, deploy-backend]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: myorg/my-app
+          ref: ${{ github.event.client_payload.ref }}
+      - run: echo "Deploying ${{ github.event.client_payload.module }}"
+      # ... 빌드 및 배포 로직
+```
+
+**이 패턴의 장점:**
+
+- 소스 코드와 배포 로직의 관심사 분리
+- CI/CD 워크플로우 변경이 소스 히스토리를 오염시키지 않음
+- 배포 권한을 CI/CD 레포에만 부여하여 보안 강화
+- 여러 소스 레포의 배포를 하나의 CI/CD 레포에서 중앙 관리 가능
+
 > [!NOTE]
 > 이 과정에서는 **멀티레포(별도 레포)** 방식을 사용합니다.
 > 프론트엔드 레포와 백엔드 레포를 각각 만들고, 각 레포에 독립된 배포 워크플로우를 작성합니다.
-> Step 8-1 실습에서 실제로 별도 레포 기반 CI/CD를 구축합니다.
+> Step 9-1 실습에서 실제로 별도 레포 기반 CI/CD를 구축합니다.
 
 ---
 
-## 5. 환경 분리 (dev/staging/prod)
+## 6. 환경 분리 (dev/staging/prod)
 
 ### 주요 용어
 
@@ -411,7 +560,7 @@ jobs:
 
 ---
 
-## 6. Infrastructure as Code (IaC)
+## 7. Infrastructure as Code (IaC)
 
 ### 주요 용어
 
@@ -453,9 +602,7 @@ IaC (코드로 정의):
 • 자동화 파이프라인 연동
 ```
 
----
-
-## 7. GitOps
+## 8. GitOps
 
 ### 주요 용어
 
@@ -531,6 +678,9 @@ IaC (코드로 정의):
 | GitHub Flow | main + feature 브랜치 (단순)     |
 | 모노레포    | 하나의 레포에 프론트/백엔드 통합 |
 | 멀티레포    | 프론트/백엔드 각각 독립 레포     |
+| 컨테이너    | 앱+환경을 하나의 패키지로 격리   |
+| Amazon ECS  | AWS 컨테이너 오케스트레이션      |
+| AWS Fargate | 서버 관리 없이 컨테이너 실행     |
 | 환경 분리   | dev/staging/prod 독립 운영       |
 | IaC         | 인프라를 코드로 정의·관리        |
 | GitOps      | Git = 인프라의 단일 진실 공급원  |
@@ -540,3 +690,7 @@ IaC (코드로 정의):
 ## 다음 단계
 
 이 이론을 바탕으로 **Session 1: GitHub Actions로 EC2 자동 배포 구축** 실습에서 실제 CI/CD 파이프라인을 만들어봅니다.
+
+> [!TIP]
+> Step 8에서 구축한 인프라(VPC, ALB, Amazon RDS, Amazon EC2)를 그대로 재사용합니다.  
+> Step 8의 AWS CloudFormation 스택을 삭제하지 않았다면 추가 인프라 구축 없이 바로 CI/CD 구성에 집중할 수 있습니다.
