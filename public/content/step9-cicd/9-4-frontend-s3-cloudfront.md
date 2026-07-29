@@ -122,7 +122,7 @@ Invalidation 실행하면:
 | `AWS_ACCESS_KEY_ID`          | IAM Access Key ID                    | AWS 인증                          |
 | `AWS_SECRET_ACCESS_KEY`      | IAM Secret Key                       | AWS 인증                          |
 | `AWS_REGION`                 | `ap-northeast-2`                     | 리전                              |
-| `S3_BUCKET_NAME`             | `my-3tier-app-frontend-123456789012` | Step 8에서 생성한 버킷 이름       |
+| `S3_BUCKET_NAME`             | `my-3tier-app-frontend-hong01` | Step 8에서 생성한 버킷 이름       |
 | `CLOUDFRONT_DISTRIBUTION_ID` | `E1A2B3C4D5E6F7`                     | Amazon CloudFront Distribution ID |
 | `VITE_API_BASE_URL`          | `http://<ALB DNS Name>`              | 백엔드 API URL (Step 9-3의 ALB)   |
 

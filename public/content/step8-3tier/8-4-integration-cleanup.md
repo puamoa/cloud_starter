@@ -476,10 +476,10 @@ S3 버킷은 비어있어야 삭제할 수 있습니다.
 
 ```bash
 # 버킷 비우기
-aws s3 rm s3://my-3tier-app-frontend-123456789012 --recursive
+aws s3 rm s3://my-3tier-app-frontend-hong01 --recursive
 
 # 버킷 삭제
-aws s3 rb s3://my-3tier-app-frontend-123456789012
+aws s3 rb s3://my-3tier-app-frontend-hong01
 ```
 
 또는 Console에서:

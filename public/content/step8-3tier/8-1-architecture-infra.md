@@ -837,7 +837,7 @@ AWS CloudFormation이 생성한 리소스를 확인합니다.
 | ------------------ | -------------------------------------------------------------------------- | -------------------- |
 | VPCId              | `vpc-0abc123def456`                                                        | VPC 식별자           |
 | RDSEndpoint        | `my-3tier-app-db.xxxx.ap-northeast-2.rds.amazonaws.com`                    | DB 연결 주소         |
-| S3BucketName       | `my-3tier-app-frontend-123456789012`                                       | 프론트엔드 배포 대상 |
+| S3BucketName       | `my-3tier-app-frontend-hong01`                                       | 프론트엔드 배포 대상 |
 | S3WebsiteURL       | `http://my-3tier-app-frontend-xxx.s3-website.ap-northeast-2.amazonaws.com` | S3 웹사이트 URL      |
 | ALBDNSName         | `my-3tier-app-alb-xxx.ap-northeast-2.elb.amazonaws.com`                    | API 엔드포인트       |
 | ALBTargetGroupArn  | `arn:aws:elasticloadbalancing:...`                                         | EC2 등록 대상        |
@@ -893,7 +893,7 @@ AWS CloudFormation이 생성한 리소스를 확인합니다.
 ### 5-4. S3 버킷 확인
 
 91. 상단 검색창에 `S3`를 입력하고 **S3** 서비스를 선택합니다.
-92. `my-3tier-app-frontend-{AccountId}` 버킷이 생성되었는지 확인합니다.
+92. `my-3tier-app-frontend-{BucketSuffix}` 버킷이 생성되었는지 확인합니다.
 93. **Properties** 탭 → **Static website hosting**이 활성화되었는지 확인합니다.
 
 ### 5-5. ALB 확인

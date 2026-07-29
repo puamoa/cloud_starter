@@ -373,7 +373,7 @@ AWS CloudFormation에서 이미 Amazon S3 버킷과 정적 웹 호스팅을 설�
 ### S3 버킷 설정 확인
 
 1. 상단 검색창에 `S3`를 입력하고 **S3** 서비스를 선택합니다.
-2. Buckets 목록에서 `my-3tier-app-frontend-{AccountId}` 버킷을 클릭합니다.
+2. Buckets 목록에서 `my-3tier-app-frontend-{BucketSuffix}` 버킷을 클릭합니다.
 3. **Properties** 탭을 클릭합니다.
 4. 페이지 하단의 **Static website hosting** 섹션에서 다음을 확인합니다:
    - **Status**: Enabled
@@ -403,7 +403,7 @@ AWS CloudFormation에서 이미 Amazon S3 버킷과 정적 웹 호스팅을 설�
       "Effect": "Allow",
       "Principal": "*",
       "Action": "s3:GetObject",
-      "Resource": "arn:aws:s3:::my-3tier-app-frontend-{AccountId}/*"
+      "Resource": "arn:aws:s3:::my-3tier-app-frontend-{BucketSuffix}/*"
     }
   ]
 }
@@ -417,7 +417,7 @@ AWS CloudFormation에서 이미 Amazon S3 버킷과 정적 웹 호스팅을 설�
 
 > [!OUTPUT]
 > Amazon S3 웹사이트 엔드포인트 형식:  
-> `http://my-3tier-app-frontend-123456789012.s3-website.ap-northeast-2.amazonaws.com`
+> `http://my-3tier-app-frontend-hong01.s3-website.ap-northeast-2.amazonaws.com`
 >
 > 접속 시 `404 Not Found` 페이지가 표시됩니다 (아직 파일을 업로드하지 않았으므로 정상).
 
@@ -456,7 +456,7 @@ dist/
 
 ```bash
 # S3 버킷 이름 (AWS CloudFormation Outputs에서 확인)
-BUCKET_NAME="my-3tier-app-frontend-123456789012"
+BUCKET_NAME="my-3tier-app-frontend-hong01"
 
 # dist 폴더를 S3에 동기화
 aws s3 sync dist/ s3://$BUCKET_NAME --delete
@@ -487,7 +487,7 @@ aws s3 ls s3://$BUCKET_NAME --recursive
 Amazon S3 웹사이트 엔드포인트로 접속합니다:
 
 ```
-http://my-3tier-app-frontend-123456789012.s3-website.ap-northeast-2.amazonaws.com
+http://my-3tier-app-frontend-hong01.s3-website.ap-northeast-2.amazonaws.com
 ```
 
 > [!TIP]
