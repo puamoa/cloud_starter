@@ -17,7 +17,8 @@ estimatedCost: 크레딧 내 사용 가능 (비용 발생 가능)
 ---
 
 이 실습에서는 Spring Boot 백엔드를 생성하고, Amazon RDS MySQL과 연동한 후,
-Amazon EC2에 배포하여 ALB와 연결합니다. GitHub Actions로 자동 배포 파이프라인도 구축합니다.
+Amazon EC2에 배포하여 ALB와 연결합니다.  
+GitHub Actions로 자동 배포 파이프라인도 구축합니다.
 
 ### Step 8 전체 아키텍처
 
@@ -85,6 +86,9 @@ cd ~/3tier-project/my-backend
 ---
 
 ### 방법 B: 새 프로젝트 생성 (Spring Boot)
+
+Spring Initializr로 프로젝트를 새로 생성합니다.  
+Step 2-3에서 Spring Boot 프로젝트를 생성한 경험이 있다면 동일한 방식입니다.
 
 ### B-1. Spring Initializr로 프로젝트 생성
 
@@ -554,32 +558,37 @@ app:
 
 ### 5-1. Amazon EC2 인스턴스 생성
 
-1. 상단 검색창에 `EC2`를 입력하고 **EC2** 서비스를 선택합니다.
-2. 왼쪽 메뉴에서 **Instances**를 클릭합니다.
-3. [[Launch instances]] 버튼을 클릭합니다.
-4. **Name and tags** 섹션:
+5. 상단 검색창에 `EC2`를 입력하고 **EC2** 서비스를 선택합니다.
+6. 왼쪽 메뉴에서 **Instances**를 클릭합니다.
+7. [[Launch instances]] 버튼을 클릭합니다.
+8. **Name and tags** 섹션:
    - **Name**: `my-3tier-app-server`
-5. **Application and OS Images (Amazon Machine Image)** 섹션:
+9. **Application and OS Images (Amazon Machine Image)** 섹션:
    - **AMI**: `Amazon Linux 2023` 선택 (기본 선택됨)
-6. **Instance type** 섹션:
-   - `t2.micro` 선택 (프리티어 대상)
-7. **Key pair (login)** 섹션:
-   - `Proceed without a key pair (Not recommended)` 선택
-   - SSM Session Manager로 접속하므로 SSH 키가 불필요합니다.
-8. **Network settings** 섹션에서 [[Edit]] 버튼을 클릭합니다.
-9. 다음과 같이 설정합니다:
-   - **VPC**: `my-3tier-app-vpc` 선택
-   - **Subnet**: `my-3tier-app-private-subnet-1` 선택
-   - **Auto-assign public IP**: `Disable` 선택
-   - **Firewall (security groups)**: `Select existing security group` 선택
-   - **Common security groups**: `my-3tier-app-ec2-sg` 선택
+10. **Instance type** 섹션:
+
+- `t2.micro` 선택 (프리티어 대상)
+
+11. **Key pair (login)** 섹션:
+
+- `Proceed without a key pair (Not recommended)` 선택
+- SSM Session Manager로 접속하므로 SSH 키가 불필요합니다.
+
+12. **Network settings** 섹션에서 [[Edit]] 버튼을 클릭합니다.
+13. 다음과 같이 설정합니다:
+
+- **VPC**: `my-3tier-app-vpc` 선택
+- **Subnet**: `my-3tier-app-private-subnet-1` 선택
+- **Auto-assign public IP**: `Disable` 선택
+- **Firewall (security groups)**: `Select existing security group` 선택
+- **Common security groups**: `my-3tier-app-ec2-sg` 선택
 
 > [!WARNING]
 > **Auto-assign public IP**를 반드시 `Disable`로 설정하세요.
 > Private Subnet에 배치하므로 Public IP가 필요 없습니다.
 
-10. **Advanced details** 섹션을 펼칩니다.
-11. **IAM instance profile** 드롭다운에서 SSM + Parameter Store 읽기 권한이 있는 IAM Role을 선택합니다.
+14. **Advanced details** 섹션을 펼칩니다.
+15. **IAM instance profile** 드롭다운에서 SSM + Parameter Store 읽기 권한이 있는 IAM Role을 선택합니다.
     - 필요 정책: `AmazonSSMManagedInstanceCore` + `AmazonSSMReadOnlyAccess`
     - Role이 없다면 아래 TIP을 참고하여 먼저 생성하세요.
 
@@ -594,7 +603,7 @@ app:
 > - [[Next]] → **Role name**: `my-3tier-app-ec2-role` → [[Create role]]
 > - EC2 생성 화면으로 돌아와서 IAM instance profile에 `my-3tier-app-ec2-role` 선택
 
-12. [[Launch instance]] 버튼을 클릭합니다.
+16. [[Launch instance]] 버튼을 클릭합니다.
 
 > [!OUTPUT]
 > "Successfully initiated launch of instance (i-0abc123def456)" 메시지가 표시됩니다.
@@ -675,6 +684,10 @@ sudo systemctl enable spring-app
 
 ### 5-5. 로컬에서 빌드 및 EC2 전송
 
+> [!NOTE]
+> EC2가 Private Subnet에 있으므로 SSH(scp)로 직접 파일을 전송할 수 없습니다.  
+> Amazon S3를 경유하여 JAR/WAR 파일을 EC2에 전달합니다.
+
 **Spring Boot (JAR) 방식:**
 
 ```bash
@@ -682,10 +695,8 @@ sudo systemctl enable spring-app
 cd ~/3tier-project/my-backend
 ./gradlew clean bootJar
 
-# JAR 파일을 EC2로 전송
-scp -i ~/.ssh/my-key.pem \
-  build/libs/my-backend-0.0.1-SNAPSHOT.jar \
-  ec2-user@EC2_PUBLIC_IP:/home/ec2-user/app/app.jar
+# S3에 업로드 (배포용 버킷 사용)
+aws s3 cp build/libs/my-backend-0.0.1-SNAPSHOT.jar s3://<S3_DEPLOY_BUCKET>/app.jar
 ```
 
 **Spring MVC (WAR + Tomcat) 방식:**
@@ -695,11 +706,32 @@ scp -i ~/.ssh/my-key.pem \
 cd ~/3tier-project/my-backend
 ./gradlew clean build -x test
 
-# WAR 파일을 EC2로 전송
-scp -i ~/.ssh/my-key.pem \
-  build/libs/my-backend-0.0.1-SNAPSHOT.war \
-  ec2-user@EC2_PUBLIC_IP:/home/ec2-user/app/app.war
+# S3에 업로드
+aws s3 cp build/libs/my-backend-0.0.1-SNAPSHOT.war s3://<S3_DEPLOY_BUCKET>/app.war
 ```
+
+**EC2에서 다운로드 (SSM Session Manager로 접속 후):**
+
+```bash
+# JAR 방식
+aws s3 cp s3://<S3_DEPLOY_BUCKET>/app.jar /home/ec2-user/app/app.jar
+
+# WAR 방식
+aws s3 cp s3://<S3_DEPLOY_BUCKET>/app.war /home/ec2-user/app/app.war
+sudo cp /home/ec2-user/app/app.war /usr/share/tomcat/webapps/ROOT.war
+```
+
+> [!TIP]
+> `<S3_DEPLOY_BUCKET>`은 배포 아티팩트 저장용 S3 버킷입니다.  
+> 프론트엔드 버킷과 별도로 생성하거나, 기존 버킷에 `deploy/` 접두사로 구분하여 사용할 수 있습니다.
+>
+> **배포용 버킷 빠르게 생성:**
+>
+> ```bash
+> aws s3 mb s3://my-3tier-app-deploy-<BucketSuffix> --region ap-northeast-2
+> ```
+>
+> 이 버킷명을 태스크 6에서 GitHub Secrets `S3_DEPLOY_BUCKET`에 등록합니다.
 
 > [!TIP]
 > **Spring MVC (WAR) 사용 시 추가 작업:**
@@ -748,16 +780,16 @@ sudo journalctl -u spring-app -f
 
 ### 5-7. ALB Target Group에 EC2 등록
 
-13. 상단 검색창에 `EC2`를 입력하고 **EC2** 서비스를 선택합니다.
-14. 왼쪽 메뉴에서 **Target Groups**를 클릭합니다.
-15. `my-3tier-app-tg`를 클릭합니다.
-16. **Targets** 탭을 클릭합니다.
-17. [[Register targets]] 버튼을 클릭합니다.
-18. **Available instances**에서 `my-3tier-app-server`를 체크합니다.
-19. **Ports for the selected instances**: `8080` 입력
-20. [[Include as pending below]] 버튼을 클릭합니다.
-21. 하단의 **Review** 섹션에서 인스턴스가 추가된 것을 확인합니다.
-22. [[Register pending targets]] 버튼을 클릭합니다.
+17. 상단 검색창에 `EC2`를 입력하고 **EC2** 서비스를 선택합니다.
+18. 왼쪽 메뉴에서 **Target Groups**를 클릭합니다.
+19. `my-3tier-app-tg`를 클릭합니다.
+20. **Targets** 탭을 클릭합니다.
+21. [[Register targets]] 버튼을 클릭합니다.
+22. **Available instances**에서 `my-3tier-app-server`를 체크합니다.
+23. **Ports for the selected instances**: `8080` 입력
+24. [[Include as pending below]] 버튼을 클릭합니다.
+25. 하단의 **Review** 섹션에서 인스턴스가 추가된 것을 확인합니다.
+26. [[Register pending targets]] 버튼을 클릭합니다.
 
 > [!OUTPUT]
 > Target Group의 Targets 탭에서 등록된 인스턴스를 확인합니다:
@@ -800,18 +832,47 @@ sudo journalctl -u spring-app -f
 
 코드를 push하면 자동으로 빌드 → Amazon EC2 배포 → Health Check가 실행되는 파이프라인을 구축합니다.
 
-### 6-1. GitHub Secrets 설정
+### 6-1. IAM 사용자 생성 (GitHub Actions용)
 
-25. 브라우저에서 GitHub → `my-backend` 리포지토리 페이지로 이동합니다.
-26. **Settings** 탭을 클릭합니다.
-27. 왼쪽 메뉴에서 **Secrets and variables** → **Actions**를 클릭합니다.
-28. [[New repository secret]] 버튼을 클릭합니다.
-29. 다음 Secrets를 하나씩 추가합니다:
-    - **AWS_ACCESS_KEY_ID**: IAM Access Key ID (S3 업로드용)
-    - **AWS_SECRET_ACCESS_KEY**: IAM Secret Access Key
-    - **AWS_REGION**: `ap-northeast-2`
-    - **S3_DEPLOY_BUCKET**: JAR 업로드용 S3 버킷명
-    - **EC2_INSTANCE_ID**: Amazon EC2 인스턴스 ID (SSM 명령 실행용)
+27. 상단 검색창에 `IAM`을 입력하고 **IAM** 서비스를 선택합니다.
+28. 왼쪽 메뉴에서 **IAM Users**를 클릭합니다.
+29. [[Create user]]를 클릭합니다.
+30. **User name**: `github-actions-backend`를 입력합니다.
+31. **Provide user access to the AWS Management Console** 체크를 **하지 않습니다** (콘솔 접근 불필요).
+32. [[Next]]를 클릭합니다.
+33. **Permissions options**에서 `Attach policies directly`를 선택합니다.
+34. 다음 정책을 검색하여 체크합니다:
+    - `AmazonS3FullAccess` (JAR 업로드용)
+    - `AmazonSSMFullAccess` (SSM Run Command 실행용)
+35. [[Next]]를 클릭합니다.
+36. **Review and create** 페이지에서 설정을 확인하고 [[Create user]]를 클릭합니다.
+
+### Access Key 생성
+
+37. 생성된 `github-actions-backend` 사용자를 클릭하여 상세 페이지로 이동합니다.
+38. **Security credentials** 탭을 클릭합니다.
+39. **Access keys** 섹션에서 [[Create access key]]를 클릭합니다.
+40. **Use case**에서 `Third-party service`를 선택합니다.
+41. 하단의 확인 체크박스를 선택하고 [[Next]]를 클릭합니다.
+42. [[Create access key]]를 클릭합니다.
+43. **Access key ID**와 **Secret access key**를 복사하여 안전한 곳에 저장합니다.
+
+> [!WARNING]
+> Secret access key는 이 화면에서만 확인할 수 있습니다.  
+> 페이지를 닫으면 다시 볼 수 없으므로 반드시 복사하여 저장하세요.
+
+### 6-2. GitHub Secrets 설정
+
+44. 브라우저에서 GitHub → `my-backend` 리포지토리 페이지로 이동합니다.
+45. **Settings** 탭을 클릭합니다.
+46. 왼쪽 메뉴에서 **Secrets and variables** → **Actions**를 클릭합니다.
+47. [[New repository secret]] 버튼을 클릭합니다.
+48. 다음 Secrets를 하나씩 추가합니다:
+    - `AWS_ACCESS_KEY_ID`: 43번에서 복사한 Access Key ID
+    - `AWS_SECRET_ACCESS_KEY`: 43번에서 복사한 Secret Access Key
+    - `AWS_REGION`: `ap-northeast-2`
+    - `S3_DEPLOY_BUCKET`: `<태스크 5-5에서 생성한 배포용 S3 버킷명>`
+    - `EC2_INSTANCE_ID`: `<태스크 5-1에서 생성한 Amazon EC2 인스턴스 ID (예: i-0abc123def456)>`
 
 > [!CONCEPT] Private Subnet Amazon EC2에 배포하는 방법
 > Private Subnet의 Amazon EC2에는 SSH로 직접 접속할 수 없습니다.
@@ -855,7 +916,7 @@ sudo journalctl -u spring-app -f
 > 이 방식은 Spring MVC(WAR) 프로젝트처럼 SSM Parameter Store를 사용하기 어려운 경우에 유용합니다.
 > Spring Boot 프로젝트에서도 SSM 대신 이 방식을 사용할 수 있습니다.
 
-### 6-2. GitHub Actions 워크플로우 작성
+### 6-3. GitHub Actions 워크플로우 작성
 
 `.github/workflows/deploy.yml` 파일을 생성합니다:
 
@@ -942,7 +1003,7 @@ jobs:
           echo "✅ 배포 완료!"
 ```
 
-### 6-3. 배포 테스트
+### 6-4. 배포 테스트
 
 ```bash
 cd ~/3tier-project/my-backend
@@ -980,8 +1041,8 @@ GitHub → **Actions** 탭에서 워크플로우 실행을 확인합니다.
 
 ### 7-1. ALB Target Group Health Check 확인
 
-23. **EC2** → **Target Groups** → `my-3tier-app-tg`를 클릭합니다.
-24. **Targets** 탭에서 등록된 인스턴스의 Status를 확인합니다:
+49. **EC2** → **Target Groups** → `my-3tier-app-tg`를 클릭합니다.
+50. **Targets** 탭에서 등록된 인스턴스의 Status를 확인합니다:
 
 - `healthy`: 정상 (Health Check 통과)
 - `unhealthy`: 비정상 (로그 확인 필요)

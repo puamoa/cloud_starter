@@ -124,7 +124,7 @@ Invalidation 실행하면:
 | `AWS_REGION`                 | `ap-northeast-2`                     | 리전                              |
 | `S3_BUCKET_NAME`             | `my-3tier-app-frontend-hong01` | Step 8에서 생성한 버킷 이름       |
 | `CLOUDFRONT_DISTRIBUTION_ID` | `E1A2B3C4D5E6F7`                     | Amazon CloudFront Distribution ID |
-| `VITE_API_BASE_URL`          | `http://<ALB DNS Name>`              | 백엔드 API URL (Step 9-3의 ALB)   |
+| `VITE_API_URL`          | `http://<ALB DNS Name>`              | 백엔드 API URL (Step 9-3의 ALB)   |
 
 > [!TIP]
 > **Amazon CloudFront Distribution ID 확인 방법:**
@@ -132,10 +132,10 @@ Invalidation 실행하면:
 > - AWS Console → Amazon CloudFront → Distributions → ID 열에 표시됩니다.
 > - 또는 CLI: `aws cloudfront list-distributions --query 'DistributionList.Items[*].Id'`
 >
-> **VITE_API_BASE_URL:**
+> **VITE_API_URL:**
 >
 > - Step 9-3에서 배포한 백엔드의 ALB DNS Name입니다.
-> - Vue.js에서 `import.meta.env.VITE_API_BASE_URL`로 접근합니다.
+> - Vue.js에서 `import.meta.env.VITE_API_URL`로 접근합니다.
 
 > [!NOTE]
 > IAM 사용자에게 다음 정책이 필요합니다:
@@ -154,11 +154,11 @@ Invalidation 실행하면:
 3. Vue.js 프로젝트의 `.env.production` 파일을 확인합니다:
 
 ```
-VITE_API_BASE_URL=http://placeholder-will-be-replaced
+VITE_API_URL=http://placeholder-will-be-replaced
 ```
 
 > [!NOTE]
-> GitHub Actions에서 빌드 시 `VITE_API_BASE_URL` 환경변수를 주입하므로,  
+> GitHub Actions에서 빌드 시 `VITE_API_URL` 환경변수를 주입하므로,  
 > `.env.production`에는 플레이스홀더만 넣어도 됩니다.  
 > 실제 값은 워크플로우에서 GitHub Secrets로 전달합니다.
 
@@ -196,7 +196,7 @@ jobs:
       # 환경변수 주입 후 빌드
       - name: Build
         env:
-          VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
+          VITE_API_URL: ${{ secrets.VITE_API_URL }}
         run: npm run build
 
       # AWS 인증
@@ -295,7 +295,7 @@ Step 9-3의 백엔드(ECS Fargate)와 Step 9-4의 프론트엔드(S3+CloudFront)
 > | 증상 | 원인 | 해결 방법 |
 > |------|------|-----------|
 > | API 호출 시 CORS 에러 | 백엔드 CORS 설정 누락 | Spring Boot에 `@CrossOrigin` 또는 WebMvcConfigurer 설정 |
-> | `net::ERR_CONNECTION_REFUSED` | VITE_API_BASE_URL 잘못됨 | GitHub Secrets의 ALB DNS 확인 |
+> | `net::ERR_CONNECTION_REFUSED` | VITE_API_URL 잘못됨 | GitHub Secrets의 ALB DNS 확인 |
 > | 프론트엔드 로드 후 빈 화면 | Vue Router History 모드 문제 | Amazon CloudFront Error Pages → 403/404 → index.html |
 > | API 호출 `502 Bad Gateway` | ECS Task 비정상 | Amazon ECS → Tasks → CloudWatch Logs 확인 |
 
