@@ -13,6 +13,7 @@ Metadata:
           default: 'Project Settings'
         Parameters:
           - ProjectName
+          - BucketSuffix
       - Label:
           default: 'Tags (Keep Default)'
         Parameters:
@@ -28,6 +29,13 @@ Parameters:
     Type: String
     Default: my-3tier-app
     Description: Project name used as resource naming prefix
+
+  BucketSuffix:
+    Type: String
+    Default: hong01
+    Description: 'S3 bucket unique suffix (e.g. hong01, team-a)'
+    AllowedPattern: '[a-z0-9][a-z0-9-]*'
+    ConstraintDescription: 'Lowercase, numbers, hyphens only. Must start with lowercase or number.'
 
   CreatedByTag:
     Type: String
@@ -57,7 +65,7 @@ Resources:
   FrontendBucket:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: !Sub '${ProjectName}-frontend-${AWS::AccountId}'
+      BucketName: !Sub '${ProjectName}-frontend-${BucketSuffix}'
       WebsiteConfiguration:
         IndexDocument: index.html
         ErrorDocument: index.html

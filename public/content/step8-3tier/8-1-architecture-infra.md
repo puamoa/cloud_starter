@@ -155,25 +155,184 @@ my-backend/           ← Spring Boot 프로젝트
 
 ---
 
-## 태스크 2: GitHub 리포지토리 2개 생성
+## 태스크 2: GitHub Personal Access Token (PAT) 발급
+
+GitHub는 2021년부터 비밀번호 인증을 차단하고 **Personal Access Token(PAT)** 또는 SSH 키를 통한 인증만 허용합니다.  
+로컬에서 `git push`하려면 PAT이 필요합니다.
+
+> [!CONCEPT] GitHub 인증 방식
+> GitHub에서 코드를 push하려면 본인 확인이 필요합니다.  
+> 비밀번호 대신 **토큰**(긴 문자열)을 사용하여 인증합니다.  
+> 토큰은 비밀번호보다 안전합니다 (만료 기간 설정, 권한 제한, 언제든 폐기 가능).
+>
+> 인증(push 권한)과 커밋 author(이름 표시)는 별개입니다.  
+> 자세한 내용은 Step 8-0 이론의 "GitHub 인증과 Git 커밋 author" 섹션을 참고하세요.
+
+### PAT 발급
+
+이 실습에서는 설정이 간단한 **Classic** 토큰을 사용합니다.
+
+1. [GitHub](https://github.com)에 로그인합니다.
+2. 우측 상단 프로필 아이콘을 클릭합니다.
+3. **Settings**를 클릭합니다.
+4. 왼쪽 메뉴 맨 아래 **Developer settings**를 클릭합니다.
+5. **Personal access tokens** → **Tokens (classic)**을 클릭합니다.
+6. [[Generate new token]] → **Generate new token (classic)**을 클릭합니다.
+
+> [!TIP]
+> GitHub는 **Fine-grained token**(세분화 토큰)도 제공합니다.  
+> Fine-grained는 특정 레포만 접근 허용, 권한을 더 세밀하게 제어할 수 있어 보안상 권장됩니다.  
+> 하지만 설정이 복잡하므로 이 실습에서는 Classic을 사용합니다.
+
+7. 다음과 같이 설정합니다:
+   - **Note**: `3tier-project` (용도 메모)
+   - **Expiration**: `90 days` (또는 본인이 원하는 기간)
+   - **Select scopes**:
+     - ✅ `repo` 체크 (전체 레포 접근 권한)
+     - ✅ `workflow` 체크 (GitHub Actions 워크플로우 파일 push에 필요)
+     - ✅ `read:org` 체크 (admin:org 하위 항목, `gh auth login`에 필요)
+
+8. [[Generate token]] 버튼을 클릭합니다.
+9. 생성된 토큰(`ghp_` 또는 `github_pat_`으로 시작)을 **즉시 복사**하여 안전한 곳에 저장합니다.
+
+> [!WARNING]
+> 토큰은 이 화면에서만 확인할 수 있습니다. 페이지를 닫으면 다시 볼 수 없습니다.  
+> 분실 시 해당 토큰의 [[Regenerate token]]을 클릭하면 새 값으로 재발급됩니다 (기존 토큰은 즉시 무효화).
+
+### 로컬 Git에 토큰 설정
+
+GitHub CLI(`gh`)를 사용하면 브라우저 인증 한 번으로 설정이 완료됩니다.
+
+> [!NOTE]
+> 아래 10~11번은 태스크 3에서 레포를 클론한 후에 실행합니다.  
+> 지금은 PAT을 안전한 곳에 저장해두고, GitHub CLI 설치까지만 진행하세요.
+
+**방법 1: GitHub CLI 사용 (권장)**
+
+10. [GitHub CLI](https://cli.github.com/)를 설치합니다:
+
+```bash
+# macOS
+brew install gh
+
+# Windows (winget)
+winget install --id GitHub.cli
+
+# Linux (apt)
+sudo apt install gh
+```
+
+> [!NOTE]
+> Windows에서 설치 후 **터미널을 닫고 다시 열어야** `gh` 명령이 인식됩니다.
+
+11. GitHub 인증을 실행합니다:
+
+```bash
+gh auth login
+```
+
+12. 대화형 프롬프트에서 다음을 선택합니다:
+    - **What account do you want to log into?** → `GitHub.com`
+    - **What is your preferred protocol for Git operations?** → `HTTPS`
+    - **Authenticate Git with your GitHub credentials?** → `Yes`
+    - **How would you like to authenticate GitHub CLI?** → `Paste an authentication token`
+    - 9번에서 복사한 PAT을 붙여넣습니다.
+
+13. 인증 상태를 확인합니다:
+
+```bash
+gh auth status
+```
+
+> [!OUTPUT]
+>
+> ```
+> github.com
+>   ✓ Logged in to github.com account <YOUR_USERNAME> (keyring)
+>   - Active account: true
+>   - Git operations protocol: https
+>   - Token: ghp_****
+>   - Token scopes: 'read:org', 'repo', 'workflow'
+> ```
+>
+> `✓ Logged in` 메시지가 표시되면 성공입니다.  
+> 이후 `git push`, `git clone`(Private) 시 인증 없이 바로 동작합니다.
+
+> [!TIP]
+> **계정을 전환하거나 로그아웃하고 싶은 경우:**
+>
+> ```bash
+> gh auth logout
+> ```
+>
+> 이후 `gh auth login`으로 다른 계정으로 재인증할 수 있습니다.
+
+**방법 2: remote URL에 토큰 직접 포함 (GitHub CLI 설치가 어려운 경우)**
+
+> [!NOTE]
+> 이 방법은 태스크 3에서 레포를 클론한 후에 실행합니다.
+
+클론한 레포의 remote URL에 PAT을 포함시킵니다:
+
+```bash
+cd ~/3tier-project/my-backend
+git remote set-url origin https://<YOUR_USERNAME>:<발급한-토큰>@github.com/<YOUR_USERNAME>/my-backend.git
+
+cd ~/3tier-project/my-frontend
+git remote set-url origin https://<YOUR_USERNAME>:<발급한-토큰>@github.com/<YOUR_USERNAME>/my-frontend.git
+```
+
+설정 확인:
+
+```bash
+git remote -v
+```
+
+> [!WARNING]
+> 방법 2는 `.git/config`에 토큰이 평문으로 저장됩니다.  
+> 공용 PC에서는 작업 후 토큰을 제거하세요:
+>
+> ```bash
+> # 토큰 제거 (URL에서 인증 정보 삭제)
+> git remote set-url origin https://github.com/<YOUR_USERNAME>/my-backend.git
+>
+> # 로컬 user 설정 제거 (글로벌 설정으로 복원)
+> git config --unset user.name
+> git config --unset user.email
+> ```
+
+> [!TIP]
+> **커밋 author를 변경하고 싶은 경우:**
+>
+> ```bash
+> cd ~/3tier-project/my-backend
+> git config user.name "<YOUR_USERNAME>"
+> git config user.email "<YOUR_EMAIL>"
+> ```
+
+✅ **태스크 완료** — GitHub PAT을 발급하고 로컬 Git 인증을 설정했습니다.
+
+---
+
+## 태스크 3: GitHub 리포지토리 2개 생성
 
 프론트엔드와 백엔드를 별도 리포지토리로 관리합니다.
 
 > [!NOTE]
 > **소스 코드 옵션을 선택하세요:**
 >
-> | 옵션                           | 대상                                             | 설명                                       |
-> | ------------------------------ | ------------------------------------------------ | ------------------------------------------ |
-> | **옵션 A: 기존 프로젝트 사용** | Step 2~6에서 만든 Spring Boot/Vue.js가 있는 경우 | 기존 코드를 새 레포에 옮겨서 사용          |
-> | **옵션 B: 새로 시작**          | 처음부터 만들거나 기존 코드가 없는 경우          | 이 가이드에서 제공하는 보일러플레이트 사용 |
+> | 옵션                           | 대상                                             | 설명                                         |
+> | ------------------------------ | ------------------------------------------------ | -------------------------------------------- |
+> | **옵션 A: 기존 프로젝트 사용** | Step 2~6에서 만든 Spring Boot/Vue.js가 있는 경우 | 기존 코드를 그대로 사용하거나 새 레포에 복사 |
+> | **옵션 B: 새로 시작**          | 처음부터 만들거나 기존 코드가 없는 경우          | 이 가이드에서 제공하는 보일러플레이트 사용   |
 >
 > 어떤 옵션이든 최종 결과물(3-Tier 연동)은 동일합니다.
 
 > [!TIP]
 > **옵션 A (기존 프로젝트)를 선택한 경우:**
 >
-> - 기존 Spring Boot 프로젝트를 `my-backend` 레포에 push합니다.
-> - 기존 Vue.js 프로젝트를 `my-frontend` 레포에 push합니다.
+> - 팀 내 기존 GitHub 레포가 있다면 그대로 사용합니다 (3-1, 3-2 건너뛰기 가능).
+> - 개인 로컬 프로젝트만 있다면 3-1, 3-2에서 새 레포를 생성하고, 3-4에서 코드를 옮깁니다.
 > - 이후 태스크에서 DB 접속 정보나 API URL만 환경에 맞게 변경하면 됩니다.
 > - Step 8-3에서 Amazon RDS 연동 코드와 CORS 설정만 추가/확인합니다.
 >
@@ -181,101 +340,202 @@ my-backend/           ← Spring Boot 프로젝트
 >
 > - 아래 가이드를 따라 레포를 생성합니다.
 > - Step 8-2에서 Vue.js 프로젝트를, Step 8-3에서 Spring Boot 프로젝트를 처음부터 생성합니다.
+> - 3-4는 건너뛰세요.
 
-### 2-1. my-frontend 리포지토리 생성
+### 3-1. my-frontend 리포지토리 생성
 
-1. GitHub에 로그인합니다.
-2. 우측 상단 `+` → [[New repository]]를 클릭합니다.
-3. 다음과 같이 설정합니다:
-   - **Repository name**: `my-frontend`
-   - **Description**: `Vue.js Frontend for 3-Tier App`
-   - **Visibility**: Public (GitHub Actions 무료 사용)
-   - ✅ **Add a README file** 체크
-   - **.gitignore**: `Node` 선택
-4. [[Create repository]]를 클릭합니다.
+> [!WARNING]
+> 이 태스크의 명령어에서 `<>` 로 감싼 부분은 본인 환경에 맞게 변경해야 합니다:
+>
+> - `<YOUR_USERNAME>`: 본인 GitHub 사용자명 (예: `hong123`)
+> - `<TEAM_ORG>`: 팀/조직 GitHub 계정명 (예: `my-team-org`)
+> - `<기존-백엔드-레포명>`, `<기존-프론트엔드-레포명>`: 기존 GitHub 레포 이름 (예: `scoula-backend`)
+> - `<기존-백엔드-프로젝트-경로>`: 로컬 기존 프로젝트 폴더 경로 (예: `~/projects/my-spring-app`)
+> - `~/3tier-project`: 작업 디렉토리 경로. 본인이 원하는 위치로 변경 가능 (예: `~/workspace`, `~/dev`)
 
-### 2-2. my-backend 리포지토리 생성
+14. [GitHub](https://github.com)에 로그인합니다.
+15. 우측 상단 `+` → [[New repository]]를 클릭합니다 (또는 [https://github.com/new](https://github.com/new) 접속).
+16. 다음과 같이 설정합니다:
+    - **Repository name**: `my-frontend`
+    - **Description**: `Vue.js Frontend for 3-Tier App`
+    - **Visibility**: Public (GitHub Actions 무료 사용)
+    - **Add a README file**: 토글 ON
+    - **.gitignore template**: `Node` 선택
 
-5. 같은 방식으로 두 번째 리포지토리를 생성합니다:
-   - **Repository name**: `my-backend`
-   - **Description**: `Spring Boot Backend for 3-Tier App`
-   - **Visibility**: Public
-   - ✅ **Add a README file** 체크
-   - **.gitignore**: `Gradle` 선택
-6. [[Create repository]]를 클릭합니다.
+17. [[Create repository]]를 클릭합니다.
 
-### 2-3. 로컬에 클론
+### 3-2. my-backend 리포지토리 생성
+
+18. 같은 방식으로 두 번째 리포지토리를 생성합니다:
+    - **Repository name**: `my-backend`
+    - **Description**: `Spring Boot Backend for 3-Tier App`
+    - **Visibility**: Public
+    - **Add a README file**: 토글 ON
+    - **.gitignore template**: `Gradle` 선택
+
+19. [[Create repository]]를 클릭합니다.
+
+### 3-3. 로컬에 클론
+
+> [!NOTE]
+> 3-4의 경우 1(팀 레포 그대로 사용) 또는 경우 1-1(Fork)을 선택한 경우,  
+> 해당 단계에서 클론을 진행하므로 이 단계는 건너뛰세요.
+
+20. 작업 디렉토리를 생성합니다:
 
 ```bash
-# 작업 디렉토리 생성
 mkdir ~/3tier-project && cd ~/3tier-project
+```
 
-# 프론트엔드 클론
-git clone https://github.com/YOUR_USERNAME/my-frontend.git
+21. 프론트엔드 레포를 클론합니다:
 
-# 백엔드 클론
-git clone https://github.com/YOUR_USERNAME/my-backend.git
+```bash
+git clone https://github.com/<YOUR_USERNAME>/my-frontend.git
+```
+
+22. 백엔드 레포를 클론합니다:
+
+```bash
+git clone https://github.com/<YOUR_USERNAME>/my-backend.git
 ```
 
 > [!TIP]
 > 리포지토리를 Public으로 생성하면 GitHub Actions를 무제한 무료로 사용할 수 있습니다.  
 > Private 리포지토리는 월 2,000분까지 무료입니다.
 
-### 2-4. 기존 프로젝트를 새 레포에 push (옵션 A)
+> [!TIP]
+> **클론 후 로컬 Git 설정을 확인하세요.**  
+> 여러 GitHub 계정을 사용하는 경우 커밋 author가 의도한 계정인지 확인합니다:
+>
+> ```bash
+> cd ~/3tier-project/my-backend
+> git config user.name   # 현재 설정 확인
+> git config user.email  # 현재 설정 확인
+> ```
+>
+> 다른 계정으로 표시되면 로컬 설정을 변경하세요 (태스크 2 참고):
+>
+> ```bash
+> git config user.name "<YOUR_USERNAME>"
+> git config user.email "<YOUR_EMAIL>"
+> ```
 
-기존 Spring Boot/Vue.js 프로젝트가 로컬에 있는 경우, 새로 만든 레포에 push합니다.
+> [!NOTE]
+> 태스크 2에서 **방법 2(remote URL에 토큰 포함)**를 선택한 경우, 여기서 설정합니다:
+>
+> ```bash
+> git remote set-url origin https://<YOUR_USERNAME>:<발급한-토큰>@github.com/<YOUR_USERNAME>/my-backend.git
+> ```
 
-**백엔드 (Spring Boot 또는 Spring MVC):**
+### 3-4. 기존 프로젝트를 레포에 연결 (옵션 A)
+
+> [!NOTE]
+> 옵션 B(새로 시작)를 선택한 경우 이 단계를 건너뛰세요.
+
+23. 본인 상황을 확인하고 아래 3가지 중 하나를 선택합니다:
+
+| 상황                                                                   | 선택         | 3-1~3-3 필요 여부      | 설명                               |
+| ---------------------------------------------------------------------- | ------------ | ---------------------- | ---------------------------------- |
+| **경우 1**: 팀 내 기존 GitHub 레포가 있다                              | 아래 28~29번 | ❌ 건너뛰기            | 기존 레포를 그대로 사용하거나 Fork |
+| **경우 2**: 개인 로컬 프로젝트가 있다 (기존 레포를 건드리고 싶지 않다) | 아래 28~29번 | ✅ 필요 (클론 후 복사) | 파일만 복사                        |
+| **경우 3**: 개인 로컬 프로젝트가 있다 (이력을 옮기고 싶다)             | 아래 28~29번 | ❌ 건너뛰기            | 원격 주소 변경                     |
+
+**경우 1: 팀 레포가 있는 경우**
+
+24. 팀 레포를 그대로 사용하려면 기존 URL로 클론합니다 (3-1~3-3 건너뛰기 가능):
 
 ```bash
-cd ~/기존-백엔드-프로젝트
+cd ~/3tier-project
+git clone https://github.com/<TEAM_ORG>/<기존-백엔드-레포명>.git my-backend
+git clone https://github.com/<TEAM_ORG>/<기존-프론트엔드-레포명>.git my-frontend
+```
 
-# 기존 git 이력 제거 (새 레포로 시작)
-rm -rf .git
+25. 팀 레포와 분리하고 싶다면 Fork 또는 수동 복사를 합니다:
 
-# 새 레포로 초기화
-git init
-git remote add origin https://github.com/YOUR_USERNAME/my-backend.git
+```bash
+# 방법 A: GitHub Fork (팀 레포 페이지 → 우측 상단 [[Fork]] → 본인 계정에 복사)
+git clone https://github.com/<YOUR_USERNAME>/<기존-백엔드-레포명>.git my-backend
 
-# 원격 레포의 README, .gitignore 가져오기
-git pull origin main --allow-unrelated-histories
+# 방법 B: 수동 복사 (완전 분리)
+git clone https://github.com/<TEAM_ORG>/<기존-백엔드-레포명>.git temp-backend
+cp -r temp-backend/* ~/3tier-project/my-backend/
+cp temp-backend/.gitignore ~/3tier-project/my-backend/
+rm -rf temp-backend
+cd ~/3tier-project/my-backend
+git add .
+git commit -m "feat: initial project from team repo"
+git push origin main
+```
 
-# 전체 커밋 및 push
+> [!TIP]
+>
+> - **Fork**: 원본 레포와 연결 유지, PR로 원본에 기여 가능, 이력 보존
+> - **수동 복사**: 완전히 독립된 레포, 원본과 관계 없음, 이력 없이 새로 시작
+
+**경우 2: 로컬 프로젝트를 새 레포로 복사하는 경우**
+
+26. 3-3에서 클론한 디렉토리에 기존 소스 파일을 복사합니다 (`.git` 제외):
+
+```bash
+cd ~/3tier-project/my-backend
+rsync -av --exclude='.git' --exclude='build' --exclude='.gradle' \
+  <기존-백엔드-프로젝트-경로>/ .
+```
+
+27. push 전에 `.gitignore`를 확인합니다.  
+    불필요한 파일(`build/`, `node_modules/`, `.env.local` 등)이 포함되지 않도록 3-5를 먼저 확인한 후 커밋합니다:
+
+```bash
 git add .
 git commit -m "feat: initial backend project"
 git push origin main
 ```
 
-**프론트엔드 (Vue.js):**
+> [!TIP]
+> 프론트엔드도 같은 방식으로 진행합니다:
+>
+> ```bash
+> cd ~/3tier-project/my-frontend
+> rsync -av --exclude='.git' --exclude='node_modules' --exclude='dist' \
+>   <기존-프론트엔드-프로젝트-경로>/ .
+> git add .
+> git commit -m "feat: initial frontend project"
+> git push origin main
+> ```
+
+**경우 3: 기존 로컬 프로젝트의 원격 주소를 변경하는 경우**
+
+28. 기존 프로젝트 디렉토리에서 원격 주소를 새 레포로 변경합니다:
 
 ```bash
-cd ~/기존-프론트엔드-프로젝트
+cd <기존-백엔드-프로젝트-경로>
+git remote -v                    # 현재 원격 주소 확인
+git remote set-url origin https://github.com/<YOUR_USERNAME>/my-backend.git
+```
 
-rm -rf .git
-git init
-git remote add origin https://github.com/YOUR_USERNAME/my-frontend.git
-git pull origin main --allow-unrelated-histories
-git add .
-git commit -m "feat: initial frontend project"
-git push origin main
+29. 새 레포에 push합니다:
+
+```bash
+git push origin main --force
 ```
 
 > [!WARNING]
-> `rm -rf .git`은 기존 git 이력을 완전히 삭제합니다.  
-> 기존 이력을 보존하고 싶다면 `rm -rf .git` 대신 `git remote set-url origin <새 URL>`로 원격 주소만 변경하세요.
+> `--force` push는 원격 레포의 기존 커밋(README, .gitignore)을 덮어씁니다.  
+> 새로 생성한 빈 레포에만 사용하세요. 팀원이 이미 작업 중인 레포에는 절대 사용하지 마세요.
 
-> [!TIP]
-> `--allow-unrelated-histories` 옵션은 README가 있는 원격 레포와 로컬 프로젝트의 이력이 다를 때 병합을 허용합니다.  
-> 충돌이 발생하면 README 파일만 선택하고 커밋하면 됩니다.
-
-### 2-5. .gitignore와 환경 변수 설정 확인
+### 3-5. .gitignore와 환경 변수 설정 확인
 
 GitHub에서 레포 생성 시 선택한 `.gitignore` 템플릿(Node, Gradle)은 환경 변수 파일을 자동으로 무시합니다.  
 배포에 필요한 설정 파일이 누락되지 않도록 확인합니다.
 
+> [!TIP]
+> 기존 프로젝트에 이미 `.gitignore`가 있는 경우, GitHub에서 생성된 것과 **병합**하세요.  
+> 기존 `.gitignore`에 아래 항목이 없다면 추가합니다.  
+> GitHub에서 생성된 `.gitignore`와 중복되는 항목은 그대로 두면 됩니다.
+
 **백엔드 — `.gitignore` 확인:**
 
-7. `.gitignore` 파일을 열고 다음이 포함되어 있는지 확인합니다:
+30. `.gitignore` 파일을 열고 다음이 포함되어 있는지 확인합니다:
 
 ```gitignore
 # Gradle 기본 .gitignore에 포함된 항목
@@ -288,9 +548,9 @@ build/
 application-local.yml
 ```
 
-8. `application.yml`(또는 `application.properties`)은 `.gitignore`에 **포함하지 않습니다**:
-   - DB 접속 정보는 환경 변수(`${DB_ENDPOINT}`)로 주입하므로 코드에 비밀값이 없습니다.
-   - 환경 변수 값 자체는 SSM Parameter Store에서 관리합니다.
+31. `application.yml`(또는 `application.properties`)은 `.gitignore`에 **포함하지 않습니다**:
+    - DB 접속 정보는 환경 변수(`${DB_ENDPOINT}`)로 주입하므로 코드에 비밀값이 없습니다.
+    - 환경 변수 값 자체는 SSM Parameter Store에서 관리합니다.
 
 > [!NOTE]
 > `application.yml`에 하드코딩된 비밀번호가 있다면 환경 변수로 교체한 후 push하세요.  
@@ -298,7 +558,7 @@ application-local.yml
 
 **프론트엔드 — `.gitignore` 확인:**
 
-9. `.gitignore`에 다음이 포함되어 있는지 확인합니다:
+32. `.gitignore`에 다음이 포함되어 있는지 확인합니다:
 
 ```gitignore
 # Node 기본 .gitignore에 포함된 항목
@@ -310,30 +570,59 @@ dist/
 .env.*.local
 ```
 
-10. `.env.development`와 `.env.production`은 `.gitignore`에 **포함하지 않습니다**:
-    - 이 파일에는 API URL만 있고 비밀값이 없습니다.
-    - GitHub Actions 빌드 시 이 파일의 값을 사용합니다.
+33. `.env.development`와 `.env.production`의 git 포함 여부를 결정합니다:
+    - API URL만 있고 민감 정보가 없다면 → git에 포함해도 됩니다.
+    - API 키 등 민감 정보가 있다면 → `.gitignore`에 추가하고, GitHub Secrets로 빌드 시 주입합니다 (Step 8-2 태스크 6 참조).
+
+> [!WARNING]
+> Vue.js의 `VITE_` 환경 변수는 빌드 후 JS 파일에 포함되어 **브라우저에서 볼 수 있습니다.**  
+> DB 비밀번호, 서버 시크릿 같은 값은 프론트엔드에 절대 넣지 마세요 (백엔드에서 처리).
 
 > [!WARNING]
 > `.env.local`은 로컬 전용이므로 git에 포함하지 않습니다.  
-> `.env.production`은 빌드에 필요하므로 **반드시 git에 포함**해야 합니다.  
-> 만약 `VITE_API_URL`을 GitHub Secrets로 주입하는 경우에는 `.env.production`이 없어도 됩니다 (Step 8-2 태스크 6 참조).
+> `.env.production`은 민감 정보가 없다면 git에 포함해도 됩니다.  
+> 민감 정보(API 키 등)가 있다면 `.gitignore`에 추가하고 GitHub Secrets로 빌드 시 주입하세요 (Step 8-2 태스크 6 참조).
 
-11. 설정 확인 후 커밋합니다:
+34. 설정 확인 후 커밋합니다:
+
+> [!NOTE]
+> **처음 push할 때** Username/Password 프롬프트가 뜰 수 있습니다:
+>
+> ```
+> Username for 'https://github.com': <YOUR_USERNAME>
+> Password for 'https://<YOUR_USERNAME>@github.com': (여기에 PAT 붙여넣기)
+> ```
+>
+> - Password에는 GitHub 비밀번호가 아닌 **태스크 2에서 발급한 PAT**을 붙여넣습니다.
+> - 입력 시 화면에 아무것도 표시되지 않는 것이 정상입니다 (비밀번호 마스킹).
+> - macOS에서는 "키체인에 저장하시겠습니까?" 팝업이 뜰 수 있습니다. **허용**하면 이후 자동 인증됩니다.
+> - `gh auth login`(방법 1)으로 인증한 경우 프롬프트 없이 바로 push됩니다.
+
+> [!TIP]
+> **macOS 키체인 확인 방법:**  
+> Spotlight(⌘+Space)에서 `키체인 접근` 검색 → `github.com` 항목이 있으면 저장된 credential 확인 가능.
 
 ```bash
 # 백엔드
 cd ~/3tier-project/my-backend
-git add .gitignore
-git commit -m "chore: update .gitignore"
+
+# .gitignore에 추가한 파일이 이미 git에 트래킹되어 있다면 캐시 제거
+git rm -r --cached .
+git add .
+git commit -m "chore: apply updated .gitignore"
 git push origin main
 
 # 프론트엔드
 cd ~/3tier-project/my-frontend
-git add .gitignore
-git commit -m "chore: update .gitignore"
+git rm -r --cached .
+git add .
+git commit -m "chore: apply updated .gitignore"
 git push origin main
 ```
+
+> [!NOTE]
+> `git rm -r --cached .`는 git 추적 목록만 초기화합니다 (로컬 파일은 삭제되지 않습니다).  
+> `.gitignore`에 새로 추가한 파일(`.env.production`, `build/` 등)이 이후 커밋에서 제외됩니다.
 
 > [!NOTE]
 > 환경 변수(DB 접속 정보, API URL 등)의 실제 값 설정과 관리 방법은 이후 세션에서 다룹니다:
@@ -343,11 +632,17 @@ git push origin main
 >
 > 지금은 `.gitignore` 설정만 확인하고 넘어가세요.
 
+> [!WARNING]
+> 기존 프로젝트에서 민감 정보(DB 비밀번호, API 키 등)를 제거하고 push한 경우,  
+> **현재 상태로는 배포해도 앱이 정상 동작하지 않습니다** (환경 변수가 비어있으므로).  
+> 이후 Step 8-2(프론트), 8-3(백엔드)에서 GitHub Secrets 또는 SSM Parameter Store로  
+> 환경 변수를 주입하는 설정을 완료하면 정상 동작합니다.
+
 ✅ **태스크 완료** — GitHub에 `my-frontend`와 `my-backend` 리포지토리를 생성했습니다.
 
 ---
 
-## 태스크 3: AWS CloudFormation으로 인프라 한 번에 구축
+## 태스크 4: AWS CloudFormation으로 인프라 한 번에 구축
 
 Step 0~7에서 수동으로 만들었던 모든 인프라를 AWS CloudFormation 하나로 자동 구축합니다.
 
@@ -368,16 +663,18 @@ Step 0~7에서 수동으로 만들었던 모든 인프라를 AWS CloudFormation 
 > - **Frontend**: Amazon S3 버킷 (정적 웹 호스팅)
 > - **Backend**: ALB, Target Group, Listener
 
-### 3-1. Network 스택 생성 (VPC + 서브넷 + SG)
+### 4-1. Network 스택 생성 (VPC + 서브넷 + SG)
 
-7. 상단 검색창에 `CloudFormation`을 입력하고 **CloudFormation** 서비스를 선택합니다.
-8. [[Create stack]] 드롭다운을 클릭한 후 **With new resources (standard)**를 선택합니다.
-9. **Prerequisite - Prepare template**에서 `Choose an existing template`을 선택합니다.
-10. **Specify template**에서 `Upload a template file`을 선택합니다.
-11. [[Choose file]] 버튼을 클릭하고 다운로드한 `step8-network.yaml` 파일을 선택합니다.
-12. [[Next]] 버튼을 클릭합니다.
-13. **Stack name**에 `step8-network`를 입력합니다.
-14. **Parameters** 섹션에서 다음을 설정합니다:
+이 스택은 VPC, Public/Private Subnet 4개, Internet Gateway, NAT Gateway(옵션), Route Table, Security Group 3개를 생성합니다.
+
+35. 상단 검색창에 `CloudFormation`을 입력하고 **CloudFormation** 서비스를 선택합니다.
+36. [[Create stack]] 드롭다운을 클릭한 후 **With new resources (standard)**를 선택합니다.
+37. **Prerequisite - Prepare template**에서 `Choose an existing template`을 선택합니다.
+38. **Specify template**에서 `Upload a template file`을 선택합니다.
+39. [[Choose file]] 버튼을 클릭하고 다운로드한 `step8-network.yaml` 파일을 선택합니다.
+40. [[Next]] 버튼을 클릭합니다.
+41. **Stack name**에 `step8-network`를 입력합니다.
+42. **Parameters** 섹션에서 다음을 설정합니다:
 
 | 파라미터         | 값             | 설명                                               |
 | ---------------- | -------------- | -------------------------------------------------- |
@@ -385,34 +682,41 @@ Step 0~7에서 수동으로 만들었던 모든 인프라를 AWS CloudFormation 
 | CreateNATGateway | `Yes`          | Private Subnet 인터넷 접근 필요 시 Yes (비용 발생) |
 | 나머지           | 기본값 유지    | CIDR 변경 불필요                                   |
 
+> [!WARNING]
+> **ProjectName은 4개 스택 모두 반드시 동일한 값**이어야 합니다.  
+> 이 값으로 Cross-stack Reference(Export/Import)가 연결됩니다.  
+> 하나라도 다르면 "No export named..." 에러로 스택 생성이 실패합니다.
+
 > [!TIP]
-> **CreateNATGateway를 No로 설정하면:**
+> **CreateNATGateway를 `No`로 설정하면:**
 > NAT Gateway 시간당 비용($0.045/h + 데이터 처리)을 절약할 수 있습니다.  
 > 단, Private Subnet의 Amazon EC2에서 인터넷 접근(패키지 설치, SSM)이 불가합니다.  
 > 이 실습에서는 `Yes`를 권장합니다.
 
-15. [[Next]] 버튼을 클릭합니다.
-16. **Configure stack options** 페이지에서 추가 설정 없이 [[Next]] 버튼을 클릭합니다.
-17. **Review and create** 페이지에서 Stack name, Parameters 설정 내용을 확인합니다.
-18. [[Submit]] 버튼을 클릭합니다.
-19. **Events** 탭에서 리소스 생성 진행 상태를 확인합니다.
-20. Status가 `CREATE_COMPLETE`로 변경될 때까지 기다립니다 (약 2~3분).
+43. [[Next]] 버튼을 클릭합니다.
+44. **Configure stack options** 페이지에서 추가 설정 없이 [[Next]] 버튼을 클릭합니다.
+45. **Review and create** 페이지에서 Stack name, Parameters 설정 내용을 확인합니다.
+46. [[Submit]] 버튼을 클릭합니다.
+47. **Events** 탭에서 리소스 생성 진행 상태를 확인합니다.
+48. Status가 `CREATE_COMPLETE`로 변경될 때까지 기다립니다 (약 2~3분).
 
 > [!OUTPUT]
-> Stacks 목록에서 `step8-network`의 Status가 `CREATE_COMPLETE` (녹색)로 표시됩니다.
+> Stacks 목록에서 `step8-network`의 Status가 `CREATE_COMPLETE` (녹색)로 표시됩니다.  
 > Events 탭에서 VPC, Subnet, IGW, NAT Gateway, Route Table, Security Group 등이 순서대로 생성된 것을 확인할 수 있습니다.
 
-### 3-2. Data 스택 생성 (Amazon RDS)
+### 4-2. Data 스택 생성 (Amazon RDS)
+
+이 스택은 DB Parameter Group(timezone Asia/Seoul, utf8mb4), DB Subnet Group, Amazon RDS MySQL 인스턴스를 생성합니다.
 
 > [!WARNING]
 > Network 스택이 `CREATE_COMPLETE` 상태여야 Data 스택을 생성할 수 있습니다.  
 > Network 스택의 Export 값을 Import하기 때문입니다.
 
-21. [[Create stack]] 드롭다운 → **With new resources (standard)**를 선택합니다.
-22. `Upload a template file` → `step8-data.yaml` 파일을 선택합니다.
-23. [[Next]] 버튼을 클릭합니다.
-24. **Stack name**에 `step8-data`를 입력합니다.
-25. **Parameters** 섹션에서 다음을 설정합니다:
+49. Stacks 목록으로 돌아가서 [[Create stack]] 드롭다운 → **With new resources (standard)**를 선택합니다.
+50. `Upload a template file` → `step8-data.yaml` 파일을 선택합니다.
+51. [[Next]] 버튼을 클릭합니다.
+52. **Stack name**에 `step8-data`를 입력합니다.
+53. **Parameters** 섹션에서 다음을 설정합니다:
 
 | 파라미터         | 값               | 설명                               |
 | ---------------- | ---------------- | ---------------------------------- |
@@ -426,43 +730,51 @@ Step 0~7에서 수동으로 만들었던 모든 인프라를 AWS CloudFormation 
 > DBMasterPassword는 실습용으로 간단하게 설정하지만, 실제 프로젝트에서는 **반드시 강력한 비밀번호**를 사용하세요.  
 > 이 비밀번호는 Step 8-3에서 SSM Parameter Store에 저장하여 안전하게 관리합니다.
 
-26. [[Next]] 버튼을 클릭합니다.
-27. **Configure stack options** 페이지에서 [[Next]] 버튼을 클릭합니다.
-28. **Review and create** 페이지에서 Parameters(특히 비밀번호)를 확인합니다.
-29. [[Submit]] 버튼을 클릭합니다.
-30. Status가 `CREATE_COMPLETE`가 될 때까지 기다립니다 (약 **8~10분**, Amazon RDS 생성 소요).
+54. [[Next]] 버튼을 클릭합니다.
+55. **Configure stack options** 페이지에서 [[Next]] 버튼을 클릭합니다.
+56. **Review and create** 페이지에서 설정을 확인합니다.  
+    (DBMasterPassword는 `****`로 마스킹되어 표시되므로 입력 시 정확히 입력했는지 유의)
+57. [[Submit]] 버튼을 클릭합니다.
+58. Status가 `CREATE_COMPLETE`가 될 때까지 기다립니다 (약 **8~10분**, Amazon RDS 생성 소요).
 
 > [!TIP]
 > Amazon RDS 생성이 가장 오래 걸립니다 (약 8~10분).  
 > 이 시간 동안 Frontend 스택과 Backend 스택을 먼저 생성할 수 있습니다.  
 > Frontend 스택은 Network에 의존하지 않으므로 Data와 동시에 생성 가능합니다.
 
-### 3-3. Frontend 스택 생성 (Amazon S3)
+### 4-3. Frontend 스택 생성 (Amazon S3)
+
+이 스택은 Amazon S3 버킷(정적 웹 호스팅 활성화, Public Read 정책 포함)을 생성합니다.
 
 > [!NOTE]
 > Frontend 스택은 VPC와 독립적입니다 (Amazon S3는 글로벌 서비스).  
 > Network 스택 완료를 기다릴 필요 없이 바로 생성할 수 있습니다.
 
-31. [[Create stack]] 드롭다운 → **With new resources (standard)**를 선택합니다.
-32. `Upload a template file` → `step8-frontend.yaml` 파일을 선택합니다.
-33. [[Next]] 버튼을 클릭합니다.
-34. **Stack name**에 `step8-frontend`를 입력합니다.
-35. **Parameters** 섹션에서 **ProjectName**을 `my-3tier-app`으로 설정합니다 (4개 스택 모두 동일).
-36. [[Next]] 버튼을 클릭합니다.
-37. **Configure stack options** 페이지에서 [[Next]] 버튼을 클릭합니다.
-38. **Review and create** 페이지에서 확인 후 [[Submit]] 버튼을 클릭합니다.
-39. Status가 `CREATE_COMPLETE`가 될 때까지 기다립니다 (약 1분).
+59. [[Create stack]] 드롭다운 → **With new resources (standard)**를 선택합니다.
+60. `Upload a template file` → `step8-frontend.yaml` 파일을 선택합니다.
+61. [[Next]] 버튼을 클릭합니다.
+62. **Stack name**에 `step8-frontend`를 입력합니다.
+63. **Parameters** 섹션에서 다음을 설정합니다:
+    - **ProjectName**: `my-3tier-app` (4개 스택 모두 동일)
+    - **BucketSuffix**: 본인만의 고유한 값 입력 (예: `hong01`, `myname-dev`).  
+      S3 버킷 이름은 전 세계에서 고유해야 하므로 이니셜+번호 등을 사용합니다.
+64. [[Next]] 버튼을 클릭합니다.
+65. **Configure stack options** 페이지에서 [[Next]] 버튼을 클릭합니다.
+66. **Review and create** 페이지에서 확인 후 [[Submit]] 버튼을 클릭합니다.
+67. Status가 `CREATE_COMPLETE`가 될 때까지 기다립니다 (약 1분).
 
-### 3-4. Backend 스택 생성 (ALB)
+### 4-4. Backend 스택 생성 (ALB)
+
+이 스택은 Application Load Balancer, Target Group, HTTP Listener를 생성합니다.
 
 > [!WARNING]
 > Network 스택이 `CREATE_COMPLETE` 상태여야 합니다 (VPC, Subnet, SG를 Import).
 
-40. [[Create stack]] 드롭다운 → **With new resources (standard)**를 선택합니다.
-41. `Upload a template file` → `step8-backend.yaml` 파일을 선택합니다.
-42. [[Next]] 버튼을 클릭합니다.
-43. **Stack name**에 `step8-backend`를 입력합니다.
-44. **Parameters** 섹션에서 다음을 설정합니다:
+68. [[Create stack]] 드롭다운 → **With new resources (standard)**를 선택합니다.
+69. `Upload a template file` → `step8-backend.yaml` 파일을 선택합니다.
+70. [[Next]] 버튼을 클릭합니다.
+71. **Stack name**에 `step8-backend`를 입력합니다.
+72. **Parameters** 섹션에서 다음을 설정합니다:
 
 | 파라미터        | 값                 | 설명                       |
 | --------------- | ------------------ | -------------------------- |
@@ -470,14 +782,14 @@ Step 0~7에서 수동으로 만들었던 모든 인프라를 AWS CloudFormation 
 | AppPort         | `8080`             | Spring Boot 기본 포트      |
 | HealthCheckPath | `/actuator/health` | Health Check 경로          |
 
-45. [[Next]] 버튼을 클릭합니다.
-46. **Configure stack options** 페이지에서 [[Next]] 버튼을 클릭합니다.
-47. **Review and create** 페이지에서 확인 후 [[Submit]] 버튼을 클릭합니다.
-48. Status가 `CREATE_COMPLETE`가 될 때까지 기다립니다 (약 2~3분).
+73. [[Next]] 버튼을 클릭합니다.
+74. **Configure stack options** 페이지에서 [[Next]] 버튼을 클릭합니다.
+75. **Review and create** 페이지에서 확인 후 [[Submit]] 버튼을 클릭합니다.
+76. Status가 `CREATE_COMPLETE`가 될 때까지 기다립니다 (약 2~3분).
 
-### 3-5. 전체 스택 상태 확인
+### 4-5. 전체 스택 상태 확인
 
-49. AWS CloudFormation 콘솔에서 4개 스택 모두 `CREATE_COMPLETE` 상태인지 확인합니다:
+77. AWS CloudFormation 콘솔에서 4개 스택 모두 `CREATE_COMPLETE` 상태인지 확인합니다:
 
 | 스택 이름        | 상태               | 소요 시간 |
 | ---------------- | ------------------ | --------- |
@@ -510,15 +822,16 @@ Step 0~7에서 수동으로 만들었던 모든 인프라를 AWS CloudFormation 
 
 ---
 
-## 태스크 4: 인프라 확인
+## 태스크 5: 인프라 확인
 
 AWS CloudFormation이 생성한 리소스를 확인합니다.
 
-### 4-1. AWS CloudFormation Outputs 확인
+### 5-1. AWS CloudFormation Outputs 확인
 
-23. CloudFormation → **Stacks** → `step8-network` 클릭 (또는 각 스택의 Outputs 탭)
-24. **Outputs** 탭을 클릭합니다.
-25. 다음 값들을 메모합니다:
+78. 상단 검색창에 `CloudFormation`을 입력하고 **CloudFormation** 서비스를 선택합니다.
+79. **Stacks** 목록에서 `step8-network`를 클릭합니다.
+80. **Outputs** 탭을 클릭합니다.
+81. 다음 값들을 메모합니다:
 
 | Output Key         | 예시 값                                                                    | 용도                 |
 | ------------------ | -------------------------------------------------------------------------- | -------------------- |
@@ -531,8 +844,9 @@ AWS CloudFormation이 생성한 리소스를 확인합니다.
 | EC2SecurityGroupId | `sg-0abc123`                                                               | EC2 생성 시 사용     |
 
 > [!WARNING]
-> 이 값들은 Step 8-2, 8-3에서 계속 사용됩니다. 반드시 메모해두세요!  
-> 특히 RDSEndpoint, S3BucketName, ALBDNSName은 필수입니다.
+> 이 값들은 Step 8-2, 8-3에서 계속 사용됩니다.  
+> 메모해두거나, 필요할 때 CloudFormation → Stacks → 해당 스택 → **Outputs** 탭에서 다시 확인할 수 있습니다.  
+> 특히 **RDSEndpoint**, **S3BucketName**, **ALBDNSName**은 이후 실습에서 자주 참조합니다.
 
 > [!TIP]
 > Outputs 값을 메모장에 복사해두거나, 다음 CLI 명령으로 한 번에 확인할 수 있습니다:
@@ -544,27 +858,28 @@ AWS CloudFormation이 생성한 리소스를 확인합니다.
 >
 > 이 명령을 실행하면 모든 Output 값을 표 형태로 볼 수 있습니다.
 
-### 4-2. VPC 확인
+### 5-2. VPC 확인
 
-26. AWS Console → **VPC** 서비스로 이동합니다.
-27. 왼쪽 메뉴에서 **Your VPCs**를 클릭합니다.
-28. `my-3tier-app-vpc`가 생성되었는지 확인합니다.
+82. 상단 검색창에 `VPC`를 입력하고 **VPC** 서비스를 선택합니다.
+83. 왼쪽 메뉴에서 **Your VPCs**를 클릭합니다.
+84. `my-3tier-app-vpc`가 생성되었는지 확인합니다.
 
 > [!OUTPUT]
 > Your VPCs 목록에 `my-3tier-app-vpc` (CIDR: 10.0.0.0/16, State: available)가 표시됩니다.
 
-29. **Subnets**에서 4개의 서브넷을 확인합니다:
+85. **Subnets**에서 4개의 서브넷을 확인합니다:
     - `my-3tier-app-public-subnet-1` (10.0.1.0/24)
     - `my-3tier-app-public-subnet-2` (10.0.2.0/24)
     - `my-3tier-app-private-subnet-1` (10.0.11.0/24)
     - `my-3tier-app-private-subnet-2` (10.0.12.0/24)
 
-### 4-3. RDS 확인
+### 5-3. RDS 확인
 
-30. AWS Console → **RDS** 서비스로 이동합니다.
-31. **Databases**에서 `my-3tier-app-db`를 클릭합니다.
-32. **Connectivity & security** 탭에서 Endpoint를 확인합니다.
-33. Status가 `Available`인지 확인합니다.
+86. 상단 검색창에 `RDS`를 입력하고 **RDS** 서비스를 선택합니다.
+87. 왼쪽 메뉴에서 **Databases**를 클릭합니다.
+88. `my-3tier-app-db`를 클릭합니다.
+89. **Connectivity & security** 탭을 클릭하고, **Connect using** 섹션에서 **Endpoints**를 선택하면 Endpoint 주소가 표시됩니다.
+90. Status가 `Available`인지 확인합니다.
 
 > [!OUTPUT]
 > Amazon RDS 인스턴스 상세 정보:
@@ -575,18 +890,19 @@ AWS CloudFormation이 생성한 리소스를 확인합니다.
 > - **Endpoint**: `my-3tier-app-db.xxxx.ap-northeast-2.rds.amazonaws.com`
 > - **Port**: 3306
 
-### 4-4. S3 버킷 확인
+### 5-4. S3 버킷 확인
 
-34. AWS Console → **S3** 서비스로 이동합니다.
-35. `my-3tier-app-frontend-{AccountId}` 버킷이 생성되었는지 확인합니다.
-36. **Properties** 탭 → **Static website hosting**이 활성화되었는지 확인합니다.
+91. 상단 검색창에 `S3`를 입력하고 **S3** 서비스를 선택합니다.
+92. `my-3tier-app-frontend-{AccountId}` 버킷이 생성되었는지 확인합니다.
+93. **Properties** 탭 → **Static website hosting**이 활성화되었는지 확인합니다.
 
-### 4-5. ALB 확인
+### 5-5. ALB 확인
 
-37. AWS Console → **EC2** → **Load Balancers**로 이동합니다.
-38. `my-3tier-app-alb`가 생성되었는지 확인합니다.
-39. **DNS name**을 복사합니다 (Step 8-3에서 사용).
-40. **Target Groups**에서 `my-3tier-app-tg`를 확인합니다 (아직 등록된 타겟 없음).
+94. 상단 검색창에 `EC2`를 입력하고 **EC2** 서비스를 선택합니다.
+95. 왼쪽 메뉴에서 **Load Balancers**를 클릭합니다.
+96. `my-3tier-app-alb`가 생성되었는지 확인합니다.
+97. **DNS name**을 복사합니다 (Step 8-3에서 사용).
+98. **Target Groups**에서 `my-3tier-app-tg`를 확인합니다 (아직 등록된 타겟 없음).
 
 > [!OUTPUT]
 > ALB 상세 정보:
@@ -597,12 +913,13 @@ AWS CloudFormation이 생성한 리소스를 확인합니다.
 > - **DNS name**: `my-3tier-app-alb-xxx.ap-northeast-2.elb.amazonaws.com`
 > - **Target Group**: `my-3tier-app-tg` (Targets: 0, 아직 EC2 미등록)
 
-### 4-6. Security Groups 확인
+### 5-6. Security Groups 확인
 
-41. **EC2** → **Security Groups**에서 3개의 SG를 확인합니다:
-    - `my-3tier-app-alb-sg`: 80, 443 포트 열림
-    - `my-3tier-app-ec2-sg`: 8080 (ALB-SG에서만), 22 (전체)
-    - `my-3tier-app-rds-sg`: 3306 (EC2-SG에서만)
+99. 왼쪽 메뉴에서 **Security Groups**를 클릭합니다.
+100. 3개의 SG를 확인합니다:
+     - `my-3tier-app-alb-sg`: 80, 443 포트 열림
+     - `my-3tier-app-ec2-sg`: 8080 (ALB-SG에서만), 22 (전체)
+     - `my-3tier-app-rds-sg`: 3306 (EC2-SG에서만)
 
 > [!CONCEPT] AWS CloudFormation의 장점
 >
@@ -628,18 +945,19 @@ AWS CloudFormation으로 생성된 Amazon RDS에 기존 프로젝트의 테이�
 - Private Subnet의 Amazon RDS에 접근하려면 **같은 VPC의 Amazon EC2**가 필요합니다.
 - Step 8-3에서 EC2를 생성하지만, 미리 해보고 싶다면 직접 EC2를 생성하세요.
 - Amazon EC2 생성 시: Private Subnet 배치, `ec2-sg` 적용, SSM Session Manager용 IAM Role 연결
-- **IAM Role 필수**: SSM Session Manager로 접속하려면 EC2에 `AmazonSSMManagedInstanceCore` 정책이 포함된 IAM Role을 연결해야 합니다. IAM → Roles → Create role → AWS service: EC2 → `AmazonSSMManagedInstanceCore` 정책 연결 → EC2 생성 시 IAM instance profile에 선택
+- **IAM Role 필수**: SSM Session Manager로 접속하려면 EC2에 `AmazonSSMManagedInstanceCore` 정책이 포함된 IAM Role을 연결해야 합니다.  
+  IAM → Roles → Create role → AWS service: EC2 → `AmazonSSMManagedInstanceCore` 정책 연결 → EC2 생성 시 IAM instance profile에 선택
 - MySQL 클라이언트 설치: `sudo dnf install -y mariadb105`
 - SQL 파일 전송: 로컬 → Amazon S3 → Amazon EC2 (Private Subnet이므로 SCP 직접 불가)
 
 ### 진행 순서
 
-1. Amazon EC2 인스턴스를 Private Subnet에 생성합니다 (Step 8-3 태스크 5 참고).
-2. SSM Session Manager로 Amazon EC2에 접속합니다.
-3. MySQL 클라이언트를 설치합니다.
-4. `.sql` 파일을 Amazon S3 경유로 Amazon EC2에 전송합니다.
-5. Amazon RDS에 접속하여 SQL을 실행합니다.
-6. 테이블과 데이터가 정상 생성되었는지 확인합니다.
+101. Amazon EC2 인스턴스를 Private Subnet에 생성합니다 (Step 8-3 태스크 5 참고).
+102. SSM Session Manager로 Amazon EC2에 접속합니다.
+103. MySQL 클라이언트를 설치합니다.
+104. `.sql` 파일을 Amazon S3 경유로 Amazon EC2에 전송합니다.
+105. Amazon RDS에 접속하여 SQL을 실행합니다.
+106. 테이블과 데이터가 정상 생성되었는지 확인합니다.
 
 ```bash
 # 예시: EC2에서 RDS 접속 후 SQL 실행

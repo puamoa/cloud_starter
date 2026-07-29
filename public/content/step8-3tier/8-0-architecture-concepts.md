@@ -296,6 +296,39 @@ SPA(Vue.js)가 백엔드 API를 호출할 때, ALB를 외부에 노출할지 숨
 > ALB가 Internet-facing이므로 외부에서 직접 API를 테스트할 수 있고, 3-Tier 아키텍처 학습에 집중할 수 있습니다.  
 > 프로덕션에서는 방식 B 또는 C로 전환하여 ALB를 외부에 노출하지 않는 것이 좋습니다.
 
+### GitHub 인증과 Git 커밋 author
+
+> [!CONCEPT] Git push 인증과 커밋 author는 별개
+> Git에서 **인증**(authentication)과 **커밋 author**는 독립적인 설정입니다.
+> 혼동하기 쉽지만 역할이 완전히 다릅니다.
+>
+> - **인증** (`gh auth login` 또는 PAT): "이 사람이 GitHub에 push할 권한이 있는가?"를 확인합니다. Push 가능 여부를 결정합니다.
+> - **커밋 author** (`git config user.name/email`): "이 커밋을 누가 작성했는가?"를 기록합니다. GitHub 커밋 히스토리에 표시되는 이름입니다.
+>
+> 즉, A 계정으로 인증(push 권한)해도 커밋 author는 B로 찍힐 수 있습니다.
+
+| 설정                 | 역할                      | 명령어                                           | 영향 범위           |
+| -------------------- | ------------------------- | ------------------------------------------------ | ------------------- |
+| **인증 (push 권한)** | GitHub 서버 접근 허가     | `gh auth login` 또는 remote URL에 PAT 포함       | push/pull 성공 여부 |
+| **커밋 author**      | 커밋에 찍히는 이름/이메일 | `git config user.name` / `git config user.email` | 커밋 히스토리 표시  |
+
+```
+예시:
+gh auth login → puamoa 계정으로 인증 (push 권한)
+git config user.name = "홍길동"
+
+결과: push는 puamoa 권한으로 성공, 커밋 author는 "홍길동"으로 표시
+```
+
+**설정 우선순위:**
+
+| 구분      | 로컬 설정 (`git config`)   | 글로벌 설정 (`git config --global`) |
+| --------- | -------------------------- | ----------------------------------- |
+| 적용 범위 | 해당 레포에서만            | 모든 레포에서                       |
+| 우선순위  | **높음** (글로벌보다 우선) | 낮음 (로컬이 없을 때 사용)          |
+
+> 여러 GitHub 계정을 사용하는 경우 레포별로 로컬 설정을 해두면 혼동을 방지할 수 있습니다.
+
 ---
 
 ## 4. REST API 설계 원칙

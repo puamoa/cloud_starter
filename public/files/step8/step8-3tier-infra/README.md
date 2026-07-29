@@ -99,17 +99,18 @@ Frontend (S3)  ──→  언제든 삭제 가능 (독립)
 
 **파라미터:**
 
-| 파라미터         | 기본값         | 설명                                           |
-| ---------------- | -------------- | ---------------------------------------------- |
-| ProjectName      | `my-3tier-app` | network 스택과 동일해야 함                     |
-| DBName           | `myapp`        | 초기 데이터베이스 이름 (RDS 생성 시 자동 생성) |
-| DBMasterUsername | `admin`        | RDS 마스터 사용자                              |
-| DBMasterPassword | (필수)         | RDS 비밀번호 (8자 이상)                        |
-| DBInstanceClass  | `db.t3.micro`  | 인스턴스 클래스                                |
+| 파라미터         | 기본값         | 설명                                                                             |
+| ---------------- | -------------- | -------------------------------------------------------------------------------- |
+| ProjectName      | `my-3tier-app` | network 스택과 동일해야 함                                                       |
+| DBName           | `myapp`        | 초기 데이터베이스 이름 (RDS 생성 시 자동 생성)                                   |
+| DBMasterUsername | `admin`        | RDS 마스터 사용자                                                                |
+| DBMasterPassword | (필수)         | RDS 비밀번호 (8자 이상)                                                          |
+| DBInstanceClass  | `db.t3.micro`  | 인스턴스 클래스 (드롭다운: db.t3.micro, db.t4g.micro, db.t3.small, db.t3.medium) |
 
 **RDS 설정:**
 
 - DBName: `myapp` (스택 생성 시 자동으로 데이터베이스 생성, 별도 CREATE DATABASE 불필요)
+- DBInstanceClass: `db.t3.micro` 또는 `db.t4g.micro`는 **프리티어 대상** (계정 생성 12개월 이내, 월 750시간)
 - timezone: `Asia/Seoul`
 - 문자셋: `utf8mb4` (한글 + 이모지 지원)
 - Multi-AZ: false (실습용)
@@ -129,9 +130,13 @@ Frontend (S3)  ──→  언제든 삭제 가능 (독립)
 
 **파라미터:**
 
-| 파라미터    | 기본값         | 설명               |
-| ----------- | -------------- | ------------------ |
-| ProjectName | `my-3tier-app` | 리소스 이름 접두사 |
+| 파라미터     | 기본값         | 설명                                                               |
+| ------------ | -------------- | ------------------------------------------------------------------ |
+| ProjectName  | `my-3tier-app` | 리소스 이름 접두사                                                 |
+| BucketSuffix | (필수 입력)    | S3 버킷 고유 접미사 (예: `hong01`, `team-a`). 소문자+숫자+하이픈만 |
+
+> Amazon S3 버킷 이름은 전 세계에서 고유해야 합니다.  
+> 결과 버킷 이름: `{ProjectName}-frontend-{BucketSuffix}` (예: `my-3tier-app-frontend-hong01`)
 
 > Amazon S3는 VPC 외부의 글로벌 서비스이므로 Network 스택에 의존하지 않습니다.
 
