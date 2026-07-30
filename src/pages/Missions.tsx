@@ -8,9 +8,11 @@ import {
   Badge,
 } from '@cloudscape-design/components';
 import { useNavigate } from 'react-router-dom';
+import { isStepPublished } from '@/utils/contentFilter';
 
 interface Mission {
   step: string;
+  week: number;
   session: string;
   title: string;
   difficulty: number;
@@ -18,9 +20,10 @@ interface Mission {
   path: string;
 }
 
-const missions: Mission[] = [
+const allMissions: Mission[] = [
   {
     step: 'Step 2',
+    week: 2,
     session: '2-1',
     title: 'MySQL 포트로 NACL 차단/복구 테스트',
     difficulty: 1,
@@ -29,6 +32,7 @@ const missions: Mission[] = [
   },
   {
     step: 'Step 4',
+    week: 4,
     session: '4-1',
     title: '백엔드 프로젝트 DB 세팅',
     difficulty: 2,
@@ -37,6 +41,7 @@ const missions: Mission[] = [
   },
   {
     step: 'Step 5',
+    week: 5,
     session: '5-2',
     title: 'Amazon EC2에서 게시판 CRUD 테스트 (curl)',
     difficulty: 2,
@@ -45,6 +50,7 @@ const missions: Mission[] = [
   },
   {
     step: 'Step 5',
+    week: 5,
     session: '5-2',
     title: '프론트엔드 배포 + S3 이미지 확인',
     difficulty: 2,
@@ -53,6 +59,7 @@ const missions: Mission[] = [
   },
   {
     step: 'Step 5',
+    week: 5,
     session: '5-2',
     title: 'S3 코드를 활용한 백엔드 프로그램 제작',
     difficulty: 3,
@@ -61,6 +68,7 @@ const missions: Mission[] = [
   },
   {
     step: 'Step 7',
+    week: 7,
     session: '7-3',
     title: '본인 앱으로 Launch Template 구성',
     difficulty: 2,
@@ -69,6 +77,7 @@ const missions: Mission[] = [
   },
   {
     step: 'Step 7',
+    week: 7,
     session: '7-3',
     title: 'ALB에 커스텀 도메인 연결',
     difficulty: 2,
@@ -77,6 +86,7 @@ const missions: Mission[] = [
   },
   {
     step: 'Step 8',
+    week: 8,
     session: '8-1',
     title: 'Amazon RDS 초기 데이터베이스 구성 (Spring Legacy)',
     difficulty: 2,
@@ -85,6 +95,7 @@ const missions: Mission[] = [
   },
   {
     step: 'Step 8',
+    week: 8,
     session: '8-3',
     title: 'Auto Scaling Group으로 전환',
     difficulty: 3,
@@ -97,6 +108,7 @@ const getDifficultyStars = (level: number) => '⭐'.repeat(level);
 
 export function Missions() {
   const navigate = useNavigate();
+  const missions = allMissions.filter((m) => isStepPublished(m.week));
 
   return (
     <SpaceBetween size="l">
