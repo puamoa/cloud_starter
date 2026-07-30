@@ -139,6 +139,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
       items: [
         { type: 'link' as const, text: '📚 실습 목록', href: '/dashboard' },
         { type: 'link' as const, text: '⚙️ 환경 설정', href: '/setup' },
+        { type: 'link' as const, text: '🎯 셀프 미션', href: '/missions' },
       ],
     },
     { type: 'divider' as const },

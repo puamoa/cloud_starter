@@ -15,6 +15,7 @@ import { Dashboard } from './pages/Dashboard';
 import { EnvironmentSetup } from './pages/EnvironmentSetup';
 import { SessionGuide } from './pages/SessionGuide';
 import { WeekOverview } from './pages/WeekOverview';
+import { Missions } from './pages/Missions';
 import '@cloudscape-design/global-styles/index.css';
 import './styles/theme.css';
 import './styles/responsive.css';
@@ -63,6 +64,7 @@ function AppContent() {
           <Routes>
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/setup" element={<EnvironmentSetup />} />
+            <Route path="/missions" element={<Missions />} />
             <Route path="/week/:weekNumber" element={<WeekOverview />} />
             <Route
               path="/week/:weekNumber/session/:sessionNumber"
