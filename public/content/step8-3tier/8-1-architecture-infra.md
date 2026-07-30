@@ -53,6 +53,9 @@ estimatedCost: 크레딧 내 사용 가능 (비용 발생 가능)
 > - 8-2: Vue.js 프론트엔드 배포 (S3 + CloudFront)
 > - 8-3: Spring Boot 백엔드 배포 (EC2 + ALB)
 > - 8-4: 전체 연동 확인 + 리소스 정리
+>
+> 8-1에서 생성하는 인프라(NAT Gateway, ALB, Amazon RDS)는 시간당 비용이 발생합니다.  
+> 비용 절감을 위해 **8-1~8-4를 가능한 한 번에 연속 진행**하고, 완료 후 즉시 8-4에서 정리하는 것을 권장합니다.
 
 ---
 
@@ -837,7 +840,7 @@ AWS CloudFormation이 생성한 리소스를 확인합니다.
 | ------------------ | -------------------------------------------------------------------------- | -------------------- |
 | VPCId              | `vpc-0abc123def456`                                                        | VPC 식별자           |
 | RDSEndpoint        | `my-3tier-app-db.xxxx.ap-northeast-2.rds.amazonaws.com`                    | DB 연결 주소         |
-| S3BucketName       | `my-3tier-app-frontend-hong01`                                       | 프론트엔드 배포 대상 |
+| S3BucketName       | `my-3tier-app-frontend-hong01`                                             | 프론트엔드 배포 대상 |
 | S3WebsiteURL       | `http://my-3tier-app-frontend-xxx.s3-website.ap-northeast-2.amazonaws.com` | S3 웹사이트 URL      |
 | ALBDNSName         | `my-3tier-app-alb-xxx.ap-northeast-2.elb.amazonaws.com`                    | API 엔드포인트       |
 | ALBTargetGroupArn  | `arn:aws:elasticloadbalancing:...`                                         | EC2 등록 대상        |
@@ -930,7 +933,7 @@ AWS CloudFormation이 생성한 리소스를 확인합니다.
 
 ---
 
-## 셀프 미션: Amazon RDS 초기 데이터베이스 구성 (Spring Legacy 사용자)
+## 🎯 셀프 미션: Amazon RDS 초기 데이터베이스 구성 (Spring Legacy 사용자)
 
 > [!NOTE]
 > 이 미션은 기존 Spring MVC(WAR) 프로젝트를 사용하며, 초기 테이블과 데이터가 담긴 `.sql` 파일이 있는 경우에 진행합니다.  

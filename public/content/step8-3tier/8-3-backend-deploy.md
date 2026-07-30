@@ -95,15 +95,16 @@ Step 2-3에서 Spring Boot 프로젝트를 생성한 경험이 있다면 동일�
 1. 브라우저에서 [https://start.spring.io](https://start.spring.io)에 접속합니다.
 2. 다음과 같이 설정합니다:
 
-| 설정        | 값                                        |
-| ----------- | ----------------------------------------- |
-| Project     | Gradle - Groovy                           |
-| Language    | Java                                      |
-| Spring Boot | 최신 안정 버전 (예: `4.0.6` 또는 `3.5.x`) |
-| Group       | com.example                               |
-| Artifact    | my-backend                                |
-| Packaging   | Jar                                       |
-| Java        | 17                                        |
+| 설정          | 값                                             |
+| ------------- | ---------------------------------------------- |
+| Project       | Gradle - Groovy                                |
+| Language      | Java                                           |
+| Spring Boot   | 최신 안정 버전 (SNAPSHOT/RC 제외, 예: `4.1.0`) |
+| Group         | com.example                                    |
+| Artifact      | my-backend                                     |
+| Packaging     | Jar                                            |
+| Configuration | YAML                                           |
+| Java          | 17                                             |
 
 > [!TIP]
 > **Spring Boot 버전 선택 가이드:**
@@ -117,6 +118,11 @@ Step 2-3에서 Spring Boot 프로젝트를 생성한 경험이 있다면 동일�
 > Spring Boot 3.x/4.x 모두 **Java 17 이상**을 요구합니다.  
 > 4.x와 3.x는 Jackson, Security 기본값 등이 달라 기존 3.x 코드와 호환성 문제가 있을 수 있습니다.  
 > 기존 프로젝트가 있다면 같은 메이저 버전을 유지하세요.
+>
+> **Configuration**: `YAML`을 선택하면 `application.yml`이 생성됩니다.  
+> `Properties`를 선택하면 `application.properties`가 생성됩니다.  
+> 이 가이드에서는 `YAML`을 기준으로 설명하지만, Properties를 선택해도 무방합니다.  
+> 기존 프로젝트가 `.properties` 형식이라면 그대로 유지하세요.
 
 3. **Dependencies**에서 다음을 추가합니다:
    - Spring Web
@@ -136,29 +142,33 @@ cd ~/3tier-project/my-backend
 # 또는 Spring Initializr에서 직접 생성한 구조 사용
 ```
 
-프로젝트 구조:
+완성 시 프로젝트 구조 (태스크 3~6에서 순차적으로 생성):
 
 ```
 my-backend/
 ├── src/
 │   ├── main/
 │   │   ├── java/com/example/mybackend/
-│   │   │   ├── MyBackendApplication.java
+│   │   │   ├── MyBackendApplication.java       ← 자동 생성됨
 │   │   │   ├── controller/
-│   │   │   │   └── ItemController.java
+│   │   │   │   └── ItemController.java         ← 태스크 3에서 생성
 │   │   │   ├── entity/
-│   │   │   │   └── Item.java
+│   │   │   │   └── Item.java                   ← 태스크 3에서 생성
 │   │   │   ├── repository/
-│   │   │   │   └── ItemRepository.java
+│   │   │   │   └── ItemRepository.java         ← 태스크 3에서 생성
 │   │   │   └── config/
-│   │   │       └── WebConfig.java
+│   │   │       └── WebConfig.java              ← 태스크 4에서 생성
 │   │   └── resources/
-│   │       └── application.yml
+│   │       └── application.yml                 ← 태스크 2에서 수정
 │   └── test/
-├── build.gradle
-├── settings.gradle
-└── .github/workflows/deploy.yml
+├── build.gradle                                 ← 자동 생성됨
+├── settings.gradle                              ← 자동 생성됨
+└── .github/workflows/deploy.yml                 ← 태스크 6에서 생성
 ```
+
+> [!NOTE]
+> Spring Initializr로 생성 직후에는 `MyBackendApplication.java`, `build.gradle`, `application.yml`만 존재합니다.  
+> 나머지 파일은 이후 태스크를 진행하면서 직접 생성합니다.
 
 ✅ **태스크 완료** — Spring Boot 프로젝트를 생성했습니다.
 
@@ -166,54 +176,78 @@ my-backend/
 
 ## 태스크 2: RDS 연동 설정
 
+> [!WARNING]
+> 이 태스크는 **필수**입니다. SSM Parameter Store에 DB 접속 정보를 저장하지 않으면 Amazon EC2에서 애플리케이션이 시작되지 않습니다.
+
 ### 2-1. SSM Parameter Store에 비밀값 저장
 
 Amazon EC2에서 Amazon RDS 접속 정보를 안전하게 관리하기 위해 SSM Parameter Store를 사용합니다.
+
+> [!TIP]
+> SSM Parameter Store의 개념, 타입(String/SecureString), 계층 구조, Spring 연동 방법은 [Step 6-1](/week/6/session/1)에서 자세히 다루고 있습니다.  
+> 처음 접하는 경우 Step 6-1을 먼저 참고하세요.
+>
+> **스택 생성 시 기본값을 변경하지 않았다면:**
+>
+> | 파라미터     | 기본값                                                           |
+> | ------------ | ---------------------------------------------------------------- |
+> | DB 이름      | `myapp`                                                          |
+> | DB 사용자명  | `admin`                                                          |
+> | DB 비밀번호  | `MyPassword123!` (Step 8-1 가이드 기본 예시, 변경했다면 본인 값) |
+> | RDS Endpoint | CloudFormation Outputs → `RDSEndpoint` 확인                      |
+
+5. 다음 명령어를 실행하여 SSM Parameter Store에 4개의 파라미터를 저장합니다:
 
 ```bash
 # Amazon RDS 엔드포인트 저장
 aws ssm put-parameter \
   --name "/my-3tier-app/db/endpoint" \
-  --value "my-3tier-app-db.xxxx.ap-northeast-2.rds.amazonaws.com" \
+  --value "<Step 8-1 CloudFormation Outputs의 RDSEndpoint 값>" \
   --type String
 
 # DB 이름 저장
 aws ssm put-parameter \
   --name "/my-3tier-app/db/name" \
-  --value "myapp" \
+  --value "<스택 생성 시 설정한 DB 이름 (기본: myapp)>" \
   --type String
 
 # DB 사용자명 저장
 aws ssm put-parameter \
   --name "/my-3tier-app/db/username" \
-  --value "admin" \
+  --value "<스택 생성 시 설정한 DB 마스터 사용자명 (기본: admin)>" \
   --type String
 
 # DB 비밀번호 저장 (SecureString으로 암호화)
 aws ssm put-parameter \
   --name "/my-3tier-app/db/password" \
-  --value "MyPassword123!" \
+  --value "<스택 생성 시 설정한 DB 마스터 비밀번호>" \
   --type SecureString
 ```
 
 > [!TIP]
 > `SecureString` 타입은 AWS KMS로 자동 암호화됩니다.
 > 비밀번호, API 키 등 민감한 값은 항상 SecureString을 사용하세요.
+>
+> **값을 잘못 입력한 경우:**
+>
+> - CLI: `--overwrite` 플래그를 추가하여 같은 명령을 다시 실행하면 덮어씁니다.
+> - 콘솔: AWS Console → Systems Manager → Parameter Store에서 해당 파라미터를 클릭하고 [[Edit]] → 값 수정 → [[Save changes]]
 
 ### 2-2. RDS 초기 데이터베이스 및 테이블 설정
 
+6. 아래 방법 중 본인 프로젝트에 맞는 것을 선택합니다:
+
 > [!NOTE]
-> Step 8-1에서 AWS CloudFormation `DBName` 파라미터로 `myapp` 데이터베이스가 **자동 생성**되었습니다.  
-> 별도로 `CREATE DATABASE`를 실행할 필요가 없습니다.  
-> 테이블 생성은 아래 방법 중 본인 프로젝트에 맞는 것을 선택하세요.
+> Step 8-1에서 AWS CloudFormation `DBName` 파라미터로 데이터베이스가 **자동 생성**되었습니다 (기본: `myapp`).  
+> 별도로 `CREATE DATABASE`를 실행할 필요가 없습니다.
 
-**방법 A: Spring Boot — 자동 테이블 생성 (새 프로젝트)**
+| 방법    | 대상                             | 테이블 생성 방식                             | 추가 작업               |
+| ------- | -------------------------------- | -------------------------------------------- | ----------------------- |
+| **A**   | 기존 레거시 (Spring MVC 등)      | EC2에서 수동 SQL 실행                        | 태스크 5-2b에서 진행    |
+| **B-1** | 새 프로젝트 (Spring Boot + JPA)  | `ddl-auto: update`로 앱 시작 시 자동 생성    | 없음 (7번에서 yml 설정) |
+| **B-2** | Spring Boot + 초기 SQL 파일 있음 | `schema.sql`/`data.sql` 앱 시작 시 자동 실행 | 아래 yml 설정 추가      |
 
-Spring Boot의 JPA `ddl-auto` 설정으로 앱 시작 시 테이블이 자동 생성됩니다.  
-`application.yml`에서 `ddl-auto: update`를 설정하면 Entity 클래스 기반으로 테이블을 만들어줍니다.  
-별도 SQL 실행이 필요 없습니다.
-
-**방법 B: Spring Boot — schema.sql / data.sql 사용**
+**방법 B-2: schema.sql / data.sql 사용 시 설정**
 
 초기 테이블 구조와 데이터가 있는 SQL 파일을 프로젝트에 포함하면 앱 시작 시 자동 실행됩니다:
 
@@ -240,45 +274,11 @@ spring:
 > 테이블이 이미 존재하면 에러가 발생할 수 있으므로 `CREATE TABLE IF NOT EXISTS`를 사용하세요.  
 > 프로덕션에서는 Flyway나 Liquibase 같은 마이그레이션 도구를 권장합니다.
 
-**방법 C: EC2에서 수동 SQL 실행 (기존 레거시 프로젝트)**
+### 2-3. DB 접속 설정 파일 수정
 
-기존 `.sql` 파일이 있고 Spring 자동 초기화를 사용하지 않는 경우, Amazon EC2에서 직접 실행합니다:
+**방법 B 사용자 (새 프로젝트 — application.yml):**
 
-```bash
-# EC2에 SSM Session Manager로 접속 후
-mysql -h my-3tier-app-db.xxxx.ap-northeast-2.rds.amazonaws.com \
-  -u admin -p myapp
-
-# SQL 파일 실행 (EC2에 파일을 먼저 전송해야 함)
-source /home/ec2-user/schema.sql;
-source /home/ec2-user/data.sql;
-
-# 또는 직접 입력
-CREATE TABLE IF NOT EXISTS items (
-  id BIGINT AUTO_INCREMENT PRIMARY KEY,
-  name VARCHAR(100) NOT NULL,
-  description VARCHAR(500),
-  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
-SHOW TABLES;
-EXIT;
-```
-
-> [!TIP]
-> SQL 파일을 EC2로 전송하려면 Amazon S3를 경유합니다 (Private Subnet이므로 SCP 불가):
->
-> ```bash
-> # 로컬에서 S3에 업로드
-> aws s3 cp schema.sql s3://MY_BUCKET/schema.sql
->
-> # EC2에서 S3에서 다운로드
-> aws s3 cp s3://MY_BUCKET/schema.sql /home/ec2-user/schema.sql
-> ```
-
-### 2-3. application.yml 설정
-
-`src/main/resources/application.yml`:
+7. `src/main/resources/application.yml` 파일을 다음과 같이 설정합니다:
 
 ```yaml
 spring:
@@ -318,10 +318,111 @@ management:
       show-details: always
 ```
 
+**방법 A 사용자 (기존 프로젝트 — application.properties):**
+
+> [!TIP]
+> 기존 프로젝트라도 `application.yml`을 사용한다면 위 7번을 따르세요.
+
+8. `src/main/resources/application.properties`의 DB 접속 정보를 환경 변수로 변경합니다:
+
+```properties
+# 변경 전 (로컬 DB 직접 접속)
+#jdbc.driver=net.sf.log4jdbc.sql.jdbcapi.DriverSpy
+#jdbc.url=jdbc:log4jdbc:mysql://localhost:3306/scoula_db
+#jdbc.username=scoula
+#jdbc.password=Scoula123!
+
+# 변경 후 (환경 변수에서 주입 — EC2의 start.sh에서 설정)
+jdbc.driver=net.sf.log4jdbc.sql.jdbcapi.DriverSpy
+jdbc.url=jdbc:log4jdbc:mysql://${DB_ENDPOINT}:3306/${DB_NAME}
+jdbc.username=${DB_USERNAME}
+jdbc.password=${DB_PASSWORD}
+```
+
+> [!TIP]
+> 기존 프로젝트의 `RootConfig.java`에서 `@Value("${jdbc.url}")` 등으로 값을 읽는 구조라면,  
+> `application.properties`의 값만 환경 변수 형태로 변경하면 됩니다. Java 코드 수정은 불필요합니다.
+>
+> `log4jdbc` 드라이버를 사용하는 경우 URL 형식이 `jdbc:log4jdbc:mysql://`이어야 합니다.  
+> SSM Parameter Store의 endpoint 값은 호스트명만 저장하고, 드라이버+프로토콜은 properties에서 처리합니다.
+>
+> ---
+>
+> **로컬 개발 시** 환경 변수가 없으면 앱이 시작되지 않습니다.  
+> 아래 방법 중 하나를 선택하세요:
+>
+> | 방법              | 설정 위치                                       | 적합한 경우            |
+> | ----------------- | ----------------------------------------------- | ---------------------- |
+> | IntelliJ 환경변수 | Run/Debug Configuration → Environment variables | IDE 사용자 (가장 간편) |
+> | OS 환경변수       | 터미널에서 `export DB_ENDPOINT=localhost` 등    | CLI로 실행하는 경우    |
+> | properties 분리   | `application-local.properties` 별도 생성        | 팀 공유 시             |
+>
+> **IntelliJ 설정 예시:**  
+> Run → Edit Configurations → 실행 설정 선택 → Environment variables에 입력:
+>
+> ```
+> DB_ENDPOINT=localhost;DB_NAME=scoula_db;DB_USERNAME=scoula;DB_PASSWORD=Scoula123!
+> ```
+>
+> **properties 분리 예시:**  
+> `application-local.properties`를 생성하고 `.gitignore`에 추가합니다:
+>
+> ```properties
+> jdbc.driver=net.sf.log4jdbc.sql.jdbcapi.DriverSpy
+> jdbc.url=jdbc:log4jdbc:mysql://localhost:3306/scoula_db
+> jdbc.username=scoula
+> jdbc.password=Scoula123!
+> ```
+>
+> `RootConfig.java`의 `@PropertySource`를 프로파일 기반으로 변경:
+>
+> ```java
+> @PropertySource({"classpath:/application-${spring.profiles.active:local}.properties"})
+> ```
+>
+> 로컬에서는 프로파일 없이 실행(기본 `local`), EC2에서는 `--spring.profiles.active=prod`로 실행합니다.
+
+**Step 6-1 실습을 적용한 경우 (ParameterStoreService 사용):**
+
+9. Step 6-1에서 `ParameterStoreService`를 구현하여 SSM Parameter Store에서 직접 값을 읽는 구조라면, `application.properties`에 환경 변수(`${DB_ENDPOINT}`)를 넣을 필요가 없습니다.  
+   대신 SSM Parameter Store의 **파라미터 값**만 Amazon RDS 엔드포인트로 업데이트하면 됩니다:
+
+```bash
+# 기존 로컬 DB URL을 Amazon RDS 엔드포인트로 변경
+aws ssm put-parameter \
+  --name "/starter/prod/db/url" \
+  --value "jdbc:log4jdbc:mysql://<RDS_ENDPOINT>:3306/<DB_NAME>" \
+  --type String \
+  --overwrite
+
+# 사용자명/비밀번호도 Amazon RDS 기준으로 업데이트 (필요 시)
+aws ssm put-parameter \
+  --name "/starter/prod/db/username" \
+  --value "<DB_USERNAME>" \
+  --type String \
+  --overwrite
+
+aws ssm put-parameter \
+  --name "/starter/prod/db/password" \
+  --value "<DB_PASSWORD>" \
+  --type SecureString \
+  --overwrite
+```
+
+> [!TIP]
+> 이 경우 `application.properties`는 수정하지 않아도 됩니다.  
+> `ParameterStoreService`가 앱 시작 시 SSM에서 값을 읽어 DataSource에 주입하기 때문입니다.  
+> 파라미터 경로(`/starter/prod/db/...`)는 본인 프로젝트에서 설정한 경로에 맞게 변경하세요.
+>
+> **프로파일 관련:**  
+> `ParameterStoreService`는 `@Profile("aws-ssm")`으로 설정되어 있습니다.  
+> 태스크 5-3의 `start.sh`에서 `--spring.profiles.active=aws-ssm`으로 실행해야 이 Bean이 활성화됩니다.  
+> 기존 `prod`로 되어 있다면 본인 프로젝트의 `@Profile` 값에 맞게 변경하세요.
+
 > [!CONCEPT] 환경 변수로 설정값 주입
 >
-> `${DB_ENDPOINT}`, `${DB_USERNAME}` 등은 EC2의 환경 변수에서 값을 가져옵니다.
-> systemd 서비스 파일에서 SSM Parameter Store의 값을 환경 변수로 설정합니다.
+> `${DB_ENDPOINT}`, `${DB_USERNAME}` 등은 EC2의 환경 변수에서 값을 가져옵니다.  
+> systemd 서비스 파일에서 SSM Parameter Store의 값을 환경 변수로 설정합니다.  
 > 이렇게 하면 코드에 비밀값이 포함되지 않아 안전합니다.
 
 ✅ **태스크 완료** — Amazon RDS 연동 설정을 완료하고 SSM Parameter Store에 비밀값을 저장했습니다.
@@ -335,7 +436,7 @@ management:
 > | `Unknown database 'myapp'` | 데이터베이스 미생성 | Amazon EC2에서 Amazon RDS 접속 후 `CREATE DATABASE myapp` 실행 |
 
 > [!NOTE]
-> SSM Parameter Store의 Standard 파라미터는 무료입니다 (리전당 10,000개까지).
+> SSM Parameter Store의 Standard 파라미터는 무료입니다 (리전당 10,000개까지).  
 > SecureString은 KMS 기본 키(`aws/ssm`)를 사용하면 추가 비용이 없습니다.
 
 ---
@@ -343,6 +444,8 @@ management:
 ## 태스크 3: 간단한 REST API 작성
 
 ### 3-1. Entity 클래스
+
+10. `src/main/java/com/example/mybackend/entity/Item.java` 파일을 생성합니다:
 
 ```java
 // src/main/java/com/example/mybackend/entity/Item.java
@@ -388,6 +491,8 @@ public class Item {
 
 ### 3-2. Repository 인터페이스
 
+11. `src/main/java/com/example/mybackend/repository/ItemRepository.java` 파일을 생성합니다:
+
 ```java
 // src/main/java/com/example/mybackend/repository/ItemRepository.java
 package com.example.mybackend.repository;
@@ -400,6 +505,8 @@ public interface ItemRepository extends JpaRepository<Item, Long> {
 ```
 
 ### 3-3. Controller 클래스
+
+12. `src/main/java/com/example/mybackend/controller/ItemController.java` 파일을 생성합니다:
 
 ```java
 // src/main/java/com/example/mybackend/controller/ItemController.java
@@ -493,7 +600,75 @@ public class ItemController {
 
 Amazon CloudFront 도메인에서 API를 호출할 수 있도록 CORS를 설정합니다.
 
+13. 아래 방법 중 본인 프로젝트에 맞는 것을 선택합니다:
+
+| 방법  | 대상                                     | CORS 설정 위치                         | 작업                      |
+| ----- | ---------------------------------------- | -------------------------------------- | ------------------------- |
+| **A** | 기존 레거시 (Spring Security 사용)       | `SecurityConfig.java`의 `CorsFilter`   | `*` 유지 또는 도메인 제한 |
+| **B** | 기존 레거시 (Spring Security 미사용)     | `WebMvcConfigurer` 또는 `@CrossOrigin` | 아래 방법 B 참고          |
+| **C** | 새 프로젝트 (Spring Boot, Security 없음) | `WebConfig.java` + `application.yml`   | 아래 14~15번 진행         |
+
+**방법 A: SecurityConfig.java 수정 (기존 프로젝트 — Security 사용)**
+
+`SecurityConfig.java`에 이미 `CorsFilter` Bean이 있고 `addAllowedOriginPattern("*")`로 설정되어 있다면 추가 작업 없이 동작합니다.  
+프로덕션에서 도메인을 제한하려면 `*` 부분을 수정합니다:
+
+```java
+// SecurityConfig.java의 corsFilter() 메서드
+@Bean
+public CorsFilter corsFilter() {
+    UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+    CorsConfiguration config = new CorsConfiguration();
+    config.setAllowCredentials(true);
+    config.addAllowedOriginPattern("https://<CloudFront 도메인>"); // 예: https://d1234abcdef.cloudfront.net
+    config.addAllowedOriginPattern("http://localhost:5173");        // 로컬 개발
+    config.addAllowedHeader("*");
+    config.addAllowedMethod("*");
+    source.registerCorsConfiguration("/**", config);
+    return new CorsFilter(source);
+}
+```
+
+> [!TIP]
+> `addAllowedOriginPattern("*")`을 그대로 두면 모든 도메인에서 접근 가능합니다.  
+> 학습용이라면 `*`로 유지해도 무방합니다. 방법 A를 선택했다면 **태스크 5로 이동**하세요.
+
+**방법 B: WebMvcConfigurer 추가 (기존 프로젝트 — Security 미사용)**
+
+Spring Security를 사용하지 않는 레거시 프로젝트에서는 기존 `WebConfig.java` (또는 `ServletConfig.java` 등 MVC 설정 파일)에 CORS 설정을 추가합니다:
+
+```java
+// src/main/java/.../config/WebConfig.java
+@Configuration
+@EnableWebMvc
+public class WebConfig implements WebMvcConfigurer {
+    @Override
+    public void addCorsMappings(CorsRegistry registry) {
+        registry.addMapping("/**")
+            .allowedOriginPatterns("*")
+            .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
+            .allowedHeaders("*")
+            .allowCredentials(true);
+    }
+}
+```
+
+> [!TIP]
+> 이미 `WebConfig.java`가 있고 `addCorsMappings`가 설정되어 있다면 추가 작업 없이 동작합니다.  
+> 프로덕션에서는 `allowedOriginPatterns("*")`을 Amazon CloudFront 도메인으로 제한하세요.  
+> 방법 B를 선택했다면 **태스크 5로 이동**하세요.
+
+**방법 C: WebConfig.java 생성 (새 프로젝트 — Spring Boot)**
+
+Spring Boot에서는 Security를 사용하지 않으면 CORS를 처리할 필터가 없으므로, `WebConfig.java`를 생성하여 MVC 레벨에서 CORS를 설정합니다.
+
+> [!NOTE]
+> Spring Boot에 Spring Security 의존성을 추가한 경우, `WebConfig`의 CORS 설정보다 Security 필터가 우선합니다.  
+> 이 경우 방법 A처럼 Security 설정에서 CORS를 처리해야 합니다.
+
 ### 4-1. WebConfig 클래스 생성
+
+14. `src/main/java/com/example/mybackend/config/WebConfig.java` 파일을 생성합니다:
 
 ```java
 // src/main/java/com/example/mybackend/config/WebConfig.java
@@ -524,6 +699,8 @@ public class WebConfig implements WebMvcConfigurer {
 
 ### 4-2. application.yml에 CORS 설정 추가
 
+15. `application.yml`에 CORS 설정을 추가합니다:
+
 ```yaml
 # application.yml에 추가
 app:
@@ -547,7 +724,8 @@ app:
 > | 배포 후 CORS 에러 (로컬은 정상) | `application.yml`의 CORS 설정이 환경변수로 주입 안 됨 | EC2의 환경변수 또는 `application.yml` 직접 수정 |
 
 > [!NOTE]
-> CORS 에러는 **브라우저에서만** 발생합니다. `curl`로 테스트하면 CORS 에러가 나타나지 않습니다.
+> CORS 에러는 **브라우저에서만** 발생합니다.  
+> `curl`로 테스트하면 CORS 에러가 나타나지 않습니다.  
 > 브라우저 개발자 도구(F12) → Console 탭에서 CORS 에러 메시지를 확인하세요.
 
 ---
@@ -556,39 +734,47 @@ app:
 
 ### 5-1. Amazon EC2 인스턴스 생성
 
-### 5-1. Amazon EC2 인스턴스 생성
+> [!WARNING]
+> AWS Console 우측 상단에서 리전이 **Asia Pacific (Seoul) ap-northeast-2**인지 확인하세요.  
+> 다른 리전에서 생성하면 Step 8-1의 VPC, Security Group 등이 보이지 않습니다.
 
-5. 상단 검색창에 `EC2`를 입력하고 **EC2** 서비스를 선택합니다.
-6. 왼쪽 메뉴에서 **Instances**를 클릭합니다.
-7. [[Launch instances]] 버튼을 클릭합니다.
-8. **Name and tags** 섹션:
-   - **Name**: `my-3tier-app-server`
-9. **Application and OS Images (Amazon Machine Image)** 섹션:
-   - **AMI**: `Amazon Linux 2023` 선택 (기본 선택됨)
-10. **Instance type** 섹션:
+16. 상단 검색창에 `EC2`를 입력하고 **EC2** 서비스를 선택합니다.
+17. 왼쪽 메뉴에서 **Instances**를 클릭합니다.
+18. [[Launch instances]] 버튼을 클릭합니다.
+19. **Name and tags** 섹션:
+    - **Name**: `my-3tier-app-server`
+    - [[Add additional tags]]를 클릭하여 다음 태그를 추가합니다:
+      - `CreatedBy` = `admin-user`
+      - `Step` = `step8`
+      - `Session` = `8-3`
 
-- `t2.micro` 선택 (프리티어 대상)
+20. **Application and OS Images (Amazon Machine Image)** 섹션:
+    - **AMI**: `Amazon Linux 2023` 선택 (기본 선택됨)
 
-11. **Key pair (login)** 섹션:
+21. **Instance type** 섹션:
+    - `t2.micro` 선택 (프리티어 대상)
 
-- `Proceed without a key pair (Not recommended)` 선택
-- SSM Session Manager로 접속하므로 SSH 키가 불필요합니다.
+22. **Key pair (login)** 섹션:
+    - `Proceed without a key pair (Not recommended)` 선택
+    - SSM Session Manager로 접속하므로 SSH 키가 불필요합니다.
 
-12. **Network settings** 섹션에서 [[Edit]] 버튼을 클릭합니다.
-13. 다음과 같이 설정합니다:
-
-- **VPC**: `my-3tier-app-vpc` 선택
-- **Subnet**: `my-3tier-app-private-subnet-1` 선택
-- **Auto-assign public IP**: `Disable` 선택
-- **Firewall (security groups)**: `Select existing security group` 선택
-- **Common security groups**: `my-3tier-app-ec2-sg` 선택
+23. **Network settings** 섹션에서 [[Edit]] 버튼을 클릭합니다.
+24. 다음과 같이 설정합니다:
+    - **VPC**: `my-3tier-app-vpc` 선택
+    - **Subnet**: `my-3tier-app-private-subnet-1` 선택
+    - **Auto-assign public IP**: `Disable` 선택
+    - **Firewall (security groups)**: `Select existing security group` 선택
+    - **Common security groups**: `my-3tier-app-ec2-sg` 선택
 
 > [!WARNING]
 > **Auto-assign public IP**를 반드시 `Disable`로 설정하세요.
 > Private Subnet에 배치하므로 Public IP가 필요 없습니다.
 
-14. **Advanced details** 섹션을 펼칩니다.
-15. **IAM instance profile** 드롭다운에서 SSM + Parameter Store 읽기 권한이 있는 IAM Role을 선택합니다.
+25. **Configure storage** 섹션은 기본값을 유지합니다:
+    - **Root volume**: `8 GiB`, `gp3` (기본값)
+
+26. **Advanced details** 섹션을 펼칩니다.
+27. **IAM instance profile** 드롭다운에서 SSM + Parameter Store 읽기 권한이 있는 IAM Role을 선택합니다.
     - 필요 정책: `AmazonSSMManagedInstanceCore` + `AmazonSSMReadOnlyAccess`
     - Role이 없다면 아래 TIP을 참고하여 먼저 생성하세요.
 
@@ -603,7 +789,7 @@ app:
 > - [[Next]] → **Role name**: `my-3tier-app-ec2-role` → [[Create role]]
 > - EC2 생성 화면으로 돌아와서 IAM instance profile에 `my-3tier-app-ec2-role` 선택
 
-16. [[Launch instance]] 버튼을 클릭합니다.
+28. [[Launch instance]] 버튼을 클릭합니다.
 
 > [!OUTPUT]
 > "Successfully initiated launch of instance (i-0abc123def456)" 메시지가 표시됩니다.
@@ -631,6 +817,76 @@ java -version
 # MySQL 클라이언트 설치 (RDS 접속 테스트용)
 sudo dnf install -y mariadb105
 ```
+
+### 5-2b. 기존 프로젝트 SQL 실행 (방법 C 해당자만)
+
+> [!NOTE]
+> 태스크 2-2에서 **방법 C**를 선택한 경우에만 이 단계를 진행합니다.  
+> 방법 A(ddl-auto) 또는 방법 B(schema.sql)를 사용하면 앱 시작 시 자동 처리되므로 건너뛰세요.
+
+Step 2-3에서 `board.sql`, `member.sql` 등으로 EC2 로컬 MySQL에 세팅했던 것과 동일한 작업을 Amazon RDS에 수행합니다.
+
+> [!NOTE]
+> 아래 명령어의 파일명은 예시입니다.  
+> 본인 프로젝트에서 사용하는 SQL/CSV 파일명으로 변경하세요.
+
+```bash
+# 로컬에서 기존 SQL/CSV 파일을 S3에 업로드 (예시)
+aws s3 cp board.sql s3://<S3_DEPLOY_BUCKET>/
+aws s3 cp member.sql s3://<S3_DEPLOY_BUCKET>/
+aws s3 cp travel.sql s3://<S3_DEPLOY_BUCKET>/
+aws s3 cp travel.csv s3://<S3_DEPLOY_BUCKET>/
+aws s3 cp travel_image.csv s3://<S3_DEPLOY_BUCKET>/
+
+# EC2에서 S3에서 다운로드 (SSM Session Manager 접속 상태에서)
+aws s3 cp s3://<S3_DEPLOY_BUCKET>/board.sql /home/ec2-user/
+aws s3 cp s3://<S3_DEPLOY_BUCKET>/member.sql /home/ec2-user/
+aws s3 cp s3://<S3_DEPLOY_BUCKET>/travel.sql /home/ec2-user/
+aws s3 cp s3://<S3_DEPLOY_BUCKET>/travel.csv /home/ec2-user/
+aws s3 cp s3://<S3_DEPLOY_BUCKET>/travel_image.csv /home/ec2-user/
+
+# Amazon RDS에 접속하여 SQL 실행
+mysql -h <RDS_ENDPOINT> -u admin -p
+
+source /home/ec2-user/board.sql;
+source /home/ec2-user/member.sql;
+source /home/ec2-user/travel.sql;
+
+SHOW TABLES;
+EXIT;
+```
+
+**CSV 데이터가 있는 경우 (`LOAD DATA LOCAL INFILE`):**
+
+```bash
+# --local-infile 옵션 필수
+mysql -h <RDS_ENDPOINT> -u admin -p --local-infile=1 <DB_NAME> -e "
+  LOAD DATA LOCAL INFILE '/home/ec2-user/travel.csv'
+  INTO TABLE tbl_travel
+  FIELDS TERMINATED BY ',' ENCLOSED BY '\"'
+  LINES TERMINATED BY '\n'
+  IGNORE 1 ROWS;"
+
+mysql -h <RDS_ENDPOINT> -u admin -p --local-infile=1 <DB_NAME> -e "
+  LOAD DATA LOCAL INFILE '/home/ec2-user/travel_image.csv'
+  INTO TABLE tbl_travel_image
+  FIELDS TERMINATED BY ','
+  LINES TERMINATED BY '\n'
+  IGNORE 1 ROWS (filename, travel_no);"
+
+# 확인
+mysql -h <RDS_ENDPOINT> -u admin -p <DB_NAME> -e "SELECT COUNT(*) FROM tbl_travel;"
+```
+
+> [!WARNING]
+> Step 2-3에서 사용했던 SQL에 `CREATE USER 'scoula'@'%'` 등이 포함된 경우,  
+> Amazon RDS에서는 `admin` 계정으로 접속하여 실행하면 됩니다.  
+> Amazon RDS의 마스터 사용자(`admin`)가 해당 권한을 갖고 있습니다.
+
+> [!TIP]
+> `<RDS_ENDPOINT>`는 Step 8-1 AWS CloudFormation Outputs의 RDSEndpoint 값입니다.  
+> `<DB_NAME>`은 스택 생성 시 설정한 데이터베이스 이름(기본: `myapp`)입니다.  
+> SQL 파일 내에서 별도 DB를 생성하는 경우(`CREATE DATABASE scoula_db`), `<DB_NAME>`과 다를 수 있으므로 `application.properties`의 DB 이름과 일치시키세요.
 
 ### 5-3. 앱 디렉토리 및 시작 스크립트 생성
 
@@ -780,16 +1036,16 @@ sudo journalctl -u spring-app -f
 
 ### 5-7. ALB Target Group에 EC2 등록
 
-17. 상단 검색창에 `EC2`를 입력하고 **EC2** 서비스를 선택합니다.
-18. 왼쪽 메뉴에서 **Target Groups**를 클릭합니다.
-19. `my-3tier-app-tg`를 클릭합니다.
-20. **Targets** 탭을 클릭합니다.
-21. [[Register targets]] 버튼을 클릭합니다.
-22. **Available instances**에서 `my-3tier-app-server`를 체크합니다.
-23. **Ports for the selected instances**: `8080` 입력
-24. [[Include as pending below]] 버튼을 클릭합니다.
-25. 하단의 **Review** 섹션에서 인스턴스가 추가된 것을 확인합니다.
-26. [[Register pending targets]] 버튼을 클릭합니다.
+29. 상단 검색창에 `EC2`를 입력하고 **EC2** 서비스를 선택합니다.
+30. 왼쪽 메뉴에서 **Target Groups**를 클릭합니다.
+31. `my-3tier-app-tg`를 클릭합니다.
+32. **Targets** 탭을 클릭합니다.
+33. [[Register targets]] 버튼을 클릭합니다.
+34. **Available instances**에서 `my-3tier-app-server`를 체크합니다.
+35. **Ports for the selected instances**: `8080` 입력
+36. [[Include as pending below]] 버튼을 클릭합니다.
+37. 하단의 **Review** 섹션에서 인스턴스가 추가된 것을 확인합니다.
+38. [[Register pending targets]] 버튼을 클릭합니다.
 
 > [!OUTPUT]
 > Target Group의 Targets 탭에서 등록된 인스턴스를 확인합니다:
@@ -834,28 +1090,28 @@ sudo journalctl -u spring-app -f
 
 ### 6-1. IAM 사용자 생성 (GitHub Actions용)
 
-27. 상단 검색창에 `IAM`을 입력하고 **IAM** 서비스를 선택합니다.
-28. 왼쪽 메뉴에서 **IAM Users**를 클릭합니다.
-29. [[Create user]]를 클릭합니다.
-30. **User name**: `github-actions-backend`를 입력합니다.
-31. **Provide user access to the AWS Management Console** 체크를 **하지 않습니다** (콘솔 접근 불필요).
-32. [[Next]]를 클릭합니다.
-33. **Permissions options**에서 `Attach policies directly`를 선택합니다.
-34. 다음 정책을 검색하여 체크합니다:
+39. 상단 검색창에 `IAM`을 입력하고 **IAM** 서비스를 선택합니다.
+40. 왼쪽 메뉴에서 **IAM Users**를 클릭합니다.
+41. [[Create user]]를 클릭합니다.
+42. **User name**: `github-actions-backend`를 입력합니다.
+43. **Provide user access to the AWS Management Console** 체크를 **하지 않습니다** (콘솔 접근 불필요).
+44. [[Next]]를 클릭합니다.
+45. **Permissions options**에서 `Attach policies directly`를 선택합니다.
+46. 다음 정책을 검색하여 체크합니다:
     - `AmazonS3FullAccess` (JAR 업로드용)
     - `AmazonSSMFullAccess` (SSM Run Command 실행용)
-35. [[Next]]를 클릭합니다.
-36. **Review and create** 페이지에서 설정을 확인하고 [[Create user]]를 클릭합니다.
+47. [[Next]]를 클릭합니다.
+48. **Review and create** 페이지에서 설정을 확인하고 [[Create user]]를 클릭합니다.
 
 ### Access Key 생성
 
-37. 생성된 `github-actions-backend` 사용자를 클릭하여 상세 페이지로 이동합니다.
-38. **Security credentials** 탭을 클릭합니다.
-39. **Access keys** 섹션에서 [[Create access key]]를 클릭합니다.
-40. **Use case**에서 `Third-party service`를 선택합니다.
-41. 하단의 확인 체크박스를 선택하고 [[Next]]를 클릭합니다.
-42. [[Create access key]]를 클릭합니다.
-43. **Access key ID**와 **Secret access key**를 복사하여 안전한 곳에 저장합니다.
+49. 생성된 `github-actions-backend` 사용자를 클릭하여 상세 페이지로 이동합니다.
+50. **Security credentials** 탭을 클릭합니다.
+51. **Access keys** 섹션에서 [[Create access key]]를 클릭합니다.
+52. **Use case**에서 `Third-party service`를 선택합니다.
+53. 하단의 확인 체크박스를 선택하고 [[Next]]를 클릭합니다.
+54. [[Create access key]]를 클릭합니다.
+55. **Access key ID**와 **Secret access key**를 복사하여 안전한 곳에 저장합니다.
 
 > [!WARNING]
 > Secret access key는 이 화면에서만 확인할 수 있습니다.  
@@ -863,13 +1119,13 @@ sudo journalctl -u spring-app -f
 
 ### 6-2. GitHub Secrets 설정
 
-44. 브라우저에서 GitHub → `my-backend` 리포지토리 페이지로 이동합니다.
-45. **Settings** 탭을 클릭합니다.
-46. 왼쪽 메뉴에서 **Secrets and variables** → **Actions**를 클릭합니다.
-47. [[New repository secret]] 버튼을 클릭합니다.
-48. 다음 Secrets를 하나씩 추가합니다:
-    - `AWS_ACCESS_KEY_ID`: 43번에서 복사한 Access Key ID
-    - `AWS_SECRET_ACCESS_KEY`: 43번에서 복사한 Secret Access Key
+56. 브라우저에서 GitHub → `my-backend` 리포지토리 페이지로 이동합니다.
+57. **Settings** 탭을 클릭합니다.
+58. 왼쪽 메뉴에서 **Secrets and variables** → **Actions**를 클릭합니다.
+59. [[New repository secret]] 버튼을 클릭합니다.
+60. 다음 Secrets를 하나씩 추가합니다:
+    - `AWS_ACCESS_KEY_ID`: 55번에서 복사한 Access Key ID
+    - `AWS_SECRET_ACCESS_KEY`: 55번에서 복사한 Secret Access Key
     - `AWS_REGION`: `ap-northeast-2`
     - `S3_DEPLOY_BUCKET`: `<태스크 5-5에서 생성한 배포용 S3 버킷명>`
     - `EC2_INSTANCE_ID`: `<태스크 5-1에서 생성한 Amazon EC2 인스턴스 ID (예: i-0abc123def456)>`
@@ -1041,8 +1297,8 @@ GitHub → **Actions** 탭에서 워크플로우 실행을 확인합니다.
 
 ### 7-1. ALB Target Group Health Check 확인
 
-49. **EC2** → **Target Groups** → `my-3tier-app-tg`를 클릭합니다.
-50. **Targets** 탭에서 등록된 인스턴스의 Status를 확인합니다:
+61. **EC2** → **Target Groups** → `my-3tier-app-tg`를 클릭합니다.
+62. **Targets** 탭에서 등록된 인스턴스의 Status를 확인합니다:
 
 - `healthy`: 정상 (Health Check 통과)
 - `unhealthy`: 비정상 (로그 확인 필요)
@@ -1143,6 +1399,189 @@ EXIT;
 > 이를 통해 장애가 발생한 인스턴스로 트래픽이 전달되지 않습니다.
 
 ✅ **태스크 완료** — ALB Health Check를 확인하고 API 테스트를 완료했습니다.
+
+---
+
+## 🎯 셀프 미션: Auto Scaling Group으로 전환 (선택)
+
+> [!NOTE]
+> 이 셀프 미션은 선택 사항입니다. 태스크 5~6에서 단일 Amazon EC2 배포를 완료한 후, 도전 과제로 진행하세요.
+
+### 단일 EC2 vs ASG — 무엇이 다른가?
+
+| 항목        | 단일 EC2 (현재)                    | Auto Scaling Group           |
+| ----------- | ---------------------------------- | ---------------------------- |
+| 인스턴스 수 | 1대 고정                           | 최소~최대 범위에서 자동 조절 |
+| 장애 대응   | 수동 복구                          | 자동으로 새 인스턴스 생성    |
+| 배포 방식   | SSM Run Command (Instance ID 고정) | Instance Refresh (순차 교체) |
+| CI/CD       | Instance ID를 Secret에 등록        | ASG 이름을 Secret에 등록     |
+| 비용        | 1대 고정 비용                      | 트래픽에 따라 유동적         |
+
+### 전환 시 주의사항
+
+- ASG 인스턴스는 **동적으로 생성/삭제**됩니다. Instance ID를 고정할 수 없습니다.
+- 새 인스턴스가 생성될 때 **자동으로 앱이 설치+시작**되어야 합니다 (Launch Template의 User Data 활용).
+- 배포 시에는 새 JAR을 S3에 업로드한 뒤 **Instance Refresh**로 인스턴스를 순차 교체합니다.
+- Health Check가 통과해야 새 인스턴스가 서비스에 투입됩니다.
+
+### 구현 가이드
+
+**1단계: Launch Template 생성**
+
+Launch Template의 **User Data**에 앱 설치+시작 스크립트를 포함합니다:
+
+```bash
+#!/bin/bash
+# User Data — 인스턴스 시작 시 자동 실행
+
+# Java 설치
+dnf install -y java-17-amazon-corretto-devel
+
+# 앱 디렉토리 생성
+mkdir -p /home/ec2-user/app
+
+# S3에서 최신 JAR 다운로드
+aws s3 cp s3://<S3_DEPLOY_BUCKET>/app.jar /home/ec2-user/app/app.jar
+
+# start.sh 생성 (태스크 5-3과 동일)
+cat << 'SCRIPT' > /home/ec2-user/app/start.sh
+#!/bin/bash
+export DB_ENDPOINT=$(aws ssm get-parameter --name "/my-3tier-app/db/endpoint" --query "Parameter.Value" --output text --region ap-northeast-2)
+export DB_NAME=$(aws ssm get-parameter --name "/my-3tier-app/db/name" --query "Parameter.Value" --output text --region ap-northeast-2)
+export DB_USERNAME=$(aws ssm get-parameter --name "/my-3tier-app/db/username" --query "Parameter.Value" --output text --region ap-northeast-2)
+export DB_PASSWORD=$(aws ssm get-parameter --name "/my-3tier-app/db/password" --with-decryption --query "Parameter.Value" --output text --region ap-northeast-2)
+exec java -jar /home/ec2-user/app/app.jar --spring.profiles.active=prod
+SCRIPT
+chmod +x /home/ec2-user/app/start.sh
+chown -R ec2-user:ec2-user /home/ec2-user/app
+
+# systemd 서비스 등록 + 시작
+cat << 'EOF' > /etc/systemd/system/spring-app.service
+[Unit]
+Description=Spring Boot Application
+After=network.target
+[Service]
+User=ec2-user
+WorkingDirectory=/home/ec2-user/app
+ExecStart=/home/ec2-user/app/start.sh
+Restart=on-failure
+RestartSec=10
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl daemon-reload
+systemctl enable spring-app
+systemctl start spring-app
+```
+
+**2단계: ASG 생성**
+
+- AWS Console → EC2 → Auto Scaling Groups → [[Create Auto Scaling group]]
+- Launch Template: 위에서 생성한 템플릿 선택
+- VPC: `my-3tier-app-vpc`, Subnet: Private Subnet 1, 2
+- Load balancing: 기존 `my-3tier-app-tg` Target Group 연결
+- Health check: ELB health check 활성화
+- Desired capacity: 2, Minimum: 1, Maximum: 4
+
+**3단계: CI/CD 워크플로우 변경**
+
+GitHub Secrets에 `ASG_NAME`을 추가하고, 워크플로우를 다음과 같이 변경합니다:
+
+```yaml
+# .github/workflows/deploy.yml (ASG 버전)
+name: Deploy Spring Boot to ASG (via S3 + Instance Refresh)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'build.gradle'
+      - '.github/workflows/deploy.yml'
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'corretto'
+
+      - name: Cache Gradle packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*') }}
+          restore-keys: ${{ runner.os }}-gradle-
+
+      - name: Build with Gradle
+        run: |
+          chmod +x ./gradlew
+          ./gradlew clean bootJar
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      # S3에 새 JAR 업로드
+      - name: Upload JAR to S3
+        run: |
+          JAR_FILE=$(ls build/libs/*.jar | head -1)
+          aws s3 cp "$JAR_FILE" s3://${{ secrets.S3_DEPLOY_BUCKET }}/app.jar
+
+      # ASG Instance Refresh 실행 (인스턴스를 순차 교체)
+      - name: Start Instance Refresh
+        run: |
+          aws autoscaling start-instance-refresh \
+            --auto-scaling-group-name ${{ secrets.ASG_NAME }} \
+            --preferences '{"MinHealthyPercentage": 50, "InstanceWarmup": 60}'
+
+          echo "✅ Instance Refresh 시작! 새 인스턴스가 최신 JAR로 교체됩니다."
+```
+
+> [!CONCEPT] Instance Refresh 동작 방식
+>
+> - ASG의 인스턴스를 **순차적으로 교체** (Rolling Update)
+> - 새 인스턴스가 Launch Template의 User Data를 실행 → S3에서 최신 JAR 다운로드 → 앱 시작
+> - ALB Health Check 통과 후 이전 인스턴스 종료
+> - `MinHealthyPercentage: 50` — 최소 50% 인스턴스는 항상 서비스 중
+> - 무중단 배포 (Zero-downtime deployment) 달성
+
+> [!TIP]
+> **Step 8 (EC2/ASG) vs Step 9 (Docker/ECS Fargate) 배포 방식 비교:**
+>
+> | 항목        | EC2 단일                          | EC2 + ASG                | ECS Fargate (Step 9)       |
+> | ----------- | --------------------------------- | ------------------------ | -------------------------- |
+> | 서버 관리   | 직접 관리 (Java 설치, systemd 등) | Launch Template에 정의   | **관리 불필요** (서버리스) |
+> | 배포 방식   | SSM Run Command                   | Instance Refresh         | Docker 이미지 교체         |
+> | 확장        | 수동                              | 자동 (CPU/메모리 기반)   | 자동 (더 빠름)             |
+> | 배포 속도   | 즉시 (재시작만)                   | 3~5분 (인스턴스 교체)    | 2~3분 (Task 교체)          |
+> | 환경 일관성 | EC2마다 다를 수 있음              | Launch Template으로 통일 | **Docker 이미지로 보장**   |
+> | 비용        | EC2 시간당 과금                   | EC2 시간당 과금          | 실행 시간 기반 과금        |
+>
+> Step 9에서는 Docker + Amazon ECR + Amazon ECS Fargate를 사용하여 서버 관리 없이 컨테이너 기반 배포를 학습합니다.
+> EC2/ASG 방식의 한계(서버 패치, Java 버전 관리, 환경 불일치 등)를 Docker로 해결합니다.
+
+> [!WARNING]
+> **ASG 전환 시 추가 비용 발생:**
+>
+> - ASG 자체는 무료이지만, 최소 인스턴스 수만큼 Amazon EC2 비용 발생
+> - Desired capacity: 2이면 `t2.micro` 2대 비용 (프리티어는 1대만 적용)
+> - Instance Refresh 중에는 일시적으로 인스턴스가 더 많아질 수 있음
+>
+> 학습 완료 후 반드시 ASG를 삭제하세요 (Step 8-4에서 정리).
 
 ---
 

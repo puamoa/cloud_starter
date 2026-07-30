@@ -474,6 +474,9 @@ AWS CloudFormation에서 이미 Amazon S3 버킷과 정적 웹 호스팅을 설�
 
 ### S3 버킷 설정 확인
 
+> [!WARNING]
+> AWS Console 우측 상단에서 리전이 **Asia Pacific (Seoul) ap-northeast-2**인지 확인하세요.
+
 6. 상단 검색창에 `S3`를 입력하고 **S3** 서비스를 선택합니다.
 7. Buckets 목록에서 `my-3tier-app-frontend-{BucketSuffix}` 버킷을 클릭합니다.
 8. **Properties** 탭을 클릭합니다.
