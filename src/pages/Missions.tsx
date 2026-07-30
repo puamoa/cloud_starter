@@ -67,6 +67,16 @@ const allMissions: Mission[] = [
     path: '/week/5/session/2#self-mission-3',
   },
   {
+    step: 'Step 6',
+    week: 6,
+    session: '6-3',
+    title:
+      'Amazon EC2에 Spring 백엔드 배포 (Parameter Store + Secrets Manager)',
+    difficulty: 3,
+    keywords: ['SSM', 'Secrets Manager', 'Amazon EC2', '배포'],
+    path: '/week/6/session/3',
+  },
+  {
     step: 'Step 7',
     week: 7,
     session: '7-3',
