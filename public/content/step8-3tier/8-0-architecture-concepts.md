@@ -296,6 +296,46 @@ SPA(Vue.js)가 백엔드 API를 호출할 때, ALB를 외부에 노출할지 숨
 > ALB가 Internet-facing이므로 외부에서 직접 API를 테스트할 수 있고, 3-Tier 아키텍처 학습에 집중할 수 있습니다.  
 > 프로덕션에서는 방식 B 또는 C로 전환하여 ALB를 외부에 노출하지 않는 것이 좋습니다.
 
+### Private Subnet EC2 접속 및 배포 방식
+
+Private Subnet에 배치된 Amazon EC2는 Public IP가 없으므로 SSH로 직접 접속할 수 없습니다.  
+대신 **AWS Systems Manager (SSM)** 를 사용합니다.
+
+| 기능                    | 용도                 | 설명                                       |
+| ----------------------- | -------------------- | ------------------------------------------ |
+| **SSM Session Manager** | EC2 접속 (터미널)    | SSH 키 없이 브라우저 또는 CLI로 EC2에 접속 |
+| **SSM Run Command**     | EC2에 원격 명령 실행 | 접속하지 않고도 셸 명령을 EC2에 전달·실행  |
+
+**SSM Run Command의 동작 방식:**
+
+```
+GitHub Actions (또는 로컬 CLI)
+    │
+    │  aws ssm send-command
+    │  (실행할 명령 + 대상 Instance ID)
+    ▼
+AWS Systems Manager 서비스
+    │
+    │  SSM Agent에 명령 전달
+    ▼
+EC2 (Private Subnet)
+    │  명령 실행 (S3 다운로드, 앱 재시작 등)
+    │  결과를 SSM 서비스에 보고
+    ▼
+GitHub Actions
+    aws ssm wait (완료 대기)
+    → 성공/실패 확인
+```
+
+> [!CONCEPT] SSM Run Command가 CI/CD에 적합한 이유
+>
+> - **SSH 키 관리 불필요**: IAM 권한만으로 명령 전달 (키 유출 위험 없음)
+> - **Private Subnet 호환**: EC2에 Public IP 없이도 동작 (NAT Gateway 또는 VPC Endpoint 필요)
+> - **감사 추적**: 누가, 언제, 어떤 명령을 실행했는지 AWS CloudTrail에 기록
+> - **멱등성**: 같은 명령을 여러 번 실행해도 안전 (배포 스크립트를 멱등하게 작성)
+>
+> Step 8-3 태스크 6에서 GitHub Actions + SSM Run Command로 CI/CD 파이프라인을 구축합니다.
+
 ### GitHub 인증과 Git 커밋 author
 
 > [!CONCEPT] Git push 인증과 커밋 author는 별개

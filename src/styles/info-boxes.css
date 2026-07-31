@@ -12,6 +12,22 @@
   font-size: 14px !important;
 }
 
+/* Alert 내부 버튼 크기 축소 (본문 대비 부풀어 보이지 않게) */
+.info-box-content .markdown-button-wrapper button,
+.info-box-content .markdown-button-wrapper span,
+.info-box-content .markdown-button-wrapper [class*='awsui_button'],
+.info-box-content .markdown-button-wrapper [class*='awsui_content'] {
+  font-size: 0.8rem !important;
+  padding: 1px 6px !important;
+  min-height: auto !important;
+  line-height: 1.4 !important;
+}
+
+.info-box-content .markdown-button-wrapper {
+  transform: scale(0.9);
+  transform-origin: center;
+}
+
 /* 깔끔한 정보 박스 스타일 */
 
 .info-box {

@@ -3008,6 +3008,125 @@ sudo nginx -t && sudo systemctl restart nginx
 
 ---
 
+### 구현 가이드: 게시글 첨부파일 S3 전환
+
+기존 `BoardServiceImpl`의 로컬 파일 저장(`UploadFiles.upload()`)을 `S3Service.upload()`로 교체하는 과정입니다.
+
+#### 왜 S3로 전환해야 하는가?
+
+| 항목          | 로컬 저장 (`/tmp/upload`)         | Amazon S3 저장              |
+| ------------- | --------------------------------- | --------------------------- |
+| EC2 교체 시   | 파일 소실 (ASG, Instance Refresh) | 영구 보존                   |
+| 다중 인스턴스 | 인스턴스별 파일 분산 (불일치)     | 모든 인스턴스에서 동일 접근 |
+| 디스크 용량   | EC2 EBS 제한 (8GB 기본)           | 사실상 무제한               |
+| 백업          | 별도 구성 필요                    | 자동 내구성 (99.999999999%) |
+
+> [!WARNING]
+> EC2에 배포하면 로컬 파일 저장 경로 (`c:/upload/board`, `/tmp/upload` 등)가 환경에 따라 달라지고, 인스턴스 교체 시 파일이 사라집니다.  
+> **프로덕션 배포를 목표로 한다면 S3 전환은 필수입니다.**
+
+#### 변경 전 (로컬 저장)
+
+```java
+// BoardServiceImpl.java — 기존 방식
+private final static String BASE_DIR = "c:/upload/board"; // OS별 경로 문제
+
+private void upload(Long bno, List<MultipartFile> files) {
+    for (MultipartFile part : files) {
+        if (part.isEmpty()) continue;
+        try {
+            String uploadPath = UploadFiles.upload(BASE_DIR, part); // 로컬 저장
+            BoardAttachmentVO attach = BoardAttachmentVO.of(part, bno, uploadPath);
+            mapper.createAttachment(attach);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+}
+```
+
+#### 변경 후 (S3 저장)
+
+```java
+// BoardServiceImpl.java — S3 방식
+private final S3Service s3Service; // 생성자 주입
+
+private void upload(Long bno, List<MultipartFile> files) {
+    for (MultipartFile part : files) {
+        if (part.isEmpty()) continue;
+        // S3에 업로드하고 key를 반환받음 (예: "public/board/uuid.jpg")
+        String key = s3Service.upload(part, "public/board");
+        // DB에 S3 key를 저장 (로컬 경로 대신)
+        BoardAttachmentVO attach = BoardAttachmentVO.of(part, bno, key);
+        mapper.createAttachment(attach);
+    }
+}
+```
+
+#### 변경 포인트 정리
+
+| 변경 대상                     | 변경 내용                                                                       |
+| ----------------------------- | ------------------------------------------------------------------------------- |
+| `BoardServiceImpl`            | `UploadFiles.upload(BASE_DIR, part)` → `s3Service.upload(part, "public/board")` |
+| `BoardServiceImpl`            | `S3Service` 필드 추가 (생성자 주입)                                             |
+| `BoardController` (다운로드)  | `new File(path)` → `s3Service.getFileUrl(key)` URL 리다이렉트                   |
+| `BoardAttachmentVO.path` 컬럼 | 로컬 경로 대신 S3 key 저장 (DB 스키마 변경 불필요 — 문자열 컬럼)                |
+| `application.properties`      | `cloud.aws.s3.bucket` 값이 실제 버킷명인지 확인                                 |
+
+#### 첨부파일 다운로드 변경
+
+```java
+// BoardController.java — 변경 전
+@GetMapping("/download/{no}")
+public void download(@PathVariable Long no, HttpServletResponse response) throws Exception {
+    BoardAttachmentVO attachment = service.getAttachment(no);
+    File file = new File(attachment.getPath()); // 로컬 파일
+    UploadFiles.download(response, file, attachment.getFilename());
+}
+```
+
+```java
+// BoardController.java — 변경 후 (S3 key 기반)
+@GetMapping("/download/{no}")
+public void download(@PathVariable Long no, HttpServletResponse response) throws Exception {
+    BoardAttachmentVO attachment = service.getAttachment(no);
+    // path에 저장된 S3 key로 다운로드 URL 리다이렉트
+    String url = s3Service.getFileUrl(attachment.getPath());
+    response.sendRedirect(url);
+}
+```
+
+> [!TIP]
+> **더 간단한 방법 — 프론트에서 직접 S3 URL 접근:**
+>
+> `BoardAttachmentVO.path`에 S3 key가 저장되므로, 프론트에 URL을 내려줄 때:
+>
+> ```java
+> // BoardAttachmentVO 또는 DTO에 getter 추가
+> public String getUrl() {
+>     return String.format("https://%s.s3.%s.amazonaws.com/%s", bucket, region, path);
+> }
+> ```
+>
+> 이 방식이면 다운로드 Controller를 거치지 않고 프론트에서 바로 S3 파일에 접근합니다.  
+> 단, S3 버킷의 해당 prefix에 **공개 읽기 권한**(Public Read) 또는 **CloudFront** 설정이 필요합니다.
+
+#### 프로필 이미지(아바타) S3 전환 (선택)
+
+`MemberServiceImpl`에서도 동일한 패턴을 적용합니다:
+
+```java
+// 변경 전
+File dest = new File("/tmp/upload/avatar", username + ".png");
+avatar.transferTo(dest);
+
+// 변경 후
+String key = s3Service.upload(avatar, "avatar");
+// DB에 key 저장 or 고정 키 사용: "avatar/{username}.png"
+```
+
+---
+
 ## 마무리
 
 다음을 성공적으로 수행했습니다:

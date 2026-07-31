@@ -90,6 +90,7 @@ Resources:
   DBParameterGroup:
     Type: AWS::RDS::DBParameterGroup
     Properties:
+      DBParameterGroupName: !Sub '${ProjectName}-db-params'
       Family: mysql8.4
       Description: !Sub '${ProjectName} MySQL 8.4 parameter group with Seoul timezone'
       Parameters:
@@ -113,6 +114,7 @@ Resources:
   DBSubnetGroup:
     Type: AWS::RDS::DBSubnetGroup
     Properties:
+      DBSubnetGroupName: !Sub '${ProjectName}-db-subnet-group'
       DBSubnetGroupDescription: RDS subnet group for private subnets
       SubnetIds:
         - Fn::ImportValue: !Sub '${ProjectName}-private-subnet-1-id'

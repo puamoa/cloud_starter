@@ -331,6 +331,7 @@ Resources:
   ALBSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
+      GroupName: !Sub '${ProjectName}-alb-sg'
       GroupDescription: Allow HTTP/HTTPS from internet to ALB
       VpcId: !Ref VPC
       SecurityGroupIngress:
@@ -355,6 +356,7 @@ Resources:
   EC2SecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
+      GroupName: !Sub '${ProjectName}-ec2-sg'
       GroupDescription: Allow port 8080 from ALB only
       VpcId: !Ref VPC
       SecurityGroupIngress:
@@ -375,6 +377,7 @@ Resources:
   RDSSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
+      GroupName: !Sub '${ProjectName}-rds-sg'
       GroupDescription: Allow MySQL 3306 from EC2 only
       VpcId: !Ref VPC
       SecurityGroupIngress:
