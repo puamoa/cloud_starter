@@ -1,0 +1,688 @@
+---
+title: '기존 백엔드 배포: Spring MVC WAR (EC2 + Tomcat + ALB)'
+week: 8
+session: '3a'
+awsServices:
+  - Amazon EC2
+  - Elastic Load Balancing
+learningObjectives:
+  - 기존 Spring MVC 프로젝트를 Amazon EC2에 배포할 수 있습니다.
+  - Tomcat 9에 WAR를 배포하고 ALB와 연결할 수 있습니다.
+  - SSM Parameter Store로 비밀값을 관리할 수 있습니다.
+  - GitHub Actions로 백엔드 자동 배포를 구성할 수 있습니다.
+prerequisites:
+  - Step 8-1 완료 (인프라 구축)
+  - 기존 Spring MVC 프로젝트 (MyBatis, JWT, WAR, javax.servlet)
+  - Java 17 + Gradle (로컬)
+estimatedCost: 크레딧 내 사용 가능 (비용 발생 가능)
+---
+
+이 실습에서는 **기존 Spring MVC 프로젝트**(WAR)를 Amazon EC2의 Tomcat에 배포하고,
+ALB와 연결합니다. GitHub Actions로 자동 배포 파이프라인도 구축합니다.
+
+### Step 8 전체 아키텍처
+
+<img src="/images/step8/8-architecture.png" alt="Step 8 3-Tier 아키텍처" class="guide-img-lg" />
+
+> [!NOTE]
+> Step 8-1에서 생성한 AWS CloudFormation Outputs 값이 필요합니다:
+>
+> - **RDSEndpoint**: 데이터베이스 연결 주소
+> - **ALBTargetGroupArn**: EC2 등록 대상
+> - **EC2SecurityGroupId**: Amazon EC2 인스턴스에 적용할 보안 그룹
+
+---
+
+## 태스크 1: Health Check 설정
+
+ALB Target Group은 Health Check 경로로 HTTP 200 응답을 기대합니다.
+Spring MVC에는 Actuator가 없으므로 아래 중 하나를 선택하세요:
+
+**방법 1: Target Group Health Check 경로를 `/`로 변경 (가장 간단)**
+
+앱의 기본 페이지(`/`)가 200을 반환하면 추가 작업 없음.
+태스크 5에서 Target Group 설정 시 경로를 변경합니다.
+
+**방법 2: 간단한 Health Check 컨트롤러 추가**
+
+```java
+// src/main/java/.../controller/HealthController.java
+@RestController
+public class HealthController {
+    @GetMapping("/health")
+    public ResponseEntity<String> health() {
+        return ResponseEntity.ok("OK");
+    }
+}
+```
+
+Target Group Health Check 경로를 `/health`로 설정합니다.
+
+**방법 3: Actuator 의존성 추가**
+
+`build.gradle`에 의존성 추가:
+
+```groovy
+implementation 'org.springframework.boot:spring-boot-starter-actuator'
+```
+
+이 경우 `/actuator/health`가 자동 활성화됩니다.
+
+> [!TIP]
+> 기존 프로젝트가 순수 Spring MVC(Spring Boot 아님)라면 방법 1 또는 2를 권장합니다.
+> 방법 1이 가장 간단하며 코드 수정이 불필요합니다.
+
+✅ **태스크 완료** — Health Check 방식을 선택했습니다.
+
+---
+
+## 태스크 2: RDS 연동 설정
+
+### 2-1. SSM Parameter Store에 비밀값 저장
+
+Amazon EC2에서 Amazon RDS 접속 정보를 안전하게 관리하기 위해 SSM Parameter Store를 사용합니다.
+
+> [!TIP]
+> **스택 생성 시 기본값을 변경하지 않았다면:**
+>
+> | 파라미터     | 기본값                                                           |
+> | ------------ | ---------------------------------------------------------------- |
+> | DB 이름      | `myapp`                                                          |
+> | DB 사용자명  | `admin`                                                          |
+> | DB 비밀번호  | `MyPassword123!` (Step 8-1 가이드 기본 예시, 변경했다면 본인 값) |
+> | RDS Endpoint | CloudFormation Outputs → `RDSEndpoint` 확인                      |
+
+1. 다음 명령어를 실행하여 SSM Parameter Store에 파라미터를 저장합니다:
+
+```bash
+# Amazon RDS 엔드포인트 저장
+aws ssm put-parameter \
+  --name "/my-3tier-app/db/endpoint" \
+  --value "<Step 8-1 CloudFormation Outputs의 RDSEndpoint 값>" \
+  --type String
+
+# DB 이름 저장
+aws ssm put-parameter \
+  --name "/my-3tier-app/db/name" \
+  --value "<스택 생성 시 설정한 DB 이름 (기본: myapp)>" \
+  --type String
+
+# DB 사용자명 저장
+aws ssm put-parameter \
+  --name "/my-3tier-app/db/username" \
+  --value "<스택 생성 시 설정한 DB 마스터 사용자명 (기본: admin)>" \
+  --type String
+
+# DB 비밀번호 저장 (SecureString으로 암호화)
+aws ssm put-parameter \
+  --name "/my-3tier-app/db/password" \
+  --value "<스택 생성 시 설정한 DB 마스터 비밀번호>" \
+  --type SecureString
+
+# S3 버킷명 저장 (S3 업로드 기능이 있는 프로젝트만 해당)
+aws ssm put-parameter \
+  --name "/my-3tier-app/s3/bucket" \
+  --value "<Step 8-1 CloudFormation Outputs의 S3BucketName 값>" \
+  --type String
+
+# AWS 리전 저장
+aws ssm put-parameter \
+  --name "/my-3tier-app/aws/region" \
+  --value "ap-northeast-2" \
+  --type String
+```
+
+### 2-2. DB 접속 설정 파일 수정
+
+`src/main/resources/application.properties`의 DB 접속 정보를 환경 변수로 변경합니다:
+
+```properties
+# 변경 전 (로컬 DB 직접 접속)
+#jdbc.driver=net.sf.log4jdbc.sql.jdbcapi.DriverSpy
+#jdbc.url=jdbc:log4jdbc:mysql://localhost:3306/scoula_db
+#jdbc.username=scoula
+#jdbc.password=Scoula123!
+
+# 변경 후 (환경 변수에서 주입 — EC2의 setenv.sh에서 설정)
+jdbc.driver=net.sf.log4jdbc.sql.jdbcapi.DriverSpy
+jdbc.url=jdbc:log4jdbc:mysql://${DB_ENDPOINT}:3306/${DB_NAME}
+jdbc.username=${DB_USERNAME}
+jdbc.password=${DB_PASSWORD}
+```
+
+> [!TIP]
+> 기존 프로젝트의 `RootConfig.java`에서 `@Value("${jdbc.url}")` 등으로 값을 읽는 구조라면,
+> `application.properties`의 값만 환경 변수 형태로 변경하면 됩니다. Java 코드 수정은 불필요합니다.
+>
+> `log4jdbc` 드라이버를 사용하는 경우 URL 형식이 `jdbc:log4jdbc:mysql://`이어야 합니다.
+
+> [!TIP]
+> **로컬 개발 시** 환경 변수가 없으면 앱이 시작되지 않습니다.
+> IntelliJ Run/Debug Configuration → Environment variables에 입력:
+>
+> ```
+> DB_ENDPOINT=localhost;DB_NAME=scoula_db;DB_USERNAME=scoula;DB_PASSWORD=Scoula123!
+> ```
+
+**Step 6-1 실습을 적용한 경우 (ParameterStoreService 사용):**
+
+2. `ParameterStoreService`를 구현하여 SSM Parameter Store에서 직접 값을 읽는 구조라면, `application.properties`에 환경 변수를 넣을 필요가 없습니다.
+   대신 SSM Parameter Store의 파라미터 값만 Amazon RDS 엔드포인트로 업데이트합니다:
+
+```bash
+aws ssm put-parameter \
+  --name "/starter/prod/db/url" \
+  --value "jdbc:log4jdbc:mysql://<RDS_ENDPOINT>:3306/<DB_NAME>" \
+  --type String \
+  --overwrite
+```
+
+> [!TIP]
+> 이 경우 `application.properties`는 수정하지 않아도 됩니다.
+> `ParameterStoreService`가 앱 시작 시 SSM에서 값을 읽어 DataSource에 주입합니다.
+
+✅ **태스크 완료** — Amazon RDS 연동 설정을 완료했습니다.
+
+---
+
+## 태스크 3: 기존 프로젝트 확인 사항
+
+기존 프로젝트에는 이미 Entity, Repository(Mapper), Controller가 있으므로 새로 작성하지 않습니다.
+아래 항목만 확인하세요:
+
+- **API 엔드포인트**: `/api/board`, `/api/travel`, `/api/member`, `/api/auth/login` 등이 정상 동작
+- **빌드 가능 여부**: `./gradlew clean build -x test`로 WAR 생성 확인
+- **SQL 파일 존재**: `board.sql`, `member.sql`, `travel.sql` 등 테이블 생성 SQL 확인
+
+```bash
+cd ~/3tier-project/my-backend
+./gradlew clean build -x test
+ls build/libs/*.war
+```
+
+> [!NOTE]
+> 빌드 성공 시 `build/libs/` 안에 WAR 파일이 생성됩니다.
+> 파일명은 `settings.gradle`의 `rootProject.name`과 `build.gradle`의 `version`에 따라 결정됩니다.
+
+✅ **태스크 완료** — 기존 프로젝트의 배포 준비 상태를 확인했습니다.
+
+---
+
+## 태스크 4: CORS 설정
+
+Amazon CloudFront 도메인에서 API를 호출할 수 있도록 CORS를 설정합니다.
+
+**SecurityConfig.java에 CorsFilter가 있는 경우:**
+
+`SecurityConfig.java`에 이미 `CorsFilter` Bean이 있고 `addAllowedOriginPattern("*")`로 설정되어 있다면 추가 작업 없이 동작합니다.
+프로덕션에서 도메인을 제한하려면:
+
+```java
+// SecurityConfig.java의 corsFilter() 메서드
+@Bean
+public CorsFilter corsFilter() {
+    UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+    CorsConfiguration config = new CorsConfiguration();
+    config.setAllowCredentials(true);
+    config.addAllowedOriginPattern("https://<CloudFront 도메인>");
+    config.addAllowedOriginPattern("http://localhost:5173");
+    config.addAllowedHeader("*");
+    config.addAllowedMethod("*");
+    source.registerCorsConfiguration("/**", config);
+    return new CorsFilter(source);
+}
+```
+
+**Spring Security 미사용 시 (WebMvcConfigurer):**
+
+기존 `WebConfig.java` (또는 MVC 설정 파일)에 CORS 설정을 추가합니다:
+
+```java
+@Configuration
+@EnableWebMvc
+public class WebConfig implements WebMvcConfigurer {
+    @Override
+    public void addCorsMappings(CorsRegistry registry) {
+        registry.addMapping("/**")
+            .allowedOriginPatterns("*")
+            .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
+            .allowedHeaders("*")
+            .allowCredentials(true);
+    }
+}
+```
+
+> [!TIP]
+> `allowedOriginPatterns("*")`을 그대로 두면 모든 도메인에서 접근 가능합니다.
+> 학습용이라면 `*`로 유지해도 무방합니다.
+
+✅ **태스크 완료** — CORS를 설정했습니다.
+
+---
+
+## 태스크 5: Amazon EC2 배포 + Tomcat + ALB Target Group 등록
+
+### 5-1. Amazon EC2 인스턴스 생성
+
+> [!WARNING]
+> AWS Console 우측 상단에서 리전이 **Asia Pacific (Seoul) ap-northeast-2**인지 확인하세요.
+
+3. 상단 검색창에 `EC2`를 입력하고 **EC2** 서비스를 선택합니다.
+4. [[Launch instances]] 버튼을 클릭합니다.
+5. **Name**: `my-3tier-app-server`
+6. **AMI**: `Amazon Linux 2023` 선택
+7. **Instance type**: `t3.micro`
+8. **Key pair**: `Proceed without a key pair (Not recommended)` 선택
+9. **Network settings** → [[Edit]]:
+   - **VPC**: `my-3tier-app-vpc` 선택
+   - **Subnet**: `my-3tier-app-private-subnet-1` 선택
+   - **Auto-assign public IP**: `Disable`
+   - **Security groups**: `my-3tier-app-ec2-sg` 선택
+10. **Advanced details** → **IAM instance profile**: SSM + Parameter Store 읽기 권한이 있는 IAM Role 선택
+11. [[Launch instance]] 클릭
+
+> [!TIP]
+> IAM Role에 필요한 정책: `AmazonSSMManagedInstanceCore` + `AmazonSSMReadOnlyAccess` + `AmazonS3ReadOnlyAccess`
+> 앞차시에서 `ec2-starter-role`을 이미 만든 경우 기존 Role에 정책을 추가하면 됩니다.
+
+### 5-2. EC2 초기 설정 + Tomcat 설치
+
+```bash
+# SSM Session Manager로 EC2 접속
+# EC2 콘솔 → 인스턴스 선택 → [[Connect]] → Session Manager → [[Connect]]
+
+# ec2-user로 전환
+sudo su - ec2-user
+
+# Java 17 설치
+sudo dnf install -y java-17-amazon-corretto-devel
+
+# JAVA_HOME 설정
+echo 'export JAVA_HOME=/usr/lib/jvm/java-17-amazon-corretto' | sudo tee -a /etc/profile.d/java.sh
+source /etc/profile.d/java.sh
+java -version
+
+# MySQL 클라이언트 설치 (RDS 접속 테스트용)
+sudo dnf install -y mariadb105
+
+# RDS 접속 테스트
+mysql -h <RDS_ENDPOINT> -u admin -p -e "SELECT 1;"
+```
+
+### 5-3. Tomcat 9 설치
+
+```bash
+# Tomcat 9 설치 (Spring MVC 5.x + javax.servlet)
+sudo dnf install -y wget
+wget https://archive.apache.org/dist/tomcat/tomcat-9/v9.0.106/bin/apache-tomcat-9.0.106.tar.gz
+sudo mkdir -p /opt/tomcat
+sudo tar -xzf apache-tomcat-9.0.106.tar.gz -C /opt/tomcat --strip-components=1
+rm apache-tomcat-9.0.106.tar.gz
+sudo chown -R ec2-user:ec2-user /opt/tomcat
+```
+
+### 5-4. systemd 서비스 등록
+
+```bash
+sudo tee /etc/systemd/system/tomcat.service << 'EOF'
+[Unit]
+Description=Apache Tomcat
+After=network.target
+
+[Service]
+Type=forking
+User=ec2-user
+Group=ec2-user
+Environment=JAVA_HOME=/usr/lib/jvm/java-17-amazon-corretto
+Environment=CATALINA_HOME=/opt/tomcat
+Environment=CATALINA_PID=/opt/tomcat/temp/tomcat.pid
+ExecStart=/opt/tomcat/bin/startup.sh
+ExecStop=/opt/tomcat/bin/shutdown.sh
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+sudo systemctl daemon-reload
+sudo systemctl enable tomcat
+```
+
+### 5-5. setenv.sh 생성 (환경 변수 주입)
+
+```bash
+tee /opt/tomcat/bin/setenv.sh << 'EOF'
+#!/bin/bash
+
+# SSM Parameter Store에서 값 가져오기
+DB_ENDPOINT=$(aws ssm get-parameter --name "/my-3tier-app/db/endpoint" --query "Parameter.Value" --output text --region ap-northeast-2)
+DB_NAME=$(aws ssm get-parameter --name "/my-3tier-app/db/name" --query "Parameter.Value" --output text --region ap-northeast-2)
+DB_USERNAME=$(aws ssm get-parameter --name "/my-3tier-app/db/username" --query "Parameter.Value" --output text --region ap-northeast-2)
+DB_PASSWORD=$(aws ssm get-parameter --name "/my-3tier-app/db/password" --with-decryption --query "Parameter.Value" --output text --region ap-northeast-2)
+
+# S3 설정 (S3 업로드 기능이 있는 프로젝트만 해당)
+S3_BUCKET=$(aws ssm get-parameter --name "/my-3tier-app/s3/bucket" --query "Parameter.Value" --output text --region ap-northeast-2 2>/dev/null || echo "")
+S3_REGION=$(aws ssm get-parameter --name "/my-3tier-app/aws/region" --query "Parameter.Value" --output text --region ap-northeast-2 2>/dev/null || echo "ap-northeast-2")
+
+# Java 시스템 프로퍼티로 전달 + 프로파일 설정
+export CATALINA_OPTS="$CATALINA_OPTS -DDB_ENDPOINT=$DB_ENDPOINT -DDB_NAME=$DB_NAME -DDB_USERNAME=$DB_USERNAME -DDB_PASSWORD=$DB_PASSWORD -Dcloud.aws.s3.bucket=$S3_BUCKET -Dcloud.aws.region=$S3_REGION -Dspring.profiles.active=prod"
+EOF
+chmod +x /opt/tomcat/bin/setenv.sh
+```
+
+> [!NOTE]
+> `setenv.sh`는 Tomcat이 시작될 때 자동으로 실행됩니다.
+> `-D` 옵션으로 전달된 값은 Java 시스템 프로퍼티가 됩니다.
+
+> [!TIP]
+> WAR 방식에서 `ParameterStoreService`를 사용하는 경우, DB 관련 환경 변수는 불필요합니다.
+> 프로파일만 설정하면 됩니다:
+>
+> ```bash
+> export CATALINA_OPTS="$CATALINA_OPTS -Dspring.profiles.active=aws-ssm"
+> ```
+
+### 5-6. SQL 실행 (테이블 생성)
+
+기존 프로젝트의 SQL 파일을 Amazon S3를 경유하여 Amazon RDS에 적용합니다.
+
+**① 로컬 PC에서 — SQL/CSV 파일을 S3에 업로드:**
+
+```bash
+export S3_DEPLOY_BUCKET=my-3tier-app-deploy-<BucketSuffix>
+
+# 배포용 버킷 생성 (아직 없는 경우)
+aws s3 mb s3://$S3_DEPLOY_BUCKET --region ap-northeast-2
+
+# SQL 파일 업로드
+aws s3 cp board.sql s3://$S3_DEPLOY_BUCKET/sql/
+aws s3 cp member.sql s3://$S3_DEPLOY_BUCKET/sql/
+aws s3 cp travel.sql s3://$S3_DEPLOY_BUCKET/sql/
+
+# CSV 파일이 있는 경우
+aws s3 cp travel.csv s3://$S3_DEPLOY_BUCKET/sql/
+aws s3 cp travel_image.csv s3://$S3_DEPLOY_BUCKET/sql/
+```
+
+**② EC2에서 — S3에서 다운로드 후 RDS에 적용:**
+
+```bash
+cd /home/ec2-user
+export S3_DEPLOY_BUCKET=my-3tier-app-deploy-<BucketSuffix>
+export DB_ENDPOINT=$(aws ssm get-parameter --name "/my-3tier-app/db/endpoint" --query "Parameter.Value" --output text --region ap-northeast-2)
+export DB_USERNAME=$(aws ssm get-parameter --name "/my-3tier-app/db/username" --query "Parameter.Value" --output text --region ap-northeast-2)
+export DB_PASSWORD=$(aws ssm get-parameter --name "/my-3tier-app/db/password" --with-decryption --query "Parameter.Value" --output text --region ap-northeast-2)
+
+# S3에서 SQL/CSV 파일 다운로드
+aws s3 cp s3://$S3_DEPLOY_BUCKET/sql/ . --recursive
+
+# Amazon RDS에 접속하여 SQL 실행
+mysql -h $DB_ENDPOINT -u $DB_USERNAME -p$DB_PASSWORD
+```
+
+```sql
+source /home/ec2-user/board.sql;
+source /home/ec2-user/member.sql;
+source /home/ec2-user/travel.sql;
+SHOW TABLES;
+EXIT;
+```
+
+> [!WARNING]
+> 기존 SQL에 `CREATE DATABASE scoula_db` + `USE scoula_db`가 포함된 경우,
+> `application.properties`의 DB 이름도 `scoula_db`로 맞춰야 합니다.
+
+### 5-7. WAR 빌드 및 배포
+
+**로컬에서 빌드 + S3 업로드:**
+
+```bash
+cd ~/3tier-project/my-backend
+./gradlew clean build -x test
+
+export S3_DEPLOY_BUCKET=my-3tier-app-deploy-<BucketSuffix>
+WAR_FILE=$(ls build/libs/*.war | head -1)
+aws s3 cp "$WAR_FILE" s3://$S3_DEPLOY_BUCKET/app.war
+```
+
+**EC2에서 다운로드 + Tomcat 배포:**
+
+```bash
+# 앱 디렉토리 생성
+mkdir -p /home/ec2-user/app
+mkdir -p /tmp/upload
+
+# WAR 다운로드
+aws s3 cp s3://$S3_DEPLOY_BUCKET/app.war /home/ec2-user/app/app.war
+
+# Tomcat에 배포 (ROOT.war로 복사)
+rm -rf /opt/tomcat/webapps/ROOT /opt/tomcat/webapps/ROOT.war
+cp /home/ec2-user/app/app.war /opt/tomcat/webapps/ROOT.war
+
+# Tomcat 시작
+sudo systemctl start tomcat
+
+# 상태 확인
+sudo systemctl status tomcat
+tail -f /opt/tomcat/logs/catalina.out
+
+# 정상 기동 확인
+curl http://localhost:8080/
+```
+
+### 5-8. ALB Target Group에 EC2 등록
+
+12. **EC2** 콘솔 → 왼쪽 메뉴 **Target Groups** → `my-3tier-app-tg` 클릭
+13. **Targets** 탭 → [[Register targets]]
+14. `my-3tier-app-server` 체크 → Port: `8080` → [[Include as pending below]]
+15. [[Register pending targets]]
+
+> [!NOTE]
+> Health Check 경로를 확인하세요:
+>
+> - Target Group → Health checks → [[Edit]]
+> - 태스크 1에서 방법 1을 선택했다면 경로를 `/`로 변경
+> - 방법 2를 선택했다면 `/health`로 변경
+
+> [!OUTPUT]
+> 약 30초~1분 후 Status가 `healthy`로 변경됩니다.
+> `unhealthy`가 표시되면 EC2에서 `curl http://localhost:8080/`로 응답을 확인하세요.
+
+✅ **태스크 완료** — Amazon EC2에 WAR를 배포하고 ALB Target Group에 등록했습니다.
+
+---
+
+## 태스크 6: GitHub Actions CI/CD (WAR)
+
+### 6-1. IAM 사용자 생성
+
+16. **IAM** → Users → [[Create user]]
+17. **User name**: `github-actions-backend`
+18. 정책 연결: `AmazonS3FullAccess` + `AmazonSSMFullAccess`
+19. Access Key 생성 (Third-party service)
+
+### 6-2. GitHub Secrets 설정
+
+GitHub → `my-backend` 리포지토리 → Settings → Secrets:
+
+- `AWS_ACCESS_KEY_ID`
+- `AWS_SECRET_ACCESS_KEY`
+- `AWS_REGION`: `ap-northeast-2`
+- `S3_DEPLOY_BUCKET`: `<배포용 S3 버킷명>`
+- `EC2_INSTANCE_ID`: `<EC2 인스턴스 ID>`
+
+### 6-3. GitHub Actions 워크플로우 작성
+
+`.github/workflows/deploy.yml`:
+
+```yaml
+name: Deploy Spring MVC WAR to EC2 (via S3 + SSM)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'build.gradle'
+      - '.github/workflows/deploy.yml'
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'corretto'
+
+      - name: Create application.properties
+        run: |
+          if [ -n "$APP_PROPS" ]; then
+            mkdir -p src/main/resources
+            echo "$APP_PROPS" > src/main/resources/application.properties
+          fi
+        env:
+          APP_PROPS: ${{ secrets.APPLICATION_PROPERTIES }}
+
+      - name: Cache Gradle packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*') }}
+          restore-keys: ${{ runner.os }}-gradle-
+
+      - name: Build WAR
+        run: |
+          chmod +x ./gradlew
+          ./gradlew clean build -x test
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Upload WAR to S3
+        run: |
+          WAR_FILE=$(ls build/libs/*.war | head -1)
+          aws s3 cp "$WAR_FILE" s3://${{ secrets.S3_DEPLOY_BUCKET }}/app.war
+
+      - name: Deploy via SSM Run Command
+        run: |
+          COMMAND_ID=$(aws ssm send-command \
+            --instance-ids "${{ secrets.EC2_INSTANCE_ID }}" \
+            --document-name "AWS-RunShellScript" \
+            --timeout-seconds 120 \
+            --parameters 'commands=[
+              "aws s3 cp s3://${{ secrets.S3_DEPLOY_BUCKET }}/app.war /home/ec2-user/app/app.war --quiet",
+              "rm -rf /opt/tomcat/webapps/ROOT /opt/tomcat/webapps/ROOT.war",
+              "cp /home/ec2-user/app/app.war /opt/tomcat/webapps/ROOT.war",
+              "chown -R ec2-user:ec2-user /opt/tomcat/webapps/ROOT.war",
+              "systemctl restart tomcat",
+              "sleep 30",
+              "for i in 1 2 3; do curl -sf http://localhost:8080/ && exit 0; sleep 10; done; exit 1"
+            ]' \
+            --query "Command.CommandId" \
+            --output text)
+
+          echo "SSM Command ID: $COMMAND_ID"
+
+          aws ssm wait command-executed \
+            --command-id "$COMMAND_ID" \
+            --instance-id "${{ secrets.EC2_INSTANCE_ID }}"
+
+          echo "✅ 배포 완료!"
+```
+
+> [!WARNING]
+> `./gradlew`를 사용하므로 **Gradle Wrapper 파일이 레포에 포함**되어야 합니다:
+>
+> ```bash
+> git add -f gradle/wrapper/gradle-wrapper.properties gradle/wrapper/gradle-wrapper.jar gradlew gradlew.bat
+> git commit -m "chore: add gradle wrapper for CI/CD"
+> ```
+
+### 6-4. 배포 테스트
+
+```bash
+git add .
+git commit -m "feat: initial backend with CI/CD"
+git push origin main
+```
+
+GitHub Actions 탭에서 워크플로우 실행을 확인합니다.
+
+✅ **태스크 완료** — GitHub Actions로 WAR 자동 배포 파이프라인을 구축했습니다.
+
+---
+
+## 태스크 7: ALB Health Check 확인 + API 테스트
+
+### 7-1. Target Group Health Check 확인
+
+20. **EC2** → **Target Groups** → `my-3tier-app-tg` → **Targets** 탭에서 Status 확인
+21. Status가 `healthy`이면 정상
+
+### 7-2. ALB를 통한 API 테스트
+
+```bash
+ALB_DNS="<ALB_DNS_NAME>"
+
+# Health Check
+curl http://$ALB_DNS/
+# 또는
+curl http://$ALB_DNS/health
+
+# 게시글 목록 조회 (GET — 인증 불필요)
+curl http://$ALB_DNS/api/board
+
+# 여행지 목록 조회
+curl http://$ALB_DNS/api/travel
+```
+
+> 위 요청에 JSON 응답이 오면 **백엔드 배포 + DB 연동 성공**입니다.
+
+**인증 필요 API 테스트 (선택):**
+
+```bash
+# 로그인하여 토큰 획득
+TOKEN=$(curl -s -X POST http://$ALB_DNS/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username": "admin", "password": "<PASSWORD>"}' | jq -r '.token')
+
+echo $TOKEN
+
+# 게시글 생성
+curl -X POST http://$ALB_DNS/api/board \
+  -H "Authorization: Bearer $TOKEN" \
+  -F "title=배포 테스트" \
+  -F "content=ALB 경유 확인" \
+  -F "writer=admin"
+```
+
+> [!NOTE]
+> 이 시점에서 브라우저(CloudFront HTTPS)에서 프론트엔드 → 백엔드(ALB HTTP) API 호출은 **Mixed Content**로 차단됩니다.
+> 프론트엔드 ↔ 백엔드 연동은 **Step 8-4 태스크 1**을 완료한 뒤 동작합니다.
+> 현재 단계에서는 `curl`로 API가 정상 응답하는 것을 확인했으면 충분합니다.
+
+✅ **태스크 완료** — ALB Health Check를 확인하고 API 테스트를 완료했습니다.
+
+---
+
+# 🗑️ 리소스 정리
+
+> [!WARNING]
+> 이 세션에서 생성한 리소스를 지금 삭제하지 마세요!
+> Step 8-4에서 전체 연동 확인 후 정리합니다.
+> **Step 8-4에서 전체 정리합니다.**
+
+✅ **실습 종료**: Step 8-4에서 전체 연동을 확인하고 리소스를 정리합니다.

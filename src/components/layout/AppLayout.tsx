@@ -132,6 +132,39 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
     setTheme(theme === 'light' ? 'dark' : 'light');
   };
 
+  // Step 8 네비게이션: 기존/새 프로젝트 그룹 구분
+  const buildStep8NavItems = (
+    sessions: (typeof curriculum)[0]['sessions'],
+    weekNum: number,
+  ) => {
+    const common = sessions.filter((s) => typeof s.session === 'number');
+    const existing = sessions.filter((s) =>
+      ['2A', '3A', '3B'].includes(String(s.session)),
+    );
+    const fresh = sessions.filter((s) =>
+      ['2B', '3C'].includes(String(s.session)),
+    );
+
+    const toLink = (s: (typeof sessions)[0]) => ({
+      type: 'link' as const,
+      text: `⚡ ${weekNum}-${s.session}. ${s.title}`,
+      href: `/week/${weekNum}/session/${s.session}`,
+    });
+
+    const commonBefore = common.filter((s) => Number(s.session) <= 1);
+    const commonAfter = common.filter((s) => Number(s.session) >= 4);
+
+    return [
+      ...commonBefore.map(toLink),
+      { type: 'link' as const, text: '── 🏠 기존 프로젝트 ──', href: '#' },
+      ...existing.map(toLink),
+      { type: 'link' as const, text: '── 🌱 새 프로젝트 ──', href: '#' },
+      ...fresh.map(toLink),
+      { type: 'link' as const, text: '── 공통 ──', href: '#' },
+      ...commonAfter.map(toLink),
+    ];
+  };
+
   const navigationItems = [
     {
       type: 'section' as const,
@@ -157,17 +190,18 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
         return {
           type: 'section' as const,
           text: `Step ${week.week}: ${week.title}`,
-          items: visibleSessions.map((session) => {
-            // sessionTypeConfig에서 이모지 가져오기
-            const config = sessionTypeConfig[session.type];
-            const icon = config.emoji;
-
-            return {
-              type: 'link' as const,
-              text: `${icon} ${week.week}-${session.session}. ${session.title}`,
-              href: `/week/${week.week}/session/${session.session}`,
-            };
-          }),
+          items:
+            week.week === 8
+              ? buildStep8NavItems(visibleSessions, week.week)
+              : visibleSessions.map((session) => {
+                  const config = sessionTypeConfig[session.type];
+                  const icon = config.emoji;
+                  return {
+                    type: 'link' as const,
+                    text: `${icon} ${week.week}-${session.session}. ${session.title}`,
+                    href: `/week/${week.week}/session/${session.session}`,
+                  };
+                }),
         };
       })
       .filter((item) => item !== null), // null 항목 제거

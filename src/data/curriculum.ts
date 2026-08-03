@@ -3,7 +3,7 @@
 export type SessionType = 'lab' | 'demo' | 'theory' | 'mission';
 
 export interface Session {
-  session: number;
+  session: number | string;
   type: SessionType;
   title: string;
   hasContent: boolean;
@@ -438,23 +438,54 @@ export const curriculum: WeekCurriculum[] = [
         estimatedCost: '크레딧 내 사용 가능 (비용 발생 가능)',
       },
       {
-        session: 2,
+        session: '2A',
         type: 'lab',
-        title: 'Vue.js 프론트엔드 배포 (S3 + CloudFront)',
+        title: '🏠 FE 배포: Vue.js → S3 + CloudFront',
         hasContent: true,
-        markdownPath: '/content/step8-3tier/8-2-frontend-deploy.md',
+        markdownPath: '/content/step8-3tier/8-2a-frontend-existing.md',
         description:
-          '프론트엔드 레포에서 빌드, S3 정적 호스팅, CloudFront CDN 배포',
+          '기존 Vue.js 프로젝트에 환경 변수 추가 후 S3 + CloudFront 배포',
         awsServices: ['Amazon S3', 'Amazon CloudFront'],
         estimatedCost: '크레딧 내 사용 가능 (비용 발생 가능)',
       },
       {
-        session: 3,
+        session: '2B',
         type: 'lab',
-        title: 'Spring Boot 백엔드 배포 (EC2 + ALB)',
+        title: '🌱 FE 생성 + 배포: Vue.js → S3 + CloudFront',
         hasContent: true,
-        markdownPath: '/content/step8-3tier/8-3-backend-deploy.md',
-        description: '백엔드 레포에서 빌드, EC2 배포, ALB 연결',
+        markdownPath: '/content/step8-3tier/8-2b-frontend-new.md',
+        description:
+          'Vue.js 프로젝트 생성, API 연동 코드 작성, S3 + CloudFront 배포',
+        awsServices: ['Amazon S3', 'Amazon CloudFront'],
+        estimatedCost: '크레딧 내 사용 가능 (비용 발생 가능)',
+      },
+      {
+        session: '3A',
+        type: 'lab',
+        title: '🏠 BE 배포: Spring MVC WAR → EC2 Tomcat + ALB',
+        hasContent: true,
+        markdownPath: '/content/step8-3tier/8-3a-backend-existing.md',
+        description: '기존 Spring MVC 프로젝트를 Tomcat + ALB로 배포',
+        awsServices: ['Amazon EC2', 'Elastic Load Balancing'],
+        estimatedCost: '크레딧 내 사용 가능 (비용 발생 가능)',
+      },
+      {
+        session: '3B',
+        type: 'lab',
+        title: '🏠 BE 배포: Spring Boot JAR → EC2 + ALB',
+        hasContent: true,
+        markdownPath: '/content/step8-3tier/8-3b-backend-existing-jar.md',
+        description: '기존 Spring Boot 프로젝트를 JAR + systemd로 배포',
+        awsServices: ['Amazon EC2', 'Elastic Load Balancing'],
+        estimatedCost: '크레딧 내 사용 가능 (비용 발생 가능)',
+      },
+      {
+        session: '3C',
+        type: 'lab',
+        title: '🌱 BE 생성 + 배포: Spring Boot JAR → EC2 + ALB',
+        hasContent: true,
+        markdownPath: '/content/step8-3tier/8-3c-backend-new.md',
+        description: 'Spring Boot 프로젝트 생성, CRUD API 작성, EC2 + ALB 배포',
         awsServices: ['Amazon EC2', 'Elastic Load Balancing'],
         estimatedCost: '크레딧 내 사용 가능 (비용 발생 가능)',
       },

@@ -177,11 +177,13 @@ export const SessionGuide: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   const week = parseInt(weekNumber || '0');
-  const session = parseInt(sessionNumber || '0');
+  const sessionId = sessionNumber || '0';
 
   // 커리큘럼 데이터에서 해당 주차와 차시 찾기
   const weekData = curriculum.find((w) => w.week === week);
-  const sessionData = weekData?.sessions.find((s) => s.session === session);
+  const sessionData = weekData?.sessions.find(
+    (s) => String(s.session) === sessionId,
+  );
 
   useEffect(() => {
     const loadContent = async () => {
@@ -240,7 +242,7 @@ export const SessionGuide: React.FC = () => {
     };
 
     loadContent();
-  }, [week, session, sessionData]);
+  }, [week, sessionId, sessionData]);
 
   // 콘텐츠 로드 + 렌더링 완료 후 해시 앵커 스크롤
   useEffect(() => {
