@@ -781,7 +781,7 @@ git push origin main
 91. **CloudFront** 서비스로 이동하여 배포를 선택하고 **General** 탭에서 [[Edit]] 버튼을 클릭합니다.
 92. **Alternate domain name (CNAME)**: `app.<mydomain.shop>`
 93. **Custom SSL certificate**: us-east-1 인증서 선택
-94. [[Save changes]]
+94. [[Save changes]] 버튼을 클릭합니다.
 
 ### Amazon Route 53 A 레코드 추가
 
@@ -790,7 +790,7 @@ git push origin main
     - **Record name**: `app`
     - **Record type**: `A`
     - **Alias**: ON → `Alias to CloudFront distribution` → 본인 Distribution 선택
-97. [[Create records]]
+97. [[Create records]] 버튼을 클릭합니다.
 
 ### 커스텀 도메인 접속 확인
 

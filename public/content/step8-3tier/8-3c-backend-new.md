@@ -382,7 +382,7 @@ public class WebConfig implements WebMvcConfigurer {
     - **Auto-assign public IP**: `Disable`
     - **Security groups**: `my-3tier-app-ec2-sg`
 18. **Advanced details** → **IAM instance profile**: SSM + Parameter Store 읽기 권한이 있는 IAM Role
-19. [[Launch instance]]
+19. [[Launch instance]] 버튼을 클릭합니다.
 
 ### 5-2. EC2 초기 설정
 
@@ -495,7 +495,7 @@ curl http://localhost:8080/actuator/health
 25. **EC2** 콘솔 → **Target Groups** → `my-3tier-app-tg` 클릭
 26. **Targets** 탭 → [[Register targets]]
 27. `my-3tier-app-server` 체크 → Port: `8080` → [[Include as pending below]]
-28. [[Register pending targets]]
+28. [[Register pending targets]] 버튼을 클릭하여 등록을 완료합니다.
 
 > [!OUTPUT]
 > 약 30초~1분 후 Status가 `healthy`로 변경됩니다.

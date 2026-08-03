@@ -274,7 +274,7 @@ public class WebConfig implements WebMvcConfigurer {
     - **Security groups**: `my-3tier-app-ec2-sg` 선택
 
 14. **Advanced details** → **IAM instance profile**: SSM + Parameter Store 읽기 권한이 있는 IAM Role 선택
-15. [[Launch instance]] 클릭
+15. [[Launch instance]] 버튼을 클릭합니다.
 
 > [!TIP]
 > IAM Role에 필요한 정책: `AmazonSSMManagedInstanceCore` + `AmazonSSMReadOnlyAccess` + `AmazonS3ReadOnlyAccess`
@@ -489,7 +489,7 @@ curl http://localhost:8080/
 25. **EC2** 콘솔 → 왼쪽 메뉴 **Target Groups** → `my-3tier-app-tg` 클릭
 26. **Targets** 탭 → [[Register targets]]
 27. `my-3tier-app-server` 체크 → Port: `8080` → [[Include as pending below]]
-28. [[Register pending targets]]
+28. [[Register pending targets]] 버튼을 클릭하여 등록을 완료합니다.
 
 > [!NOTE]
 > Health Check 경로를 확인하세요:
