@@ -2197,6 +2197,11 @@ EXIT;
 
 ✅ **태스크 완료** — ALB Health Check를 확인하고 API 테스트를 완료했습니다.
 
+> [!NOTE]
+> 이 시점에서 브라우저(CloudFront HTTPS)에서 프론트엔드 → 백엔드(ALB HTTP) API 호출은 **Mixed Content**로 차단됩니다.  
+> 프론트엔드 ↔ 백엔드 연동은 **Step 8-4 태스크 1**(도메인 + ALB HTTPS)을 완료한 뒤 동작합니다.  
+> 현재 단계에서는 `curl`로 API가 정상 응답하는 것을 확인했으면 충분합니다.
+
 ---
 
 ## 🎯 셀프 미션: Auto Scaling Group으로 전환 (선택)

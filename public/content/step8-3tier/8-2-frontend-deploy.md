@@ -48,8 +48,20 @@ AWS 배포를 위해 아래 항목을 확인하고 수정한 후, **태스크 3*
 
 ```bash
 # .env.production
-VITE_API_URL=http://<ALB_DNS_NAME>/api
+VITE_API_URL=http://<ALB_DNS_NAME>
 ```
+
+> [!WARNING]
+> **`/api` 중복 주의:**  
+> 📘 새 프로젝트 — API 호출이 `/items`, `/health` 형태라면 끝에 `/api`를 추가하세요: `VITE_API_URL=http://<ALB_DNS_NAME>/api`  
+> 📗 기존 프로젝트 — `/api/board`, `/api/travel` 처럼 이미 `/api`가 포함되어 있으면 **추가하지 않습니다.**
+
+> [!WARNING]
+> **Mixed Content 에러 (HTTPS ↔ HTTP):**
+>
+> Amazon CloudFront(HTTPS)에서 로드된 페이지가 ALB(HTTP)로 API를 호출하면 브라우저가 차단합니다.  
+> Step 8-4 태스크 1에서 도메인 + ALB HTTPS 리스너를 추가한 뒤 `VITE_API_URL=https://api.<YOUR_DOMAIN>`으로 변경하면 해결됩니다.  
+> 그 전까지 백엔드 배포 확인은 `curl`로 직접 테스트하세요.
 
 2. `main.js` 상단에 axios 전역 baseURL을 설정합니다:
 
@@ -60,9 +72,21 @@ axios.defaults.baseURL = import.meta.env.VITE_API_URL || '';
 
 > [!NOTE]
 > `axios.defaults.baseURL`은 전역 설정입니다.  
-> `main.js`에서 한 번 설정하면 이후 어떤 파일에서 `import axios from 'axios'`해도 동일한 baseURL이 적용됩니다.  
-> 기존 API 호출 코드(`api.get('/board/list')` 등)는 변경할 필요 없습니다.
+> `main.js`에서 한 번 설정하면 이후 어떤 파일에서 `import axios from 'axios'`해도 동일한 baseURL이 적용됩니다.
 >
+> **단, `axios.create()`로 별도 인스턴스를 사용하는 경우:**  
+> `src/api/index.js`에서 `axios.create()`를 사용하고 있다면 그 인스턴스에 직접 `baseURL`을 추가하세요:
+>
+> ```javascript
+> const instance = axios.create({
+>   baseURL: import.meta.env.VITE_API_URL || '', // ← 추가
+>   timeout: 10000,
+> });
+> ```
+>
+> 이 경우 `main.js`의 `axios.defaults.baseURL` 설정은 불필요합니다.
+
+> [!NOTE]
 > `vite.config.js`의 `server.proxy`는 로컬 개발(`npm run dev`)에서만 동작합니다.  
 > 프로덕션 빌드에는 적용되지 않으므로 환경 변수 설정이 필수입니다.  
 > CORS 설정은 Step 8-3 태스크 4에서 백엔드(Spring)에 추가합니다.
@@ -254,13 +278,16 @@ VITE_API_URL=http://localhost:8080/api
 ```bash
 # 프로덕션 환경 (배포)
 # .env.production
-VITE_API_URL=http://ALB_DNS_NAME/api
+VITE_API_URL=http://<ALB_DNS_NAME>/api
 ```
 
 > [!WARNING]
-> `.env.production`의 `ALB_DNS_NAME`은 Step 8-1에서 확인한 ALB DNS 이름으로 교체해야 합니다.  
-> Step 8-3에서 백엔드 배포 후 실제 동작합니다.  
-> 예: `VITE_API_URL=http://my-3tier-app-alb-xxx.ap-northeast-2.elb.amazonaws.com/api`
+> `.env.production`의 `<ALB_DNS_NAME>`은 Step 8-1 CloudFormation Outputs의 `ALBDNSName` 값으로 교체해야 합니다.  
+> Step 8-3에서 백엔드 배포 후 실제 동작합니다.
+>
+> **Mixed Content 주의:** CloudFront(HTTPS)에서 ALB(HTTP) API를 호출하면 브라우저가 차단합니다.  
+> 이 문제는 Step 8-4 태스크 1에서 도메인 + ALB HTTPS를 설정하면 해결됩니다.  
+> 설정 전에는 `curl`로 직접 API 테스트하세요.
 
 ### 2-2. Axios 설정
 
@@ -869,7 +896,7 @@ S3 앞에 Amazon CloudFront를 배치하여 CDN + HTTPS를 적용합니다.
     - `AWS_REGION`: `ap-northeast-2`
     - `S3_BUCKET_NAME`: `<Step 8-1 CloudFormation Outputs의 S3BucketName 값>`
     - `CLOUDFRONT_DISTRIBUTION_ID`: `<태스크 5에서 메모한 Distribution ID (예: E1A2B3C4D5E6F7)>`
-    - `VITE_API_URL`: `http://<Step 8-1 CloudFormation Outputs의 ALBDNSName 값>/api`
+    - `VITE_API_URL`: 📗 기존 프로젝트 — `http://<ALBDNSName>` (`/api` 붙이지 않음) / 📘 새 프로젝트 — `http://<ALBDNSName>/api`
     - (추가 환경변수가 있다면) `VITE_KAKAO_KEY`, `VITE_API_KEY` 등 본인 프로젝트에서 사용하는 `VITE_` 변수를 동일하게 등록
 
 > [!WARNING]
