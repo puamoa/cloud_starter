@@ -18,7 +18,8 @@ estimatedCost: 크레딧 내 사용 가능 (비용 발생 가능)
 ---
 
 이 실습에서는 **기존 Spring MVC 프로젝트**(WAR)를 Amazon EC2의 Tomcat에 배포하고,
-ALB와 연결합니다. GitHub Actions로 자동 배포 파이프라인도 구축합니다.
+ALB와 연결합니다.  
+GitHub Actions로 자동 배포 파이프라인도 구축합니다.
 
 ### Step 8 전체 아키텍처
 
@@ -35,12 +36,12 @@ ALB와 연결합니다. GitHub Actions로 자동 배포 파이프라인도 구�
 
 ## 태스크 1: Health Check 설정
 
-ALB Target Group은 Health Check 경로로 HTTP 200 응답을 기대합니다.
+ALB Target Group은 Health Check 경로로 HTTP 200 응답을 기대합니다.  
 Spring MVC에는 Actuator가 없으므로 아래 중 하나를 선택하세요:
 
 **방법 1: Target Group Health Check 경로를 `/`로 변경 (가장 간단)**
 
-앱의 기본 페이지(`/`)가 200을 반환하면 추가 작업 없음.
+앱의 기본 페이지(`/`)가 200을 반환하면 추가 작업 없음.  
 태스크 5에서 Target Group 설정 시 경로를 변경합니다.
 
 **방법 2: 간단한 Health Check 컨트롤러 추가**
@@ -58,18 +59,7 @@ public class HealthController {
 
 Target Group Health Check 경로를 `/health`로 설정합니다.
 
-**방법 3: Actuator 의존성 추가**
-
-`build.gradle`에 의존성 추가:
-
-```groovy
-implementation 'org.springframework.boot:spring-boot-starter-actuator'
-```
-
-이 경우 `/actuator/health`가 자동 활성화됩니다.
-
 > [!TIP]
-> 기존 프로젝트가 순수 Spring MVC(Spring Boot 아님)라면 방법 1 또는 2를 권장합니다.
 > 방법 1이 가장 간단하며 코드 수정이 불필요합니다.
 
 ✅ **태스크 완료** — Health Check 방식을 선택했습니다.
@@ -134,7 +124,7 @@ aws ssm put-parameter \
 
 ### 2-2. DB 접속 설정 파일 수정
 
-`src/main/resources/application.properties`의 DB 접속 정보를 환경 변수로 변경합니다:
+2. `src/main/resources/application.properties`의 DB 접속 정보를 환경 변수로 변경합니다:
 
 ```properties
 # 변경 전 (로컬 DB 직접 접속)
@@ -151,13 +141,13 @@ jdbc.password=${DB_PASSWORD}
 ```
 
 > [!TIP]
-> 기존 프로젝트의 `RootConfig.java`에서 `@Value("${jdbc.url}")` 등으로 값을 읽는 구조라면,
-> `application.properties`의 값만 환경 변수 형태로 변경하면 됩니다. Java 코드 수정은 불필요합니다.
+> 기존 프로젝트의 `RootConfig.java`에서 `@Value("${jdbc.url}")` 등으로 값을 읽는 구조라면, `application.properties`의 값만 환경 변수 형태로 변경하면 됩니다.  
+> Java 코드 수정은 불필요합니다.
 >
 > `log4jdbc` 드라이버를 사용하는 경우 URL 형식이 `jdbc:log4jdbc:mysql://`이어야 합니다.
 
 > [!TIP]
-> **로컬 개발 시** 환경 변수가 없으면 앱이 시작되지 않습니다.
+> **로컬 개발 시** 환경 변수가 없으면 앱이 시작되지 않습니다.  
 > IntelliJ Run/Debug Configuration → Environment variables에 입력:
 >
 > ```
@@ -166,7 +156,7 @@ jdbc.password=${DB_PASSWORD}
 
 **Step 6-1 실습을 적용한 경우 (ParameterStoreService 사용):**
 
-2. `ParameterStoreService`를 구현하여 SSM Parameter Store에서 직접 값을 읽는 구조라면, `application.properties`에 환경 변수를 넣을 필요가 없습니다.
+3. `ParameterStoreService`를 구현하여 SSM Parameter Store에서 직접 값을 읽는 구조라면, `application.properties`에 환경 변수를 넣을 필요가 없습니다.  
    대신 SSM Parameter Store의 파라미터 값만 Amazon RDS 엔드포인트로 업데이트합니다:
 
 ```bash
@@ -178,7 +168,7 @@ aws ssm put-parameter \
 ```
 
 > [!TIP]
-> 이 경우 `application.properties`는 수정하지 않아도 됩니다.
+> 이 경우 `application.properties`는 수정하지 않아도 됩니다.  
 > `ParameterStoreService`가 앱 시작 시 SSM에서 값을 읽어 DataSource에 주입합니다.
 
 ✅ **태스크 완료** — Amazon RDS 연동 설정을 완료했습니다.
@@ -187,12 +177,14 @@ aws ssm put-parameter \
 
 ## 태스크 3: 기존 프로젝트 확인 사항
 
-기존 프로젝트에는 이미 Entity, Repository(Mapper), Controller가 있으므로 새로 작성하지 않습니다.
+기존 프로젝트에는 이미 Entity, Repository(Mapper), Controller가 있으므로 새로 작성하지 않습니다.  
 아래 항목만 확인하세요:
 
 - **API 엔드포인트**: `/api/board`, `/api/travel`, `/api/member`, `/api/auth/login` 등이 정상 동작
 - **빌드 가능 여부**: `./gradlew clean build -x test`로 WAR 생성 확인
 - **SQL 파일 존재**: `board.sql`, `member.sql`, `travel.sql` 등 테이블 생성 SQL 확인
+
+4. 로컬에서 프로젝트를 빌드하여 WAR 파일이 정상 생성되는지 확인합니다:
 
 ```bash
 cd ~/3tier-project/my-backend
@@ -201,7 +193,7 @@ ls build/libs/*.war
 ```
 
 > [!NOTE]
-> 빌드 성공 시 `build/libs/` 안에 WAR 파일이 생성됩니다.
+> 빌드 성공 시 `build/libs/` 안에 WAR 파일이 생성됩니다.  
 > 파일명은 `settings.gradle`의 `rootProject.name`과 `build.gradle`의 `version`에 따라 결정됩니다.
 
 ✅ **태스크 완료** — 기존 프로젝트의 배포 준비 상태를 확인했습니다.
@@ -214,8 +206,10 @@ Amazon CloudFront 도메인에서 API를 호출할 수 있도록 CORS를 설정�
 
 **SecurityConfig.java에 CorsFilter가 있는 경우:**
 
-`SecurityConfig.java`에 이미 `CorsFilter` Bean이 있고 `addAllowedOriginPattern("*")`로 설정되어 있다면 추가 작업 없이 동작합니다.
+`SecurityConfig.java`에 이미 `CorsFilter` Bean이 있고 `addAllowedOriginPattern("*")`로 설정되어 있다면 추가 작업 없이 동작합니다.  
 프로덕션에서 도메인을 제한하려면:
+
+5. `SecurityConfig.java`의 `corsFilter()` 메서드에서 도메인을 설정합니다:
 
 ```java
 // SecurityConfig.java의 corsFilter() 메서드
@@ -235,7 +229,7 @@ public CorsFilter corsFilter() {
 
 **Spring Security 미사용 시 (WebMvcConfigurer):**
 
-기존 `WebConfig.java` (또는 MVC 설정 파일)에 CORS 설정을 추가합니다:
+6. 기존 `WebConfig.java` (또는 MVC 설정 파일)에 CORS 설정을 추가합니다:
 
 ```java
 @Configuration
@@ -253,7 +247,7 @@ public class WebConfig implements WebMvcConfigurer {
 ```
 
 > [!TIP]
-> `allowedOriginPatterns("*")`을 그대로 두면 모든 도메인에서 접근 가능합니다.
+> `allowedOriginPatterns("*")`을 그대로 두면 모든 도메인에서 접근 가능합니다.  
 > 학습용이라면 `*`로 유지해도 무방합니다.
 
 ✅ **태스크 완료** — CORS를 설정했습니다.
@@ -267,25 +261,28 @@ public class WebConfig implements WebMvcConfigurer {
 > [!WARNING]
 > AWS Console 우측 상단에서 리전이 **Asia Pacific (Seoul) ap-northeast-2**인지 확인하세요.
 
-3. 상단 검색창에 `EC2`를 입력하고 **EC2** 서비스를 선택합니다.
-4. [[Launch instances]] 버튼을 클릭합니다.
-5. **Name**: `my-3tier-app-server`
-6. **AMI**: `Amazon Linux 2023` 선택
-7. **Instance type**: `t3.micro`
-8. **Key pair**: `Proceed without a key pair (Not recommended)` 선택
-9. **Network settings** → [[Edit]]:
-   - **VPC**: `my-3tier-app-vpc` 선택
-   - **Subnet**: `my-3tier-app-private-subnet-1` 선택
-   - **Auto-assign public IP**: `Disable`
-   - **Security groups**: `my-3tier-app-ec2-sg` 선택
-10. **Advanced details** → **IAM instance profile**: SSM + Parameter Store 읽기 권한이 있는 IAM Role 선택
-11. [[Launch instance]] 클릭
+7. 상단 검색창에 `EC2`를 입력하고 **EC2** 서비스를 선택합니다.
+8. [[Launch instances]] 버튼을 클릭합니다.
+9. **Name**: `my-3tier-app-server`
+10. **AMI**: `Amazon Linux 2023` 선택
+11. **Instance type**: `t3.micro`
+12. **Key pair**: `Proceed without a key pair (Not recommended)` 선택
+13. **Network settings** 섹션에서 [[Edit]] 버튼을 클릭하고 다음과 같이 설정합니다:
+    - **VPC**: `my-3tier-app-vpc` 선택
+    - **Subnet**: `my-3tier-app-private-subnet-1` 선택
+    - **Auto-assign public IP**: `Disable`
+    - **Security groups**: `my-3tier-app-ec2-sg` 선택
+
+14. **Advanced details** → **IAM instance profile**: SSM + Parameter Store 읽기 권한이 있는 IAM Role 선택
+15. [[Launch instance]] 클릭
 
 > [!TIP]
 > IAM Role에 필요한 정책: `AmazonSSMManagedInstanceCore` + `AmazonSSMReadOnlyAccess` + `AmazonS3ReadOnlyAccess`
 > 앞차시에서 `ec2-starter-role`을 이미 만든 경우 기존 Role에 정책을 추가하면 됩니다.
 
 ### 5-2. EC2 초기 설정 + Tomcat 설치
+
+16. SSM Session Manager로 EC2에 접속하고 초기 설정을 실행합니다:
 
 ```bash
 # SSM Session Manager로 EC2 접속
@@ -311,6 +308,8 @@ mysql -h <RDS_ENDPOINT> -u admin -p -e "SELECT 1;"
 
 ### 5-3. Tomcat 9 설치
 
+17. Tomcat 9를 설치합니다:
+
 ```bash
 # Tomcat 9 설치 (Spring MVC 5.x + javax.servlet)
 sudo dnf install -y wget
@@ -322,6 +321,8 @@ sudo chown -R ec2-user:ec2-user /opt/tomcat
 ```
 
 ### 5-4. systemd 서비스 등록
+
+18. Tomcat을 systemd 서비스로 등록합니다:
 
 ```bash
 sudo tee /etc/systemd/system/tomcat.service << 'EOF'
@@ -350,6 +351,8 @@ sudo systemctl enable tomcat
 ```
 
 ### 5-5. setenv.sh 생성 (환경 변수 주입)
+
+19. SSM Parameter Store에서 환경 변수를 주입하는 `setenv.sh`를 생성합니다:
 
 ```bash
 tee /opt/tomcat/bin/setenv.sh << 'EOF'
@@ -389,6 +392,8 @@ chmod +x /opt/tomcat/bin/setenv.sh
 
 **① 로컬 PC에서 — SQL/CSV 파일을 S3에 업로드:**
 
+20. 로컬 PC에서 SQL/CSV 파일을 S3에 업로드합니다:
+
 ```bash
 export S3_DEPLOY_BUCKET=my-3tier-app-deploy-<BucketSuffix>
 
@@ -407,6 +412,8 @@ aws s3 cp travel_image.csv s3://$S3_DEPLOY_BUCKET/sql/
 
 **② EC2에서 — S3에서 다운로드 후 RDS에 적용:**
 
+21. EC2에서 S3의 SQL 파일을 다운로드하고 Amazon RDS에 접속합니다:
+
 ```bash
 cd /home/ec2-user
 export S3_DEPLOY_BUCKET=my-3tier-app-deploy-<BucketSuffix>
@@ -420,6 +427,8 @@ aws s3 cp s3://$S3_DEPLOY_BUCKET/sql/ . --recursive
 # Amazon RDS에 접속하여 SQL 실행
 mysql -h $DB_ENDPOINT -u $DB_USERNAME -p$DB_PASSWORD
 ```
+
+22. MySQL에 접속 후 SQL 파일을 실행합니다:
 
 ```sql
 source /home/ec2-user/board.sql;
@@ -437,6 +446,8 @@ EXIT;
 
 **로컬에서 빌드 + S3 업로드:**
 
+23. 로컬에서 WAR를 빌드하고 S3에 업로드합니다:
+
 ```bash
 cd ~/3tier-project/my-backend
 ./gradlew clean build -x test
@@ -447,6 +458,8 @@ aws s3 cp "$WAR_FILE" s3://$S3_DEPLOY_BUCKET/app.war
 ```
 
 **EC2에서 다운로드 + Tomcat 배포:**
+
+24. EC2에서 WAR를 다운로드하고 Tomcat에 배포합니다:
 
 ```bash
 # 앱 디렉토리 생성
@@ -473,10 +486,10 @@ curl http://localhost:8080/
 
 ### 5-8. ALB Target Group에 EC2 등록
 
-12. **EC2** 콘솔 → 왼쪽 메뉴 **Target Groups** → `my-3tier-app-tg` 클릭
-13. **Targets** 탭 → [[Register targets]]
-14. `my-3tier-app-server` 체크 → Port: `8080` → [[Include as pending below]]
-15. [[Register pending targets]]
+25. **EC2** 콘솔 → 왼쪽 메뉴 **Target Groups** → `my-3tier-app-tg` 클릭
+26. **Targets** 탭 → [[Register targets]]
+27. `my-3tier-app-server` 체크 → Port: `8080` → [[Include as pending below]]
+28. [[Register pending targets]]
 
 > [!NOTE]
 > Health Check 경로를 확인하세요:
@@ -497,14 +510,14 @@ curl http://localhost:8080/
 
 ### 6-1. IAM 사용자 생성
 
-16. **IAM** → Users → [[Create user]]
-17. **User name**: `github-actions-backend`
-18. 정책 연결: `AmazonS3FullAccess` + `AmazonSSMFullAccess`
-19. Access Key 생성 (Third-party service)
+29. 상단 검색창에 `IAM`을 입력하고 **IAM** 서비스를 선택합니다. 왼쪽 메뉴에서 **Users** → [[Create user]]를 클릭합니다.
+30. **User name**: `github-actions-backend`
+31. 정책 연결: `AmazonS3FullAccess` + `AmazonSSMFullAccess`
+32. Access Key 생성 (Third-party service)
 
 ### 6-2. GitHub Secrets 설정
 
-GitHub → `my-backend` 리포지토리 → Settings → Secrets:
+33. GitHub → `my-backend` 리포지토리 → Settings → Secrets에 다음 값을 등록합니다:
 
 - `AWS_ACCESS_KEY_ID`
 - `AWS_SECRET_ACCESS_KEY`
@@ -514,7 +527,7 @@ GitHub → `my-backend` 리포지토리 → Settings → Secrets:
 
 ### 6-3. GitHub Actions 워크플로우 작성
 
-`.github/workflows/deploy.yml`:
+34. `.github/workflows/deploy.yml` 파일을 생성합니다:
 
 ```yaml
 name: Deploy Spring MVC WAR to EC2 (via S3 + SSM)
@@ -613,13 +626,15 @@ jobs:
 
 ### 6-4. 배포 테스트
 
+35. 코드를 커밋하고 push하여 자동 배포를 실행합니다:
+
 ```bash
 git add .
 git commit -m "feat: initial backend with CI/CD"
 git push origin main
 ```
 
-GitHub Actions 탭에서 워크플로우 실행을 확인합니다.
+36. GitHub Actions 탭에서 워크플로우 실행을 확인합니다.
 
 ✅ **태스크 완료** — GitHub Actions로 WAR 자동 배포 파이프라인을 구축했습니다.
 
@@ -629,10 +644,12 @@ GitHub Actions 탭에서 워크플로우 실행을 확인합니다.
 
 ### 7-1. Target Group Health Check 확인
 
-20. **EC2** → **Target Groups** → `my-3tier-app-tg` → **Targets** 탭에서 Status 확인
-21. Status가 `healthy`이면 정상
+37. **EC2** → **Target Groups** → `my-3tier-app-tg` → **Targets** 탭에서 Status 확인
+38. Status가 `healthy`이면 정상
 
 ### 7-2. ALB를 통한 API 테스트
+
+39. ALB DNS를 통해 API를 테스트합니다:
 
 ```bash
 ALB_DNS="<ALB_DNS_NAME>"
@@ -652,6 +669,8 @@ curl http://$ALB_DNS/api/travel
 > 위 요청에 JSON 응답이 오면 **백엔드 배포 + DB 연동 성공**입니다.
 
 **인증 필요 API 테스트 (선택):**
+
+40. 인증이 필요한 API를 테스트합니다:
 
 ```bash
 # 로그인하여 토큰 획득

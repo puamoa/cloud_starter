@@ -64,6 +64,8 @@ Spring Initializr로 프로젝트를 생성합니다.
 
 ### 1-2. 프로젝트 설정
 
+5. 다운로드한 ZIP을 압축 해제하고 프로젝트 디렉터리로 이동합니다:
+
 ```bash
 cd ~/3tier-project/my-backend
 # 다운로드한 ZIP 압축 해제 후 파일 복사
@@ -101,6 +103,8 @@ my-backend/
 
 ### 2-1. SSM Parameter Store에 비밀값 저장
 
+6. SSM Parameter Store에 데이터베이스 연결 정보를 저장합니다:
+
 ```bash
 aws ssm put-parameter \
   --name "/my-3tier-app/db/endpoint" \
@@ -125,7 +129,7 @@ aws ssm put-parameter \
 
 ### 2-2. application.yml 설정
 
-5. `src/main/resources/application.yml` 파일을 다음과 같이 설정합니다:
+7. `src/main/resources/application.yml` 파일을 다음과 같이 설정합니다:
 
 ```yaml
 spring:
@@ -180,7 +184,7 @@ app:
 
 ### 3-1. Entity 클래스
 
-6. `src/main/java/com/example/mybackend/entity/Item.java`:
+8. `src/main/java/com/example/mybackend/entity/Item.java` 파일을 작성합니다:
 
 ```java
 package com.example.mybackend.entity;
@@ -225,7 +229,7 @@ public class Item {
 
 ### 3-2. Repository 인터페이스
 
-7. `src/main/java/com/example/mybackend/repository/ItemRepository.java`:
+9. `src/main/java/com/example/mybackend/repository/ItemRepository.java` 파일을 작성합니다:
 
 ```java
 package com.example.mybackend.repository;
@@ -239,7 +243,7 @@ public interface ItemRepository extends JpaRepository<Item, Long> {
 
 ### 3-3. Controller 클래스
 
-8. `src/main/java/com/example/mybackend/controller/ItemController.java`:
+10. `src/main/java/com/example/mybackend/controller/ItemController.java` 파일을 작성합니다:
 
 ```java
 package com.example.mybackend.controller;
@@ -324,7 +328,7 @@ Amazon CloudFront 도메인에서 API를 호출할 수 있도록 CORS를 설정�
 
 ### 4-1. WebConfig 클래스 생성
 
-9. `src/main/java/com/example/mybackend/config/WebConfig.java`:
+11. `src/main/java/com/example/mybackend/config/WebConfig.java` 파일을 작성합니다:
 
 ```java
 package com.example.mybackend.config;
@@ -367,20 +371,22 @@ public class WebConfig implements WebMvcConfigurer {
 > [!WARNING]
 > AWS Console 우측 상단에서 리전이 **Asia Pacific (Seoul) ap-northeast-2**인지 확인하세요.
 
-10. **EC2** → [[Launch instances]]
-11. **Name**: `my-3tier-app-server`
-12. **AMI**: `Amazon Linux 2023`
-13. **Instance type**: `t3.micro`
-14. **Key pair**: `Proceed without a key pair`
-15. **Network settings** → [[Edit]]:
+12. 상단 검색창에 `EC2`를 입력하고 **EC2** 서비스를 선택합니다. [[Launch instances]] 버튼을 클릭합니다.
+13. **Name**: `my-3tier-app-server`
+14. **AMI**: `Amazon Linux 2023`
+15. **Instance type**: `t3.micro`
+16. **Key pair**: `Proceed without a key pair`
+17. **Network settings** 섹션에서 [[Edit]] 버튼을 클릭하고 다음과 같이 설정합니다:
     - **VPC**: `my-3tier-app-vpc`
     - **Subnet**: `my-3tier-app-private-subnet-1`
     - **Auto-assign public IP**: `Disable`
     - **Security groups**: `my-3tier-app-ec2-sg`
-16. **Advanced details** → **IAM instance profile**: SSM + Parameter Store 읽기 권한이 있는 IAM Role
-17. [[Launch instance]]
+18. **Advanced details** → **IAM instance profile**: SSM + Parameter Store 읽기 권한이 있는 IAM Role
+19. [[Launch instance]]
 
 ### 5-2. EC2 초기 설정
+
+20. SSM Session Manager로 EC2에 접속하여 Java 17과 MySQL 클라이언트를 설치합니다:
 
 ```bash
 # SSM Session Manager로 접속 후
@@ -398,6 +404,8 @@ mysql -h <RDS_ENDPOINT> -u admin -p -e "SELECT 1;"
 ```
 
 ### 5-3. start.sh 생성
+
+21. 애플리케이션 시작 스크립트를 생성합니다:
 
 ```bash
 mkdir -p /home/ec2-user/app
@@ -420,6 +428,8 @@ chmod +x /home/ec2-user/app/start.sh
 ```
 
 ### 5-4. systemd 서비스 등록
+
+22. Spring Boot를 systemd 서비스로 등록합니다:
 
 ```bash
 sudo tee /etc/systemd/system/spring-app.service << 'EOF'
@@ -447,7 +457,7 @@ sudo systemctl enable spring-app
 
 ### 5-5. JAR 빌드 및 배포
 
-**로컬에서 빌드 + S3 업로드:**
+23. 로컬에서 JAR을 빌드하고 S3에 업로드합니다:
 
 ```bash
 cd ~/3tier-project/my-backend
@@ -463,7 +473,7 @@ JAR_FILE=$(ls build/libs/*.jar | head -1)
 aws s3 cp "$JAR_FILE" s3://$S3_DEPLOY_BUCKET/app.jar
 ```
 
-**EC2에서 다운로드 + 실행:**
+24. EC2에서 JAR을 다운로드하고 애플리케이션을 실행합니다:
 
 ```bash
 export S3_DEPLOY_BUCKET=my-3tier-app-deploy-<BucketSuffix>
@@ -482,10 +492,10 @@ curl http://localhost:8080/actuator/health
 
 ### 5-6. ALB Target Group에 EC2 등록
 
-18. **EC2** 콘솔 → **Target Groups** → `my-3tier-app-tg` 클릭
-19. **Targets** 탭 → [[Register targets]]
-20. `my-3tier-app-server` 체크 → Port: `8080` → [[Include as pending below]]
-21. [[Register pending targets]]
+25. **EC2** 콘솔 → **Target Groups** → `my-3tier-app-tg` 클릭
+26. **Targets** 탭 → [[Register targets]]
+27. `my-3tier-app-server` 체크 → Port: `8080` → [[Include as pending below]]
+28. [[Register pending targets]]
 
 > [!OUTPUT]
 > 약 30초~1분 후 Status가 `healthy`로 변경됩니다.
@@ -499,14 +509,14 @@ curl http://localhost:8080/actuator/health
 
 ### 6-1. IAM 사용자 생성
 
-22. **IAM** → Users → [[Create user]]
-23. **User name**: `github-actions-backend`
-24. 정책 연결: `AmazonS3FullAccess` + `AmazonSSMFullAccess`
-25. Access Key 생성 (Third-party service)
+29. 상단 검색창에 `IAM`을 입력하고 **IAM** 서비스를 선택합니다. 왼쪽 메뉴에서 **Users** → [[Create user]]를 클릭합니다.
+30. **User name**: `github-actions-backend`
+31. 정책 연결: `AmazonS3FullAccess` + `AmazonSSMFullAccess`
+32. Access Key 생성 (Third-party service)
 
 ### 6-2. GitHub Secrets 설정
 
-GitHub → `my-backend` 리포지토리 → Settings → Secrets:
+33. GitHub → `my-backend` 리포지토리 → Settings → Secrets에 다음 값을 등록합니다:
 
 - `AWS_ACCESS_KEY_ID`
 - `AWS_SECRET_ACCESS_KEY`
@@ -516,7 +526,7 @@ GitHub → `my-backend` 리포지토리 → Settings → Secrets:
 
 ### 6-3. GitHub Actions 워크플로우 작성
 
-`.github/workflows/deploy.yml`:
+34. `.github/workflows/deploy.yml` 파일을 작성합니다:
 
 ```yaml
 name: Deploy Spring Boot to EC2 (via S3 + SSM)
@@ -604,13 +614,15 @@ jobs:
 
 ### 6-4. 배포 테스트
 
+35. 코드를 커밋하고 푸시하여 자동 배포를 실행합니다:
+
 ```bash
 git add .
 git commit -m "feat: initial backend with CI/CD"
 git push origin main
 ```
 
-GitHub Actions 탭에서 워크플로우 실행을 확인합니다.
+36. GitHub Actions 탭에서 워크플로우 실행을 확인합니다.
 
 ✅ **태스크 완료** — GitHub Actions로 JAR 자동 배포 파이프라인을 구축했습니다.
 
@@ -620,10 +632,12 @@ GitHub Actions 탭에서 워크플로우 실행을 확인합니다.
 
 ### 7-1. Target Group Health Check 확인
 
-26. **EC2** → **Target Groups** → `my-3tier-app-tg` → **Targets** 탭에서 Status 확인
-27. Status가 `healthy`이면 정상
+37. **EC2** → **Target Groups** → `my-3tier-app-tg` → **Targets** 탭에서 Status 확인
+38. Status가 `healthy`이면 정상
 
 ### 7-2. ALB를 통한 API 테스트
+
+39. ALB DNS를 통해 API 엔드포인트를 테스트합니다:
 
 ```bash
 ALB_DNS="<ALB_DNS_NAME>"
@@ -656,7 +670,7 @@ curl -X DELETE http://$ALB_DNS/api/items/1
 
 ### 7-3. RDS 데이터 확인 (선택)
 
-EC2에서 직접 Amazon RDS에 접속하여 데이터를 확인합니다:
+40. EC2에서 직접 Amazon RDS에 접속하여 데이터를 확인합니다:
 
 ```bash
 mysql -h <RDS_ENDPOINT> -u admin -p
