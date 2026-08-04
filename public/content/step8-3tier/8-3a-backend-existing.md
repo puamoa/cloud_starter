@@ -60,7 +60,7 @@ public class HealthController {
 Target Group Health Check 경로를 `/health`로 설정합니다.
 
 > [!TIP]
-> 방법 1이 가장 간단하며 코드 수정이 불필요합니다.
+> 방법 1이 가장 간단하며 코드 수정이 불필요합니다.  
 
 ✅ **태스크 완료** — Health Check 방식을 선택했습니다.
 
@@ -69,7 +69,7 @@ Target Group Health Check 경로를 `/health`로 설정합니다.
 ## 태스크 2: RDS 연동 설정
 
 > [!WARNING]
-> 이 태스크는 **필수**입니다. SSM Parameter Store에 DB 접속 정보를 저장하지 않으면 Amazon EC2에서 애플리케이션이 시작되지 않습니다.
+> 이 태스크는 **필수**입니다. SSM Parameter Store에 DB 접속 정보를 저장하지 않으면 Amazon EC2에서 애플리케이션이 시작되지 않습니다.  
 
 ### 2-1. SSM Parameter Store에 비밀값 저장
 
@@ -126,12 +126,12 @@ aws ssm put-parameter \
 ```
 
 > [!TIP]
-> `SecureString` 타입은 AWS KMS로 자동 암호화됩니다.
-> 비밀번호, API 키 등 민감한 값은 항상 SecureString을 사용하세요.
+> `SecureString` 타입은 AWS KMS로 자동 암호화됩니다.  
+> 비밀번호, API 키 등 민감한 값은 항상 SecureString을 사용하세요.  
 >
 > **값을 잘못 입력한 경우:**
 >
-> - CLI: `--overwrite` 플래그를 추가하여 같은 명령을 다시 실행하면 덮어씁니다.
+> - CLI: `--overwrite` 플래그를 추가하여 같은 명령을 다시 실행하면 덮어씁니다.  
 > - 콘솔: AWS Console → Systems Manager → Parameter Store에서 해당 파라미터를 클릭하고 [[Edit]] → 값 수정 → [[Save changes]]
 
 ### 2-2. DB 접속 설정 파일 수정
@@ -154,9 +154,9 @@ jdbc.password=${DB_PASSWORD}
 
 > [!TIP]
 > 기존 프로젝트의 `RootConfig.java`에서 `@Value("${jdbc.url}")` 등으로 값을 읽는 구조라면, `application.properties`의 값만 환경 변수 형태로 변경하면 됩니다.  
-> Java 코드 수정은 불필요합니다.
+> Java 코드 수정은 불필요합니다.  
 >
-> `log4jdbc` 드라이버를 사용하는 경우 URL 형식이 `jdbc:log4jdbc:mysql://`이어야 합니다.
+> `log4jdbc` 드라이버를 사용하는 경우 URL 형식이 `jdbc:log4jdbc:mysql://`이어야 합니다.  
 
 > [!TIP]
 > **로컬 개발 시** 환경 변수가 없으면 앱이 시작되지 않습니다.  
@@ -181,7 +181,7 @@ aws ssm put-parameter \
 
 > [!TIP]
 > 이 경우 `application.properties`는 수정하지 않아도 됩니다.  
-> `ParameterStoreService`가 앱 시작 시 SSM에서 값을 읽어 DataSource에 주입합니다.
+> `ParameterStoreService`가 앱 시작 시 SSM에서 값을 읽어 DataSource에 주입합니다.  
 
 > [!TROUBLESHOOTING]
 >
@@ -228,7 +228,7 @@ ls build/libs/*.war
 
 > [!NOTE]
 > 빌드 성공 시 `build/libs/` 안에 WAR 파일이 생성됩니다.  
-> 파일명은 `settings.gradle`의 `rootProject.name`과 `build.gradle`의 `version`에 따라 결정됩니다.
+> 파일명은 `settings.gradle`의 `rootProject.name`과 `build.gradle`의 `version`에 따라 결정됩니다.  
 
 ✅ **태스크 완료** — 기존 프로젝트의 배포 준비 상태를 확인했습니다.
 
@@ -282,7 +282,7 @@ public class WebConfig implements WebMvcConfigurer {
 
 > [!TIP]
 > `allowedOriginPatterns("*")`을 그대로 두면 모든 도메인에서 접근 가능합니다.  
-> 학습용이라면 `*`로 유지해도 무방합니다.
+> 학습용이라면 `*`로 유지해도 무방합니다.  
 
 > [!TROUBLESHOOTING]
 >
@@ -304,7 +304,7 @@ public class WebConfig implements WebMvcConfigurer {
 > [!NOTE]
 > CORS 에러는 **브라우저에서만** 발생합니다.  
 > `curl`로 테스트하면 CORS 에러가 나타나지 않습니다.  
-> 브라우저 개발자 도구(F12) → Console 탭에서 CORS 에러 메시지를 확인하세요.
+> 브라우저 개발자 도구(F12) → Console 탭에서 CORS 에러 메시지를 확인하세요.  
 
 ✅ **태스크 완료** — CORS를 설정했습니다.
 
@@ -315,7 +315,7 @@ public class WebConfig implements WebMvcConfigurer {
 ### 5-1. Amazon EC2 인스턴스 생성
 
 > [!WARNING]
-> AWS Console 우측 상단에서 리전이 **Asia Pacific (Seoul) ap-northeast-2**인지 확인하세요.
+> AWS Console 우측 상단에서 리전이 **Asia Pacific (Seoul) ap-northeast-2**인지 확인하세요.  
 
 7. 상단 검색창에 `EC2`를 입력하고 **EC2** 서비스를 선택합니다.
 8. [[Launch instances]] 버튼을 클릭합니다.
@@ -334,7 +334,7 @@ public class WebConfig implements WebMvcConfigurer {
 
 > [!TIP]
 > IAM Role에 필요한 정책: `AmazonSSMManagedInstanceCore` + `AmazonSSMReadOnlyAccess` + `AmazonS3ReadOnlyAccess`
-> 앞차시에서 `ec2-starter-role`을 이미 만든 경우 기존 Role에 정책을 추가하면 됩니다.
+> 앞차시에서 `ec2-starter-role`을 이미 만든 경우 기존 Role에 정책을 추가하면 됩니다.  
 
 ### 5-2. EC2 초기 설정 + Tomcat 설치
 
@@ -356,7 +356,7 @@ aws ssm start-session --target <INSTANCE_ID> --region ap-northeast-2
 > brew install session-manager-plugin
 > ```
 >
-> 플러그인 설치가 번거로우면 AWS Console의 Session Manager로 접속하세요.
+> 플러그인 설치가 번거로우면 AWS Console의 Session Manager로 접속하세요.  
 
 ```bash
 # ssm-user → ec2-user로 전환
@@ -453,7 +453,7 @@ chmod +x /opt/tomcat/bin/setenv.sh
 
 > [!NOTE]
 > `setenv.sh`는 Tomcat이 시작될 때 자동으로 실행됩니다.  
-> `-D` 옵션으로 전달된 값은 Java 시스템 프로퍼티가 됩니다.
+> `-D` 옵션으로 전달된 값은 Java 시스템 프로퍼티가 됩니다.  
 
 > [!TIP]
 > WAR 방식에서 `ParameterStoreService`를 사용하는 경우, DB 관련 환경 변수는 불필요합니다.  
@@ -521,7 +521,7 @@ EXIT;
 
 > [!WARNING]
 > 기존 SQL에 `CREATE DATABASE scoula_db` + `USE scoula_db`가 포함된 경우,
-> `application.properties`의 DB 이름도 `scoula_db`로 맞춰야 합니다.
+> `application.properties`의 DB 이름도 `scoula_db`로 맞춰야 합니다.  
 
 **③ CSV 데이터 import (해당되는 경우):**
 
@@ -548,7 +548,7 @@ mysql -h $DB_ENDPOINT -u $DB_USERNAME -p$DB_PASSWORD $DB_NAME -e "SELECT COUNT(*
 ```
 
 > [!TIP]
-> `--local-infile`이 없으면 `ERROR 3948: Loading local data is disabled` 에러가 발생합니다.
+> `--local-infile`이 없으면 `ERROR 3948: Loading local data is disabled` 에러가 발생합니다.  
 
 ### 5-7. WAR 빌드 및 배포
 
@@ -617,8 +617,8 @@ curl http://localhost:8080/
 > - 방법 2를 선택했다면 `/health`로 변경
 >
 > **Spring MVC(WAR) 프로젝트의 경우:**
-> Spring MVC는 Actuator가 없으므로 `/actuator/health`가 404를 반환합니다.
-> 반드시 태스크 1에서 선택한 경로로 변경하세요.
+> Spring MVC는 Actuator가 없으므로 `/actuator/health`가 404를 반환합니다.  
+> 반드시 태스크 1에서 선택한 경로로 변경하세요.  
 
 > [!OUTPUT]
 > Target Group의 Targets 탭에서 등록된 인스턴스를 확인합니다:
@@ -627,8 +627,8 @@ curl http://localhost:8080/
 > | --------------- | ---- | ------------- | ------------------------------- |
 > | i-0abc123def456 | 8080 | initial       | Target registration in progress |
 >
-> 약 30초~1분 후 `healthy`로 변경됩니다.
-> `unhealthy`가 표시되면 아래 TROUBLESHOOTING을 참고하세요.
+> 약 30초~1분 후 `healthy`로 변경됩니다.  
+> `unhealthy`가 표시되면 아래 TROUBLESHOOTING을 참고하세요.  
 
 > [!TROUBLESHOOTING]
 >
@@ -660,6 +660,8 @@ curl http://localhost:8080/
 
 ## 태스크 6: GitHub Actions CI/CD (WAR)
 
+코드를 push하면 자동으로 빌드 → Amazon EC2 배포 → Health Check가 실행되는 파이프라인을 구축합니다.
+
 > [!WARNING]
 > 이 CI/CD는 **SSM Run Command**로 Private Subnet의 Amazon EC2에 명령을 전달합니다.  
 > EC2가 SSM 서비스에 접근하려면 아래 중 하나가 필요합니다:
@@ -667,34 +669,119 @@ curl http://localhost:8080/
 > - **NAT Gateway** (Step 8-1에서 `CreateNATGateway=Yes`로 생성한 경우) — 추가 작업 없음
 > - **VPC Endpoint** 3개 (`ssm`, `ssmmessages`, `ec2messages`) — NAT 없이 가능하지만 유료
 >
-> Step 8-1에서 NAT Gateway를 생성했다면 바로 진행하세요.
+> Step 8-1에서 NAT Gateway를 생성했다면 바로 진행하세요.  
 
-### 6-1. IAM 사용자 생성
+### 6-1. IAM 사용자 설정 (GitHub Actions용)
 
-29. 상단 검색창에 `IAM`을 입력하고 **IAM** 서비스를 선택합니다. 왼쪽 메뉴에서 **Users** → [[Create user]]를 클릭합니다.
-30. **User name**: `github-actions-backend`
-31. 정책 연결: `AmazonS3FullAccess` + `AmazonSSMFullAccess`
-32. Access Key 생성 (Third-party service)
+백엔드 CI/CD에는 `AmazonS3FullAccess`(WAR 업로드)와 `AmazonSSMFullAccess`(SSM Run Command 실행) 권한이 필요합니다.
+
+> [!CONCEPT] IAM 사용자를 분리하는 이유
+>
+> 실무에서는 프론트엔드/백엔드별로 IAM 사용자를 분리하는 것이 보안 원칙(최소 권한)입니다.  
+> 프론트엔드 사용자에 SSM 권한을 부여하면, 프론트 레포가 탈취될 경우 EC2까지 제어할 수 있게 됩니다.  
+> 학습 환경에서는 하나로 합쳐도 무방하지만, 분리를 권장합니다.  
+
+아래 두 가지 중 하나를 선택합니다:
+
+| 옵션 | 방법                                       | 장점                             | 단점                             |
+| ---- | ------------------------------------------ | -------------------------------- | -------------------------------- |
+| 📗 A | 새 IAM 사용자 생성                         | 보안 분리 (권장), 권한 추적 명확 | 사용자/키 하나 더 관리           |
+| 📙 B | 기존 `github-actions-frontend`에 정책 추가 | 키 하나로 관리 간편              | 프론트 레포 탈취 시 EC2까지 영향 |
+
+**📗 옵션 A: 새 IAM 사용자 생성 (권장)**
+
+35. 상단 검색창에 `IAM`을 입력하고 **IAM** 서비스를 선택합니다.
+36. 왼쪽 메뉴에서 **Users**를 클릭합니다.
+37. [[Create user]]를 클릭합니다.
+38. **User name**: `github-actions-backend`를 입력합니다.
+39. **Provide user access to the AWS Management Console** 체크를 **하지 않습니다** (콘솔 접근 불필요).
+40. [[Next]]를 클릭합니다.
+41. **Permissions options**에서 `Attach policies directly`를 선택합니다.
+42. 다음 정책을 검색하여 체크합니다:
+    - `AmazonS3FullAccess` (WAR 업로드용)
+    - `AmazonSSMFullAccess` (SSM Run Command 실행용)
+43. [[Next]]를 클릭합니다.
+44. **Review and create** 페이지에서 설정을 확인하고 [[Create user]]를 클릭합니다.
+
+**📙 옵션 B: 기존 `github-actions-frontend` 사용자에 정책 추가**
+
+35. 상단 검색창에 `IAM`을 입력하고 **IAM** 서비스를 선택합니다.
+36. 왼쪽 메뉴에서 **Users**를 클릭합니다.
+37. `github-actions-frontend`를 클릭합니다.
+38. **Permissions** 탭 → [[Add permissions]] → **Add permissions**를 클릭합니다.
+39. **Permissions options**에서 `Attach policies directly`를 선택합니다.
+40. 검색창에 `SSMFull`을 입력하고 `AmazonSSMFullAccess`를 체크합니다 (`AmazonS3FullAccess`는 이미 있음).
+41. [[Next]] → [[Add permissions]]를 클릭합니다.
+
+> [!NOTE]
+> 옵션 B를 선택한 경우 아래 "Access Key 생성"을 건너뛰세요.  
+> 8-2에서 발급한 Access Key ID / Secret Access Key를 `my-backend` 레포의 GitHub Secrets에도 동일하게 등록합니다 (6-2에서 진행).
+
+> [!TIP]
+> **실무에서는 커스텀 정책(최소 권한)을 권장합니다.**  
+> 이 실습에서는 편의상 AWS 관리형 정책을 사용하지만,  
+> 프로덕션에서는 JSON 정책으로 특정 리소스에만 접근을 허용합니다.  
+
+### Access Key 생성 (옵션 A만 해당)
+
+> [!NOTE]
+> 📙 옵션 B를 선택한 경우 이 단계를 건너뛰고 **6-2. GitHub Secrets 설정**으로 이동하세요.  
+
+45. 생성된 `github-actions-backend` 사용자를 클릭하여 상세 페이지로 이동합니다.
+46. **Security credentials** 탭을 클릭합니다.
+47. **Access keys** 섹션에서 [[Create access key]]를 클릭합니다.
+48. **Use case**에서 `Third-party service`를 선택합니다.
+49. 하단의 확인 체크박스를 선택하고 [[Next]]를 클릭합니다.
+50. [[Create access key]]를 클릭합니다.
+51. **Access key ID**와 **Secret access key**를 복사하여 안전한 곳에 저장합니다.
+
+> [!WARNING]
+> Secret access key는 이 화면에서만 확인할 수 있습니다.  
+> 페이지를 닫으면 다시 볼 수 없으므로 반드시 복사하여 저장하세요.  
 
 ### 6-2. GitHub Secrets 설정
 
-33. 브라우저에서 GitHub → `my-backend` 리포지토리 페이지로 이동합니다.
-34. **Settings** 탭을 클릭합니다.
-35. 왼쪽 메뉴에서 **Secrets and variables** → **Actions**를 클릭합니다.
-36. [[New repository secret]] 버튼을 클릭합니다.
-37. 다음 Secrets를 하나씩 추가합니다:
+52. 브라우저에서 GitHub → `my-backend` 리포지토리 페이지로 이동합니다.
+53. **Settings** 탭을 클릭합니다.
+54. 왼쪽 메뉴에서 **Secrets and variables** → **Actions**를 클릭합니다.
+55. [[New repository secret]] 버튼을 클릭합니다.
+56. 다음 Secrets를 하나씩 추가합니다:
+    - `AWS_ACCESS_KEY_ID`: 51번에서 복사한 Access Key ID
+    - `AWS_SECRET_ACCESS_KEY`: 51번에서 복사한 Secret Access Key
+    - `AWS_REGION`: `ap-northeast-2`
+    - `S3_DEPLOY_BUCKET`: `<태스크 5-6에서 생성한 배포용 S3 버킷명>`
+    - `EC2_INSTANCE_ID`: `<태스크 5-1에서 생성한 Amazon EC2 인스턴스 ID (예: i-0abc123def456)>`
 
-- `AWS_ACCESS_KEY_ID`
-- `AWS_SECRET_ACCESS_KEY`
-- `AWS_REGION`: `ap-northeast-2`
-- `S3_DEPLOY_BUCKET`: `<배포용 S3 버킷명>`
-- `EC2_INSTANCE_ID`: `<EC2 인스턴스 ID>`
+> [!CONCEPT] Private Subnet Amazon EC2에 배포하는 방법
+>
+> Private Subnet의 Amazon EC2에는 SSH로 직접 접속할 수 없습니다.  
+> 대신 다음 방식으로 배포합니다:
+>
+> - GitHub Actions에서 WAR을 Amazon S3에 업로드
+> - SSM Run Command로 Amazon EC2에서 Amazon S3 다운로드 + Tomcat 재시작
+>
+> 이 방식은 SSH 키 관리가 불필요하고 보안상 더 안전합니다.  
 
 ### 6-3. GitHub Actions 워크플로우 작성
 
-34. `.github/workflows/deploy.yml` 파일을 생성합니다:
+> [!WARNING]
+> 이 워크플로우는 `./gradlew`를 사용하므로 **Gradle Wrapper 파일이 레포에 포함**되어야 합니다.  
+> GitHub의 Gradle `.gitignore`가 이 파일을 제외할 수 있으니 아래 명령으로 확인 후 추가하세요:
+>
+> ```bash
+> # wrapper가 git에 있는지 확인
+> git ls-files gradle/wrapper/
+>
+> # 비어있으면 강제 추가
+> git add -f gradle/wrapper/gradle-wrapper.properties gradle/wrapper/gradle-wrapper.jar gradlew gradlew.bat
+> git commit -m "chore: add gradle wrapper for CI/CD"
+> git push origin main
+> ```
+
+57. `.github/workflows/deploy.yml` 파일을 생성합니다:
 
 ```yaml
+# .github/workflows/deploy.yml (WAR + Tomcat 버전)
 name: Deploy Spring MVC WAR to EC2 (via S3 + SSM)
 
 on:
@@ -797,30 +884,29 @@ jobs:
 >       │◀────────────────────────│                                │
 >       │  ✅ 성공 / ❌ 실패      │                                │
 > ```
-
-> [!WARNING]
-> `./gradlew`를 사용하므로 **Gradle Wrapper 파일이 레포에 포함**되어야 합니다:
 >
-> ```bash
-> git add -f gradle/wrapper/gradle-wrapper.properties gradle/wrapper/gradle-wrapper.jar gradlew gradlew.bat
-> git commit -m "chore: add gradle wrapper for CI/CD"
-> ```
+> - `send-command`: EC2에 실행할 셸 명령을 전달 (SSH 불필요)
+> - `commands` 배열: EC2에서 순서대로 실행되는 명령어 목록
+> - `wait command-executed`: 명령이 완료될 때까지 대기 (타임아웃 시 실패 처리)
+> - Health Check(`curl -sf`)가 실패하면 `exit 1`로 전체 배포 실패 처리
 
 ### 6-4. 배포 테스트
 
-35. 코드를 커밋하고 push하여 자동 배포를 실행합니다:
+58. 변경사항을 커밋하고 push합니다:
 
 ```bash
+cd ~/3tier-project/my-backend
+
 git add .
 git commit -m "feat: initial backend with CI/CD"
 git push origin main
 ```
 
-36. GitHub Actions 탭에서 워크플로우 실행을 확인합니다.
+59. GitHub → `my-backend` 리포지토리 → **Actions** 탭에서 워크플로우 실행을 확인합니다.
 
 > [!TIP]
 > 첫 빌드는 Gradle 의존성 다운로드로 3~4분 소요됩니다.  
-> 이후 빌드는 캐시 덕분에 1~2분으로 단축됩니다.
+> 이후 빌드는 캐시 덕분에 1~2분으로 단축됩니다.  
 
 > [!TROUBLESHOOTING]
 >
@@ -854,6 +940,10 @@ git push origin main
 > - 원인: wrapper 파일이 git에 없음
 > - 해결: `git add -f gradle/wrapper/gradle-wrapper.properties gradle/wrapper/gradle-wrapper.jar gradlew gradlew.bat`
 
+> [!NOTE]
+> Private Subnet의 Amazon EC2에 SSM Run Command를 사용하려면 Amazon EC2가 SSM 서비스에 접근할 수 있어야 합니다.  
+> NAT Gateway가 있으면 자동으로 가능하고, 없다면 VPC Endpoint(ssm, ssmmessages, ec2messages)가 필요합니다.  
+
 ✅ **태스크 완료** — GitHub Actions로 WAR 자동 배포 파이프라인을 구축했습니다.
 
 ---
@@ -886,7 +976,7 @@ curl http://$ALB_DNS/api/board
 curl http://$ALB_DNS/api/travel
 ```
 
-> 위 요청에 JSON 응답이 오면 **백엔드 배포 + DB 연동 성공**입니다.
+> 위 요청에 JSON 응답이 오면 **백엔드 배포 + DB 연동 성공**입니다.  
 
 **인증 필요 API 테스트 (선택):**
 
@@ -909,9 +999,9 @@ curl -X POST http://$ALB_DNS/api/board \
 ```
 
 > [!NOTE]
-> 이 시점에서 브라우저(CloudFront HTTPS)에서 프론트엔드 → 백엔드(ALB HTTP) API 호출은 **Mixed Content**로 차단됩니다.
-> 프론트엔드 ↔ 백엔드 연동은 **Step 8-4 태스크 1**을 완료한 뒤 동작합니다.
-> 현재 단계에서는 `curl`로 API가 정상 응답하는 것을 확인했으면 충분합니다.
+> 이 시점에서 브라우저(CloudFront HTTPS)에서 프론트엔드 → 백엔드(ALB HTTP) API 호출은 **Mixed Content**로 차단됩니다.  
+> 프론트엔드 ↔ 백엔드 연동은 **Step 8-4 태스크 1**을 완료한 뒤 동작합니다.  
+> 현재 단계에서는 `curl`로 API가 정상 응답하는 것을 확인했으면 충분합니다.  
 
 ✅ **태스크 완료** — ALB Health Check를 확인하고 API 테스트를 완료했습니다.
 
@@ -921,7 +1011,7 @@ curl -X POST http://$ALB_DNS/api/board \
 
 > [!WARNING]
 > 이 세션에서 생성한 리소스를 지금 삭제하지 마세요!
-> Step 8-4에서 전체 연동 확인 후 정리합니다.
+> Step 8-4에서 전체 연동 확인 후 정리합니다.  
 > **Step 8-4에서 전체 정리합니다.**
 
 ✅ **실습 종료**: Step 8-4에서 전체 연동을 확인하고 리소스를 정리합니다.

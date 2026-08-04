@@ -58,9 +58,9 @@ npm create vue@latest .
 - **Add Prettier?** → No (또는 Yes)
 
 > [!NOTE]
-> 8-1에서 클론한 레포 안에 이미 `README.md`, `.gitignore` 파일이 있습니다.
-> "기존 파일이 있습니다. 덮어쓰시겠습니까?" 라고 물으면 **Yes**를 선택하세요.
-> `.gitignore`는 생성된 것과 기존 것을 병합하면 됩니다.
+> 8-1에서 클론한 레포 안에 이미 `README.md`, `.gitignore` 파일이 있습니다.  
+> "기존 파일이 있습니다. 덮어쓰시겠습니까?" 라고 물으면 **Yes**를 선택하세요.  
+> `.gitignore`는 생성된 것과 기존 것을 병합하면 됩니다.  
 
 2. 의존성을 설치합니다:
 
@@ -146,7 +146,7 @@ app.mount('#app');
 ```
 
 > [!TIP]
-> `createWebHistory()`를 사용하면 URL에 `#`이 없는 깔끔한 경로를 사용할 수 있습니다.
+> `createWebHistory()`를 사용하면 URL에 `#`이 없는 깔끔한 경로를 사용할 수 있습니다.  
 > 단, SPA 라우팅을 위해 Amazon CloudFront에서 에러 페이지 설정이 필요합니다 (태스크 4에서 설정).
 
 ✅ **태스크 완료** — Vue.js 프로젝트를 생성하고 기본 구조를 설정했습니다.
@@ -177,16 +177,16 @@ VITE_API_URL=http://<ALB_DNS_NAME>/api
 
 > [!WARNING]
 > **`/api`를 포함하는 이유:**
-> 새 프로젝트의 API 호출은 `/items`, `/health` 형태(상대 경로)이고, 백엔드 Controller의 `@RequestMapping("/api")`가 접두사를 붙입니다.
-> `baseURL`에 `/api`를 포함해야 실제 요청이 `/api/items`, `/api/health`로 전송됩니다.
+> 새 프로젝트의 API 호출은 `/items`, `/health` 형태(상대 경로)이고, 백엔드 Controller의 `@RequestMapping("/api")`가 접두사를 붙입니다.  
+> `baseURL`에 `/api`를 포함해야 실제 요청이 `/api/items`, `/api/health`로 전송됩니다.  
 
 > [!WARNING]
-> `.env.production`의 `<ALB_DNS_NAME>`은 Step 8-1 CloudFormation Outputs의 `ALBDNSName` 값으로 교체해야 합니다.
-> Step 8-3에서 백엔드 배포 후 실제 동작합니다.
+> `.env.production`의 `<ALB_DNS_NAME>`은 Step 8-1 CloudFormation Outputs의 `ALBDNSName` 값으로 교체해야 합니다.  
+> Step 8-3에서 백엔드 배포 후 실제 동작합니다.  
 >
-> **Mixed Content 주의:** CloudFront(HTTPS)에서 ALB(HTTP) API를 호출하면 브라우저가 차단합니다.
-> 이 문제는 Step 8-4 태스크 1에서 도메인 + ALB HTTPS를 설정하면 해결됩니다.
-> 설정 전에는 `curl`로 직접 API 테스트하세요.
+> **Mixed Content 주의:** CloudFront(HTTPS)에서 ALB(HTTP) API를 호출하면 브라우저가 차단합니다.  
+> 이 문제는 Step 8-4 태스크 1에서 도메인 + ALB HTTPS를 설정하면 해결됩니다.  
+> 설정 전에는 `curl`로 직접 API 테스트하세요.  
 
 ### 2-2. Axios 설정
 
@@ -368,8 +368,8 @@ onMounted(fetchItems);
 > - 로컬 개발 시: `http://localhost:8080/api` (백엔드 로컬 실행)
 > - 프로덕션 배포 시: `http://ALB_DNS/api` (AWS ALB 경유)
 >
-> Vite는 빌드 시 `VITE_` 접두사가 붙은 환경 변수를 코드에 주입합니다.
-> `.env.production` 파일의 값이 `npm run build` 시 적용됩니다.
+> Vite는 빌드 시 `VITE_` 접두사가 붙은 환경 변수를 코드에 주입합니다.  
+> `.env.production` 파일의 값이 `npm run build` 시 적용됩니다.  
 
 ✅ **태스크 완료** — API 연동 코드를 작성하고 환경 변수로 URL을 관리합니다.
 
@@ -381,13 +381,13 @@ AWS CloudFormation에서 이미 Amazon S3 버킷과 정적 웹 호스팅을 설�
 여기서는 설정을 확인하고 추가 구성을 합니다.
 
 > [!TIP]
-> Step 5-3에서 수동으로 설정했던 Block Public Access 해제, 버킷 정책, 정적 웹 호스팅 활성화를 AWS CloudFormation 템플릿에 정의하여 스택 생성 시 자동으로 설정되도록 했습니다.
-> 이 태스크에서는 정상 생성되었는지 확인만 합니다.
+> Step 5-3에서 수동으로 설정했던 Block Public Access 해제, 버킷 정책, 정적 웹 호스팅 활성화를 AWS CloudFormation 템플릿에 정의하여 스택 생성 시 자동으로 설정되도록 했습니다.  
+> 이 태스크에서는 정상 생성되었는지 확인만 합니다.  
 
 ### S3 버킷 설정 확인
 
 > [!WARNING]
-> AWS Console 우측 상단에서 리전이 **Asia Pacific (Seoul) ap-northeast-2**인지 확인하세요.
+> AWS Console 우측 상단에서 리전이 **Asia Pacific (Seoul) ap-northeast-2**인지 확인하세요.  
 
 11. 상단 검색창에 `S3`를 입력하고 **S3** 서비스를 선택합니다.
 12. Buckets 목록에서 `my-3tier-app-frontend-{BucketSuffix}` 버킷을 클릭합니다.
@@ -485,8 +485,8 @@ aws s3 sync dist/ s3://$BUCKET_NAME --delete
 ```
 
 > [!NOTE]
-> `--delete` 옵션은 S3에 있지만 로컬 dist에 없는 파일을 삭제합니다.
-> 이전 배포의 잔여 파일을 정리하여 깔끔한 상태를 유지합니다.
+> `--delete` 옵션은 S3에 있지만 로컬 dist에 없는 파일을 삭제합니다.  
+> 이전 배포의 잔여 파일을 정리하여 깔끔한 상태를 유지합니다.  
 
 ### 4-3. 업로드 확인
 
@@ -506,8 +506,8 @@ http://my-3tier-app-frontend-hong01.s3-website.ap-northeast-2.amazonaws.com
 ```
 
 > [!TIP]
-> 이 시점에서는 API 서버가 아직 없으므로 "API 연결 실패" 메시지가 표시됩니다.
-> 이는 정상입니다. Step 8-3에서 백엔드를 배포하면 정상 동작합니다.
+> 이 시점에서는 API 서버가 아직 없으므로 "API 연결 실패" 메시지가 표시됩니다.  
+> 이는 정상입니다. Step 8-3에서 백엔드를 배포하면 정상 동작합니다.  
 
 ✅ **태스크 완료** — Vue.js를 빌드하고 Amazon S3에 업로드하여 정적 웹사이트를 확인했습니다.
 
@@ -545,7 +545,7 @@ S3 앞에 Amazon CloudFront를 배치하여 CDN + HTTPS를 적용합니다.
 
 > [!WARNING]
 > **`Amazon S3`를 선택하지 마세요!**
-> 이 실습에서는 S3 **정적 웹 호스팅 엔드포인트**(public bucket)를 사용하므로 `Other`를 선택해야 합니다.
+> 이 실습에서는 S3 **정적 웹 호스팅 엔드포인트**(public bucket)를 사용하므로 `Other`를 선택해야 합니다.  
 
 39. **Origin** 필드에 태스크 3에서 확인한 S3 웹사이트 엔드포인트를 직접 입력합니다:
     - `my-3tier-app-frontend-<BucketSuffix>.s3-website.ap-northeast-2.amazonaws.com`
@@ -557,7 +557,7 @@ S3 앞에 Amazon CloudFront를 배치하여 CDN + HTTPS를 적용합니다.
 
 > [!WARNING]
 > **Protocol을 반드시 `HTTP only`로 설정하세요!**
-> S3 웹사이트 엔드포인트는 HTTP만 지원합니다.
+> S3 웹사이트 엔드포인트는 HTTP만 지원합니다.  
 
 42. **Cache settings**: `Customize cache settings` 선택
 43. **Viewer protocol policy**: `Redirect HTTP to HTTPS` 선택
@@ -572,8 +572,8 @@ S3 앞에 Amazon CloudFront를 배치하여 CDN + HTTPS를 적용합니다.
 49. **Web Application Firewall (WAF)**: `Do not enable security protections` 선택
 
 > [!WARNING]
-> `Enable security protections`를 선택하면 **AWS WAF 비용이 월 $14 이상** 발생할 수 있습니다.
-> 학습용 실습에서는 반드시 `Do not enable security protections`를 선택하세요.
+> `Enable security protections`를 선택하면 **AWS WAF 비용이 월 $14 이상** 발생할 수 있습니다.  
+> 학습용 실습에서는 반드시 `Do not enable security protections`를 선택하세요.  
 
 50. [[Next]]를 클릭합니다.
 
@@ -608,9 +608,9 @@ S3 앞에 Amazon CloudFront를 배치하여 CDN + HTTPS를 적용합니다.
 
 > [!CONCEPT] SPA 라우팅과 에러 페이지 설정
 >
-> Vue Router의 `createWebHistory()`는 `/items` 같은 경로를 사용합니다.
-> 사용자가 `/items`를 직접 입력하면 Amazon CloudFront는 S3에서 `/items` 파일을 찾지만, 실제로는 존재하지 않아 403/404 에러가 발생합니다.
-> 에러 페이지를 `/index.html`로 설정하면, 모든 경로에서 Vue.js가 로드되고 클라이언트 측 라우터가 올바른 페이지를 렌더링합니다.
+> Vue Router의 `createWebHistory()`는 `/items` 같은 경로를 사용합니다.  
+> 사용자가 `/items`를 직접 입력하면 Amazon CloudFront는 S3에서 `/items` 파일을 찾지만, 실제로는 존재하지 않아 403/404 에러가 발생합니다.  
+> 에러 페이지를 `/index.html`로 설정하면, 모든 경로에서 Vue.js가 로드되고 클라이언트 측 라우터가 올바른 페이지를 렌더링합니다.  
 
 ### Amazon CloudFront URL 접속 확인
 
@@ -628,8 +628,8 @@ S3 앞에 Amazon CloudFront를 배치하여 CDN + HTTPS를 적용합니다.
 > - **Status**: `Enabled`
 
 > [!TIP]
-> Amazon CloudFront 도메인 이름을 메모해두세요.
-> Step 8-3 태스크 4에서 백엔드의 CORS 설정에 사용합니다.
+> Amazon CloudFront 도메인 이름을 메모해두세요.  
+> Step 8-3 태스크 4에서 백엔드의 CORS 설정에 사용합니다.  
 
 ✅ **태스크 완료** — Amazon CloudFront 배포를 생성하여 CDN + HTTPS를 적용했습니다.
 
@@ -657,18 +657,23 @@ S3 앞에 Amazon CloudFront를 배치하여 CDN + HTTPS를 적용합니다.
 
 78. 생성된 `github-actions-frontend` 사용자를 클릭하여 상세 페이지로 이동합니다.
 79. **Security credentials** 탭 → **Access keys** 섹션에서 [[Create access key]]를 클릭합니다.
-80. **Use case**: `Third-party service` → 확인 체크 → [[Next]] → [[Create access key]]
-81. **Access key ID**와 **Secret access key**를 복사하여 안전한 곳에 저장합니다.
+80. **Use case**에서 `Third-party service`를 선택합니다.
+81. 하단의 확인 체크박스를 선택하고 [[Next]]를 클릭합니다.
+82. [[Create access key]]를 클릭합니다.
+83. **Access key ID**와 **Secret access key**를 복사하여 안전한 곳에 저장합니다.
 
 > [!WARNING]
-> Secret access key는 이 화면에서만 확인할 수 있습니다.
+> Secret access key는 이 화면에서만 확인할 수 있습니다.  
+> 페이지를 닫으면 다시 볼 수 없으므로 반드시 복사하여 저장하세요.  
 
 ### GitHub Secrets 설정
 
-82. GitHub → `my-frontend` 리포지토리 → **Settings** → **Secrets and variables** → **Actions**
-83. [[New repository secret]] 버튼을 클릭하고 다음 Secrets를 추가합니다:
-    - `AWS_ACCESS_KEY_ID`: 81번에서 복사한 Access Key ID
-    - `AWS_SECRET_ACCESS_KEY`: 81번에서 복사한 Secret Access Key
+84. 브라우저에서 GitHub → `my-frontend` 리포지토리 페이지로 이동합니다.
+85. **Settings** 탭을 클릭합니다.
+86. 왼쪽 메뉴에서 **Secrets and variables** → **Actions**를 클릭합니다.
+87. [[New repository secret]] 버튼을 클릭하고 다음 Secrets를 추가합니다:
+    - `AWS_ACCESS_KEY_ID`: 83번에서 복사한 Access Key ID
+    - `AWS_SECRET_ACCESS_KEY`: 83번에서 복사한 Secret Access Key
     - `AWS_REGION`: `ap-northeast-2`
     - `S3_BUCKET_NAME`: `<Step 8-1 CloudFormation Outputs의 S3BucketName 값>`
     - `CLOUDFRONT_DISTRIBUTION_ID`: `<태스크 5에서 메모한 Distribution ID>`
@@ -764,13 +769,13 @@ git push origin main
 ## 태스크 7: Amazon CloudFront에 커스텀 도메인 연결 (선택)
 
 > [!NOTE]
-> 이 태스크는 Step 7-1에서 Amazon Route 53 Hosted Zone과 ACM 인증서를 발급한 경우에 진행합니다.
-> 도메인이 없다면 Amazon CloudFront 기본 URL(`d1234abcdef.cloudfront.net`)로 사용해도 됩니다.
+> 이 태스크는 Step 7-1에서 Amazon Route 53 Hosted Zone과 ACM 인증서를 발급한 경우에 진행합니다.  
+> 도메인이 없다면 Amazon CloudFront 기본 URL(`d1234abcdef.cloudfront.net`)로 사용해도 됩니다.  
 
 ### ACM 인증서 확인 (us-east-1)
 
 > [!WARNING]
-> Amazon CloudFront에 사용할 인증서는 반드시 **us-east-1 (버지니아 북부)** 리전에서 발급해야 합니다.
+> Amazon CloudFront에 사용할 인증서는 반드시 **us-east-1 (버지니아 북부)** 리전에서 발급해야 합니다.  
 
 88. AWS Console 우측 상단에서 리전을 **US East (N. Virginia) us-east-1**로 변경합니다.
 89. 상단 검색창에 `Certificate Manager`를 입력하고 **Certificate Manager** 서비스를 선택합니다.
@@ -804,8 +809,8 @@ git push origin main
 # 🗑️ 리소스 정리
 
 > [!WARNING]
-> 이 세션에서 생성한 리소스를 지금 삭제하지 마세요!
-> Step 8-3, 8-4에서 계속 사용합니다.
+> 이 세션에서 생성한 리소스를 지금 삭제하지 마세요!  
+> Step 8-3, 8-4에서 계속 사용합니다.  
 > **Step 8-4에서 전체 정리합니다.**
 
 ✅ **실습 종료**: Step 8-3에서 백엔드를 배포합니다.
