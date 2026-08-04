@@ -68,6 +68,9 @@ Target Group Health Check 경로를 `/health`로 설정합니다.
 
 ## 태스크 2: RDS 연동 설정
 
+> [!WARNING]
+> 이 태스크는 **필수**입니다. SSM Parameter Store에 DB 접속 정보를 저장하지 않으면 Amazon EC2에서 애플리케이션이 시작되지 않습니다.
+
 ### 2-1. SSM Parameter Store에 비밀값 저장
 
 Amazon EC2에서 Amazon RDS 접속 정보를 안전하게 관리하기 위해 SSM Parameter Store를 사용합니다.
@@ -122,6 +125,15 @@ aws ssm put-parameter \
   --type String
 ```
 
+> [!TIP]
+> `SecureString` 타입은 AWS KMS로 자동 암호화됩니다.
+> 비밀번호, API 키 등 민감한 값은 항상 SecureString을 사용하세요.
+>
+> **값을 잘못 입력한 경우:**
+>
+> - CLI: `--overwrite` 플래그를 추가하여 같은 명령을 다시 실행하면 덮어씁니다.
+> - 콘솔: AWS Console → Systems Manager → Parameter Store에서 해당 파라미터를 클릭하고 [[Edit]] → 값 수정 → [[Save changes]]
+
 ### 2-2. DB 접속 설정 파일 수정
 
 2. `src/main/resources/application.properties`의 DB 접속 정보를 환경 변수로 변경합니다:
@@ -170,6 +182,28 @@ aws ssm put-parameter \
 > [!TIP]
 > 이 경우 `application.properties`는 수정하지 않아도 됩니다.  
 > `ParameterStoreService`가 앱 시작 시 SSM에서 값을 읽어 DataSource에 주입합니다.
+
+> [!TROUBLESHOOTING]
+>
+> **`ParameterAlreadyExists` 에러**
+>
+> - 원인: 동일 이름의 파라미터 이미 존재
+> - 해결: `--overwrite` 플래그 추가하여 재실행
+>
+> **Amazon EC2에서 Amazon RDS 접속 실패 (`Can't connect`)**
+>
+> - 원인: Security Group 미허용 또는 RDS 미생성
+> - 해결: RDS-SG에서 EC2-SG의 3306 포트 허용 확인
+>
+> **`Access denied for user 'admin'`**
+>
+> - 원인: 비밀번호 오류
+> - 해결: SSM에 저장한 비밀번호와 RDS 생성 시 설정한 비밀번호 일치 확인
+>
+> **`Unknown database 'myapp'`**
+>
+> - 원인: 데이터베이스 미생성
+> - 해결: Amazon EC2에서 Amazon RDS 접속 후 `CREATE DATABASE myapp` 실행
 
 ✅ **태스크 완료** — Amazon RDS 연동 설정을 완료했습니다.
 
@@ -250,6 +284,28 @@ public class WebConfig implements WebMvcConfigurer {
 > `allowedOriginPatterns("*")`을 그대로 두면 모든 도메인에서 접근 가능합니다.  
 > 학습용이라면 `*`로 유지해도 무방합니다.
 
+> [!TROUBLESHOOTING]
+>
+> **브라우저에서 CORS 에러**
+>
+> - 원인: `allowed-origins`에 프론트엔드 도메인 미포함
+> - 해결: Amazon CloudFront 도메인을 `https://` 포함하여 정확히 추가
+>
+> **`localhost`에서 CORS 에러**
+>
+> - 원인: `http://localhost:5173` 미추가
+> - 해결: 개발 환경 URL도 `allowed-origins`에 포함
+>
+> **OPTIONS 요청 실패 (Preflight)**
+>
+> - 원인: `allowedMethods`에 `OPTIONS` 미포함
+> - 해결: `"GET", "POST", "PUT", "DELETE", "OPTIONS"` 모두 포함 확인
+
+> [!NOTE]
+> CORS 에러는 **브라우저에서만** 발생합니다.  
+> `curl`로 테스트하면 CORS 에러가 나타나지 않습니다.  
+> 브라우저 개발자 도구(F12) → Console 탭에서 CORS 에러 메시지를 확인하세요.
+
 ✅ **태스크 완료** — CORS를 설정했습니다.
 
 ---
@@ -285,10 +341,25 @@ public class WebConfig implements WebMvcConfigurer {
 16. SSM Session Manager로 EC2에 접속하고 초기 설정을 실행합니다:
 
 ```bash
-# SSM Session Manager로 EC2 접속
-# EC2 콘솔 → 인스턴스 선택 → [[Connect]] → Session Manager → [[Connect]]
+# SSM Session Manager로 EC2 접속 (AWS Console에서)
+# EC2 콘솔 → 인스턴스 선택 → [[Connect]] → Session Manager 탭 → [[Connect]]
 
-# ec2-user로 전환
+# 또는 AWS CLI로 접속 (Instance ID는 EC2 콘솔에서 확인)
+aws ssm start-session --target <INSTANCE_ID> --region ap-northeast-2
+```
+
+> [!TIP]
+> **AWS CLI로 접속하려면** 로컬에 Session Manager plugin이 필요합니다:
+>
+> ```bash
+> # macOS
+> brew install session-manager-plugin
+> ```
+>
+> 플러그인 설치가 번거로우면 AWS Console의 Session Manager로 접속하세요.
+
+```bash
+# ssm-user → ec2-user로 전환
 sudo su - ec2-user
 
 # Java 17 설치
@@ -304,6 +375,12 @@ sudo dnf install -y mariadb105
 
 # RDS 접속 테스트
 mysql -h <RDS_ENDPOINT> -u admin -p -e "SELECT 1;"
+
+# 또는 SSM Parameter Store에서 값 가져와서 접속 테스트 (태스크 2-1에서 저장한 파라미터 활용)
+mysql -h $(aws ssm get-parameter --name "/my-3tier-app/db/endpoint" --query "Parameter.Value" --output text --region ap-northeast-2) \
+  -u $(aws ssm get-parameter --name "/my-3tier-app/db/username" --query "Parameter.Value" --output text --region ap-northeast-2) \
+  -p$(aws ssm get-parameter --name "/my-3tier-app/db/password" --with-decryption --query "Parameter.Value" --output text --region ap-northeast-2) \
+  -e "SELECT 1;"
 ```
 
 ### 5-3. Tomcat 9 설치
@@ -375,11 +452,11 @@ chmod +x /opt/tomcat/bin/setenv.sh
 ```
 
 > [!NOTE]
-> `setenv.sh`는 Tomcat이 시작될 때 자동으로 실행됩니다.
+> `setenv.sh`는 Tomcat이 시작될 때 자동으로 실행됩니다.  
 > `-D` 옵션으로 전달된 값은 Java 시스템 프로퍼티가 됩니다.
 
 > [!TIP]
-> WAR 방식에서 `ParameterStoreService`를 사용하는 경우, DB 관련 환경 변수는 불필요합니다.
+> WAR 방식에서 `ParameterStoreService`를 사용하는 경우, DB 관련 환경 변수는 불필요합니다.  
 > 프로파일만 설정하면 됩니다:
 >
 > ```bash
@@ -391,6 +468,8 @@ chmod +x /opt/tomcat/bin/setenv.sh
 기존 프로젝트의 SQL 파일을 Amazon S3를 경유하여 Amazon RDS에 적용합니다.
 
 **① 로컬 PC에서 — SQL/CSV 파일을 S3에 업로드:**
+
+📍 **실행 위치: 로컬 PC**
 
 20. 로컬 PC에서 SQL/CSV 파일을 S3에 업로드합니다:
 
@@ -411,6 +490,8 @@ aws s3 cp travel_image.csv s3://$S3_DEPLOY_BUCKET/sql/
 ```
 
 **② EC2에서 — S3에서 다운로드 후 RDS에 적용:**
+
+📍 **실행 위치: EC2** (SSM Session Manager 접속 상태)
 
 21. EC2에서 S3의 SQL 파일을 다운로드하고 Amazon RDS에 접속합니다:
 
@@ -442,9 +523,38 @@ EXIT;
 > 기존 SQL에 `CREATE DATABASE scoula_db` + `USE scoula_db`가 포함된 경우,
 > `application.properties`의 DB 이름도 `scoula_db`로 맞춰야 합니다.
 
+**③ CSV 데이터 import (해당되는 경우):**
+
+CSV 파일이 있는 경우 `LOAD DATA LOCAL INFILE`로 import합니다:
+
+```bash
+# --local-infile 옵션 필수
+mysql -h $DB_ENDPOINT -u $DB_USERNAME -p$DB_PASSWORD --local-infile=1 $DB_NAME -e "
+  LOAD DATA LOCAL INFILE '/home/ec2-user/travel.csv'
+  INTO TABLE tbl_travel
+  FIELDS TERMINATED BY ',' ENCLOSED BY '\"'
+  LINES TERMINATED BY '\n'
+  IGNORE 1 ROWS;"
+
+mysql -h $DB_ENDPOINT -u $DB_USERNAME -p$DB_PASSWORD --local-infile=1 $DB_NAME -e "
+  LOAD DATA LOCAL INFILE '/home/ec2-user/travel_image.csv'
+  INTO TABLE tbl_travel_image
+  FIELDS TERMINATED BY ','
+  LINES TERMINATED BY '\n'
+  IGNORE 1 ROWS (filename, travel_no);"
+
+# 확인
+mysql -h $DB_ENDPOINT -u $DB_USERNAME -p$DB_PASSWORD $DB_NAME -e "SELECT COUNT(*) FROM tbl_travel;"
+```
+
+> [!TIP]
+> `--local-infile`이 없으면 `ERROR 3948: Loading local data is disabled` 에러가 발생합니다.
+
 ### 5-7. WAR 빌드 및 배포
 
 **로컬에서 빌드 + S3 업로드:**
+
+📍 **실행 위치: 로컬 PC**
 
 23. 로컬에서 WAR를 빌드하고 S3에 업로드합니다:
 
@@ -458,6 +568,8 @@ aws s3 cp "$WAR_FILE" s3://$S3_DEPLOY_BUCKET/app.war
 ```
 
 **EC2에서 다운로드 + Tomcat 배포:**
+
+📍 **실행 위치: EC2** (SSM Session Manager 접속 상태)
 
 24. EC2에서 WAR를 다운로드하고 Tomcat에 배포합니다:
 
@@ -486,10 +598,16 @@ curl http://localhost:8080/
 
 ### 5-8. ALB Target Group에 EC2 등록
 
-25. **EC2** 콘솔 → 왼쪽 메뉴 **Target Groups** → `my-3tier-app-tg` 클릭
-26. **Targets** 탭 → [[Register targets]]
-27. `my-3tier-app-server` 체크 → Port: `8080` → [[Include as pending below]]
-28. [[Register pending targets]] 버튼을 클릭하여 등록을 완료합니다.
+25. 상단 검색창에 `EC2`를 입력하고 **EC2** 서비스를 선택합니다.
+26. 왼쪽 메뉴에서 **Target Groups**를 클릭합니다.
+27. `my-3tier-app-tg`를 클릭합니다.
+28. **Targets** 탭을 클릭합니다.
+29. [[Register targets]] 버튼을 클릭합니다.
+30. **Available instances**에서 `my-3tier-app-server`를 체크합니다.
+31. **Ports for the selected instances**에 `8080`을 입력합니다.
+32. [[Include as pending below]] 버튼을 클릭합니다.
+33. 하단의 **Review** 섹션에서 인스턴스가 추가된 것을 확인합니다.
+34. [[Register pending targets]] 버튼을 클릭하여 등록을 완료합니다.
 
 > [!NOTE]
 > Health Check 경로를 확인하세요:
@@ -497,16 +615,59 @@ curl http://localhost:8080/
 > - Target Group → Health checks → [[Edit]]
 > - 태스크 1에서 방법 1을 선택했다면 경로를 `/`로 변경
 > - 방법 2를 선택했다면 `/health`로 변경
+>
+> **Spring MVC(WAR) 프로젝트의 경우:**
+> Spring MVC는 Actuator가 없으므로 `/actuator/health`가 404를 반환합니다.
+> 반드시 태스크 1에서 선택한 경로로 변경하세요.
 
 > [!OUTPUT]
-> 약 30초~1분 후 Status가 `healthy`로 변경됩니다.
-> `unhealthy`가 표시되면 EC2에서 `curl http://localhost:8080/`로 응답을 확인하세요.
+> Target Group의 Targets 탭에서 등록된 인스턴스를 확인합니다:
+>
+> | Instance ID     | Port | Health Status | Status Details                  |
+> | --------------- | ---- | ------------- | ------------------------------- |
+> | i-0abc123def456 | 8080 | initial       | Target registration in progress |
+>
+> 약 30초~1분 후 `healthy`로 변경됩니다.
+> `unhealthy`가 표시되면 아래 TROUBLESHOOTING을 참고하세요.
+
+> [!TROUBLESHOOTING]
+>
+> **Target Group Status: `unhealthy`**
+>
+> - 원인: 앱 미시작 또는 Health Check 경로 불일치
+> - 해결: EC2에서 Health Check 경로를 직접 호출하여 응답 확인
+>   - 방법 1 선택: `curl http://localhost:8080/`
+>   - 방법 2 선택: `curl http://localhost:8080/health`
+>
+> **Tomcat 시작 실패 (`systemctl start tomcat`)**
+>
+> - 원인: Java 미설치 또는 WAR 경로 오류
+> - 해결: `java -version` 확인, `/opt/tomcat/webapps/ROOT.war` 존재 확인, `tail -50 /opt/tomcat/logs/catalina.out`으로 에러 로그 확인
+>
+> **SSM Session Manager 접속 불가**
+>
+> - 원인: IAM Role 미연결 또는 VPC 엔드포인트 없음
+> - 해결: EC2에 `AmazonSSMManagedInstanceCore` 정책 연결 확인
+>
+> **`setenv.sh`에서 SSM 값 못 가져옴**
+>
+> - 원인: EC2 IAM Role에 SSM 읽기 권한 없음
+> - 해결: `AmazonSSMReadOnlyAccess` 정책 추가
 
 ✅ **태스크 완료** — Amazon EC2에 WAR를 배포하고 ALB Target Group에 등록했습니다.
 
 ---
 
 ## 태스크 6: GitHub Actions CI/CD (WAR)
+
+> [!WARNING]
+> 이 CI/CD는 **SSM Run Command**로 Private Subnet의 Amazon EC2에 명령을 전달합니다.  
+> EC2가 SSM 서비스에 접근하려면 아래 중 하나가 필요합니다:
+>
+> - **NAT Gateway** (Step 8-1에서 `CreateNATGateway=Yes`로 생성한 경우) — 추가 작업 없음
+> - **VPC Endpoint** 3개 (`ssm`, `ssmmessages`, `ec2messages`) — NAT 없이 가능하지만 유료
+>
+> Step 8-1에서 NAT Gateway를 생성했다면 바로 진행하세요.
 
 ### 6-1. IAM 사용자 생성
 
@@ -517,7 +678,11 @@ curl http://localhost:8080/
 
 ### 6-2. GitHub Secrets 설정
 
-33. GitHub → `my-backend` 리포지토리 → Settings → Secrets에 다음 값을 등록합니다:
+33. 브라우저에서 GitHub → `my-backend` 리포지토리 페이지로 이동합니다.
+34. **Settings** 탭을 클릭합니다.
+35. 왼쪽 메뉴에서 **Secrets and variables** → **Actions**를 클릭합니다.
+36. [[New repository secret]] 버튼을 클릭합니다.
+37. 다음 Secrets를 하나씩 추가합니다:
 
 - `AWS_ACCESS_KEY_ID`
 - `AWS_SECRET_ACCESS_KEY`
@@ -616,6 +781,23 @@ jobs:
           echo "✅ 배포 완료!"
 ```
 
+> [!CONCEPT] SSM Run Command 워크플로우 동작 흐름
+>
+> ```
+> GitHub Actions Runner          AWS                          EC2 (Private Subnet)
+>       │                         │                                │
+>       │  1. aws ssm send-command│                                │
+>       │────────────────────────▶│  2. SSM Agent에 명령 전달      │
+>       │                         │───────────────────────────────▶│
+>       │                         │                                │ 3. S3에서 WAR 다운로드
+>       │                         │                                │ 4. Tomcat 재시작
+>       │                         │                                │ 5. Health Check (curl)
+>       │                         │  6. 결과 반환                   │
+>       │  7. aws ssm wait        │◀───────────────────────────────│
+>       │◀────────────────────────│                                │
+>       │  ✅ 성공 / ❌ 실패      │                                │
+> ```
+
 > [!WARNING]
 > `./gradlew`를 사용하므로 **Gradle Wrapper 파일이 레포에 포함**되어야 합니다:
 >
@@ -636,6 +818,42 @@ git push origin main
 
 36. GitHub Actions 탭에서 워크플로우 실행을 확인합니다.
 
+> [!TIP]
+> 첫 빌드는 Gradle 의존성 다운로드로 3~4분 소요됩니다.  
+> 이후 빌드는 캐시 덕분에 1~2분으로 단축됩니다.
+
+> [!TROUBLESHOOTING]
+>
+> **`Upload failed: NoSuchBucket`**
+>
+> - 원인: S3 버킷명 Secret 오류
+> - 해결: `S3_DEPLOY_BUCKET` Secret 값이 실제 버킷명과 일치하는지 확인
+>
+> **`SSM SendCommand failed`**
+>
+> - 원인: Amazon EC2 인스턴스 ID 오류 또는 IAM 권한 부족
+> - 해결: `EC2_INSTANCE_ID` 확인, GitHub Actions IAM에 `ssm:SendCommand` 권한 추가
+>
+> **`CommandInvocationStatus: Failed`**
+>
+> - 원인: EC2에서 명령 실행 실패
+> - 해결: EC2에서 수동으로 같은 명령 실행하여 에러 확인
+>
+> **`aws ssm wait` 타임아웃**
+>
+> - 원인: SSM Agent 미설치 또는 EC2 미실행
+> - 해결: EC2 상태 확인, Amazon Linux 2023은 SSM Agent 기본 설치됨
+>
+> **Gradle 빌드 실패 (GitHub Actions)**
+>
+> - 원인: Java 버전 불일치
+> - 해결: `setup-java`의 `java-version`이 프로젝트와 일치하는지 확인
+>
+> **`gradle-wrapper.properties does not exist`**
+>
+> - 원인: wrapper 파일이 git에 없음
+> - 해결: `git add -f gradle/wrapper/gradle-wrapper.properties gradle/wrapper/gradle-wrapper.jar gradlew gradlew.bat`
+
 ✅ **태스크 완료** — GitHub Actions로 WAR 자동 배포 파이프라인을 구축했습니다.
 
 ---
@@ -644,8 +862,10 @@ git push origin main
 
 ### 7-1. Target Group Health Check 확인
 
-37. **EC2** → **Target Groups** → `my-3tier-app-tg` → **Targets** 탭에서 Status 확인
-38. Status가 `healthy`이면 정상
+37. 상단 검색창에 `EC2`를 입력하고 **EC2** 서비스를 선택합니다.
+38. 왼쪽 메뉴에서 **Target Groups** → `my-3tier-app-tg`를 클릭합니다.
+39. **Targets** 탭에서 Status를 확인합니다.
+40. Status가 `healthy`이면 정상
 
 ### 7-2. ALB를 통한 API 테스트
 

@@ -101,6 +101,9 @@ my-backend/
 
 ## 태스크 2: RDS 연동 설정
 
+> [!WARNING]
+> 이 태스크는 **필수**입니다. SSM Parameter Store에 DB 접속 정보를 저장하지 않으면 Amazon EC2에서 애플리케이션이 시작되지 않습니다.
+
 ### 2-1. SSM Parameter Store에 비밀값 저장
 
 6. SSM Parameter Store에 데이터베이스 연결 정보를 저장합니다:
@@ -126,6 +129,12 @@ aws ssm put-parameter \
   --value "<DB 마스터 비밀번호>" \
   --type SecureString
 ```
+
+> [!TIP]
+> `SecureString` 타입은 AWS KMS로 자동 암호화됩니다.
+> 비밀번호, API 키 등 민감한 값은 항상 SecureString을 사용하세요.
+>
+> **값을 잘못 입력한 경우:** `--overwrite` 플래그를 추가하여 같은 명령을 다시 실행하면 덮어씁니다.
 
 ### 2-2. application.yml 설정
 
@@ -360,6 +369,10 @@ public class WebConfig implements WebMvcConfigurer {
 > `application.yml`의 `app.cors.allowed-origins`에 Step 8-2에서 생성한 Amazon CloudFront 도메인을 입력하세요.
 > 로컬 개발 시에는 `http://localhost:5173`도 추가합니다.
 
+> [!NOTE]
+> CORS 에러는 **브라우저에서만** 발생합니다.
+> `curl`로 테스트하면 CORS 에러가 나타나지 않습니다.
+
 ✅ **태스크 완료** — CORS를 설정했습니다.
 
 ---
@@ -389,7 +402,25 @@ public class WebConfig implements WebMvcConfigurer {
 20. SSM Session Manager로 EC2에 접속하여 Java 17과 MySQL 클라이언트를 설치합니다:
 
 ```bash
-# SSM Session Manager로 접속 후
+# SSM Session Manager로 EC2 접속 (AWS Console에서)
+# EC2 콘솔 → 인스턴스 선택 → [[Connect]] → Session Manager 탭 → [[Connect]]
+
+# 또는 AWS CLI로 접속 (Instance ID는 EC2 콘솔에서 확인)
+aws ssm start-session --target <INSTANCE_ID> --region ap-northeast-2
+```
+
+> [!TIP]
+> **AWS CLI로 접속하려면** 로컬에 Session Manager plugin이 필요합니다:
+>
+> ```bash
+> # macOS
+> brew install session-manager-plugin
+> ```
+>
+> 플러그인 설치가 번거로우면 AWS Console의 Session Manager로 접속하세요.
+
+```bash
+# ssm-user → ec2-user로 전환
 sudo su - ec2-user
 
 # Java 17 설치
@@ -401,6 +432,12 @@ java -version
 # MySQL 클라이언트 설치 + RDS 접속 테스트
 sudo dnf install -y mariadb105
 mysql -h <RDS_ENDPOINT> -u admin -p -e "SELECT 1;"
+
+# 또는 SSM Parameter Store에서 값 가져와서 접속 테스트
+mysql -h $(aws ssm get-parameter --name "/my-3tier-app/db/endpoint" --query "Parameter.Value" --output text --region ap-northeast-2) \
+  -u $(aws ssm get-parameter --name "/my-3tier-app/db/username" --query "Parameter.Value" --output text --region ap-northeast-2) \
+  -p$(aws ssm get-parameter --name "/my-3tier-app/db/password" --with-decryption --query "Parameter.Value" --output text --region ap-northeast-2) \
+  -e "SELECT 1;"
 ```
 
 ### 5-3. start.sh 생성
@@ -457,6 +494,8 @@ sudo systemctl enable spring-app
 
 ### 5-5. JAR 빌드 및 배포
 
+📍 **실행 위치: 로컬 PC**
+
 23. 로컬에서 JAR을 빌드하고 S3에 업로드합니다:
 
 ```bash
@@ -472,6 +511,8 @@ aws s3 mb s3://$S3_DEPLOY_BUCKET --region ap-northeast-2
 JAR_FILE=$(ls build/libs/*.jar | head -1)
 aws s3 cp "$JAR_FILE" s3://$S3_DEPLOY_BUCKET/app.jar
 ```
+
+📍 **실행 위치: EC2** (SSM Session Manager 접속 상태)
 
 24. EC2에서 JAR을 다운로드하고 애플리케이션을 실행합니다:
 
@@ -492,20 +533,58 @@ curl http://localhost:8080/actuator/health
 
 ### 5-6. ALB Target Group에 EC2 등록
 
-25. **EC2** 콘솔 → **Target Groups** → `my-3tier-app-tg` 클릭
-26. **Targets** 탭 → [[Register targets]]
-27. `my-3tier-app-server` 체크 → Port: `8080` → [[Include as pending below]]
-28. [[Register pending targets]] 버튼을 클릭하여 등록을 완료합니다.
+25. 상단 검색창에 `EC2`를 입력하고 **EC2** 서비스를 선택합니다.
+26. 왼쪽 메뉴에서 **Target Groups**를 클릭합니다.
+27. `my-3tier-app-tg`를 클릭합니다.
+28. **Targets** 탭을 클릭하고 [[Register targets]] 버튼을 클릭합니다.
+29. **Available instances**에서 `my-3tier-app-server`를 체크합니다.
+30. **Ports for the selected instances**에 `8080`을 입력합니다.
+31. [[Include as pending below]] 버튼을 클릭합니다.
+32. 하단의 **Review** 섹션에서 인스턴스가 추가된 것을 확인합니다.
+33. [[Register pending targets]] 버튼을 클릭하여 등록을 완료합니다.
 
 > [!OUTPUT]
-> 약 30초~1분 후 Status가 `healthy`로 변경됩니다.
+> Target Group의 Targets 탭에서 등록된 인스턴스를 확인합니다:
+>
+> | Instance ID     | Port | Health Status | Status Details                  |
+> | --------------- | ---- | ------------- | ------------------------------- |
+> | i-0abc123def456 | 8080 | initial       | Target registration in progress |
+>
+> 약 30초~1분 후 `healthy`로 변경됩니다.
 > Health Check 경로는 `/actuator/health` (CloudFormation 기본값)입니다.
+
+> [!TROUBLESHOOTING]
+>
+> **Target Group Status: `unhealthy`**
+>
+> - 원인: 앱 미시작 또는 Health Check 경로 불일치
+> - 해결: EC2에서 `curl http://localhost:8080/actuator/health`로 응답 확인
+>
+> **`systemctl start spring-app` 실패**
+>
+> - 원인: Java 미설치 또는 JAR 경로 오류
+> - 해결: `java -version` 확인, `/home/ec2-user/app/app.jar` 존재 확인, `sudo journalctl -u spring-app -n 50`으로 에러 로그 확인
+>
+> **SSM Session Manager 접속 불가**
+>
+> - 원인: IAM Role 미연결
+> - 해결: EC2에 `AmazonSSMManagedInstanceCore` 정책 연결 확인
+>
+> **`start.sh`에서 SSM 값 못 가져옴**
+>
+> - 원인: EC2 IAM Role에 SSM 읽기 권한 없음
+> - 해결: `AmazonSSMReadOnlyAccess` 정책 추가
 
 ✅ **태스크 완료** — Amazon EC2에 Spring Boot를 배포하고 ALB Target Group에 등록했습니다.
 
 ---
 
 ## 태스크 6: GitHub Actions CI/CD (JAR)
+
+> [!WARNING]
+> 이 CI/CD는 **SSM Run Command**로 Private Subnet의 Amazon EC2에 명령을 전달합니다.
+> EC2가 SSM 서비스에 접근하려면 NAT Gateway 또는 VPC Endpoint가 필요합니다.
+> Step 8-1에서 NAT Gateway를 생성했다면 바로 진행하세요.
 
 ### 6-1. IAM 사용자 생성
 
@@ -516,7 +595,11 @@ curl http://localhost:8080/actuator/health
 
 ### 6-2. GitHub Secrets 설정
 
-33. GitHub → `my-backend` 리포지토리 → Settings → Secrets에 다음 값을 등록합니다:
+33. 브라우저에서 GitHub → `my-backend` 리포지토리 페이지로 이동합니다.
+34. **Settings** 탭을 클릭합니다.
+35. 왼쪽 메뉴에서 **Secrets and variables** → **Actions**를 클릭합니다.
+36. [[New repository secret]] 버튼을 클릭합니다.
+37. 다음 Secrets를 하나씩 추가합니다:
 
 - `AWS_ACCESS_KEY_ID`
 - `AWS_SECRET_ACCESS_KEY`
@@ -624,6 +707,27 @@ git push origin main
 
 36. GitHub Actions 탭에서 워크플로우 실행을 확인합니다.
 
+> [!TIP]
+> 첫 빌드는 Gradle 의존성 다운로드로 3~4분 소요됩니다.
+> 이후 빌드는 캐시 덕분에 1~2분으로 단축됩니다.
+
+> [!TROUBLESHOOTING]
+>
+> **`Upload failed: NoSuchBucket`**
+>
+> - 원인: S3 버킷명 Secret 오류
+> - 해결: `S3_DEPLOY_BUCKET` Secret 값이 실제 버킷명과 일치하는지 확인
+>
+> **`SSM SendCommand failed`**
+>
+> - 원인: EC2 인스턴스 ID 오류 또는 IAM 권한 부족
+> - 해결: `EC2_INSTANCE_ID` 확인
+>
+> **`aws ssm wait` 타임아웃**
+>
+> - 원인: SSM Agent 미설치 또는 EC2 미실행
+> - 해결: EC2 상태 확인, Amazon Linux 2023은 SSM Agent 기본 설치됨
+
 ✅ **태스크 완료** — GitHub Actions로 JAR 자동 배포 파이프라인을 구축했습니다.
 
 ---
@@ -632,8 +736,10 @@ git push origin main
 
 ### 7-1. Target Group Health Check 확인
 
-37. **EC2** → **Target Groups** → `my-3tier-app-tg` → **Targets** 탭에서 Status 확인
-38. Status가 `healthy`이면 정상
+37. 상단 검색창에 `EC2`를 입력하고 **EC2** 서비스를 선택합니다.
+38. 왼쪽 메뉴에서 **Target Groups** → `my-3tier-app-tg`를 클릭합니다.
+39. **Targets** 탭에서 Status를 확인합니다.
+40. Status가 `healthy`이면 정상
 
 ### 7-2. ALB를 통한 API 테스트
 

@@ -962,7 +962,8 @@ mysql -h $(aws ssm get-parameter --name "/my-3tier-app/db/endpoint" --query "Par
 
 > [!TIP]
 > `<RDS_ENDPOINT>`는 Step 8-1 AWS CloudFormation Outputs에서 확인한 값입니다.  
-> 접속에 성공하면 `1`이 출력됩니다. 실패하면 Security Group(RDS-SG → EC2-SG 3306 허용)을 확인하세요.  
+> 접속에 성공하면 `1`이 출력됩니다.  
+> 실패하면 Security Group(RDS-SG → EC2-SG 3306 허용)을 확인하세요.  
 > SSM Parameter Store 방식은 EC2 IAM Role에 `AmazonSSMReadOnlyAccess` 정책이 연결되어 있어야 합니다 (27번에서 설정 완료).
 
 ### 5-2b. 기존 프로젝트 SQL 실행 (방법 A 해당자만)
