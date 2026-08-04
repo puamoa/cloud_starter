@@ -18,7 +18,8 @@ estimatedCost: 크레딧 내 사용 가능 (비용 발생 가능)
 ---
 
 이 실습에서는 **기존 Spring Boot 프로젝트**(JAR)를 Amazon EC2에 배포하고,
-ALB와 연결합니다. GitHub Actions로 자동 배포 파이프라인도 구축합니다.
+ALB와 연결합니다.  
+GitHub Actions로 자동 배포 파이프라인도 구축합니다.
 
 ### Step 8 전체 아키텍처
 
@@ -35,15 +36,18 @@ ALB와 연결합니다. GitHub Actions로 자동 배포 파이프라인도 구�
 
 ## 태스크 1: Health Check 설정
 
-ALB Target Group은 Health Check 경로로 HTTP 200 응답을 기대합니다.
+ALB Target Group은 Health Check 경로로 HTTP 200 응답을 기대합니다.  
 기존 Spring Boot 프로젝트의 경우 아래 중 하나를 확인하세요:
 
-**방법 1: Actuator가 이미 있는 경우 (가장 간단)**
+**🟢 방법 1: Actuator가 이미 있는 경우 (가장 간단)**
 
-`build.gradle`에 `spring-boot-starter-actuator` 의존성이 있다면
-`/actuator/health`가 자동으로 활성화됩니다. 추가 작업 없음.
+`build.gradle`에 `spring-boot-starter-actuator` 의존성이 있다면 `/actuator/health`가 자동으로 활성화됩니다. 추가 작업 없음.
 
-**방법 2: Actuator가 없는 경우 — 의존성 추가**
+> [!TIP]
+> 의존성만 있으면 별도 yml 설정 없이도 `/actuator/health`가 동작합니다.  
+> **방법 2**의 yml 설정은 상세 정보 노출(`show-details`)과 엔드포인트 제한(`exposure.include`)을 명시적으로 설정하고 싶을 때 추가합니다.
+
+**🟡 방법 2: Actuator가 없는 경우 — 의존성 추가**
 
 **1.** `build.gradle`에 Actuator 의존성을 추가합니다:
 
@@ -52,7 +56,7 @@ ALB Target Group은 Health Check 경로로 HTTP 200 응답을 기대합니다.
 implementation 'org.springframework.boot:spring-boot-starter-actuator'
 ```
 
-**2.** `application.yml` (또는 `.properties`)에 다음을 추가합니다:
+**2.** `application.yml` (또는 `.properties`)에 다음을 추가합니다 (선택):
 
 ```yaml
 management:
@@ -65,7 +69,7 @@ management:
       show-details: always
 ```
 
-**방법 3: Actuator를 추가하지 않으려면 — Health Controller 직접 작성**
+**🔴 방법 3: Actuator를 추가하지 않으려면 — Health Controller 직접 작성**
 
 **3.** Health Check용 Controller를 작성합니다:
 
@@ -88,11 +92,12 @@ Target Group Health Check 경로를 `/health`로 변경합니다 (태스크 5에
 ## 태스크 2: RDS 연동 설정
 
 > [!WARNING]
-> 이 태스크는 **필수**입니다. SSM Parameter Store에 DB 접속 정보를 저장하지 않으면 Amazon EC2에서 애플리케이션이 시작되지 않습니다.  
+> 이 태스크는 **필수**입니다.  
+> SSM Parameter Store에 DB 접속 정보를 저장하지 않으면 Amazon EC2에서 애플리케이션이 시작되지 않습니다.
 
 ### 2-1. SSM Parameter Store에 비밀값 저장
 
-**4.** AWS CLI로 SSM Parameter Store에 DB 접속 정보를 저장합니다:
+**4.** 아래 명령어에서 `<>` 부분을 본인 값으로 수정한 후 실행합니다:
 
 ```bash
 aws ssm put-parameter \
@@ -117,12 +122,29 @@ aws ssm put-parameter \
 ```
 
 > [!TIP]
+> 프로젝트에서 S3 업로드 기능을 사용하거나 추가 설정이 필요한 경우 아래 파라미터도 등록하세요:
+>
+> ```bash
+> # S3 버킷명 (S3 업로드 기능이 있는 프로젝트만 해당)
+> aws ssm put-parameter \
+>   --name "/my-3tier-app/s3/bucket" \
+>   --value "<Step 8-1 CloudFormation Outputs의 S3BucketName 값>" \
+>   --type String
+>
+> # AWS 리전
+> aws ssm put-parameter \
+>   --name "/my-3tier-app/aws/region" \
+>   --value "ap-northeast-2" \
+>   --type String
+> ```
+
+> [!TIP]
 > `SecureString` 타입은 AWS KMS로 자동 암호화됩니다.  
-> 비밀번호, API 키 등 민감한 값은 항상 SecureString을 사용하세요.  
+> 비밀번호, API 키 등 민감한 값은 항상 SecureString을 사용하세요.
 >
 > **값을 잘못 입력한 경우:**
 >
-> - CLI: `--overwrite` 플래그를 추가하여 같은 명령을 다시 실행하면 덮어씁니다.  
+> - CLI: `--overwrite` 플래그를 추가하여 같은 명령을 다시 실행하면 덮어씁니다.
 > - 콘솔: AWS Console → Systems Manager → Parameter Store에서 해당 파라미터를 클릭하고 [[Edit]] → 값 수정 → [[Save changes]]
 
 ### 2-2. DB 접속 설정 파일 수정
@@ -161,10 +183,14 @@ spring.datasource.password=${DB_PASSWORD}
 > ```
 > DB_ENDPOINT=localhost;DB_NAME=mydb;DB_USERNAME=root;DB_PASSWORD=1234
 > ```
+>
+> 본인 프로젝트의 DB 이름, 사용자명, 비밀번호가 위 예시와 다르면 본인 값으로 변경하세요.  
+> 예: `DB_NAME=scoula_db;DB_USERNAME=scoula;DB_PASSWORD=Scoula123!`
 
 **Step 6-1 실습을 적용한 경우 (ParameterStoreService 사용):**
 
-`ParameterStoreService`를 구현하여 SSM Parameter Store에서 직접 값을 읽는 구조라면, `application.properties`에 환경 변수를 넣을 필요가 없습니다.  
+`ParameterStoreService`를 구현하여 SSM Parameter Store에서 직접 값을 읽는 구조라면,  
+`application.properties`에 환경 변수를 넣을 필요가 없습니다.  
 대신 SSM Parameter Store의 파라미터 값만 Amazon RDS 엔드포인트로 업데이트합니다:
 
 **6.** SSM Parameter Store의 DB URL 파라미터를 RDS 엔드포인트로 업데이트합니다:
@@ -179,7 +205,7 @@ aws ssm put-parameter \
 
 > [!TIP]
 > 이 경우 `application.yml`은 수정하지 않아도 됩니다.  
-> `ParameterStoreService`가 앱 시작 시 SSM에서 값을 읽어 DataSource에 주입합니다.  
+> `ParameterStoreService`가 앱 시작 시 SSM에서 값을 읽어 DataSource에 주입합니다.
 
 > [!TROUBLESHOOTING]
 >
@@ -199,7 +225,7 @@ aws ssm put-parameter \
 
 ## 태스크 3: 기존 프로젝트 확인 사항
 
-기존 프로젝트에는 이미 Entity, Repository, Controller가 있으므로 새로 작성하지 않습니다.
+기존 프로젝트에는 이미 Entity, Repository, Controller가 있으므로 새로 작성하지 않습니다.  
 아래 항목만 확인하세요:
 
 - **빌드 가능 여부**: `./gradlew clean bootJar`로 JAR 생성 확인
@@ -216,13 +242,13 @@ ls build/libs/*.jar
 
 > [!NOTE]
 > `bootJar`로 빌드하면 실행 가능한 Fat JAR이 생성됩니다.  
-> `build -x test`는 일반 JAR과 WAR을 모두 생성하므로 Spring Boot라면 `bootJar`를 사용하세요.  
+> `build -x test`는 일반 JAR과 WAR을 모두 생성하므로 Spring Boot라면 `bootJar`를 사용하세요.
 >
 > **JPA(ddl-auto: update)를 사용하는 경우:**
-> 앱 시작 시 테이블이 자동 생성되므로 SQL 실행이 불필요합니다.  
+> 앱 시작 시 테이블이 자동 생성되므로 SQL 실행이 불필요합니다.
 >
 > **MyBatis + SQL 파일을 사용하는 경우:**
-> 태스크 5에서 EC2 접속 후 SQL을 Amazon RDS에 실행합니다.  
+> 태스크 5에서 EC2 접속 후 SQL을 Amazon RDS에 실행합니다.
 
 ✅ **태스크 완료** — 기존 프로젝트의 배포 준비 상태를 확인했습니다.
 
@@ -234,7 +260,7 @@ Amazon CloudFront 도메인에서 API를 호출할 수 있도록 CORS를 설정�
 
 **Spring Security를 사용하는 경우 (SecurityConfig):**
 
-`SecurityConfig.java`에 이미 `CorsFilter` Bean이 있고 `addAllowedOriginPattern("*")`로 설정되어 있다면 추가 작업 없이 동작합니다.
+`SecurityConfig.java`에 이미 `CorsFilter` Bean이 있고 `addAllowedOriginPattern("*")`로 설정되어 있다면 추가 작업 없이 동작합니다.  
 프로덕션에서 도메인을 제한하려면:
 
 **8.** `SecurityConfig.java`에서 CORS 설정을 확인하거나 수정합니다:
@@ -273,7 +299,7 @@ public class WebConfig implements WebMvcConfigurer {
 ```
 
 > [!TIP]
-> 학습용이라면 `*`로 유지해도 무방합니다.  
+> 학습용이라면 `*`로 유지해도 무방합니다.
 
 > [!TROUBLESHOOTING]
 >
@@ -289,7 +315,7 @@ public class WebConfig implements WebMvcConfigurer {
 
 > [!NOTE]
 > CORS 에러는 **브라우저에서만** 발생합니다.  
-> `curl`로 테스트하면 CORS 에러가 나타나지 않습니다.  
+> `curl`로 테스트하면 CORS 에러가 나타나지 않습니다.
 
 ✅ **태스크 완료** — CORS를 설정했습니다.
 
@@ -300,7 +326,7 @@ public class WebConfig implements WebMvcConfigurer {
 ### 5-1. Amazon EC2 인스턴스 생성
 
 > [!WARNING]
-> AWS Console 우측 상단에서 리전이 **Asia Pacific (Seoul) ap-northeast-2**인지 확인하세요.  
+> AWS Console 우측 상단에서 리전이 **Asia Pacific (Seoul) ap-northeast-2**인지 확인하세요.
 
 **10.** **EC2** → [[Launch instances]]를 클릭합니다.
 
@@ -323,8 +349,8 @@ public class WebConfig implements WebMvcConfigurer {
 **14.** [[Launch instance]]를 클릭하여 인스턴스를 생성합니다.
 
 > [!TIP]
-> IAM Role에 필요한 정책: `AmazonSSMManagedInstanceCore` + `AmazonSSMReadOnlyAccess` + `AmazonS3ReadOnlyAccess`
-> 앞차시에서 `ec2-starter-role`을 이미 만든 경우 기존 Role에 정책을 추가하면 됩니다.  
+> IAM Role에 필요한 정책: `AmazonSSMManagedInstanceCore` + `AmazonSSMReadOnlyAccess` + `AmazonS3ReadOnlyAccess`  
+> 앞차시에서 `ec2-starter-role`을 이미 만든 경우 기존 Role에 정책을 추가하면 됩니다.
 
 ### 5-2. EC2 초기 설정
 
@@ -346,7 +372,7 @@ aws ssm start-session --target <INSTANCE_ID> --region ap-northeast-2
 > brew install session-manager-plugin
 > ```
 >
-> 플러그인 설치가 번거로우면 AWS Console의 Session Manager로 접속하세요.  
+> 플러그인 설치가 번거로우면 AWS Console의 Session Manager로 접속하세요.
 
 ```bash
 # ssm-user → ec2-user로 전환
@@ -373,7 +399,7 @@ mysql -h $(aws ssm get-parameter --name "/my-3tier-app/db/endpoint" --query "Par
 
 > [!NOTE]
 > JPA(ddl-auto: update)를 사용하는 프로젝트는 이 단계를 건너뛰세요.  
-> 앱 시작 시 테이블이 자동 생성됩니다.  
+> 앱 시작 시 테이블이 자동 생성됩니다.
 
 SQL 파일이 있는 경우, Amazon S3를 경유하여 Amazon RDS에 적용합니다:
 
@@ -453,7 +479,7 @@ chmod +x /home/ec2-user/app/start.sh
 > ```
 >
 > `aws-ssm`은 Step 6-1에서 `ParameterStoreService`에 설정한 `@Profile` 값입니다.  
-> 본인 프로젝트에서 다른 이름을 사용했다면 해당 값으로 변경하세요.  
+> 본인 프로젝트에서 다른 이름을 사용했다면 해당 값으로 변경하세요.
 
 ### 5-5. systemd 서비스 등록
 
@@ -550,7 +576,7 @@ curl http://localhost:8080/actuator/health
 > | --------------- | ---- | ------------- | ------------------------------- |
 > | i-0abc123def456 | 8080 | initial       | Target registration in progress |
 >
-> 약 30초~1분 후 `healthy`로 변경됩니다.  
+> 약 30초~1분 후 `healthy`로 변경됩니다.
 
 > [!TROUBLESHOOTING]
 >
@@ -591,7 +617,7 @@ curl http://localhost:8080/actuator/health
 > - **NAT Gateway** (Step 8-1에서 `CreateNATGateway=Yes`로 생성한 경우) — 추가 작업 없음
 > - **VPC Endpoint** 3개 (`ssm`, `ssmmessages`, `ec2messages`) — NAT 없이 가능하지만 유료
 >
-> Step 8-1에서 NAT Gateway를 생성했다면 바로 진행하세요.  
+> Step 8-1에서 NAT Gateway를 생성했다면 바로 진행하세요.
 
 ### 6-1. IAM 사용자 설정 (GitHub Actions용)
 
@@ -601,7 +627,7 @@ curl http://localhost:8080/actuator/health
 >
 > 실무에서는 프론트엔드/백엔드별로 IAM 사용자를 분리하는 것이 보안 원칙(최소 권한)입니다.  
 > 프론트엔드 사용자에 SSM 권한을 부여하면, 프론트 레포가 탈취될 경우 EC2까지 제어할 수 있게 됩니다.  
-> 학습 환경에서는 하나로 합쳐도 무방하지만, 분리를 권장합니다.  
+> 학습 환경에서는 하나로 합쳐도 무방하지만, 분리를 권장합니다.
 
 아래 두 가지 중 하나를 선택합니다:
 
@@ -655,12 +681,12 @@ curl http://localhost:8080/actuator/health
 > [!TIP]
 > **실무에서는 커스텀 정책(최소 권한)을 권장합니다.**  
 > 이 실습에서는 편의상 AWS 관리형 정책을 사용하지만,  
-> 프로덕션에서는 JSON 정책으로 특정 리소스에만 접근을 허용합니다.  
+> 프로덕션에서는 JSON 정책으로 특정 리소스에만 접근을 허용합니다.
 
 ### Access Key 생성 (옵션 A만 해당)
 
 > [!NOTE]
-> 📙 옵션 B를 선택한 경우 이 단계를 건너뛰고 **6-2. GitHub Secrets 설정**으로 이동하세요.  
+> 📙 옵션 B를 선택한 경우 이 단계를 건너뛰고 **6-2. GitHub Secrets 설정**으로 이동하세요.
 
 **41.** 생성된 `github-actions-backend` 사용자를 클릭하여 상세 페이지로 이동합니다.
 
@@ -678,7 +704,7 @@ curl http://localhost:8080/actuator/health
 
 > [!WARNING]
 > Secret access key는 이 화면에서만 확인할 수 있습니다.  
-> 페이지를 닫으면 다시 볼 수 없으므로 반드시 복사하여 저장하세요.  
+> 페이지를 닫으면 다시 볼 수 없으므로 반드시 복사하여 저장하세요.
 
 ### 6-2. GitHub Secrets 설정
 
@@ -700,7 +726,7 @@ curl http://localhost:8080/actuator/health
 > - GitHub Actions에서 JAR을 Amazon S3에 업로드
 > - SSM Run Command로 Amazon EC2에서 Amazon S3 다운로드 + spring-app 재시작
 >
-> 이 방식은 SSH 키 관리가 불필요하고 보안상 더 안전합니다.  
+> 이 방식은 SSH 키 관리가 불필요하고 보안상 더 안전합니다.
 
 ### 6-3. GitHub Actions 워크플로우 작성
 
@@ -816,8 +842,7 @@ jobs:
 ```
 
 > [!NOTE]
-> 워크플로우의 Health Check URL(`/actuator/health`)은 태스크 1에서 Actuator를 사용하지 않기로 한 경우  
-> 본인이 설정한 경로(`/health` 등)로 변경하세요.  
+> 워크플로우의 Health Check URL(`/actuator/health`)은 태스크 1에서 Actuator를 사용하지 않기로 한 경우 본인이 설정한 경로(`/health` 등)로 변경하세요.
 
 > [!CONCEPT] SSM Run Command 워크플로우 동작 흐름
 >
@@ -856,7 +881,7 @@ git push origin main
 
 > [!TIP]
 > 첫 빌드는 Gradle 의존성 다운로드로 3~4분 소요됩니다.  
-> 이후 빌드는 캐시 덕분에 1~2분으로 단축됩니다.  
+> 이후 빌드는 캐시 덕분에 1~2분으로 단축됩니다.
 
 > [!TROUBLESHOOTING]
 >
@@ -892,7 +917,7 @@ git push origin main
 
 > [!NOTE]
 > Private Subnet의 Amazon EC2에 SSM Run Command를 사용하려면 Amazon EC2가 SSM 서비스에 접근할 수 있어야 합니다.  
-> NAT Gateway가 있으면 자동으로 가능하고, 없다면 VPC Endpoint(ssm, ssmmessages, ec2messages)가 필요합니다.  
+> NAT Gateway가 있으면 자동으로 가능하고, 없다면 VPC Endpoint(ssm, ssmmessages, ec2messages)가 필요합니다.
 
 ✅ **태스크 완료** — GitHub Actions로 JAR 자동 배포 파이프라인을 구축했습니다.
 
@@ -927,12 +952,12 @@ curl http://$ALB_DNS/api/boards
 
 > [!TIP]
 > 본인 프로젝트의 Controller `@RequestMapping` 경로에 맞게 테스트하세요.  
-> Spring Security + JWT 프로젝트는 인증 불필요 엔드포인트(GET 목록 조회 등)로 먼저 확인합니다.  
+> Spring Security + JWT 프로젝트는 인증 불필요 엔드포인트(GET 목록 조회 등)로 먼저 확인합니다.
 
 > [!NOTE]
 > 이 시점에서 브라우저(CloudFront HTTPS)에서 프론트엔드 → 백엔드(ALB HTTP) API 호출은 **Mixed Content**로 차단됩니다.  
 > 프론트엔드 ↔ 백엔드 연동은 **Step 8-4 태스크 1**을 완료한 뒤 동작합니다.  
-> 현재 단계에서는 `curl`로 API가 정상 응답하는 것을 확인했으면 충분합니다.  
+> 현재 단계에서는 `curl`로 API가 정상 응답하는 것을 확인했으면 충분합니다.
 
 ✅ **태스크 완료** — ALB Health Check를 확인하고 API 테스트를 완료했습니다.
 
