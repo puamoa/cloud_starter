@@ -39,7 +39,7 @@ AWS 배포를 위해 아래 항목을 확인하고 수정합니다.
 
 ### 1-1. API URL 환경 변수 설정
 
-1. 프로젝트 루트에 `.env.production` 파일을 생성합니다:
+1. 프로젝트 루트에 `.env.production` 파일을 생성합니다 (아래 `<>` 부분을 본인 값으로 수정한 후 실행합니다):
 
 ```bash
 # .env.production
@@ -55,7 +55,7 @@ VITE_API_URL=http://<ALB_DNS_NAME>
 >
 > Amazon CloudFront(HTTPS)에서 로드된 페이지가 ALB(HTTP)로 API를 호출하면 브라우저가 차단합니다.  
 > Step 8-4 태스크 1에서 도메인 + ALB HTTPS 리스너를 추가한 뒤 `VITE_API_URL=https://api.<YOUR_DOMAIN>`으로 변경하면 해결됩니다.  
-> 그 전까지 백엔드 배포 확인은 `curl`로 직접 테스트하세요.  
+> 그 전까지 백엔드 배포 확인은 `curl`로 직접 테스트하세요.
 
 2. `main.js` 상단에 axios 전역 baseURL을 설정합니다:
 
@@ -66,7 +66,7 @@ axios.defaults.baseURL = import.meta.env.VITE_API_URL || '';
 
 > [!NOTE]
 > `axios.defaults.baseURL`은 전역 설정입니다.  
-> `main.js`에서 한 번 설정하면 이후 어떤 파일에서 `import axios from 'axios'`해도 동일한 baseURL이 적용됩니다.  
+> `main.js`에서 한 번 설정하면 이후 어떤 파일에서 `import axios from 'axios'`해도 동일한 baseURL이 적용됩니다.
 >
 > **단, `axios.create()`로 별도 인스턴스를 사용하는 경우:**
 > `src/api/index.js`에서 `axios.create()`를 사용하고 있다면 그 인스턴스에 직접 `baseURL`을 추가하세요:
@@ -78,18 +78,18 @@ axios.defaults.baseURL = import.meta.env.VITE_API_URL || '';
 > });
 > ```
 >
-> 이 경우 `main.js`의 `axios.defaults.baseURL` 설정은 불필요합니다.  
+> 이 경우 `main.js`의 `axios.defaults.baseURL` 설정은 불필요합니다.
 
 > [!NOTE]
 > `vite.config.js`의 `server.proxy`는 로컬 개발(`npm run dev`)에서만 동작합니다.  
 > 프로덕션 빌드에는 적용되지 않으므로 환경 변수 설정이 필수입니다.  
-> CORS 설정은 Step 8-3 태스크 4에서 백엔드(Spring)에 추가합니다.  
+> CORS 설정은 Step 8-3 태스크 4에서 백엔드(Spring)에 추가합니다.
 
 > [!TIP]
 > **실무 권장: 인터셉터에 예외 URL을 설정하고 모든 호출을 인스턴스로 통일**
 >
 > 아래는 예시입니다.  
-> `noAuthUrls` 배열을 본인 프로젝트의 인증 불필요 경로에 맞게 수정하세요.  
+> `noAuthUrls` 배열을 본인 프로젝트의 인증 불필요 경로에 맞게 수정하세요.
 >
 > ```javascript
 > // src/api/index.js
@@ -109,7 +109,7 @@ axios.defaults.baseURL = import.meta.env.VITE_API_URL || '';
 > });
 > ```
 >
-> 이렇게 하면 `stores/auth.js` 등에서도 `import api from '@/api'`를 사용할 수 있고, `axios.defaults.baseURL` 전역 설정 없이 baseURL을 한 곳(`axios.create`)에서 관리합니다.  
+> 이렇게 하면 `stores/auth.js` 등에서도 `import api from '@/api'`를 사용할 수 있고, `axios.defaults.baseURL` 전역 설정 없이 baseURL을 한 곳(`axios.create`)에서 관리합니다.
 
 ### 1-2. 하드코딩된 API 키 분리 (해당되는 경우)
 
@@ -146,12 +146,12 @@ AWS CloudFormation에서 이미 Amazon S3 버킷과 정적 웹 호스팅을 설�
 
 > [!TIP]
 > Step 5-3에서 수동으로 설정했던 Block Public Access 해제, 버킷 정책, 정적 웹 호스팅 활성화를 AWS CloudFormation 템플릿에 정의하여 스택 생성 시 자동으로 설정되도록 했습니다.  
-> 이 태스크에서는 정상 생성되었는지 확인만 합니다.  
+> 이 태스크에서는 정상 생성되었는지 확인만 합니다.
 
 ### S3 버킷 설정 확인
 
 > [!WARNING]
-> AWS Console 우측 상단에서 리전이 **Asia Pacific (Seoul) ap-northeast-2**인지 확인하세요.  
+> AWS Console 우측 상단에서 리전이 **Asia Pacific (Seoul) ap-northeast-2**인지 확인하세요.
 
 6. 상단 검색창에 `S3`를 입력하고 **S3** 서비스를 선택합니다.
 7. Buckets 목록에서 `my-3tier-app-frontend-{BucketSuffix}` 버킷을 클릭합니다.
@@ -174,7 +174,7 @@ AWS CloudFormation에서 이미 Amazon S3 버킷과 정적 웹 호스팅을 설�
 
 > [!NOTE]
 > AWS CloudFormation 템플릿에서 이미 Public Access를 허용하고 버킷 정책을 설정했습니다.  
-> 수동으로 추가 설정할 필요가 없습니다.  
+> 수동으로 추가 설정할 필요가 없습니다.
 
 ### 버킷 정책 확인
 
@@ -209,7 +209,7 @@ AWS CloudFormation에서 이미 Amazon S3 버킷과 정적 웹 호스팅을 설�
 > 접속 시 `404 Not Found` 페이지가 표시됩니다 (아직 파일을 업로드하지 않았으므로 정상).
 
 > [!TIP]
-> 이 URL은 Amazon CloudFront의 Origin으로 사용됩니다. 메모해두세요.  
+> 이 URL은 Amazon CloudFront의 Origin으로 사용됩니다. 메모해두세요.
 
 ✅ **태스크 완료** — Amazon S3 버킷의 정적 웹 호스팅 설정을 확인했습니다.
 
@@ -243,7 +243,7 @@ dist/
 
 ### 3-2. Amazon S3에 업로드
 
-21. S3 버킷에 빌드 결과물을 업로드합니다:
+21. S3 버킷에 빌드 결과물을 업로드합니다 (아래 `<>` 부분을 본인 값으로 수정한 후 실행합니다):
 
 ```bash
 # S3 버킷 이름 (Step 8-1 CloudFormation Outputs의 S3BucketName 값으로 변경)
@@ -267,7 +267,7 @@ aws s3 sync dist/ s3://$BUCKET_NAME --delete
 > aws configure --profile <프로파일명>
 > ```
 >
-> Access Key ID, Secret Access Key, Region(`ap-northeast-2`), Output format(`json`)을 입력합니다.  
+> Access Key ID, Secret Access Key, Region(`ap-northeast-2`), Output format(`json`)을 입력합니다.
 >
 > ```
 > AWS Access Key ID [None]: AKIA****************
@@ -278,7 +278,7 @@ aws s3 sync dist/ s3://$BUCKET_NAME --delete
 
 > [!NOTE]
 > `--delete` 옵션은 S3에 있지만 로컬 dist에 없는 파일을 삭제합니다.  
-> 이전 배포의 잔여 파일을 정리하여 깔끔한 상태를 유지합니다.  
+> 이전 배포의 잔여 파일을 정리하여 깔끔한 상태를 유지합니다.
 
 ### 3-3. 업로드 확인
 
@@ -308,7 +308,7 @@ http://my-3tier-app-frontend-<BucketSuffix>.s3-website.ap-northeast-2.amazonaws.
 
 > [!TIP]
 > 이 시점에서는 API 서버가 아직 없으므로 "API 연결 실패" 메시지가 표시됩니다.  
-> 이는 정상입니다. Step 8-3에서 백엔드를 배포하면 정상 동작합니다.  
+> 이는 정상입니다. Step 8-3에서 백엔드를 배포하면 정상 동작합니다.
 
 ✅ **태스크 완료** — Vue.js를 빌드하고 Amazon S3에 업로드하여 정적 웹사이트를 확인했습니다.
 
@@ -328,7 +328,7 @@ S3 앞에 Amazon CloudFront를 배치하여 CDN + HTTPS를 적용합니다.
 
 > [!TIP]
 > Step 5-3에서 Amazon CloudFront + SPA 에러 페이지 설정을 경험했습니다.  
-> 이번에도 동일한 위저드 흐름으로 설정하되, Origin에 Step 8-1에서 생성한 S3 웹사이트 엔드포인트를 사용합니다.  
+> 이번에도 동일한 위저드 흐름으로 설정하되, Origin에 Step 8-1에서 생성한 S3 웹사이트 엔드포인트를 사용합니다.
 
 ### Amazon CloudFront 콘솔 이동
 
@@ -342,7 +342,7 @@ S3 앞에 Amazon CloudFront를 배치하여 CDN + HTTPS를 적용합니다.
 
 > [!NOTE]
 > **Free** 플랜(1M 요청/100GB 전송 무료, WAF/DDoS 포함)을 선택해도 이 실습에 문제없습니다.  
-> 본인 상황에 맞게 선택하세요. 콘솔 UI가 수시로 변경되므로 화면이 다를 수 있습니다.  
+> 본인 상황에 맞게 선택하세요. 콘솔 UI가 수시로 변경되므로 화면이 다를 수 있습니다.
 
 ### Step 2: Get started
 
@@ -363,7 +363,7 @@ S3 앞에 Amazon CloudFront를 배치하여 CDN + HTTPS를 적용합니다.
 > [!WARNING]
 > **`Amazon S3`를 선택하지 마세요!**
 > Amazon S3를 선택하면 OAC(Origin Access Control)가 기본 활성화되어 private bucket 방식으로 동작합니다.  
-> 이 실습에서는 S3 **정적 웹 호스팅 엔드포인트**(public bucket)를 사용하므로 `Other`를 선택해야 합니다.  
+> 이 실습에서는 S3 **정적 웹 호스팅 엔드포인트**(public bucket)를 사용하므로 `Other`를 선택해야 합니다.
 
 35. **Origin** 필드에 태스크 2에서 확인한 S3 웹사이트 엔드포인트를 직접 입력합니다:
     - `my-3tier-app-frontend-<BucketSuffix>.s3-website.ap-northeast-2.amazonaws.com`
@@ -376,7 +376,7 @@ S3 앞에 Amazon CloudFront를 배치하여 CDN + HTTPS를 적용합니다.
 > [!WARNING]
 > **Protocol을 반드시 `HTTP only`로 설정하세요!**  
 > S3 웹사이트 엔드포인트는 HTTP만 지원합니다.  
-> `Use recommended origin settings`(기본값)를 그대로 두면 Protocol이 `HTTPS only`로 설정되어 **504 Gateway Timeout**이 발생합니다.  
+> `Use recommended origin settings`(기본값)를 그대로 두면 Protocol이 `HTTPS only`로 설정되어 **504 Gateway Timeout**이 발생합니다.
 
 38. **Cache settings**: `Customize cache settings` 선택
 39. **Viewer protocol policy**: `Redirect HTTP to HTTPS` 선택
@@ -392,7 +392,7 @@ S3 앞에 Amazon CloudFront를 배치하여 CDN + HTTPS를 적용합니다.
 
 > [!WARNING]
 > `Enable security protections`를 선택하면 **AWS WAF 비용이 월 $14 이상** 발생할 수 있습니다 (조건에 따라 달라집니다).  
-> 학습용 실습에서는 반드시 `Do not enable security protections`를 선택하세요.  
+> 학습용 실습에서는 반드시 `Do not enable security protections`를 선택하세요.
 
 46. [[Next]]를 클릭합니다.
 
@@ -402,7 +402,7 @@ S3 앞에 Amazon CloudFront를 배치하여 CDN + HTTPS를 적용합니다.
 
 > [!OUTPUT]
 > "Successfully created new distribution." 녹색 배너가 표시됩니다.  
-> Distribution 상세 페이지로 이동되며 **Last modified**가 `Deploying` 상태입니다.  
+> Distribution 상세 페이지로 이동되며 **Last modified**가 `Deploying` 상태입니다.
 >
 > - **Distribution domain name**: `d1234abcdef.cloudfront.net` 형태 (메모해 두세요)
 > - **Distribution ID**: `E1A2B3C4D5E6F7` 형태 (메모해 두세요)
@@ -412,7 +412,7 @@ S3 앞에 Amazon CloudFront를 배치하여 CDN + HTTPS를 적용합니다.
 
 > [!WARNING]
 > 새 콘솔 위저드에서는 Default root object가 자동 설정되지 않습니다.  
-> 이 설정을 하지 않으면 `https://d1234abcdef.cloudfront.net/` 접속 시 **AccessDenied** 에러가 발생합니다.  
+> 이 설정을 하지 않으면 `https://d1234abcdef.cloudfront.net/` 접속 시 **AccessDenied** 에러가 발생합니다.
 
 48. 생성 직후 상세 페이지의 **General** 탭 → **Settings** 섹션에서 [[Edit]] 버튼을 클릭합니다.
 49. **Default root object** 필드에 `index.html`을 입력합니다.
@@ -422,11 +422,11 @@ S3 앞에 Amazon CloudFront를 배치하여 CDN + HTTPS를 적용합니다.
 > [!TIP]
 > **Price class**는 Amazon CloudFront가 콘텐츠를 배포할 엣지 로케이션 범위를 결정합니다.  
 > 학습용이므로 가장 저렴한 `Use only North America and Europe`로 충분합니다.  
-> 실제 서비스에서 한국 사용자가 주 대상이라면 `Use all edge locations`를 선택하세요.  
+> 실제 서비스에서 한국 사용자가 주 대상이라면 `Use all edge locations`를 선택하세요.
 
 > [!NOTE]
 > Amazon CloudFront 배포 생성에 약 **5~10분**이 소요됩니다.  
-> Status가 `Enabled`로 변경되고, Last modified에 날짜가 표시되면 배포가 완료된 것입니다.  
+> Status가 `Enabled`로 변경되고, Last modified에 날짜가 표시되면 배포가 완료된 것입니다.
 
 ### 에러 페이지 설정 (SPA 라우팅)
 
@@ -452,7 +452,7 @@ S3 앞에 Amazon CloudFront를 배치하여 CDN + HTTPS를 적용합니다.
 >
 > Vue Router의 `createWebHistory()`는 `/items` 같은 경로를 사용합니다.  
 > 사용자가 `/items`를 직접 입력하면 Amazon CloudFront는 S3에서 `/items` 파일을 찾지만, 실제로는 존재하지 않아 403/404 에러가 발생합니다.  
-> 에러 페이지를 `/index.html`로 설정하면, 모든 경로에서 Vue.js가 로드되고 클라이언트 측 라우터가 올바른 페이지를 렌더링합니다.  
+> 에러 페이지를 `/index.html`로 설정하면, 모든 경로에서 Vue.js가 로드되고 클라이언트 측 라우터가 올바른 페이지를 렌더링합니다.
 
 ### Amazon CloudFront URL 접속 확인
 
@@ -468,11 +468,11 @@ S3 앞에 Amazon CloudFront를 배치하여 CDN + HTTPS를 적용합니다.
 > - **Distribution ID**: `E1A2B3C4D5E6F7` (메모 — GitHub Secrets에 사용)
 > - **Distribution domain name**: `d1234abcdef.cloudfront.net`
 > - **Status**: `Enabled`
-> - 브라우저에서 Vue.js 앱이 🔒 HTTPS로 로드됩니다.  
+> - 브라우저에서 Vue.js 앱이 🔒 HTTPS로 로드됩니다.
 
 > [!TIP]
 > Amazon CloudFront 도메인 이름을 메모해두세요.  
-> Step 8-3 태스크 4에서 백엔드의 CORS 설정에 사용합니다.  
+> Step 8-3 태스크 4에서 백엔드의 CORS 설정에 사용합니다.
 
 ✅ **태스크 완료** — Amazon CloudFront 배포를 생성하여 CDN + HTTPS를 적용했습니다.
 
@@ -514,6 +514,10 @@ S3 앞에 Amazon CloudFront를 배치하여 CDN + HTTPS를 적용합니다.
     - Permissions: `AmazonS3FullAccess`, `CloudFrontFullAccess`
 74. [[Create user]]를 클릭합니다.
 
+> [!NOTE]
+> 이 실습에서는 편의상 AWS 관리형 정책(`FullAccess`)을 사용합니다.  
+> 실무에서는 **최소 권한 원칙**에 따라 특정 S3 버킷, 특정 CloudFront Distribution에만 접근 가능한 커스텀 정책을 권장합니다.
+
 ### Access Key 생성
 
 75. 생성된 `github-actions-frontend` 사용자를 클릭하여 상세 페이지로 이동합니다.
@@ -526,7 +530,7 @@ S3 앞에 Amazon CloudFront를 배치하여 CDN + HTTPS를 적용합니다.
 
 > [!WARNING]
 > Secret access key는 이 화면에서만 확인할 수 있습니다.  
-> 페이지를 닫으면 다시 볼 수 없으므로 반드시 복사하여 저장하세요.  
+> 페이지를 닫으면 다시 볼 수 없으므로 반드시 복사하여 저장하세요.
 
 ### GitHub Secrets 설정
 
@@ -557,8 +561,8 @@ S3 앞에 Amazon CloudFront를 배치하여 CDN + HTTPS를 적용합니다.
 >    git rm --cached .env.production
 >    git commit -m "chore: remove .env.production from tracking"
 >    ```
-> 3. GitHub Secrets에 해당 변수를 등록합니다.  
-> 4. 워크플로우 빌드 스텝의 `env`에 추가합니다.  
+> 3. GitHub Secrets에 해당 변수를 등록합니다.
+> 4. 워크플로우 빌드 스텝의 `env`에 추가합니다.
 
 ### GitHub Actions 워크플로우 작성
 
@@ -646,7 +650,7 @@ jobs:
 > - **정적 자산** (JS, CSS, 이미지): `max-age=31536000` (1년) — 파일명에 해시가 포함되어 변경 시 새 파일명 생성
 > - **index.html**: `no-cache` — 항상 최신 버전을 가져옴
 >
-> 이 전략으로 빠른 로딩 속도와 즉시 업데이트를 동시에 달성합니다.  
+> 이 전략으로 빠른 로딩 속도와 즉시 업데이트를 동시에 달성합니다.
 
 ### 배포 테스트
 
@@ -660,9 +664,24 @@ git commit -m "feat: initial frontend with CI/CD"
 git push origin main
 ```
 
+> [!TIP]
+> **자동 배포 확인 꿀팁:** push 전에 간단한 텍스트(예: 푸터 문구)를 수정해두면 배포 완료 후 브라우저에서 변경 사항을 쉽게 확인할 수 있습니다.
+
+> [!TIP]
+> **push 시 인증 에러가 발생하면:** Step 8-1에서 생성한 Personal Access Token(PAT)이 만료되었을 수 있습니다.  
+> GitHub → Settings → Developer settings → Personal access tokens에서 토큰을 재발급하세요.
+
 89. GitHub 리포지토리 페이지에서 **Actions** 탭을 클릭합니다.
 90. 방금 트리거된 워크플로우를 클릭합니다.
 91. 모든 스텝이 ✅ 성공하면 Amazon CloudFront URL에서 최신 버전을 확인합니다.
+
+> [!NOTE]
+> 워크플로우가 실패하면 실패한 스텝을 클릭하여 로그를 확인하세요.  
+> 대부분 Secrets 값 오류이므로 오타를 재확인합니다.
+
+> [!TIP]
+> 배포 성공 후에도 이전 버전이 보이면 브라우저 강력 새로고침(Ctrl+Shift+R / Cmd+Shift+R)을 시도하세요.  
+> Amazon CloudFront 캐시 무효화가 전파되는 데 1~2분 소요될 수 있습니다.
 
 > [!OUTPUT]
 > GitHub Actions 워크플로우 실행 결과:
@@ -697,7 +716,7 @@ git push origin main
 
 > [!NOTE]
 > 이 태스크는 Step 7-1에서 Amazon Route 53 Hosted Zone과 ACM 인증서를 발급한 경우에 진행합니다.  
-> 도메인이 없다면 Amazon CloudFront 기본 URL(`d1234abcdef.cloudfront.net`)로 사용해도 됩니다.  
+> 도메인이 없다면 Amazon CloudFront 기본 URL(`d1234abcdef.cloudfront.net`)로 사용해도 됩니다.
 
 Step 7-1에서 발급한 ACM 인증서를 Amazon CloudFront에 연결하고,  
 Amazon Route 53 A 레코드를 추가하여 `app.mydomain.shop` 같은 커스텀 도메인으로 접속할 수 있도록 합니다.
@@ -706,7 +725,7 @@ Amazon Route 53 A 레코드를 추가하여 `app.mydomain.shop` 같은 커스텀
 
 > [!WARNING]
 > Amazon CloudFront에 사용할 인증서는 반드시 **us-east-1 (버지니아 북부)** 리전에서 발급해야 합니다.  
-> Step 7-1에서 서울 리전(ap-northeast-2)에만 발급했다면, us-east-1에서 추가 발급이 필요합니다.  
+> Step 7-1에서 서울 리전(ap-northeast-2)에만 발급했다면, us-east-1에서 추가 발급이 필요합니다.
 
 92. AWS Console 우측 상단에서 리전을 **US East (N. Virginia) us-east-1**로 변경합니다.
 93. 상단 검색창에 `Certificate Manager`를 입력하고 **Certificate Manager** 서비스를 선택합니다.

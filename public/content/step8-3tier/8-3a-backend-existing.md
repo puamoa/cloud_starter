@@ -39,12 +39,12 @@ GitHub Actions로 자동 배포 파이프라인도 구축합니다.
 ALB Target Group은 Health Check 경로로 HTTP 200 응답을 기대합니다.  
 Spring MVC에는 Actuator가 없으므로 아래 중 하나를 선택하세요:
 
-**방법 1: Target Group Health Check 경로를 `/`로 변경 (가장 간단)**
+**🟢 방법 1: Target Group Health Check 경로를 `/`로 변경 (가장 간단)**
 
 앱의 기본 페이지(`/`)가 200을 반환하면 추가 작업 없음.  
 태스크 5에서 Target Group 설정 시 경로를 변경합니다.
 
-**방법 2: 간단한 Health Check 컨트롤러 추가**
+**🟡 방법 2: 간단한 Health Check 컨트롤러 추가**
 
 ```java
 // src/main/java/.../controller/HealthController.java
@@ -60,7 +60,7 @@ public class HealthController {
 Target Group Health Check 경로를 `/health`로 설정합니다.
 
 > [!TIP]
-> 방법 1이 가장 간단하며 코드 수정이 불필요합니다.  
+> 방법 1이 가장 간단하며 코드 수정이 불필요합니다.
 
 ✅ **태스크 완료** — Health Check 방식을 선택했습니다.
 
@@ -69,7 +69,7 @@ Target Group Health Check 경로를 `/health`로 설정합니다.
 ## 태스크 2: RDS 연동 설정
 
 > [!WARNING]
-> 이 태스크는 **필수**입니다. SSM Parameter Store에 DB 접속 정보를 저장하지 않으면 Amazon EC2에서 애플리케이션이 시작되지 않습니다.  
+> 이 태스크는 **필수**입니다. SSM Parameter Store에 DB 접속 정보를 저장하지 않으면 Amazon EC2에서 애플리케이션이 시작되지 않습니다.
 
 ### 2-1. SSM Parameter Store에 비밀값 저장
 
@@ -85,7 +85,7 @@ Amazon EC2에서 Amazon RDS 접속 정보를 안전하게 관리하기 위해 SS
 > | DB 비밀번호  | `MyPassword123!` (Step 8-1 가이드 기본 예시, 변경했다면 본인 값) |
 > | RDS Endpoint | CloudFormation Outputs → `RDSEndpoint` 확인                      |
 
-1. 다음 명령어를 실행하여 SSM Parameter Store에 파라미터를 저장합니다:
+1. 아래 명령어에서 `<>` 부분을 본인 값으로 수정한 후 실행하여 SSM Parameter Store에 파라미터를 저장합니다:
 
 ```bash
 # Amazon RDS 엔드포인트 저장
@@ -127,11 +127,11 @@ aws ssm put-parameter \
 
 > [!TIP]
 > `SecureString` 타입은 AWS KMS로 자동 암호화됩니다.  
-> 비밀번호, API 키 등 민감한 값은 항상 SecureString을 사용하세요.  
+> 비밀번호, API 키 등 민감한 값은 항상 SecureString을 사용하세요.
 >
 > **값을 잘못 입력한 경우:**
 >
-> - CLI: `--overwrite` 플래그를 추가하여 같은 명령을 다시 실행하면 덮어씁니다.  
+> - CLI: `--overwrite` 플래그를 추가하여 같은 명령을 다시 실행하면 덮어씁니다.
 > - 콘솔: AWS Console → Systems Manager → Parameter Store에서 해당 파라미터를 클릭하고 [[Edit]] → 값 수정 → [[Save changes]]
 
 ### 2-2. DB 접속 설정 파일 수정
@@ -154,9 +154,9 @@ jdbc.password=${DB_PASSWORD}
 
 > [!TIP]
 > 기존 프로젝트의 `RootConfig.java`에서 `@Value("${jdbc.url}")` 등으로 값을 읽는 구조라면, `application.properties`의 값만 환경 변수 형태로 변경하면 됩니다.  
-> Java 코드 수정은 불필요합니다.  
+> Java 코드 수정은 불필요합니다.
 >
-> `log4jdbc` 드라이버를 사용하는 경우 URL 형식이 `jdbc:log4jdbc:mysql://`이어야 합니다.  
+> `log4jdbc` 드라이버를 사용하는 경우 URL 형식이 `jdbc:log4jdbc:mysql://`이어야 합니다.
 
 > [!TIP]
 > **로컬 개발 시** 환경 변수가 없으면 앱이 시작되지 않습니다.  
@@ -169,7 +169,7 @@ jdbc.password=${DB_PASSWORD}
 **Step 6-1 실습을 적용한 경우 (ParameterStoreService 사용):**
 
 3. `ParameterStoreService`를 구현하여 SSM Parameter Store에서 직접 값을 읽는 구조라면, `application.properties`에 환경 변수를 넣을 필요가 없습니다.  
-   대신 SSM Parameter Store의 파라미터 값만 Amazon RDS 엔드포인트로 업데이트합니다:
+   대신 SSM Parameter Store의 파라미터 값만 Amazon RDS 엔드포인트로 업데이트합니다 (아래 `<>` 부분을 본인 값으로 수정한 후 실행합니다):
 
 ```bash
 aws ssm put-parameter \
@@ -181,7 +181,7 @@ aws ssm put-parameter \
 
 > [!TIP]
 > 이 경우 `application.properties`는 수정하지 않아도 됩니다.  
-> `ParameterStoreService`가 앱 시작 시 SSM에서 값을 읽어 DataSource에 주입합니다.  
+> `ParameterStoreService`가 앱 시작 시 SSM에서 값을 읽어 DataSource에 주입합니다.
 
 > [!TROUBLESHOOTING]
 >
@@ -228,7 +228,7 @@ ls build/libs/*.war
 
 > [!NOTE]
 > 빌드 성공 시 `build/libs/` 안에 WAR 파일이 생성됩니다.  
-> 파일명은 `settings.gradle`의 `rootProject.name`과 `build.gradle`의 `version`에 따라 결정됩니다.  
+> 파일명은 `settings.gradle`의 `rootProject.name`과 `build.gradle`의 `version`에 따라 결정됩니다.
 
 ✅ **태스크 완료** — 기존 프로젝트의 배포 준비 상태를 확인했습니다.
 
@@ -282,7 +282,7 @@ public class WebConfig implements WebMvcConfigurer {
 
 > [!TIP]
 > `allowedOriginPatterns("*")`을 그대로 두면 모든 도메인에서 접근 가능합니다.  
-> 학습용이라면 `*`로 유지해도 무방합니다.  
+> 학습용이라면 `*`로 유지해도 무방합니다.
 
 > [!TROUBLESHOOTING]
 >
@@ -304,7 +304,7 @@ public class WebConfig implements WebMvcConfigurer {
 > [!NOTE]
 > CORS 에러는 **브라우저에서만** 발생합니다.  
 > `curl`로 테스트하면 CORS 에러가 나타나지 않습니다.  
-> 브라우저 개발자 도구(F12) → Console 탭에서 CORS 에러 메시지를 확인하세요.  
+> 브라우저 개발자 도구(F12) → Console 탭에서 CORS 에러 메시지를 확인하세요.
 
 ✅ **태스크 완료** — CORS를 설정했습니다.
 
@@ -315,7 +315,7 @@ public class WebConfig implements WebMvcConfigurer {
 ### 5-1. Amazon EC2 인스턴스 생성
 
 > [!WARNING]
-> AWS Console 우측 상단에서 리전이 **Asia Pacific (Seoul) ap-northeast-2**인지 확인하세요.  
+> AWS Console 우측 상단에서 리전이 **Asia Pacific (Seoul) ap-northeast-2**인지 확인하세요.
 
 7. 상단 검색창에 `EC2`를 입력하고 **EC2** 서비스를 선택합니다.
 8. [[Launch instances]] 버튼을 클릭합니다.
@@ -334,11 +334,11 @@ public class WebConfig implements WebMvcConfigurer {
 
 > [!TIP]
 > IAM Role에 필요한 정책: `AmazonSSMManagedInstanceCore` + `AmazonSSMReadOnlyAccess` + `AmazonS3ReadOnlyAccess`
-> 앞차시에서 `ec2-starter-role`을 이미 만든 경우 기존 Role에 정책을 추가하면 됩니다.  
+> 앞차시에서 `ec2-starter-role`을 이미 만든 경우 기존 Role에 정책을 추가하면 됩니다.
 
 ### 5-2. EC2 초기 설정 + Tomcat 설치
 
-16. SSM Session Manager로 EC2에 접속하고 초기 설정을 실행합니다:
+16. SSM Session Manager로 EC2에 접속하고 초기 설정을 실행합니다 (아래 `<>` 부분을 본인 값으로 수정한 후 실행합니다):
 
 ```bash
 # SSM Session Manager로 EC2 접속 (AWS Console에서)
@@ -356,7 +356,7 @@ aws ssm start-session --target <INSTANCE_ID> --region ap-northeast-2
 > brew install session-manager-plugin
 > ```
 >
-> 플러그인 설치가 번거로우면 AWS Console의 Session Manager로 접속하세요.  
+> 플러그인 설치가 번거로우면 AWS Console의 Session Manager로 접속하세요.
 
 ```bash
 # ssm-user → ec2-user로 전환
@@ -373,7 +373,7 @@ java -version
 # MySQL 클라이언트 설치 (RDS 접속 테스트용)
 sudo dnf install -y mariadb105
 
-# RDS 접속 테스트
+# RDS 접속 테스트 (아래 <> 부분을 본인 값으로 수정)
 mysql -h <RDS_ENDPOINT> -u admin -p -e "SELECT 1;"
 
 # 또는 SSM Parameter Store에서 값 가져와서 접속 테스트 (태스크 2-1에서 저장한 파라미터 활용)
@@ -453,7 +453,7 @@ chmod +x /opt/tomcat/bin/setenv.sh
 
 > [!NOTE]
 > `setenv.sh`는 Tomcat이 시작될 때 자동으로 실행됩니다.  
-> `-D` 옵션으로 전달된 값은 Java 시스템 프로퍼티가 됩니다.  
+> `-D` 옵션으로 전달된 값은 Java 시스템 프로퍼티가 됩니다.
 
 > [!TIP]
 > WAR 방식에서 `ParameterStoreService`를 사용하는 경우, DB 관련 환경 변수는 불필요합니다.  
@@ -471,7 +471,7 @@ chmod +x /opt/tomcat/bin/setenv.sh
 
 📍 **실행 위치: 로컬 PC**
 
-20. 로컬 PC에서 SQL/CSV 파일을 S3에 업로드합니다:
+20. 로컬 PC에서 SQL/CSV 파일을 S3에 업로드합니다 (아래 `<>` 부분을 본인 값으로 수정한 후 실행합니다):
 
 ```bash
 export S3_DEPLOY_BUCKET=my-3tier-app-deploy-<BucketSuffix>
@@ -493,7 +493,7 @@ aws s3 cp travel_image.csv s3://$S3_DEPLOY_BUCKET/sql/
 
 📍 **실행 위치: EC2** (SSM Session Manager 접속 상태)
 
-21. EC2에서 S3의 SQL 파일을 다운로드하고 Amazon RDS에 접속합니다:
+21. EC2에서 S3의 SQL 파일을 다운로드하고 Amazon RDS에 접속합니다 (아래 `<>` 부분을 본인 값으로 수정한 후 실행합니다):
 
 ```bash
 cd /home/ec2-user
@@ -521,7 +521,7 @@ EXIT;
 
 > [!WARNING]
 > 기존 SQL에 `CREATE DATABASE scoula_db` + `USE scoula_db`가 포함된 경우,
-> `application.properties`의 DB 이름도 `scoula_db`로 맞춰야 합니다.  
+> `application.properties`의 DB 이름도 `scoula_db`로 맞춰야 합니다.
 
 **③ CSV 데이터 import (해당되는 경우):**
 
@@ -548,7 +548,7 @@ mysql -h $DB_ENDPOINT -u $DB_USERNAME -p$DB_PASSWORD $DB_NAME -e "SELECT COUNT(*
 ```
 
 > [!TIP]
-> `--local-infile`이 없으면 `ERROR 3948: Loading local data is disabled` 에러가 발생합니다.  
+> `--local-infile`이 없으면 `ERROR 3948: Loading local data is disabled` 에러가 발생합니다.
 
 ### 5-7. WAR 빌드 및 배포
 
@@ -556,7 +556,7 @@ mysql -h $DB_ENDPOINT -u $DB_USERNAME -p$DB_PASSWORD $DB_NAME -e "SELECT COUNT(*
 
 📍 **실행 위치: 로컬 PC**
 
-23. 로컬에서 WAR를 빌드하고 S3에 업로드합니다:
+23. 로컬에서 WAR를 빌드하고 S3에 업로드합니다 (아래 `<>` 부분을 본인 값으로 수정한 후 실행합니다):
 
 ```bash
 cd ~/3tier-project/my-backend
@@ -618,7 +618,7 @@ curl http://localhost:8080/
 >
 > **Spring MVC(WAR) 프로젝트의 경우:**
 > Spring MVC는 Actuator가 없으므로 `/actuator/health`가 404를 반환합니다.  
-> 반드시 태스크 1에서 선택한 경로로 변경하세요.  
+> 반드시 태스크 1에서 선택한 경로로 변경하세요.
 
 > [!OUTPUT]
 > Target Group의 Targets 탭에서 등록된 인스턴스를 확인합니다:
@@ -628,7 +628,7 @@ curl http://localhost:8080/
 > | i-0abc123def456 | 8080 | initial       | Target registration in progress |
 >
 > 약 30초~1분 후 `healthy`로 변경됩니다.  
-> `unhealthy`가 표시되면 아래 TROUBLESHOOTING을 참고하세요.  
+> `unhealthy`가 표시되면 아래 TROUBLESHOOTING을 참고하세요.
 
 > [!TROUBLESHOOTING]
 >
@@ -669,7 +669,7 @@ curl http://localhost:8080/
 > - **NAT Gateway** (Step 8-1에서 `CreateNATGateway=Yes`로 생성한 경우) — 추가 작업 없음
 > - **VPC Endpoint** 3개 (`ssm`, `ssmmessages`, `ec2messages`) — NAT 없이 가능하지만 유료
 >
-> Step 8-1에서 NAT Gateway를 생성했다면 바로 진행하세요.  
+> Step 8-1에서 NAT Gateway를 생성했다면 바로 진행하세요.
 
 ### 6-1. IAM 사용자 설정 (GitHub Actions용)
 
@@ -679,7 +679,7 @@ curl http://localhost:8080/
 >
 > 실무에서는 프론트엔드/백엔드별로 IAM 사용자를 분리하는 것이 보안 원칙(최소 권한)입니다.  
 > 프론트엔드 사용자에 SSM 권한을 부여하면, 프론트 레포가 탈취될 경우 EC2까지 제어할 수 있게 됩니다.  
-> 학습 환경에서는 하나로 합쳐도 무방하지만, 분리를 권장합니다.  
+> 학습 환경에서는 하나로 합쳐도 무방하지만, 분리를 권장합니다.
 
 아래 두 가지 중 하나를 선택합니다:
 
@@ -720,12 +720,12 @@ curl http://localhost:8080/
 > [!TIP]
 > **실무에서는 커스텀 정책(최소 권한)을 권장합니다.**  
 > 이 실습에서는 편의상 AWS 관리형 정책을 사용하지만,  
-> 프로덕션에서는 JSON 정책으로 특정 리소스에만 접근을 허용합니다.  
+> 프로덕션에서는 JSON 정책으로 특정 리소스에만 접근을 허용합니다.
 
 ### Access Key 생성 (옵션 A만 해당)
 
 > [!NOTE]
-> 📙 옵션 B를 선택한 경우 이 단계를 건너뛰고 **6-2. GitHub Secrets 설정**으로 이동하세요.  
+> 📙 옵션 B를 선택한 경우 이 단계를 건너뛰고 **6-2. GitHub Secrets 설정**으로 이동하세요.
 
 45. 생성된 `github-actions-backend` 사용자를 클릭하여 상세 페이지로 이동합니다.
 46. **Security credentials** 탭을 클릭합니다.
@@ -737,7 +737,7 @@ curl http://localhost:8080/
 
 > [!WARNING]
 > Secret access key는 이 화면에서만 확인할 수 있습니다.  
-> 페이지를 닫으면 다시 볼 수 없으므로 반드시 복사하여 저장하세요.  
+> 페이지를 닫으면 다시 볼 수 없으므로 반드시 복사하여 저장하세요.
 
 ### 6-2. GitHub Secrets 설정
 
@@ -760,7 +760,7 @@ curl http://localhost:8080/
 > - GitHub Actions에서 WAR을 Amazon S3에 업로드
 > - SSM Run Command로 Amazon EC2에서 Amazon S3 다운로드 + Tomcat 재시작
 >
-> 이 방식은 SSH 키 관리가 불필요하고 보안상 더 안전합니다.  
+> 이 방식은 SSH 키 관리가 불필요하고 보안상 더 안전합니다.
 
 ### 6-3. GitHub Actions 워크플로우 작성
 
@@ -906,7 +906,7 @@ git push origin main
 
 > [!TIP]
 > 첫 빌드는 Gradle 의존성 다운로드로 3~4분 소요됩니다.  
-> 이후 빌드는 캐시 덕분에 1~2분으로 단축됩니다.  
+> 이후 빌드는 캐시 덕분에 1~2분으로 단축됩니다.
 
 > [!TROUBLESHOOTING]
 >
@@ -942,7 +942,7 @@ git push origin main
 
 > [!NOTE]
 > Private Subnet의 Amazon EC2에 SSM Run Command를 사용하려면 Amazon EC2가 SSM 서비스에 접근할 수 있어야 합니다.  
-> NAT Gateway가 있으면 자동으로 가능하고, 없다면 VPC Endpoint(ssm, ssmmessages, ec2messages)가 필요합니다.  
+> NAT Gateway가 있으면 자동으로 가능하고, 없다면 VPC Endpoint(ssm, ssmmessages, ec2messages)가 필요합니다.
 
 ✅ **태스크 완료** — GitHub Actions로 WAR 자동 배포 파이프라인을 구축했습니다.
 
@@ -952,14 +952,14 @@ git push origin main
 
 ### 7-1. Target Group Health Check 확인
 
-37. 상단 검색창에 `EC2`를 입력하고 **EC2** 서비스를 선택합니다.
-38. 왼쪽 메뉴에서 **Target Groups** → `my-3tier-app-tg`를 클릭합니다.
-39. **Targets** 탭에서 Status를 확인합니다.
-40. Status가 `healthy`이면 정상
+60. 상단 검색창에 `EC2`를 입력하고 **EC2** 서비스를 선택합니다.
+61. 왼쪽 메뉴에서 **Target Groups** → `my-3tier-app-tg`를 클릭합니다.
+62. **Targets** 탭에서 Status를 확인합니다.
+63. Status가 `healthy`이면 정상
 
 ### 7-2. ALB를 통한 API 테스트
 
-39. ALB DNS를 통해 API를 테스트합니다:
+64. ALB DNS를 통해 API를 테스트합니다 (아래 `<>` 부분을 본인 값으로 수정한 후 실행합니다):
 
 ```bash
 ALB_DNS="<ALB_DNS_NAME>"
@@ -976,11 +976,11 @@ curl http://$ALB_DNS/api/board
 curl http://$ALB_DNS/api/travel
 ```
 
-> 위 요청에 JSON 응답이 오면 **백엔드 배포 + DB 연동 성공**입니다.  
+> 위 요청에 JSON 응답이 오면 **백엔드 배포 + DB 연동 성공**입니다.
 
 **인증 필요 API 테스트 (선택):**
 
-40. 인증이 필요한 API를 테스트합니다:
+65. 인증이 필요한 API를 테스트합니다:
 
 ```bash
 # 로그인하여 토큰 획득
@@ -1001,7 +1001,7 @@ curl -X POST http://$ALB_DNS/api/board \
 > [!NOTE]
 > 이 시점에서 브라우저(CloudFront HTTPS)에서 프론트엔드 → 백엔드(ALB HTTP) API 호출은 **Mixed Content**로 차단됩니다.  
 > 프론트엔드 ↔ 백엔드 연동은 **Step 8-4 태스크 1**을 완료한 뒤 동작합니다.  
-> 현재 단계에서는 `curl`로 API가 정상 응답하는 것을 확인했으면 충분합니다.  
+> 현재 단계에서는 `curl`로 API가 정상 응답하는 것을 확인했으면 충분합니다.
 
 ✅ **태스크 완료** — ALB Health Check를 확인하고 API 테스트를 완료했습니다.
 

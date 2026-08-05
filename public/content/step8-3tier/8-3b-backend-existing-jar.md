@@ -193,7 +193,7 @@ spring.datasource.password=${DB_PASSWORD}
 `application.properties`에 환경 변수를 넣을 필요가 없습니다.  
 대신 SSM Parameter Store의 파라미터 값만 Amazon RDS 엔드포인트로 업데이트합니다:
 
-**6.** SSM Parameter Store의 DB URL 파라미터를 RDS 엔드포인트로 업데이트합니다:
+**6.** SSM Parameter Store의 DB URL 파라미터를 RDS 엔드포인트로 업데이트합니다 (아래 `<>` 부분을 본인 값으로 수정한 후 실행합니다):
 
 ```bash
 aws ssm put-parameter \
@@ -354,7 +354,7 @@ public class WebConfig implements WebMvcConfigurer {
 
 ### 5-2. EC2 초기 설정
 
-**15.** SSM Session Manager로 EC2에 접속한 후 Java 17과 MySQL 클라이언트를 설치합니다:
+**15.** SSM Session Manager로 EC2에 접속한 후 Java 17과 MySQL 클라이언트를 설치합니다 (아래 `<>` 부분을 본인 값으로 수정한 후 실행합니다):
 
 ```bash
 # SSM Session Manager로 EC2 접속 (AWS Console에서)
@@ -384,7 +384,7 @@ echo 'export JAVA_HOME=/usr/lib/jvm/java-17-amazon-corretto' | sudo tee -a /etc/
 source /etc/profile.d/java.sh
 java -version
 
-# MySQL 클라이언트 설치 + RDS 접속 테스트
+# MySQL 클라이언트 설치 + RDS 접속 테스트 (아래 <> 부분을 본인 값으로 수정)
 sudo dnf install -y mariadb105
 mysql -h <RDS_ENDPOINT> -u admin -p -e "SELECT 1;"
 
@@ -407,7 +407,7 @@ SQL 파일이 있는 경우, Amazon S3를 경유하여 Amazon RDS에 적용합�
 
 📍 **실행 위치: 로컬 PC (터미널)**
 
-**16.** 로컬에서 SQL 파일을 S3에 업로드합니다:
+**16.** 로컬에서 SQL 파일을 S3에 업로드합니다 (아래 `<>` 부분을 본인 값으로 수정한 후 실행합니다):
 
 ```bash
 export S3_DEPLOY_BUCKET=my-3tier-app-deploy-<BucketSuffix>
@@ -426,7 +426,7 @@ aws s3 cp schema.sql s3://$S3_DEPLOY_BUCKET/sql/
 
 📍 **실행 위치: EC2 (SSM Session Manager)**
 
-**17.** EC2에서 SQL 파일을 다운로드하고 RDS에 적용합니다:
+**17.** EC2에서 SQL 파일을 다운로드하고 RDS에 적용합니다 (아래 `<>` 부분을 본인 값으로 수정한 후 실행합니다):
 
 ```bash
 cd /home/ec2-user
@@ -513,7 +513,7 @@ sudo systemctl enable spring-app
 
 📍 **실행 위치: 로컬 PC (터미널)**
 
-**20.** 로컬에서 JAR을 빌드하고 S3에 업로드합니다:
+**20.** 로컬에서 JAR을 빌드하고 S3에 업로드합니다 (아래 `<>` 부분을 본인 값으로 수정한 후 실행합니다):
 
 ```bash
 cd ~/3tier-project/my-backend
@@ -526,7 +526,7 @@ aws s3 cp "$JAR_FILE" s3://$S3_DEPLOY_BUCKET/app.jar
 
 📍 **실행 위치: EC2 (SSM Session Manager)**
 
-**21.** EC2에서 JAR을 다운로드하고 서비스를 시작합니다:
+**21.** EC2에서 JAR을 다운로드하고 서비스를 시작합니다 (아래 `<>` 부분을 본인 값으로 수정한 후 실행합니다):
 
 ```bash
 export S3_DEPLOY_BUCKET=my-3tier-app-deploy-<BucketSuffix>
@@ -927,17 +927,17 @@ git push origin main
 
 ### 7-1. Target Group Health Check 확인
 
-**34.** 상단 검색창에 `EC2`를 입력하고 **EC2** 서비스를 선택합니다.
+**56.** 상단 검색창에 `EC2`를 입력하고 **EC2** 서비스를 선택합니다.
 
-**35.** 왼쪽 메뉴에서 **Target Groups** → `my-3tier-app-tg`를 클릭합니다.
+**57.** 왼쪽 메뉴에서 **Target Groups** → `my-3tier-app-tg`를 클릭합니다.
 
-**36.** **Targets** 탭에서 Status를 확인합니다.
+**58.** **Targets** 탭에서 Status를 확인합니다.
 
-**37.** Status가 `healthy`인지 확인합니다.
+**59.** Status가 `healthy`인지 확인합니다.
 
 ### 7-2. ALB를 통한 API 테스트
 
-**36.** ALB DNS를 통해 API가 정상 응답하는지 테스트합니다:
+**60.** ALB DNS를 통해 API가 정상 응답하는지 테스트합니다 (아래 `<>` 부분을 본인 값으로 수정한 후 실행합니다):
 
 ```bash
 ALB_DNS="<ALB_DNS_NAME>"
