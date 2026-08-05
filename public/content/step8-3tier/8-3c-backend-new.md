@@ -550,7 +550,7 @@ curl http://localhost:8080/actuator/health
 > | --------------- | ---- | ------------- | ------------------------------- |
 > | i-0abc123def456 | 8080 | initial       | Target registration in progress |
 >
-> 약 30초~1분 후 `healthy`로 변경됩니다.  
+> 약 30초 ~1분 후 `healthy`로 변경됩니다.  
 > Health Check 경로는 `/actuator/health` (CloudFormation 기본값)입니다.
 
 > [!TROUBLESHOOTING]
@@ -863,8 +863,8 @@ git push origin main
 58. GitHub → `my-backend` 리포지토리 → **Actions** 탭에서 워크플로우 실행을 확인합니다.
 
 > [!TIP]
-> 첫 빌드는 Gradle 의존성 다운로드로 3~4분 소요됩니다.  
-> 이후 빌드는 캐시 덕분에 1~2분으로 단축됩니다.
+> 첫 빌드는 Gradle 의존성 다운로드로 3 ~4분 소요됩니다.  
+> 이후 빌드는 캐시 덕분에 1 ~2분으로 단축됩니다.
 
 > [!TROUBLESHOOTING]
 >

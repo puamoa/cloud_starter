@@ -406,7 +406,7 @@ S3 앞에 Amazon CloudFront를 배치하여 CDN + HTTPS를 적용합니다.
 >
 > - **Distribution domain name**: `d1234abcdef.cloudfront.net` 형태 (메모해 두세요)
 > - **Distribution ID**: `E1A2B3C4D5E6F7` 형태 (메모해 두세요)
-> - **Status**: `Deploying` → 5~10분 후 완료
+> - **Status**: `Deploying` → 5 ~10분 후 완료
 
 ### Default root object 설정 (필수)
 
@@ -425,7 +425,7 @@ S3 앞에 Amazon CloudFront를 배치하여 CDN + HTTPS를 적용합니다.
 > 실제 서비스에서 한국 사용자가 주 대상이라면 `Use all edge locations`를 선택하세요.
 
 > [!NOTE]
-> Amazon CloudFront 배포 생성에 약 **5~10분**이 소요됩니다.  
+> Amazon CloudFront 배포 생성에 약 **5 ~10분**이 소요됩니다.  
 > Status가 `Enabled`로 변경되고, Last modified에 날짜가 표시되면 배포가 완료된 것입니다.
 
 ### 에러 페이지 설정 (SPA 라우팅)
@@ -456,7 +456,7 @@ S3 앞에 Amazon CloudFront를 배치하여 CDN + HTTPS를 적용합니다.
 
 ### Amazon CloudFront URL 접속 확인
 
-58. Status가 `Enabled`로 변경되었는지 확인합니다 (약 5~10분 소요).
+58. Status가 `Enabled`로 변경되었는지 확인합니다 (약 5 ~10분 소요).
 59. **Distribution domain name**을 복사합니다 (예: `d1234abcdef.cloudfront.net`).
 60. 브라우저에서 `https://d1234abcdef.cloudfront.net`으로 접속합니다.
 61. Vue.js 앱이 HTTPS로 정상 로드되는지 확인합니다.
@@ -681,7 +681,7 @@ git push origin main
 
 > [!TIP]
 > 배포 성공 후에도 이전 버전이 보이면 브라우저 강력 새로고침(Ctrl+Shift+R / Cmd+Shift+R)을 시도하세요.  
-> Amazon CloudFront 캐시 무효화가 전파되는 데 1~2분 소요될 수 있습니다.
+> Amazon CloudFront 캐시 무효화가 전파되는 데 1 ~2분 소요될 수 있습니다.
 
 > [!OUTPUT]
 > GitHub Actions 워크플로우 실행 결과:
@@ -697,7 +697,7 @@ git push origin main
 > ✅ Deployment complete            (1s)
 > ```
 >
-> 전체 실행 시간: 약 40초~1분
+> 전체 실행 시간: 약 40초 ~1분
 
 ✅ **태스크 완료** — GitHub Actions로 프론트엔드 자동 배포 파이프라인을 구축했습니다.
 
@@ -707,7 +707,7 @@ git push origin main
 > | `AccessDenied` (S3 sync 단계) | IAM 사용자에 S3 권한 없음 | `AmazonS3FullAccess` 정책 연결 확인 |
 > | `AccessDenied` (CloudFront invalidation) | IAM 사용자에 CloudFront 권한 없음 | `CloudFrontFullAccess` 정책 연결 확인 |
 > | `InvalidArgument: Distribution ID` | `CLOUDFRONT_DISTRIBUTION_ID` Secret 값 오류 | CloudFront 콘솔에서 ID 재확인 (예: `E1A2B3C4D5E6F7`) |
-> | 배포 성공했지만 변경 미반영 | Amazon CloudFront 캐시 전파 지연 | 1~2분 대기 후 브라우저 강력 새로고침 (Ctrl+Shift+R) |
+> | 배포 성공했지만 변경 미반영 | Amazon CloudFront 캐시 전파 지연 | 1 ~2분 대기 후 브라우저 강력 새로고침 (Ctrl+Shift+R) |
 > | `npm ci` 실패 | `package-lock.json` 미커밋 | `git add package-lock.json && git commit` 후 재push |
 
 ---

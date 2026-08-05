@@ -69,7 +69,8 @@ Target Group Health Check 경로를 `/health`로 설정합니다.
 ## 태스크 2: RDS 연동 설정
 
 > [!WARNING]
-> 이 태스크는 **필수**입니다. SSM Parameter Store에 DB 접속 정보를 저장하지 않으면 Amazon EC2에서 애플리케이션이 시작되지 않습니다.
+> 이 태스크는 **필수**입니다.  
+> SSM Parameter Store에 DB 접속 정보를 저장하지 않으면 Amazon EC2에서 애플리케이션이 시작되지 않습니다.
 
 ### 2-1. SSM Parameter Store에 비밀값 저장
 
@@ -627,7 +628,7 @@ curl http://localhost:8080/
 > | --------------- | ---- | ------------- | ------------------------------- |
 > | i-0abc123def456 | 8080 | initial       | Target registration in progress |
 >
-> 약 30초~1분 후 `healthy`로 변경됩니다.  
+> 약 30초 ~1분 후 `healthy`로 변경됩니다.  
 > `unhealthy`가 표시되면 아래 TROUBLESHOOTING을 참고하세요.
 
 > [!TROUBLESHOOTING]
@@ -905,8 +906,8 @@ git push origin main
 59. GitHub → `my-backend` 리포지토리 → **Actions** 탭에서 워크플로우 실행을 확인합니다.
 
 > [!TIP]
-> 첫 빌드는 Gradle 의존성 다운로드로 3~4분 소요됩니다.  
-> 이후 빌드는 캐시 덕분에 1~2분으로 단축됩니다.
+> 첫 빌드는 Gradle 의존성 다운로드로 3 ~4분 소요됩니다.  
+> 이후 빌드는 캐시 덕분에 1 ~2분으로 단축됩니다.
 
 > [!TROUBLESHOOTING]
 >

@@ -614,7 +614,7 @@ S3 앞에 Amazon CloudFront를 배치하여 CDN + HTTPS를 적용합니다.
 
 ### Amazon CloudFront URL 접속 확인
 
-62. Status가 `Enabled`로 변경되었는지 확인합니다 (약 5~10분 소요).
+62. Status가 `Enabled`로 변경되었는지 확인합니다 (약 5 ~10분 소요).
 63. **Distribution domain name**을 복사합니다 (예: `d1234abcdef.cloudfront.net`).
 64. 브라우저에서 `https://d1234abcdef.cloudfront.net`으로 접속합니다.
 65. Vue.js 앱이 HTTPS로 정상 로드되는지 확인합니다.
@@ -775,7 +775,7 @@ git push origin main
 
 > [!TIP]
 > 배포 성공 후에도 이전 버전이 보이면 브라우저 강력 새로고침(Ctrl+Shift+R / Cmd+Shift+R)을 시도하세요.  
-> Amazon CloudFront 캐시 무효화가 전파되는 데 1~2분 소요될 수 있습니다.
+> Amazon CloudFront 캐시 무효화가 전파되는 데 1 ~2분 소요될 수 있습니다.
 
 ✅ **태스크 완료** — GitHub Actions로 프론트엔드 자동 배포 파이프라인을 구축했습니다.
 
