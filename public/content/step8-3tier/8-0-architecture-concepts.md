@@ -190,11 +190,26 @@ learningObjectives:
 
 ### 주요 용어
 
-| 용어                                     | 설명                                                    |
-| ---------------------------------------- | ------------------------------------------------------- |
-| **SPA (Single Page Application)**        | 하나의 HTML 페이지에서 동적으로 콘텐츠를 갱신하는 웹 앱 |
-| **SSR (Server Side Rendering)**          | 서버에서 HTML을 생성하여 클라이언트에 전달하는 방식     |
-| **CORS (Cross-Origin Resource Sharing)** | 다른 도메인 간 API 호출을 허용하는 보안 메커니즘        |
+| 용어                                     | 설명                                                                     |
+| ---------------------------------------- | ------------------------------------------------------------------------ |
+| **SPA (Single Page Application)**        | 하나의 HTML 페이지에서 동적으로 콘텐츠를 갱신하는 웹 앱                  |
+| **SSR (Server Side Rendering)**          | 서버에서 HTML을 생성하여 클라이언트에 전달하는 방식                      |
+| **CORS (Cross-Origin Resource Sharing)** | 다른 도메인 간 API 호출을 허용하는 보안 메커니즘                         |
+| **Mixed Content**                        | HTTPS 페이지에서 HTTP 리소스를 요청할 때 브라우저가 차단하는 보안 정책   |
+| **Same-Origin Policy**                   | 브라우저가 다른 출처(프로토콜+도메인+포트)의 리소스 접근을 제한하는 정책 |
+| **Preflight Request**                    | CORS에서 본 요청 전에 OPTIONS 메서드로 허용 여부를 확인하는 사전 요청    |
+
+> [!CONCEPT] Mixed Content란?
+> HTTPS로 로드된 페이지(예: `https://d1234.cloudfront.net`)에서 HTTP 리소스(예: `http://alb-dns/api/items`)를 요청하면 브라우저가 **차단**합니다.  
+> 이는 HTTPS의 암호화를 우회할 수 있는 보안 위험을 방지하기 위한 것입니다.
+>
+> **해결 방법:**
+>
+> - 백엔드(ALB)에도 HTTPS를 적용 (도메인 + ACM 인증서 + HTTPS 리스너)
+> - 또는 CloudFront를 API 프록시로 사용하여 같은 도메인에서 서비스 (방식 B/C)
+>
+> Step 8-4에서 도메인 + ALB HTTPS를 설정하면 해결됩니다.  
+> 그 전까지 백엔드 테스트는 `curl`로 직접 호출합니다.
 
 ### 분리 전후 비교
 

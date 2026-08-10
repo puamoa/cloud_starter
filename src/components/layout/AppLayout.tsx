@@ -145,11 +145,14 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
       ['2B', '3C'].includes(String(s.session)),
     );
 
-    const toLink = (s: (typeof sessions)[0]) => ({
-      type: 'link' as const,
-      text: `⚡ ${weekNum}-${s.session}. ${s.title}`,
-      href: `/week/${weekNum}/session/${s.session}`,
-    });
+    const toLink = (s: (typeof sessions)[0]) => {
+      const config = sessionTypeConfig[s.type];
+      return {
+        type: 'link' as const,
+        text: `${config.emoji} ${weekNum}-${s.session}. ${s.title}`,
+        href: `/week/${weekNum}/session/${s.session}`,
+      };
+    };
 
     const commonBefore = common.filter((s) => Number(s.session) <= 1);
     const commonAfter = common.filter((s) => Number(s.session) >= 4);

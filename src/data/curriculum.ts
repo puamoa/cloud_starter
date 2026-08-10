@@ -500,6 +500,17 @@ export const curriculum: WeekCurriculum[] = [
         awsServices: ['Amazon Route 53', 'AWS Certificate Manager'],
         estimatedCost: '무료 (정리 작업)',
       },
+      {
+        session: 5,
+        type: 'lab',
+        title: '🗑️ 전체 리소스 정리',
+        hasContent: true,
+        markdownPath: '/content/step8-3tier/8-5-cleanup.md',
+        description:
+          'Step 0~8에서 생성한 모든 AWS 리소스를 의존 관계 순서에 따라 체계적으로 삭제',
+        awsServices: [],
+        estimatedCost: '무료 (정리 작업)',
+      },
     ],
     difficulty: 'advanced',
   },

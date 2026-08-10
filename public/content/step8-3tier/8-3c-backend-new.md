@@ -17,7 +17,7 @@ estimatedCost: 크레딧 내 사용 가능 (비용 발생 가능)
 ---
 
 이 실습에서는 **새 Spring Boot 프로젝트를 생성**하고, Amazon RDS MySQL과 연동한 후,
-Amazon EC2에 JAR로 배포하여 ALB와 연결합니다.
+Amazon EC2에 JAR로 배포하여 ALB와 연결합니다.  
 GitHub Actions로 자동 배포 파이프라인도 구축합니다.
 
 ### Step 8 전체 아키텍처
@@ -42,16 +42,17 @@ Spring Initializr로 프로젝트를 생성합니다.
 1. 브라우저에서 [https://start.spring.io](https://start.spring.io)에 접속합니다.
 2. 다음과 같이 설정합니다:
 
-| 설정          | 값                                             |
-| ------------- | ---------------------------------------------- |
-| Project       | Gradle - Groovy                                |
-| Language      | Java                                           |
-| Spring Boot   | 최신 안정 버전 (SNAPSHOT/RC 제외, 예: `4.1.0`) |
-| Group         | com.example                                    |
-| Artifact      | my-backend                                     |
-| Packaging     | Jar                                            |
-| Configuration | YAML                                           |
-| Java          | 17                                             |
+| 설정          | 값                                                |
+| ------------- | ------------------------------------------------- |
+| Project       | Gradle - Groovy                                   |
+| Language      | Java                                              |
+| Spring Boot   | 최신 안정 버전 (SNAPSHOT/RC 제외, 예: `4.1.0`)    |
+| Group         | com.example                                       |
+| Artifact      | my-backend                                        |
+| Package name  | com.example.mybackend (하이픈 제거하여 수동 수정) |
+| Packaging     | Jar                                               |
+| Configuration | YAML                                              |
+| Java          | 17                                                |
 
 3. **Dependencies** 추가:
    - Spring Web
@@ -64,12 +65,51 @@ Spring Initializr로 프로젝트를 생성합니다.
 
 ### 1-2. 프로젝트 설정
 
-5. 다운로드한 ZIP을 압축 해제하고 프로젝트 디렉터리로 이동합니다:
+5. 다운로드한 ZIP을 압축 해제하고 `my-backend/` 디렉토리에 복사합니다:
+
+**🍎 macOS:**
+
+```bash
+unzip ~/Downloads/my-backend.zip -d ~/Downloads/my-backend-temp
+cp -a ~/Downloads/my-backend-temp/my-backend/. ~/3tier-project/my-backend/
+rm -rf ~/Downloads/my-backend-temp
+```
+
+**🪟 Windows (PowerShell):**
+
+```powershell
+Expand-Archive ~/Downloads/my-backend.zip -DestinationPath ~/Downloads/my-backend-temp
+Copy-Item ~/Downloads/my-backend-temp/my-backend/* ~/3tier-project/my-backend/ -Recurse -Force
+Remove-Item ~/Downloads/my-backend-temp -Recurse
+```
+
+> [!TIP]
+> ZIP 파일명이나 다운로드 경로가 다르면 본인 환경에 맞게 변경하세요.  
+> 또는 압축 해제한 폴더 내용을 직접 드래그하여 `my-backend/` 폴더에 붙여넣어도 됩니다.
+
+**🍎 macOS — 복사 확인:**
 
 ```bash
 cd ~/3tier-project/my-backend
-# 다운로드한 ZIP 압축 해제 후 파일 복사
+ls -la
+# build.gradle, gradlew, settings.gradle, src/ 등이 보이면 성공
 ```
+
+**🪟 Windows — 복사 확인:**
+
+```powershell
+cd ~/3tier-project/my-backend
+dir
+# build.gradle, gradlew, settings.gradle, src/ 등이 보이면 성공
+```
+
+6. IDE에서 `~/3tier-project/my-backend` 폴더를 프로젝트로 엽니다:
+   - **IntelliJ IDEA**: File → Open → `my-backend` 폴더 선택 → Open as Project
+   - **VS Code**: File → Open Folder → `my-backend` 폴더 선택
+
+> [!TIP]
+> 프로젝트 폴더명과 `settings.gradle`의 `rootProject.name`이 다르면 빌드 산출물(JAR) 파일명이 달라집니다.  
+> `settings.gradle`을 열어 `rootProject.name`을 폴더명과 일치시킨 뒤, IntelliJ에서 Gradle Sync(🐘 코끼리 아이콘)를 클릭하세요.
 
 완성 시 프로젝트 구조:
 
@@ -102,11 +142,12 @@ my-backend/
 ## 태스크 2: RDS 연동 설정
 
 > [!WARNING]
-> 이 태스크는 **필수**입니다. SSM Parameter Store에 DB 접속 정보를 저장하지 않으면 Amazon EC2에서 애플리케이션이 시작되지 않습니다.
+> 이 태스크는 **필수**입니다.  
+> SSM Parameter Store에 DB 접속 정보를 저장하지 않으면 Amazon EC2에서 애플리케이션이 시작되지 않습니다.
 
 ### 2-1. SSM Parameter Store에 비밀값 저장
 
-6. SSM Parameter Store에 데이터베이스 연결 정보를 저장합니다 (아래 `<>` 부분을 본인 값으로 수정한 후 실행합니다):
+7. SSM Parameter Store에 데이터베이스 연결 정보를 저장합니다 (아래 `<>` 부분을 본인 값으로 수정한 후 실행합니다):
 
 ```bash
 aws ssm put-parameter \
@@ -138,7 +179,13 @@ aws ssm put-parameter \
 
 ### 2-2. application.yml 설정
 
-7. `src/main/resources/application.yml` 파일을 다음과 같이 설정합니다:
+8. `src/main/resources/application.yaml` 파일을 열고 기존 내용을 모두 삭제한 뒤 다음으로 교체하고 저장합니다.  
+   (아래 `<>` 부분을 본인 값으로 수정):
+
+> [!WARNING]
+> `app.cors.allowed-origins`에 Step 8-2에서 생성한 Amazon CloudFront 도메인을 입력하세요.  
+> 브라우저는 프론트엔드 도메인(CloudFront)과 백엔드 도메인(ALB)이 다르면 API 호출을 차단합니다(CORS).  
+> 여기에 프론트엔드 도메인을 등록해야 백엔드가 해당 도메인의 요청을 허용합니다.
 
 ```yaml
 spring:
@@ -179,11 +226,8 @@ management:
 
 app:
   cors:
-    allowed-origins: https://d1234abcdef.cloudfront.net,http://localhost:5173
+    allowed-origins: <https://CloudFront 도메인>,http://localhost:5173
 ```
-
-> [!WARNING]
-> `app.cors.allowed-origins`에 Step 8-2에서 생성한 Amazon CloudFront 도메인을 입력하세요.
 
 ✅ **태스크 완료** — Amazon RDS 연동 설정을 완료했습니다.
 
@@ -193,7 +237,11 @@ app:
 
 ### 3-1. Entity 클래스
 
-8. `src/main/java/com/example/mybackend/entity/Item.java` 파일을 작성합니다:
+9. `src/main/java/com/example/mybackend/entity/Item.java` 파일을 생성하고 다음 내용을 작성한 뒤 저장합니다:
+
+> [!TIP]
+> **IntelliJ 파일 생성:** 기본 패키지(`com.example.mybackend`) 우클릭 → New → Java Class → `entity.Item` 입력 → Class 선택  
+> "Add File to Git" 팝업이 뜨면 [[Add]]를 클릭하세요. 이후 파일 생성 시에도 동일합니다.
 
 ```java
 package com.example.mybackend.entity;
@@ -238,7 +286,10 @@ public class Item {
 
 ### 3-2. Repository 인터페이스
 
-9. `src/main/java/com/example/mybackend/repository/ItemRepository.java` 파일을 작성합니다:
+10. `src/main/java/com/example/mybackend/repository/ItemRepository.java` 파일을 생성하고 다음 내용을 작성한 뒤 저장합니다:
+
+> [!TIP]
+> **IntelliJ:** 기본 패키지 우클릭 → New → Java Class → `repository.ItemRepository` 입력 → Interface 선택
 
 ```java
 package com.example.mybackend.repository;
@@ -252,7 +303,10 @@ public interface ItemRepository extends JpaRepository<Item, Long> {
 
 ### 3-3. Controller 클래스
 
-10. `src/main/java/com/example/mybackend/controller/ItemController.java` 파일을 작성합니다:
+11. `src/main/java/com/example/mybackend/controller/ItemController.java` 파일을 생성하고 다음 내용을 작성한 뒤 저장합니다:
+
+> [!TIP]
+> **IntelliJ:** 기본 패키지 우클릭 → New → Java Class → `controller.ItemController` 입력 → Class 선택
 
 ```java
 package com.example.mybackend.controller;
@@ -337,7 +391,14 @@ Amazon CloudFront 도메인에서 API를 호출할 수 있도록 CORS를 설정�
 
 ### 4-1. WebConfig 클래스 생성
 
-11. `src/main/java/com/example/mybackend/config/WebConfig.java` 파일을 작성합니다:
+12. `src/main/java/com/example/mybackend/config/WebConfig.java` 파일을 생성하고 다음 내용을 작성한 뒤 저장합니다:
+
+> [!TIP]
+> **IntelliJ:** 기본 패키지 우클릭 → New → Java Class → `config.WebConfig` 입력 → Class 선택
+
+> [!NOTE]
+> `WebConfig`는 `application.yaml`의 `app.cors.allowed-origins` 값을 `@Value`로 읽어와 CORS 허용 도메인으로 설정합니다.  
+> 태스크 2에서 yaml에 입력한 CloudFront 도메인이 여기서 적용됩니다.
 
 ```java
 package com.example.mybackend.config;
@@ -365,10 +426,6 @@ public class WebConfig implements WebMvcConfigurer {
 }
 ```
 
-> [!WARNING]
-> `application.yml`의 `app.cors.allowed-origins`에 Step 8-2에서 생성한 Amazon CloudFront 도메인을 입력하세요.  
-> 로컬 개발 시에는 `http://localhost:5173`도 추가합니다.
-
 > [!NOTE]
 > CORS 에러는 **브라우저에서만** 발생합니다.  
 > `curl`로 테스트하면 CORS 에러가 나타나지 않습니다.
@@ -384,22 +441,40 @@ public class WebConfig implements WebMvcConfigurer {
 > [!WARNING]
 > AWS Console 우측 상단에서 리전이 **Asia Pacific (Seoul) ap-northeast-2**인지 확인하세요.
 
-12. 상단 검색창에 `EC2`를 입력하고 **EC2** 서비스를 선택합니다. [[Launch instances]] 버튼을 클릭합니다.
-13. **Name**: `my-3tier-app-server`
-14. **AMI**: `Amazon Linux 2023`
-15. **Instance type**: `t3.micro`
-16. **Key pair**: `Proceed without a key pair`
-17. **Network settings** 섹션에서 [[Edit]] 버튼을 클릭하고 다음과 같이 설정합니다:
+13. 상단 검색창에 `EC2`를 입력하고 **EC2** 서비스를 선택합니다. [[Launch instances]] 버튼을 클릭합니다.
+14. **Name**: `my-3tier-app-server`
+    - **Tags** 섹션: [[Add new tag]]를 클릭하여 추가
+      - `CreatedBy` = `admin-user`
+      - `Step` = `step8`
+      - `Session` = `8-3`
+15. **AMI**: `Amazon Linux 2023`
+16. **Instance type**: `t3.micro`
+17. **Key pair**: `Proceed without a key pair`
+18. **Network settings** 섹션에서 [[Edit]] 버튼을 클릭하고 다음과 같이 설정합니다:
     - **VPC**: `my-3tier-app-vpc`
     - **Subnet**: `my-3tier-app-private-subnet-1`
     - **Auto-assign public IP**: `Disable`
     - **Security groups**: `my-3tier-app-ec2-sg`
-18. **Advanced details** → **IAM instance profile**: SSM + Parameter Store 읽기 권한이 있는 IAM Role
-19. [[Launch instance]] 버튼을 클릭합니다.
+19. **Advanced details** → **IAM instance profile**: SSM + Parameter Store 읽기 권한이 있는 IAM Role을 선택합니다.
+    - 필요 정책: `AmazonSSMManagedInstanceCore` + `AmazonSSMReadOnlyAccess` + `AmazonS3ReadOnlyAccess`
+    - 앞차시에서 `ec2-starter-role`을 이미 만든 경우 해당 Role에 위 정책을 추가하여 선택합니다.
+
+> [!TIP]
+> **Role이 없는 경우 새로 생성:**
+>
+> 1. 새 탭에서 IAM → Roles → [[Create role]]
+> 2. Trusted entity: `AWS service` → Use case: `EC2` → [[Next]]
+> 3. 검색창에 `SSMManaged` → `AmazonSSMManagedInstanceCore` 체크
+> 4. 검색창 지우고 `SSMReadOnly` → `AmazonSSMReadOnlyAccess` 체크
+> 5. 검색창 지우고 `S3ReadOnly` → `AmazonS3ReadOnlyAccess` 체크
+> 6. [[Next]] → Role name: `my-3tier-app-ec2-role` → [[Create role]]
+> 7. EC2 생성 화면으로 돌아와서 IAM instance profile에 `my-3tier-app-ec2-role` 선택
+
+20. [[Launch instance]] 버튼을 클릭합니다.
 
 ### 5-2. EC2 초기 설정
 
-20. SSM Session Manager로 EC2에 접속하여 Java 17과 MySQL 클라이언트를 설치합니다 (아래 `<>` 부분을 본인 값으로 수정한 후 실행합니다):
+21. SSM Session Manager로 EC2에 접속하여 Java 17과 MySQL 클라이언트를 설치합니다 (아래 `<>` 부분을 본인 값으로 수정한 후 실행합니다):
 
 ```bash
 # SSM Session Manager로 EC2 접속 (AWS Console에서)
@@ -412,10 +487,8 @@ aws ssm start-session --target <INSTANCE_ID> --region ap-northeast-2
 > [!TIP]
 > **AWS CLI로 접속하려면** 로컬에 Session Manager plugin이 필요합니다:
 >
-> ```bash
-> # macOS
-> brew install session-manager-plugin
-> ```
+> - 🍎 macOS: `brew install session-manager-plugin`
+> - 🪟 Windows: [설치 가이드](https://docs.aws.amazon.com/systems-manager/latest/userguide/install-plugin-windows.html) 또는 [exe 직접 다운로드](https://s3.amazonaws.com/session-manager-downloads/plugin/latest/windows/SessionManagerPluginSetup.exe)
 >
 > 플러그인 설치가 번거로우면 AWS Console의 Session Manager로 접속하세요.
 
@@ -442,7 +515,11 @@ mysql -h $(aws ssm get-parameter --name "/my-3tier-app/db/endpoint" --query "Par
 
 ### 5-3. start.sh 생성
 
-21. 애플리케이션 시작 스크립트를 생성합니다:
+> [!NOTE]
+> 이 프로젝트는 JPA `ddl-auto: update`를 사용하므로 앱 시작 시 테이블이 자동 생성됩니다.  
+> 별도 SQL 파일을 RDS에 실행할 필요가 없습니다.
+
+22. 애플리케이션 시작 스크립트를 생성합니다:
 
 ```bash
 mkdir -p /home/ec2-user/app
@@ -466,7 +543,7 @@ chmod +x /home/ec2-user/app/start.sh
 
 ### 5-4. systemd 서비스 등록
 
-22. Spring Boot를 systemd 서비스로 등록합니다:
+23. Spring Boot를 systemd 서비스로 등록합니다:
 
 ```bash
 sudo tee /etc/systemd/system/spring-app.service << 'EOF'
@@ -496,15 +573,16 @@ sudo systemctl enable spring-app
 
 📍 **실행 위치: 로컬 PC**
 
-23. 로컬에서 JAR을 빌드하고 S3에 업로드합니다 (아래 `<>` 부분을 본인 값으로 수정한 후 실행합니다):
+24. 로컬에서 JAR을 빌드하고 S3에 업로드합니다 (아래 `<>` 부분을 본인 값으로 수정한 후 실행합니다):
 
 ```bash
 cd ~/3tier-project/my-backend
 ./gradlew clean bootJar
+ls build/libs/*.jar   # JAR 파일이 생성되었는지 확인
 
 export S3_DEPLOY_BUCKET=my-3tier-app-deploy-<BucketSuffix>
 
-# 배포용 버킷 생성 (아직 없는 경우)
+# 배포용 버킷 생성 (이미 있으면 생략)
 aws s3 mb s3://$S3_DEPLOY_BUCKET --region ap-northeast-2
 
 # S3에 업로드
@@ -514,7 +592,7 @@ aws s3 cp "$JAR_FILE" s3://$S3_DEPLOY_BUCKET/app.jar
 
 📍 **실행 위치: EC2** (SSM Session Manager 접속 상태)
 
-24. EC2에서 JAR을 다운로드하고 애플리케이션을 실행합니다 (아래 `<>` 부분을 본인 값으로 수정한 후 실행합니다):
+25. EC2에서 JAR을 다운로드하고 애플리케이션을 실행합니다 (아래 `<>` 부분을 본인 값으로 수정한 후 실행합니다):
 
 ```bash
 export S3_DEPLOY_BUCKET=my-3tier-app-deploy-<BucketSuffix>
@@ -533,15 +611,15 @@ curl http://localhost:8080/actuator/health
 
 ### 5-6. ALB Target Group에 EC2 등록
 
-25. 상단 검색창에 `EC2`를 입력하고 **EC2** 서비스를 선택합니다.
-26. 왼쪽 메뉴에서 **Target Groups**를 클릭합니다.
-27. `my-3tier-app-tg`를 클릭합니다.
-28. **Targets** 탭을 클릭하고 [[Register targets]] 버튼을 클릭합니다.
-29. **Available instances**에서 `my-3tier-app-server`를 체크합니다.
-30. **Ports for the selected instances**에 `8080`을 입력합니다.
-31. [[Include as pending below]] 버튼을 클릭합니다.
-32. 하단의 **Review** 섹션에서 인스턴스가 추가된 것을 확인합니다.
-33. [[Register pending targets]] 버튼을 클릭하여 등록을 완료합니다.
+26. 상단 검색창에 `EC2`를 입력하고 **EC2** 서비스를 선택합니다.
+27. 왼쪽 메뉴에서 **Target Groups**를 클릭합니다.
+28. `my-3tier-app-tg`를 클릭합니다.
+29. **Targets** 탭을 클릭하고 [[Register targets]] 버튼을 클릭합니다.
+30. **Available instances**에서 `my-3tier-app-server`를 체크합니다.
+31. **Ports for the selected instances**에 `8080`을 입력합니다.
+32. [[Include as pending below]] 버튼을 클릭합니다.
+33. 하단의 **Review** 섹션에서 인스턴스가 추가된 것을 확인합니다.
+34. [[Register pending targets]] 버튼을 클릭하여 등록을 완료합니다.
 
 > [!OUTPUT]
 > Target Group의 Targets 탭에서 등록된 인스턴스를 확인합니다:
@@ -550,7 +628,7 @@ curl http://localhost:8080/actuator/health
 > | --------------- | ---- | ------------- | ------------------------------- |
 > | i-0abc123def456 | 8080 | initial       | Target registration in progress |
 >
-> 약 30초 ~1분 후 `healthy`로 변경됩니다.  
+> 약 30초 ~ 1분 후 `healthy`로 변경됩니다.  
 > Health Check 경로는 `/actuator/health` (CloudFormation 기본값)입니다.
 
 > [!TROUBLESHOOTING]
@@ -611,28 +689,28 @@ curl http://localhost:8080/actuator/health
 
 **📗 옵션 A: 새 IAM 사용자 생성 (권장)**
 
-34. 상단 검색창에 `IAM`을 입력하고 **IAM** 서비스를 선택합니다.
-35. 왼쪽 메뉴에서 **Users**를 클릭합니다.
-36. [[Create user]]를 클릭합니다.
-37. **User name**: `github-actions-backend`를 입력합니다.
-38. **Provide user access to the AWS Management Console** 체크를 **하지 않습니다** (콘솔 접근 불필요).
-39. [[Next]]를 클릭합니다.
-40. **Permissions options**에서 `Attach policies directly`를 선택합니다.
-41. 다음 정책을 검색하여 체크합니다:
+35. 상단 검색창에 `IAM`을 입력하고 **IAM** 서비스를 선택합니다.
+36. 왼쪽 메뉴에서 **Users**를 클릭합니다.
+37. [[Create user]]를 클릭합니다.
+38. **User name**: `github-actions-backend`를 입력합니다.
+39. **Provide user access to the AWS Management Console** 체크를 **하지 않습니다** (콘솔 접근 불필요).
+40. [[Next]]를 클릭합니다.
+41. **Permissions options**에서 `Attach policies directly`를 선택합니다.
+42. 다음 정책을 검색하여 체크합니다:
     - `AmazonS3FullAccess` (JAR 업로드용)
     - `AmazonSSMFullAccess` (SSM Run Command 실행용)
-42. [[Next]]를 클릭합니다.
-43. **Review and create** 페이지에서 설정을 확인하고 [[Create user]]를 클릭합니다.
+43. [[Next]]를 클릭합니다.
+44. **Review and create** 페이지에서 설정을 확인하고 [[Create user]]를 클릭합니다.
 
 **📙 옵션 B: 기존 `github-actions-frontend` 사용자에 정책 추가**
 
-34. 상단 검색창에 `IAM`을 입력하고 **IAM** 서비스를 선택합니다.
-35. 왼쪽 메뉴에서 **Users**를 클릭합니다.
-36. `github-actions-frontend`를 클릭합니다.
-37. **Permissions** 탭 → [[Add permissions]] → **Add permissions**를 클릭합니다.
-38. **Permissions options**에서 `Attach policies directly`를 선택합니다.
-39. 검색창에 `SSMFull`을 입력하고 `AmazonSSMFullAccess`를 체크합니다 (`AmazonS3FullAccess`는 이미 있음).
-40. [[Next]] → [[Add permissions]]를 클릭합니다.
+45. 상단 검색창에 `IAM`을 입력하고 **IAM** 서비스를 선택합니다.
+46. 왼쪽 메뉴에서 **Users**를 클릭합니다.
+47. `github-actions-frontend`를 클릭합니다.
+48. **Permissions** 탭 → [[Add permissions]] → **Add permissions**를 클릭합니다.
+49. **Permissions options**에서 `Attach policies directly`를 선택합니다.
+50. 검색창에 `SSMFull`을 입력하고 `AmazonSSMFullAccess`를 체크합니다 (`AmazonS3FullAccess`는 이미 있음).
+51. [[Next]] → [[Add permissions]]를 클릭합니다.
 
 > [!NOTE]
 > 옵션 B를 선택한 경우 아래 "Access Key 생성"을 건너뛰세요.  
@@ -671,13 +749,13 @@ curl http://localhost:8080/actuator/health
 > [!NOTE]
 > 📙 옵션 B를 선택한 경우 이 단계를 건너뛰고 **6-2. GitHub Secrets 설정**으로 이동하세요.
 
-44. 생성된 `github-actions-backend` 사용자를 클릭하여 상세 페이지로 이동합니다.
-45. **Security credentials** 탭을 클릭합니다.
-46. **Access keys** 섹션에서 [[Create access key]]를 클릭합니다.
-47. **Use case**에서 `Third-party service`를 선택합니다.
-48. 하단의 확인 체크박스를 선택하고 [[Next]]를 클릭합니다.
-49. [[Create access key]]를 클릭합니다.
-50. **Access key ID**와 **Secret access key**를 복사하여 안전한 곳에 저장합니다.
+52. 생성된 `github-actions-backend` 사용자를 클릭하여 상세 페이지로 이동합니다.
+53. **Security credentials** 탭을 클릭합니다.
+54. **Access keys** 섹션에서 [[Create access key]]를 클릭합니다.
+55. **Use case**에서 `Third-party service`를 선택합니다.
+56. 하단의 확인 체크박스를 선택하고 [[Next]]를 클릭합니다.
+57. [[Create access key]]를 클릭합니다.
+58. **Access key ID**와 **Secret access key**를 복사하여 안전한 곳에 저장합니다.
 
 > [!WARNING]
 > Secret access key는 이 화면에서만 확인할 수 있습니다.  
@@ -685,11 +763,11 @@ curl http://localhost:8080/actuator/health
 
 ### 6-2. GitHub Secrets 설정
 
-51. 브라우저에서 GitHub → `my-backend` 리포지토리 페이지로 이동합니다.
-52. **Settings** 탭을 클릭합니다.
-53. 왼쪽 메뉴에서 **Secrets and variables** → **Actions**를 클릭합니다.
-54. [[New repository secret]] 버튼을 클릭합니다.
-55. 다음 Secrets를 하나씩 추가합니다:
+59. 브라우저에서 GitHub → `my-backend` 리포지토리 페이지로 이동합니다.
+60. **Settings** 탭을 클릭합니다.
+61. 왼쪽 메뉴에서 **Secrets and variables** → **Actions**를 클릭합니다.
+62. [[New repository secret]] 버튼을 클릭합니다.
+63. 다음 Secrets를 하나씩 추가합니다:
     - `AWS_ACCESS_KEY_ID`: 50번에서 복사한 Access Key ID
     - `AWS_SECRET_ACCESS_KEY`: 50번에서 복사한 Secret Access Key
     - `AWS_REGION`: `ap-northeast-2`
@@ -710,7 +788,8 @@ curl http://localhost:8080/actuator/health
 
 > [!WARNING]
 > 이 워크플로우는 `./gradlew`를 사용하므로 **Gradle Wrapper 파일이 레포에 포함**되어야 합니다.  
-> GitHub의 Gradle `.gitignore`가 이 파일을 제외할 수 있으니 아래 명령으로 확인 후 추가하세요:
+> Spring Initializr의 `.gitignore`에는 `!gradle/wrapper/gradle-wrapper.jar` 예외가 있어 정상 추적됩니다.  
+> 만약 GitHub에서 레포 생성 시 별도 Gradle `.gitignore` 템플릿을 선택했다면 아래 명령으로 확인하세요:
 >
 > ```bash
 > # wrapper가 git에 있는지 확인
@@ -722,7 +801,7 @@ curl http://localhost:8080/actuator/health
 > git push origin main
 > ```
 
-56. `.github/workflows/deploy.yml` 파일을 생성합니다:
+64. `.github/workflows/deploy.yml` 파일을 생성합니다:
 
 ```bash
 # 프로젝트 루트에서 실행 (~/3tier-project/my-backend)
@@ -850,7 +929,7 @@ jobs:
 
 ### 6-4. 배포 테스트
 
-57. 변경사항을 커밋하고 push합니다:
+65. 변경사항을 커밋하고 push합니다:
 
 ```bash
 cd ~/3tier-project/my-backend
@@ -860,13 +939,18 @@ git commit -m "feat: initial backend with CI/CD"
 git push origin main
 ```
 
-58. GitHub → `my-backend` 리포지토리 → **Actions** 탭에서 워크플로우 실행을 확인합니다.
+66. GitHub → `my-backend` 리포지토리 → **Actions** 탭에서 워크플로우 실행을 확인합니다.
 
 > [!TIP]
-> 첫 빌드는 Gradle 의존성 다운로드로 3 ~4분 소요됩니다.  
-> 이후 빌드는 캐시 덕분에 1 ~2분으로 단축됩니다.
+> 첫 빌드는 Gradle 의존성 다운로드로 3 ~ 4분 소요됩니다.  
+> 이후 빌드는 캐시 덕분에 1 ~ 2분으로 단축됩니다.
 
 > [!TROUBLESHOOTING]
+>
+> **`Invalid key=value pair in Authorization header`**
+>
+> - 원인: GitHub Secrets에 AWS Access Key ID 또는 Secret Access Key가 잘못 입력됨 (공백, 줄바꿈 포함 또는 값 뒤바뀜)
+> - 해결: Secrets에서 `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`를 삭제하고 앞뒤 공백 없이 다시 입력
 >
 > **`Upload failed: NoSuchBucket`**
 >
@@ -910,14 +994,16 @@ git push origin main
 
 ### 7-1. Target Group Health Check 확인
 
-59. 상단 검색창에 `EC2`를 입력하고 **EC2** 서비스를 선택합니다.
-60. 왼쪽 메뉴에서 **Target Groups** → `my-3tier-app-tg`를 클릭합니다.
-61. **Targets** 탭에서 Status를 확인합니다.
-62. Status가 `healthy`이면 정상
+67. 상단 검색창에 `EC2`를 입력하고 **EC2** 서비스를 선택합니다.
+68. 왼쪽 메뉴에서 **Target Groups** → `my-3tier-app-tg`를 클릭합니다.
+69. **Targets** 탭에서 Status를 확인합니다.
+70. Status가 `healthy`이면 정상
 
 ### 7-2. ALB를 통한 API 테스트
 
-63. ALB DNS를 통해 API 엔드포인트를 테스트합니다 (아래 `<>` 부분을 본인 값으로 수정한 후 실행합니다):
+📍 **실행 위치: 로컬 PC (터미널)** — ALB가 Internet-facing이므로 인터넷이 되는 곳이면 어디서든 가능
+
+71. ALB DNS를 통해 API 엔드포인트를 테스트합니다 (아래 `<>` 부분을 본인 값으로 수정한 후 실행합니다):
 
 ```bash
 ALB_DNS="<ALB_DNS_NAME>"
@@ -950,7 +1036,9 @@ curl -X DELETE http://$ALB_DNS/api/items/1
 
 ### 7-3. RDS 데이터 확인 (선택)
 
-64. EC2에서 직접 Amazon RDS에 접속하여 데이터를 확인합니다 (아래 `<>` 부분을 본인 값으로 수정한 후 실행합니다):
+📍 **실행 위치: EC2 (SSM Session Manager)**
+
+72. EC2에서 직접 Amazon RDS에 접속하여 데이터를 확인합니다 (아래 `<>` 부분을 본인 값으로 수정한 후 실행합니다):
 
 ```bash
 mysql -h <RDS_ENDPOINT> -u admin -p

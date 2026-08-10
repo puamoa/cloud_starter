@@ -330,7 +330,21 @@ public class WebConfig implements WebMvcConfigurer {
     - **Auto-assign public IP**: `Disable`
     - **Security groups**: `my-3tier-app-ec2-sg` 선택
 
-14. **Advanced details** → **IAM instance profile**: SSM + Parameter Store 읽기 권한이 있는 IAM Role 선택
+14. **Advanced details** → **IAM instance profile**: SSM + Parameter Store 읽기 권한이 있는 IAM Role을 선택합니다.
+    - 필요 정책: `AmazonSSMManagedInstanceCore` + `AmazonSSMReadOnlyAccess` + `AmazonS3ReadOnlyAccess`
+    - 앞차시에서 `ec2-starter-role`을 이미 만든 경우 해당 Role에 위 정책을 추가하여 선택합니다.
+
+> [!TIP]
+> **Role이 없는 경우 새로 생성:**
+>
+> 1. 새 탭에서 IAM → Roles → [[Create role]]
+> 2. Trusted entity: `AWS service` → Use case: `EC2` → [[Next]]
+> 3. 검색창에 `SSMManaged` → `AmazonSSMManagedInstanceCore` 체크
+> 4. 검색창 지우고 `SSMReadOnly` → `AmazonSSMReadOnlyAccess` 체크
+> 5. 검색창 지우고 `S3ReadOnly` → `AmazonS3ReadOnlyAccess` 체크
+> 6. [[Next]] → Role name: `my-3tier-app-ec2-role` → [[Create role]]
+> 7. EC2 생성 화면으로 돌아와서 IAM instance profile에 `my-3tier-app-ec2-role` 선택
+
 15. [[Launch instance]] 버튼을 클릭합니다.
 
 > [!TIP]
@@ -352,10 +366,8 @@ aws ssm start-session --target <INSTANCE_ID> --region ap-northeast-2
 > [!TIP]
 > **AWS CLI로 접속하려면** 로컬에 Session Manager plugin이 필요합니다:
 >
-> ```bash
-> # macOS
-> brew install session-manager-plugin
-> ```
+> - 🍎 macOS: `brew install session-manager-plugin`
+> - 🪟 Windows: [설치 가이드](https://docs.aws.amazon.com/systems-manager/latest/userguide/install-plugin-windows.html) 또는 [exe 직접 다운로드](https://s3.amazonaws.com/session-manager-downloads/plugin/latest/windows/SessionManagerPluginSetup.exe)
 >
 > 플러그인 설치가 번거로우면 AWS Console의 Session Manager로 접속하세요.
 
@@ -477,7 +489,7 @@ chmod +x /opt/tomcat/bin/setenv.sh
 ```bash
 export S3_DEPLOY_BUCKET=my-3tier-app-deploy-<BucketSuffix>
 
-# 배포용 버킷 생성 (아직 없는 경우)
+# 배포용 버킷 생성 (이미 있으면 생략)
 aws s3 mb s3://$S3_DEPLOY_BUCKET --region ap-northeast-2
 
 # SQL 파일 업로드
@@ -628,7 +640,7 @@ curl http://localhost:8080/
 > | --------------- | ---- | ------------- | ------------------------------- |
 > | i-0abc123def456 | 8080 | initial       | Target registration in progress |
 >
-> 약 30초 ~1분 후 `healthy`로 변경됩니다.  
+> 약 30초 ~ 1분 후 `healthy`로 변경됩니다.  
 > `unhealthy`가 표시되면 아래 TROUBLESHOOTING을 참고하세요.
 
 > [!TROUBLESHOOTING]
@@ -706,13 +718,13 @@ curl http://localhost:8080/
 
 **📙 옵션 B: 기존 `github-actions-frontend` 사용자에 정책 추가**
 
-35. 상단 검색창에 `IAM`을 입력하고 **IAM** 서비스를 선택합니다.
-36. 왼쪽 메뉴에서 **Users**를 클릭합니다.
-37. `github-actions-frontend`를 클릭합니다.
-38. **Permissions** 탭 → [[Add permissions]] → **Add permissions**를 클릭합니다.
-39. **Permissions options**에서 `Attach policies directly`를 선택합니다.
-40. 검색창에 `SSMFull`을 입력하고 `AmazonSSMFullAccess`를 체크합니다 (`AmazonS3FullAccess`는 이미 있음).
-41. [[Next]] → [[Add permissions]]를 클릭합니다.
+45. 상단 검색창에 `IAM`을 입력하고 **IAM** 서비스를 선택합니다.
+46. 왼쪽 메뉴에서 **Users**를 클릭합니다.
+47. `github-actions-frontend`를 클릭합니다.
+48. **Permissions** 탭 → [[Add permissions]] → **Add permissions**를 클릭합니다.
+49. **Permissions options**에서 `Attach policies directly`를 선택합니다.
+50. 검색창에 `SSMFull`을 입력하고 `AmazonSSMFullAccess`를 체크합니다 (`AmazonS3FullAccess`는 이미 있음).
+51. [[Next]] → [[Add permissions]]를 클릭합니다.
 
 > [!NOTE]
 > 옵션 B를 선택한 경우 아래 "Access Key 생성"을 건너뛰세요.  
@@ -728,13 +740,13 @@ curl http://localhost:8080/
 > [!NOTE]
 > 📙 옵션 B를 선택한 경우 이 단계를 건너뛰고 **6-2. GitHub Secrets 설정**으로 이동하세요.
 
-45. 생성된 `github-actions-backend` 사용자를 클릭하여 상세 페이지로 이동합니다.
-46. **Security credentials** 탭을 클릭합니다.
-47. **Access keys** 섹션에서 [[Create access key]]를 클릭합니다.
-48. **Use case**에서 `Third-party service`를 선택합니다.
-49. 하단의 확인 체크박스를 선택하고 [[Next]]를 클릭합니다.
-50. [[Create access key]]를 클릭합니다.
-51. **Access key ID**와 **Secret access key**를 복사하여 안전한 곳에 저장합니다.
+52. 생성된 `github-actions-backend` 사용자를 클릭하여 상세 페이지로 이동합니다.
+53. **Security credentials** 탭을 클릭합니다.
+54. **Access keys** 섹션에서 [[Create access key]]를 클릭합니다.
+55. **Use case**에서 `Third-party service`를 선택합니다.
+56. 하단의 확인 체크박스를 선택하고 [[Next]]를 클릭합니다.
+57. [[Create access key]]를 클릭합니다.
+58. **Access key ID**와 **Secret access key**를 복사하여 안전한 곳에 저장합니다.
 
 > [!WARNING]
 > Secret access key는 이 화면에서만 확인할 수 있습니다.  
@@ -742,11 +754,11 @@ curl http://localhost:8080/
 
 ### 6-2. GitHub Secrets 설정
 
-52. 브라우저에서 GitHub → `my-backend` 리포지토리 페이지로 이동합니다.
-53. **Settings** 탭을 클릭합니다.
-54. 왼쪽 메뉴에서 **Secrets and variables** → **Actions**를 클릭합니다.
-55. [[New repository secret]] 버튼을 클릭합니다.
-56. 다음 Secrets를 하나씩 추가합니다:
+59. 브라우저에서 GitHub → `my-backend` 리포지토리 페이지로 이동합니다.
+60. **Settings** 탭을 클릭합니다.
+61. 왼쪽 메뉴에서 **Secrets and variables** → **Actions**를 클릭합니다.
+62. [[New repository secret]] 버튼을 클릭합니다.
+63. 다음 Secrets를 하나씩 추가합니다:
     - `AWS_ACCESS_KEY_ID`: 51번에서 복사한 Access Key ID
     - `AWS_SECRET_ACCESS_KEY`: 51번에서 복사한 Secret Access Key
     - `AWS_REGION`: `ap-northeast-2`
@@ -779,7 +791,7 @@ curl http://localhost:8080/
 > git push origin main
 > ```
 
-57. `.github/workflows/deploy.yml` 파일을 생성합니다:
+64. `.github/workflows/deploy.yml` 파일을 생성합니다:
 
 ```yaml
 # .github/workflows/deploy.yml (WAR + Tomcat 버전)
@@ -893,7 +905,7 @@ jobs:
 
 ### 6-4. 배포 테스트
 
-58. 변경사항을 커밋하고 push합니다:
+65. 변경사항을 커밋하고 push합니다:
 
 ```bash
 cd ~/3tier-project/my-backend
@@ -903,13 +915,18 @@ git commit -m "feat: initial backend with CI/CD"
 git push origin main
 ```
 
-59. GitHub → `my-backend` 리포지토리 → **Actions** 탭에서 워크플로우 실행을 확인합니다.
+66. GitHub → `my-backend` 리포지토리 → **Actions** 탭에서 워크플로우 실행을 확인합니다.
 
 > [!TIP]
-> 첫 빌드는 Gradle 의존성 다운로드로 3 ~4분 소요됩니다.  
-> 이후 빌드는 캐시 덕분에 1 ~2분으로 단축됩니다.
+> 첫 빌드는 Gradle 의존성 다운로드로 3 ~ 4분 소요됩니다.  
+> 이후 빌드는 캐시 덕분에 1 ~ 2분으로 단축됩니다.
 
 > [!TROUBLESHOOTING]
+>
+> **`Invalid key=value pair in Authorization header`**
+>
+> - 원인: GitHub Secrets에 AWS Access Key ID 또는 Secret Access Key가 잘못 입력됨 (공백, 줄바꿈 포함 또는 값 뒤바뀜)
+> - 해결: Secrets에서 `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`를 삭제하고 앞뒤 공백 없이 다시 입력
 >
 > **`Upload failed: NoSuchBucket`**
 >
@@ -953,14 +970,16 @@ git push origin main
 
 ### 7-1. Target Group Health Check 확인
 
-60. 상단 검색창에 `EC2`를 입력하고 **EC2** 서비스를 선택합니다.
-61. 왼쪽 메뉴에서 **Target Groups** → `my-3tier-app-tg`를 클릭합니다.
-62. **Targets** 탭에서 Status를 확인합니다.
-63. Status가 `healthy`이면 정상
+67. 상단 검색창에 `EC2`를 입력하고 **EC2** 서비스를 선택합니다.
+68. 왼쪽 메뉴에서 **Target Groups** → `my-3tier-app-tg`를 클릭합니다.
+69. **Targets** 탭에서 Status를 확인합니다.
+70. Status가 `healthy`이면 정상
 
 ### 7-2. ALB를 통한 API 테스트
 
-64. ALB DNS를 통해 API를 테스트합니다 (아래 `<>` 부분을 본인 값으로 수정한 후 실행합니다):
+📍 **실행 위치: 로컬 PC (터미널)** — ALB가 Internet-facing이므로 인터넷이 되는 곳이면 어디서든 가능
+
+71. ALB DNS를 통해 API를 테스트합니다 (아래 `<>` 부분을 본인 값으로 수정한 후 실행합니다):
 
 ```bash
 ALB_DNS="<ALB_DNS_NAME>"
@@ -981,7 +1000,7 @@ curl http://$ALB_DNS/api/travel
 
 **인증 필요 API 테스트 (선택):**
 
-65. 인증이 필요한 API를 테스트합니다:
+72. 인증이 필요한 API를 테스트합니다:
 
 ```bash
 # 로그인하여 토큰 획득
