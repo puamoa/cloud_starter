@@ -252,6 +252,46 @@ ls build/libs/*.jar
 
 ✅ **태스크 완료** — 기존 프로젝트의 배포 준비 상태를 확인했습니다.
 
+> [!WARNING]
+> **S3에 이미지를 저장하는 프로젝트 (Step 5-2 적용한 경우):**
+>
+> 로컬 파일 경로(`uploadPath`)로 이미지를 서빙하는 코드가 있다면, 배포 환경에서는 S3에서 읽도록 수정이 필요합니다.  
+> `upload.storage.type` 설정에 따라 분기하는 방식을 권장합니다.
+>
+> **체크 대상:** `uploadPath`를 사용하여 파일을 읽는 Controller/Service 메서드  
+> **수정 예시 (TravelController 등):**
+>
+> ```java
+> @Value("${upload.storage.type}")
+> private String storageType;
+>
+> @GetMapping("/image/{no}")
+> public void viewImage(@PathVariable Long no, HttpServletResponse response) {
+>     TravelImageDTO image = service.getImage(no);
+>     String path;
+>     if ("s3".equals(storageType)) {
+>         path = "public/travel/" + image.getFilename(); // S3 key
+>     } else {
+>         path = uploadPath + "/travel/" + image.getFilename(); // 로컬
+>     }
+>     File file = new File(path);
+>     UploadFiles.downloadImage(response, file);
+> }
+> ```
+>
+> 또한 기존 이미지 파일을 S3에 업로드하는 마이그레이션이 필요합니다:
+>
+> ```bash
+> aws s3 sync /tmp/upload/ s3://<BUCKET_NAME>/public/
+> ```
+>
+> **다른 방법도 가능합니다:**
+>
+> - DTO에서 S3 URL을 직접 반환하여 백엔드 프록시를 거치지 않는 방식 (성능 우수)
+> - Presigned URL을 생성하여 private 파일도 시간 제한 접근 가능
+> - CloudFront를 S3 앞에 두고 CDN URL을 반환하는 방식 (캐싱 + 속도)
+> - 프론트엔드에서 이미지 URL을 조합 (백엔드가 filename만 반환, 프론트가 S3 base URL + filename으로 `<img src>` 조합)
+
 ---
 
 ## 태스크 4: CORS 설정

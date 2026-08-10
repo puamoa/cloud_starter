@@ -2972,6 +2972,32 @@ sudo nginx -t && sudo systemctl restart nginx
 - Amazon S3에서 직접 로드되므로 서버 부하 없이 이미지가 빠르게 표시됨
 
 > [!TIP]
+> **이미지가 표시되지 않는 경우:**
+>
+> `TravelController.viewImage()`가 로컬 파일 경로(`uploadPath`)만 참조하고 있다면, S3 모드에서는 이미지를 찾을 수 없습니다.  
+> `upload.storage.type` 값에 따라 S3 key로 분기하도록 수정이 필요합니다:
+>
+> ```java
+> @Value("${upload.storage.type}")
+> private String storageType;
+>
+> @GetMapping("/image/{no}")
+> public void viewImage(@PathVariable Long no, HttpServletResponse response) {
+>     TravelImageDTO image = service.getImage(no);
+>     String path;
+>     if ("s3".equals(storageType)) {
+>         path = "public/travel/" + image.getFilename();
+>     } else {
+>         path = uploadPath + "/travel/" + image.getFilename();
+>     }
+>     File file = new File(path);
+>     UploadFiles.downloadImage(response, file);
+> }
+> ```
+>
+> Step 8-3에서 3-Tier 배포 시에도 동일한 수정이 필요합니다.
+
+> [!TIP]
 > Nginx를 사용하는 경우 Step 2-3의 Nginx 프록시 설정을 참고하세요.  
 > 프론트(`/`) → dist 정적 파일, API(`/api/`) → Tomcat 8080으로 프록시하면 완전한 구조가 됩니다.
 

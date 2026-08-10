@@ -16,7 +16,7 @@ prerequisites:
 estimatedCost: 크레딧 내 사용 가능 (비용 매우 저렴)
 ---
 
-이 실습에서는 Vue.js로 빌드한 SPA(Single Page Application)를 Amazon S3에 업로드하고, CloudFront CDN을 연결하여 HTTPS + 전 세계 엣지 캐싱을 적용합니다.   
+이 실습에서는 Vue.js로 빌드한 SPA(Single Page Application)를 Amazon S3에 업로드하고, CloudFront CDN을 연결하여 HTTPS + 전 세계 엣지 캐싱을 적용합니다.  
 Amazon EC2 없이도 웹사이트를 전 세계에 빠르게 서빙할 수 있는 서버리스 호스팅 방식을 체험합니다.
 
 > [!NOTE]
@@ -72,7 +72,7 @@ Amazon S3 버킷을 생성하고, Block Public Access를 해제한 뒤, 버킷 �
 >
 > ```
 > ┌─────────────────────────────────────────────────────────────┐
-> │                    Amazon S3 정적 웹 호스팅                        │
+> │                    Amazon S3 정적 웹 호스팅                 │
 > │                                                             │
 > │  브라우저 요청                                              │
 > │       │                                                     │
@@ -105,7 +105,7 @@ Amazon S3 버킷을 생성하고, Block Public Access를 해제한 뒤, 버킷 �
 1. AWS Management Console에 로그인합니다.
 2. 우측 상단에서 리전을 **Asia Pacific (Seoul) ap-northeast-2**로 설정합니다.
 
-    <img src="/images/common/region-check.png" alt="리전 확인" class="guide-img-sm" />
+<img src="/images/common/region-check.png" alt="리전 확인" class="guide-img-sm" />
 
 > [!TIP]
 > 일부 AWS 서비스(IAM, CloudFront, Route 53 등)는 **글로벌 서비스**이므로 리전 선택 드롭다운이 비활성화되거나 "Global"로 표시됩니다.  
@@ -113,7 +113,7 @@ Amazon S3 버킷을 생성하고, Block Public Access를 해제한 뒤, 버킷 �
 
 3. 상단 검색창에 `S3`를 입력하고 **S3** 서비스를 선택합니다.
 
-    <img src="/images/step5/5-1-step3-s3-search.png" alt="S3 서비스 검색" class="guide-img-sm" />
+<img src="/images/step5/5-1-step3-s3-search.png" alt="S3 서비스 검색" class="guide-img-sm" />
 
 4. [[Create bucket]] 버튼을 클릭합니다.
 5. **General configuration** 섹션을 설정합니다:
@@ -151,11 +151,11 @@ Amazon S3 버킷을 생성하고, Block Public Access를 해제한 뒤, 버킷 �
 
 9. **Tags** 섹션에서 [[Add tag]]를 클릭하여 다음 태그를 추가합니다:
 
-    | Key | Value |
-    | --- | ----- |
-    | `CreatedBy` | `admin-user` |
-    | `Step` | `step5` |
-    | `Session` | `5-3` |
+   | Key         | Value        |
+   | ----------- | ------------ |
+   | `CreatedBy` | `admin-user` |
+   | `Step`      | `step5`      |
+   | `Session`   | `5-3`        |
 
 10. **Default encryption** 섹션:
     - **Encryption type**: `Server-side encryption with Amazon S3 managed keys (SSE-S3)`
@@ -192,7 +192,7 @@ Amazon S3 버킷을 생성하고, Block Public Access를 해제한 뒤, 버킷 �
 > SPA(Single Page Application)는 클라이언트 사이드 라우팅을 사용합니다.  
 > `/about`, `/users/123` 같은 경로는 실제 파일이 아니라 JavaScript가 처리하는 가상 경로입니다.  
 > Amazon S3는 해당 경로에 파일이 없으면 404를 반환하는데, Error document를 `index.html`로 설정하면
-> 모든 404 요청이 `index.html`로 리다이렉트되어 SPA 라우터가 정상 동작합니다.  
+> 모든 404 요청이 `index.html`로 리다이렉트되어 SPA 라우터가 정상 동작합니다.
 
 17. [[Save changes]] 버튼을 클릭합니다.
 
@@ -414,6 +414,7 @@ aws sts get-caller-identity
 >   "arn:aws:s3:::{닉네임}-spa-hosting/*"
 > ]
 > ```
+>
 > - [[Next]] → [[Save changes]] 클릭
 >
 > 이후 `s3-dev` 프로파일로 두 버킷 모두 접근 가능합니다.
@@ -442,6 +443,7 @@ aws s3 sync dist/ s3://{닉네임}-spa-hosting --delete
 > - `--delete`: S3에는 있지만 로컬에 없는 파일을 삭제 (완전 동기화)
 >
 > `--profile s3-dev`로 설정한 경우:
+>
 > ```bash
 > aws s3 sync dist/ s3://{닉네임}-spa-hosting --delete --profile s3-dev
 > ```
@@ -537,7 +539,7 @@ aws s3 sync ~/s3-website/ s3://{닉네임}-spa-hosting --delete
 | ----------------------------------------------------- | --------------------------------------------------- | ------------------------------------------------ |
 | `upload failed: ... An error occurred (AccessDenied)` | AWS CLI 자격 증명에 S3 권한 없음                    | IAM 사용자에 `AmazonS3FullAccess` 정책 연결      |
 | `fatal error: An error occurred (NoSuchBucket)`       | 버킷 이름 오타                                      | `aws s3 ls`로 정확한 버킷 이름 확인              |
-| 브라우저에서 403 Forbidden                            | 버킷 정책 미설정 또는 Block Public Access 활성 상태 | 태스크 1의 6 ~8번, 18 ~ 21번 단계 재확인            |
+| 브라우저에서 403 Forbidden                            | 버킷 정책 미설정 또는 Block Public Access 활성 상태 | 태스크 1의 6 ~8번, 18 ~ 21번 단계 재확인         |
 | 브라우저에서 404 Not Found                            | index.html이 버킷 루트에 없음                       | `aws s3 ls s3://bucket-name/`으로 파일 위치 확인 |
 
 <img src="/images/step5/5-3-step29-html-result1.png" alt="S3 웹사이트 접속 결과 1" class="guide-img-sm" />
@@ -673,7 +675,7 @@ Amazon S3 앞에 CloudFront를 배치하여 CDN 캐싱 + HTTPS + 전 세계 엣�
     <img src="/images/step5/5-3-step51-waf-disable.png" alt="WAF 비활성화 선택" class="guide-img-sm" />
 
 > [!WARNING]
-> `Enable security protections`를 선택하면 **AWS WAF 비용이 월 $14 이상** 발생합니다.    
+> `Enable security protections`를 선택하면 **AWS WAF 비용이 월 $14 이상** 발생합니다.  
 > 학습용 실습에서는 반드시 `Do not enable security protections`를 선택하세요.
 
 52. [[Next]]를 클릭합니다.
@@ -732,25 +734,25 @@ Amazon S3 앞에 CloudFront를 배치하여 CDN 캐싱 + HTTPS + 전 세계 엣�
 > [!CONCEPT] SPA 라우팅과 CloudFront 에러 페이지
 >
 > ```
-> ┌─────────────────────────────────────────────────────────────┐
-> │                SPA 라우팅 문제와 해결                       │
-> │                                                             │
-> │    문제 상황:                                               │
-> │    사용자가 /about 직접 접속 또는 새로고침                  │
-> │         │                                                   │
-> │         ▼                                                   │
-> │    CloudFront → Amazon S3에서 /about 파일 찾음 → 없음! → 403/404   │
-> │                                                             │
-> │    해결:                                                    │
-> │    403/404 에러 발생 시 → index.html 반환 (HTTP 200)        │
-> │         │                                                   │
-> │         ▼                                                   │
-> │    브라우저가 index.html 로드 → Vue Router가 /about 처리    │
-> │                                                             │
-> │    설정:                                                    │
-> │    HTTP 403 → /index.html (200)                             │
-> │    HTTP 404 → /index.html (200)                             │
-> └─────────────────────────────────────────────────────────────┘
+> ┌─────────────────────────────────────────────────────────────────────┐
+> │                SPA 라우팅 문제와 해결                               │
+> │                                                                     │
+> │    문제 상황:                                                       │
+> │    사용자가 /about 직접 접속 또는 새로고침                          │
+> │         │                                                           │
+> │         ▼                                                           │
+> │    CloudFront → Amazon S3에서 /about 파일 찾음 → 없음! → 403/404    │
+> │                                                                     │
+> │    해결:                                                            │
+> │    403/404 에러 발생 시 → index.html 반환 (HTTP 200)                │
+> │         │                                                           │
+> │         ▼                                                           │
+> │    브라우저가 index.html 로드 → Vue Router가 /about 처리            │
+> │                                                                     │
+> │    설정:                                                            │
+> │    HTTP 403 → /index.html (200)                                     │
+> │    HTTP 404 → /index.html (200)                                     │
+> └─────────────────────────────────────────────────────────────────────┘
 > ```
 
 ### Error pages 설정 (SPA 라우팅 필수)
@@ -767,6 +769,7 @@ Amazon S3 앞에 CloudFront를 배치하여 CDN 캐싱 + HTTPS + 전 세계 엣�
     - **HTTP response code**: `200: OK` 선택
 
     <img src="/images/step5/5-3-step59-error-settings.png" alt="403 에러 응답 설정" class="guide-img-sm" />
+
 60. [[Create custom error response]] 버튼을 클릭합니다.
 
     <img src="/images/step5/5-3-step60-403-error.png" alt="403 에러 응답 생성" class="guide-img-sm" />
@@ -831,13 +834,13 @@ CloudFront 배포가 완료되면 HTTPS URL로 접속하여 정상 동작을 확
 > 접속 전에 브라우저 개발자 도구(F12)를 열고 **Network** 탭을 선택한 뒤 접속하세요.  
 > 첫 번째 요청(document)을 클릭하고 **Headers** 탭에서 다음을 확인합니다:
 >
-> | 헤더 | 의미 | 예시 |
-> | ---- | ---- | ---- |
-> | `X-Cache` | 캐시 상태 | `Miss from cloudfront` (첫 요청) / `Hit from cloudfront` (재요청) |
-> | `X-Amz-Cf-Pop` | 응답한 엣지 로케이션 | `ICN53-P1` (인천) |
-> | `Server` | Origin 서버 | `AmazonS3` |
-> | `Via` | CloudFront 경유 확인 | `1.1 ...cloudfront.net (CloudFront)` |
-> | `Age` | 캐시된 시간(초) | `446` (캐시 히트 시 표시) |
+> | 헤더           | 의미                 | 예시                                                              |
+> | -------------- | -------------------- | ----------------------------------------------------------------- |
+> | `X-Cache`      | 캐시 상태            | `Miss from cloudfront` (첫 요청) / `Hit from cloudfront` (재요청) |
+> | `X-Amz-Cf-Pop` | 응답한 엣지 로케이션 | `ICN53-P1` (인천)                                                 |
+> | `Server`       | Origin 서버          | `AmazonS3`                                                        |
+> | `Via`          | CloudFront 경유 확인 | `1.1 ...cloudfront.net (CloudFront)`                              |
+> | `Age`          | 캐시된 시간(초)      | `446` (캐시 히트 시 표시)                                         |
 >
 > **Timing** 탭에서는 DNS Lookup, Initial connection, SSL, Waiting 등 각 단계별 소요 시간을 확인할 수 있습니다.  
 > `X-Cache: Error from cloudfront`가 나오면 에러 페이지 설정(403/404 → index.html)이 동작한 것입니다 — 페이지가 정상 표시되면 문제 없습니다.
@@ -983,27 +986,27 @@ S3의 파일을 업데이트한 후, CloudFront 엣지 캐시에 남아있는 �
 > [!CONCEPT] 캐시 무효화가 필요한 이유
 >
 > ```
-> ┌─────────────────────────────────────────────────────────────┐
-> │                캐시 무효화 시나리오                         │
-> │                                                             │
-> │    [상황] Amazon S3에 새 버전 업로드 후 CloudFront 접속            │
-> │                                                             │
-> │    사용자 → CloudFront 엣지                                 │
-> │                │                                            │
-> │                ├── 캐시에 이전 버전 있음 (TTL 만료 전)      │
-> │                │   → 이전 버전 반환 (업데이트 안 보임!)     │
-> │                │                                            │
-> │    [해결] Invalidation 실행                                 │
-> │                │                                            │
-> │                ├── 엣지 캐시 강제 삭제                      │
-> │                │                                            │
-> │    사용자 → CloudFront 엣지 (캐시 없음)                     │
-> │                │                                            │
-> │                └── Amazon S3에서 새 버전 가져옴 → 새 버전 반환     │
-> │                                                             │
-> │    비용: 월 1,000개 경로까지 무료                           │
-> │    시간: 보통 1~2분 내 전 세계 엣지에 반영                  │
-> └─────────────────────────────────────────────────────────────┘
+> ┌──────────────────────────────────────────────────────────────────┐
+> │                캐시 무효화 시나리오                              │
+> │                                                                  │
+> │    [상황] Amazon S3에 새 버전 업로드 후 CloudFront 접속          │
+> │                                                                  │
+> │    사용자 → CloudFront 엣지                                      │
+> │                │                                                 │
+> │                ├── 캐시에 이전 버전 있음 (TTL 만료 전)           │
+> │                │   → 이전 버전 반환 (업데이트 안 보임!)          │
+> │                │                                                 │
+> │    [해결] Invalidation 실행                                      │
+> │                │                                                 │
+> │                ├── 엣지 캐시 강제 삭제                           │
+> │                │                                                 │
+> │    사용자 → CloudFront 엣지 (캐시 없음)                          │
+> │                │                                                 │
+> │                └── Amazon S3에서 새 버전 가져옴 → 새 버전 반환   │
+> │                                                                  │
+> │    비용: 월 1,000개 경로까지 무료                                │
+> │    시간: 보통 1~2분 내 전 세계 엣지에 반영                       │
+> └──────────────────────────────────────────────────────────────────┘
 > ```
 
 ### S3 파일 업데이트
@@ -1014,6 +1017,7 @@ S3의 파일을 업데이트한 후, CloudFront 엣지 캐시에 남아있는 �
 
 > [!TIP]
 > 변경 방법은 자유입니다:
+>
 > - 기존 Vue 프로젝트 소스를 수정 → 빌드 → 재업로드
 > - `index.html`을 새로 만들어서 배포
 > - 기존 파일에 텍스트 한 줄만 추가
@@ -1053,12 +1057,14 @@ aws s3 sync ./ s3://{닉네임}-spa-hosting --delete
 
 > [!TIP]
 > 업로드 경로는 본인이 태스크 2에서 사용한 폴더에 맞게 변경하세요:
+>
 > - Vue 프로젝트: `dist/`
 > - 태스크 2에서 `~/s3-website/`로 만든 경우: `~/s3-website/`
 > - 현재 폴더에 `index.html`이 있으면: `./`
 
 > [!TIP]
 > `--profile` 옵션은 본인의 AWS CLI 설정에 맞게 사용하세요:
+>
 > - default 프로파일을 사용 중이면 생략 가능
 > - `s3-dev` 프로파일을 사용 중이면 `--profile s3-dev` 추가
 > - 앞서 `export AWS_PROFILE=s3-dev`를 실행했으면 생략 가능
@@ -1142,11 +1148,11 @@ aws cloudfront create-invalidation \
 > [!NOTE]
 > **명령어 옵션 설명:**
 >
-> | 옵션 | 의미 | 예시 |
-> | ---- | ---- | ---- |
-> | `create-invalidation` | 캐시 무효화 요청 생성 | — |
-> | `--distribution-id` | 대상 Distribution ID | `EB34SOTGOG5WH` |
-> | `--paths` | 무효화할 경로 패턴 | `"/*"` (전체), `"/index.html"` (단일 파일) |
+> | 옵션                  | 의미                  | 예시                                       |
+> | --------------------- | --------------------- | ------------------------------------------ |
+> | `create-invalidation` | 캐시 무효화 요청 생성 | —                                          |
+> | `--distribution-id`   | 대상 Distribution ID  | `EB34SOTGOG5WH`                            |
+> | `--paths`             | 무효화할 경로 패턴    | `"/*"` (전체), `"/index.html"` (단일 파일) |
 >
 > `{Distribution-ID}`를 본인의 Distribution ID로 교체하세요.  
 > CloudFront 콘솔 → 배포 상세 페이지 상단 또는 배포 목록의 **ID** 열에서 확인할 수 있습니다.
@@ -1186,10 +1192,10 @@ aws cloudfront create-invalidation \
 
 본인 환경에 맞는 방법을 선택하세요.
 
-| 방법 | 대상 | 설명 |
-| ---- | ---- | ---- |
-| **방법 A** | 로컬에서 admin 프로파일 사용 가능 | 로컬에서 빌드 + 업로드 + 무효화 전체 실행 |
-| **방법 B** | `s3-dev`에 CloudFront 권한 없음 | CloudShell에서 간단한 HTML로 전체 흐름 실행 |
+| 방법       | 대상                              | 설명                                        |
+| ---------- | --------------------------------- | ------------------------------------------- |
+| **방법 A** | 로컬에서 admin 프로파일 사용 가능 | 로컬에서 빌드 + 업로드 + 무효화 전체 실행   |
+| **방법 B** | `s3-dev`에 CloudFront 권한 없음   | CloudShell에서 간단한 HTML로 전체 흐름 실행 |
 
 ---
 
@@ -1224,6 +1230,7 @@ echo "🌐 https://$DISTRIBUTION_ID.cloudfront.net 에서 확인하세요."
 
 > [!NOTE]
 > 스크립트 상단의 변수를 본인의 값으로 교체하세요:
+>
 > - `{닉네임}-spa-hosting` → 본인의 Amazon S3 버킷 이름
 > - `{Distribution-ID}` → CloudFront Distribution ID (콘솔에서 확인)
 > - `BUILD_DIR` → 빌드 결과 폴더 (Vue: `dist`, 직접 작성: 파일이 있는 폴더)
@@ -1336,6 +1343,7 @@ vi ~/deploy.sh
 
 > [!TIP]
 > vi 기본 사용법:
+>
 > - `i` → 입력 모드 (값 수정)
 > - `Esc` → 명령 모드로 복귀
 > - `:wq` + Enter → 저장 후 종료
@@ -1420,6 +1428,7 @@ S3 Bucket (정적 웹 호스팅)
 
 > [!NOTE]
 > **S3 버킷을 이후 실습에서 재사용하려면:**
+>
 > - CloudFront만 삭제하고 Amazon S3 버킷은 유지해도 됩니다 (단계 4~5 건너뜀).
 > - Amazon S3 정적 호스팅 비용은 저장된 파일 크기에 비례하며, 수 MB 수준이면 월 1원 미만입니다.
 > - 완전히 정리하고 싶다면 모든 단계를 수행하세요.
@@ -1435,13 +1444,13 @@ S3 Bucket (정적 웹 호스팅)
 1. AWS Management Console 상단 검색창에 `Resource Groups & Tag Editor`를 입력하고 선택합니다.
 2. 왼쪽 메뉴에서 **Tag Editor**를 클릭합니다.
 3. 다음과 같이 설정합니다:
-    - **Regions**: `ap-northeast-2` (서울)
-    - **Resource types**: `All supported resource types`
+   - **Regions**: `ap-northeast-2` (서울)
+   - **Resource types**: `All supported resource types`
 4. **Tags** 섹션에서 [[Add tag]] 버튼을 클릭합니다.
 5. **Tag key**에 `Session`, **Tag value**에 `5-3`을 입력합니다.
 6. [[Search resources]] 버튼을 클릭합니다.
 
-    <img src="/images/step5/5-3-cleanup6-tag-editor.png" alt="Tag Editor 검색 결과" class="guide-img-sm" />
+<img src="/images/step5/5-3-cleanup6-tag-editor.png" alt="Tag Editor 검색 결과" class="guide-img-sm" />
 
 7. 이 실습에서 생성한 리소스(CloudFront Distribution, S3 Bucket)가 표시되는지 확인합니다.
 
@@ -1576,11 +1585,11 @@ Amazon S3 버킷은 비어있어야만 삭제할 수 있습니다. 먼저 모든
 
 ### 삭제 확인 체크리스트
 
-| 확인 항목 | 확인 방법 | 정상 상태 |
-| --------- | --------- | --------- |
-| CloudFront Distribution | CloudFront 콘솔 → Distributions | 목록에서 사라짐 |
-| Amazon S3 버킷 | S3 콘솔 → Buckets | 목록에서 사라짐 (또는 유지 선택) |
-| Tag Editor | `Session=5-3` 검색 | 결과 없음 |
+| 확인 항목               | 확인 방법                       | 정상 상태                        |
+| ----------------------- | ------------------------------- | -------------------------------- |
+| CloudFront Distribution | CloudFront 콘솔 → Distributions | 목록에서 사라짐                  |
+| Amazon S3 버킷          | S3 콘솔 → Buckets               | 목록에서 사라짐 (또는 유지 선택) |
+| Tag Editor              | `Session=5-3` 검색              | 결과 없음                        |
 
 > [!TROUBLESHOOTING]
 > | 문제 | 원인 | 해결 |

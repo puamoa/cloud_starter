@@ -15,6 +15,103 @@ estimatedCost: 무료 (정리 작업)
 Step 0 ~ 8에서 생성한 모든 AWS 리소스를 체계적으로 정리합니다.  
 **비용이 발생하는 리소스부터 우선 삭제합니다.**
 
+---
+
+## 본인 환경에 맞는 정리 방법 선택
+
+| 방법 | 해당하는 경우                                          | 정리 방법                                         |
+| ---- | ------------------------------------------------------ | ------------------------------------------------- |
+| 📗 A | Step 8-1에서 **CloudFormation 스택**으로 인프라 구축   | 수동 생성 리소스 삭제 → 스택 4개 역순 삭제 (간단) |
+| 📙 B | 모든 리소스를 **수동 생성** (또는 스택 없이 직접 구축) | 아래 전체 18단계를 순서대로 진행                  |
+
+> [!TIP]
+> Step 8-1 가이드를 따랐다면 대부분 **📗 방법 A**에 해당합니다.  
+> CloudFormation 스택 삭제 한번으로 VPC, RDS, ALB, S3 등이 자동 정리됩니다.
+
+---
+
+## 📗 방법 A: CloudFormation 스택 사용자 (권장)
+
+CloudFormation으로 생성한 리소스는 스택 삭제로 일괄 정리됩니다.  
+**수동 생성한 리소스만 먼저 삭제**한 뒤 스택을 삭제합니다.
+
+### A-1. Tag Editor로 리소스 확인
+
+1. 상단 검색창에 `Resource Groups & Tag Editor`를 입력하고 선택합니다.
+2. 왼쪽 메뉴에서 **Tag Editor**를 선택합니다.
+3. 다음 조건으로 검색합니다:
+   - **Regions**: `ap-northeast-2`
+   - **Tag key**: `Step`, **Tag value**: `step8`
+4. [[Search resources]] 버튼을 클릭합니다.
+5. 검색 결과에서 이 실습에서 생성한 리소스를 확인합니다.
+
+> [!TIP]
+> Tag Editor는 리소스를 **찾는 용도**로만 사용합니다.  
+> 실제 삭제는 아래 단계에서 각 서비스 콘솔에서 수행합니다.
+
+### A-2. 수동 생성 리소스 삭제
+
+아래 리소스는 CloudFormation이 아닌 수동으로 생성한 것이므로 개별 삭제합니다:
+
+6. **EC2 인스턴스 종료**: EC2 → Instances → `my-3tier-app-server` 선택 → Instance state → [[Terminate instance]]
+7. **CloudFront 배포 삭제**: CloudFront → 배포 선택 → [[Disable]] → 완료 후 [[Delete]] (5 ~ 10분 소요)
+8. **배포용 S3 버킷 삭제**: S3 → `my-3tier-app-deploy-*` 버킷 → [[Empty]] → [[Delete]]
+9. **SSM Parameter Store 삭제**:
+
+```bash
+aws ssm delete-parameter --name "/my-3tier-app/db/endpoint"
+aws ssm delete-parameter --name "/my-3tier-app/db/name"
+aws ssm delete-parameter --name "/my-3tier-app/db/username"
+aws ssm delete-parameter --name "/my-3tier-app/db/password"
+```
+
+10. **IAM 사용자 삭제**: IAM → Users → `github-actions-frontend`, `github-actions-backend` 삭제
+11. **IAM Role 삭제**: IAM → Roles → `my-3tier-app-ec2-role` (또는 `ec2-starter-role`) 삭제
+12. **ACM 인증서 삭제** (도메인 설정한 경우): Certificate Manager → us-east-1, ap-northeast-2 모두 확인
+13. **Route 53 레코드 삭제** (도메인 설정한 경우): Route 53 → Hosted zones → 생성한 A 레코드 삭제
+
+### A-3. CloudFormation 스택 삭제 (역순)
+
+> [!WARNING]
+> 스택 삭제 순서가 중요합니다! 의존 관계 역순으로 삭제하세요.  
+> 순서를 무시하면 `DELETE_FAILED`가 발생합니다.
+
+14. **CloudFormation** → **Stacks**에서 다음 순서로 삭제합니다:
+    1. `step8-backend` (ALB, Target Group) → [[Delete]]
+    2. `step8-frontend` (S3 프론트엔드 버킷) → [[Delete]]
+
+> [!WARNING]
+> `step8-frontend` 스택의 S3 버킷에 파일이 남아있으면 삭제 실패합니다.  
+> 먼저 S3 → 프론트엔드 버킷 → [[Empty]]로 비운 뒤 스택을 삭제하세요.
+
+15. (계속) 3. `step8-data` (RDS) → [[Delete]] (5 ~ 10분 소요) 4. `step8-network` (VPC, Subnet, IGW, NAT, SG) → [[Delete]]
+
+16. 각 스택 상태가 `DELETE_COMPLETE`가 될 때까지 대기합니다.
+
+> [!TROUBLESHOOTING]
+> | 증상 | 원인 | 해결 방법 |
+> |------|------|-----------|
+> | `DELETE_FAILED` (Security Group) | EC2가 아직 종료되지 않음 | EC2 Terminated 확인 후 재시도 |
+> | `DELETE_FAILED` (S3 Bucket) | 버킷이 비어있지 않음 | `aws s3 rm s3://<BUCKET> --recursive` 후 재시도 |
+> | `DELETE_FAILED` (VPC) | ENI 잔존 | EC2 → Network Interfaces에서 해당 VPC의 ENI 삭제 |
+> | 스택 삭제 재시도 시 같은 에러 | 수동 삭제 미완료 | "Retain" 옵션으로 건너뛰고 수동 정리 |
+
+### A-4. Tag Editor로 최종 확인
+
+17. 다시 Tag Editor에서 `Step: step8`로 검색합니다.
+18. 검색 결과에 리소스가 없으면 정리 완료입니다.
+
+> [!TIP]
+> **이전 Step 리소스도 확인하세요:**  
+> Tag key `Step`, Tag value `step1` ~ `step7`로 각각 검색하여 남은 리소스가 있는지 확인합니다.  
+> 이전 Step의 정리 가이드는 각 세션의 "🗑️ 리소스 정리" 섹션을 참고하세요.
+
+✅ **방법 A 완료** — CloudFormation 스택 삭제로 리소스가 정리되었습니다. 아래 "최종 비용 확인"으로 이동하세요.
+
+---
+
+## 📙 방법 B: 수동 생성 사용자 (전체 18단계)
+
 > [!WARNING]
 > **리소스 방치 시 월 비용 추정 (서울 리전 기준)**
 >
