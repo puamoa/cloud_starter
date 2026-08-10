@@ -456,7 +456,7 @@ public class WebConfig implements WebMvcConfigurer {
     - **Auto-assign public IP**: `Disable`
     - **Security groups**: `my-3tier-app-ec2-sg`
 19. **Advanced details** → **IAM instance profile**: SSM + Parameter Store 읽기 권한이 있는 IAM Role을 선택합니다.
-    - 필요 정책: `AmazonSSMManagedInstanceCore` + `AmazonSSMReadOnlyAccess` + `AmazonS3ReadOnlyAccess`
+    - 필요 정책: `AmazonSSMManagedInstanceCore` + `AmazonSSMReadOnlyAccess` + `AmazonS3FullAccess`
     - 앞차시에서 `ec2-starter-role`을 이미 만든 경우 해당 Role에 위 정책을 추가하여 선택합니다.
 
 > [!TIP]
@@ -466,7 +466,7 @@ public class WebConfig implements WebMvcConfigurer {
 > 2. Trusted entity: `AWS service` → Use case: `EC2` → [[Next]]
 > 3. 검색창에 `SSMManaged` → `AmazonSSMManagedInstanceCore` 체크
 > 4. 검색창 지우고 `SSMReadOnly` → `AmazonSSMReadOnlyAccess` 체크
-> 5. 검색창 지우고 `S3ReadOnly` → `AmazonS3ReadOnlyAccess` 체크
+> 5. 검색창 지우고 `S3Full` → `AmazonS3FullAccess` 체크
 > 6. [[Next]] → Role name: `my-3tier-app-ec2-role` → [[Create role]]
 > 7. EC2 생성 화면으로 돌아와서 IAM instance profile에 `my-3tier-app-ec2-role` 선택
 
