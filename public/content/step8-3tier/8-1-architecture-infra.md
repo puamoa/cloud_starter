@@ -179,9 +179,14 @@ GitHub는 2021년부터 비밀번호 인증을 차단하고 **Personal Access To
 1. [GitHub](https://github.com)에 로그인합니다.
 2. 우측 상단 프로필 아이콘을 클릭합니다.
 3. **Settings**를 클릭합니다.
+   <img src="/images/step8/8-1-step3-github-settings.png" alt="GitHub Settings 메뉴" class="guide-img-sm" />
+
 4. 왼쪽 메뉴 맨 아래 **Developer settings**를 클릭합니다.
+   <img src="/images/step8/8-1-step4-developer-settings.png" alt="Developer settings 메뉴" class="guide-img-sm" />
 5. **Personal access tokens** → **Tokens (classic)**을 클릭합니다.
+   <img src="/images/step8/8-1-step5-tokens-classic.png" alt="Tokens classic 메뉴" class="guide-img-sm" />
 6. [[Generate new token]] → **Generate new token (classic)**을 클릭합니다.
+   <img src="/images/step8/8-1-step6-generate-token.png" alt="Generate new token classic" class="guide-img-sm" />
 
 > [!TIP]
 > GitHub는 **Fine-grained token**(세분화 토큰)도 제공합니다.  
@@ -195,8 +200,10 @@ GitHub는 2021년부터 비밀번호 인증을 차단하고 **Personal Access To
      - ✅ `repo` 체크 (전체 레포 접근 권한)
      - ✅ `workflow` 체크 (GitHub Actions 워크플로우 파일 push에 필요)
      - ✅ `read:org` 체크 (admin:org 하위 항목, `gh auth login`에 필요)
+       <img src="/images/step8/8-1-step7-token-settings.png" alt="PAT 설정 화면" class="guide-img-md" />
 
 8. [[Generate token]] 버튼을 클릭합니다.
+   <img src="/images/step8/8-1-step8-generate-token.png" alt="Generate token 버튼" class="guide-img-sm" />
 9. 생성된 토큰(`ghp_` 또는 `github_pat_`으로 시작)을 **즉시 복사**하여 안전한 곳에 저장합니다.
 
 > [!WARNING]
@@ -229,11 +236,19 @@ sudo apt install gh
 > [!NOTE]
 > Windows에서 설치 후 **터미널을 닫고 다시 열어야** `gh` 명령이 인식됩니다.
 
+📌 **Windows (PowerShell/CMD)**
+<img src="/images/step8/8-1-step10-gh-auth-windows.png" alt="gh auth login - Windows" class="guide-img-sm" />
+
+📌 **macOS (Terminal)**
+<img src="/images/step8/8-1-step10-gh-auth-mac.png" alt="gh auth login - macOS" class="guide-img-sm" />
+
 11. GitHub 인증을 실행합니다:
 
 ```bash
 gh auth login
 ```
+
+<img src="/images/step8/8-1-step11-gh-auth-login.png" alt="gh auth login 실행" class="guide-img-sm" />
 
 12. 대화형 프롬프트에서 다음을 선택합니다:
     - **What account do you want to log into?** → `GitHub.com`
@@ -261,6 +276,8 @@ gh auth status
 >
 > `✓ Logged in` 메시지가 표시되면 성공입니다.  
 > 이후 `git push`, `git clone`(Private) 시 인증 없이 바로 동작합니다.
+>
+> <img src="/images/step8/8-1-step13-gh-auth-status.png" alt="gh auth status 결과" class="guide-img-sm" />
 
 > [!TIP]
 > **계정을 전환하거나 로그아웃하고 싶은 경우:**
@@ -346,7 +363,7 @@ git remote -v
 > - Step 8-2에서 Vue.js 프로젝트를, Step 8-3에서 Spring Boot 프로젝트를 처음부터 생성합니다.
 > - 3-4는 건너뛰세요.
 
-### 3-1. my-frontend 리포지토리 생성
+### 3-1. 🎨 my-frontend 리포지토리 생성
 
 > [!WARNING]
 > 이 태스크의 명령어에서 `<>` 로 감싼 부분은 본인 환경에 맞게 변경해야 합니다:
@@ -359,16 +376,19 @@ git remote -v
 
 14. [GitHub](https://github.com)에 로그인합니다.
 15. 우측 상단 `+` → [[New repository]]를 클릭합니다 (또는 [https://github.com/new](https://github.com/new) 접속).
+    <img src="/images/step8/8-1-step15-cloudshell.png" alt="New repository 생성" class="guide-img-sm" />
 16. 다음과 같이 설정합니다:
     - **Repository name**: `my-frontend`
     - **Description**: `Vue.js Frontend for 3-Tier App`
     - **Visibility**: Public (GitHub Actions 무료 사용)
     - **Add a README file**: 토글 ON
     - **.gitignore template**: `Node` 선택
+      <img src="/images/step8/8-1-step16-repo-settings.png" alt="Repository 설정" class="guide-img-sm" />
 
 17. [[Create repository]]를 클릭합니다.
+    <img src="/images/step8/8-1-step17-create-repo.png" alt="Create repository 완료" class="guide-img-sm" />
 
-### 3-2. my-backend 리포지토리 생성
+### 3-2. ⚙️ my-backend 리포지토리 생성
 
 18. 같은 방식으로 두 번째 리포지토리를 생성합니다:
     - **Repository name**: `my-backend`
@@ -376,8 +396,10 @@ git remote -v
     - **Visibility**: Public
     - **Add a README file**: 토글 ON
     - **.gitignore template**: `Gradle` 선택
+      <img src="/images/step8/8-1-step18-backend-repo.png" alt="Backend repository 설정" class="guide-img-sm" />
 
 19. [[Create repository]]를 클릭합니다.
+    <img src="/images/step8/8-1-step19-create-backend.png" alt="Backend repository 생성 완료" class="guide-img-sm" />
 
 ### 3-3. 로컬에 클론
 
@@ -391,6 +413,8 @@ git remote -v
 mkdir ~/3tier-project && cd ~/3tier-project
 ```
 
+<img src="/images/step8/8-1-step20-clone-repo.png" alt="작업 디렉토리 생성" class="guide-img-sm" />
+
 21. 프론트엔드 레포를 클론합니다:
 
 ```bash
@@ -402,6 +426,8 @@ git clone https://github.com/<YOUR_USERNAME>/my-frontend.git
 ```bash
 git clone https://github.com/<YOUR_USERNAME>/my-backend.git
 ```
+
+<img src="/images/step8/8-1-step22-git-config.png" alt="Git clone 완료" class="guide-img-sm" />
 
 > [!TIP]
 > 리포지토리를 Public으로 생성하면 GitHub Actions를 무제한 무료로 사용할 수 있습니다.  
@@ -486,6 +512,8 @@ rsync -av --exclude='.git' --exclude='build' --exclude='.gradle' \
   <기존-백엔드-프로젝트-경로>/ .
 ```
 
+<img src="/images/step8/8-1-step26-push-frontend.png" alt="소스 파일 복사" class="guide-img-sm" />
+
 27. push 전에 `.gitignore`를 확인합니다.  
     불필요한 파일(`build/`, `node_modules/`, `.env.local` 등)이 포함되지 않도록 3-5를 먼저 확인한 후 커밋합니다:
 
@@ -494,6 +522,10 @@ git add .
 git commit -m "feat: initial backend project"
 git push origin main
 ```
+
+<img src="/images/step8/8-1-step27-push-backend.png" alt="git push 완료" class="guide-img-sm" />
+
+<img src="/images/step8/8-1-step27-push-result.png" alt="push 결과 확인" class="guide-img-sm" />
 
 > [!TIP]
 > 프론트엔드도 같은 방식으로 진행합니다:
@@ -537,7 +569,7 @@ GitHub에서 레포 생성 시 선택한 `.gitignore` 템플릿(Node, Gradle)은
 > 기존 `.gitignore`에 아래 항목이 없다면 추가합니다.  
 > GitHub에서 생성된 `.gitignore`와 중복되는 항목은 그대로 두면 됩니다.
 
-**백엔드 — `.gitignore` 확인:**
+**⚙️ 백엔드 — `.gitignore` 확인:**
 
 30. `.gitignore` 파일을 열고 다음이 포함되어 있는지 확인합니다:
 
@@ -560,7 +592,7 @@ application-local.yml
 > `application.yml`에 하드코딩된 비밀번호가 있다면 환경 변수로 교체한 후 push하세요.  
 > Step 8-3 태스크 2에서 SSM Parameter Store를 사용하여 비밀값을 안전하게 관리합니다.
 
-**프론트엔드 — `.gitignore` 확인:**
+**🎨 프론트엔드 — `.gitignore` 확인:**
 
 32. `.gitignore`에 다음이 포함되어 있는지 확인합니다:
 
@@ -605,6 +637,8 @@ dist/
 > [!TIP]
 > **macOS 키체인 확인 방법:**  
 > Spotlight(⌘+Space)에서 `키체인 접근` 검색 → `github.com` 항목이 있으면 저장된 credential 확인 가능.
+>
+> <img src="/images/step8/8-1-step34-keychain-tip.png" alt="macOS 키체인 확인" class="guide-img-sm" />
 
 ```bash
 # 백엔드
@@ -627,6 +661,8 @@ git push origin main
 > [!NOTE]
 > `git rm -r --cached .`는 git 추적 목록만 초기화합니다 (로컬 파일은 삭제되지 않습니다).  
 > `.gitignore`에 새로 추가한 파일(`.env.production`, `build/` 등)이 이후 커밋에서 제외됩니다.
+>
+> <img src="/images/step8/8-1-step34-git-cached.png" alt="git rm --cached 실행 결과" class="guide-img-sm" />
 
 > [!NOTE]
 > 환경 변수(DB 접속 정보, API URL 등)의 실제 값 설정과 관리 방법은 이후 세션에서 다룹니다:
@@ -637,10 +673,8 @@ git push origin main
 > 지금은 `.gitignore` 설정만 확인하고 넘어가세요.
 
 > [!WARNING]
-> 기존 프로젝트에서 민감 정보(DB 비밀번호, API 키 등)를 제거하고 push한 경우,  
-> **현재 상태로는 배포해도 앱이 정상 동작하지 않습니다** (환경 변수가 비어있으므로).  
-> 이후 Step 8-2(프론트), 8-3(백엔드)에서 GitHub Secrets 또는 SSM Parameter Store로  
-> 환경 변수를 주입하는 설정을 완료하면 정상 동작합니다.
+> 기존 프로젝트에서 민감 정보(DB 비밀번호, API 키 등)를 제거하고 push한 경우, **현재 상태로는 배포해도 앱이 정상 동작하지 않습니다** (환경 변수가 비어있으므로).  
+> 이후 Step 8-2(프론트), 8-3(백엔드)에서 GitHub Secrets 또는 SSM Parameter Store로 환경 변수를 주입하는 설정을 완료하면 정상 동작합니다.
 
 ✅ **태스크 완료** — GitHub에 `my-frontend`와 `my-backend` 리포지토리를 생성했습니다.
 
@@ -674,10 +708,12 @@ Step 0~7에서 수동으로 만들었던 모든 인프라를 AWS CloudFormation 
 35. 상단 검색창에 `CloudFormation`을 입력하고 **CloudFormation** 서비스를 선택합니다.
 36. [[Create stack]] 드롭다운을 클릭한 후 **With new resources (standard)**를 선택합니다.
 37. **Prerequisite - Prepare template**에서 `Choose an existing template`을 선택합니다.
+    <img src="/images/step8/8-1-step37-cloudformation.png" alt="CloudFormation 템플릿 설정" class="guide-img-sm" />
 38. **Specify template**에서 `Upload a template file`을 선택합니다.
 39. [[Choose file]] 버튼을 클릭하고 다운로드한 `step8-network.yaml` 파일을 선택합니다.
 40. [[Next]] 버튼을 클릭합니다.
 41. **Stack name**에 `step8-network`를 입력합니다.
+    <img src="/images/step8/8-1-step41-stack-name.png" alt="Stack name 입력" class="guide-img-sm" />
 42. **Parameters** 섹션에서 다음을 설정합니다:
 
 | 파라미터         | 값             | 설명                                               |
@@ -699,8 +735,11 @@ Step 0~7에서 수동으로 만들었던 모든 인프라를 AWS CloudFormation 
 
 43. [[Next]] 버튼을 클릭합니다.
 44. **Configure stack options** 페이지에서 추가 설정 없이 [[Next]] 버튼을 클릭합니다.
+    <img src="/images/step8/8-1-step44-configure-options.png" alt="Configure stack options" class="guide-img-sm" />
 45. **Review and create** 페이지에서 Stack name, Parameters 설정 내용을 확인합니다.
+    <img src="/images/step8/8-1-step45-review.png" alt="Review and create" class="guide-img-sm" />
 46. [[Submit]] 버튼을 클릭합니다.
+    <img src="/images/step8/8-1-step46-submit.png" alt="Submit 클릭" class="guide-img-sm" />
 47. **Events** 탭에서 리소스 생성 진행 상태를 확인합니다.
 48. Status가 `CREATE_COMPLETE`로 변경될 때까지 기다립니다 (약 2~3분).
 
@@ -717,9 +756,12 @@ Step 0~7에서 수동으로 만들었던 모든 인프라를 AWS CloudFormation 
 > Network 스택의 Export 값을 Import하기 때문입니다.
 
 49. Stacks 목록으로 돌아가서 [[Create stack]] 드롭다운 → **With new resources (standard)**를 선택합니다.
+    <img src="/images/step8/8-1-step49-stack-complete.png" alt="Network 스택 생성 완료" class="guide-img-sm" />
 50. `Upload a template file` → `step8-data.yaml` 파일을 선택합니다.
+    <img src="/images/step8/8-1-step50-data-template.png" alt="Data 스택 템플릿 업로드" class="guide-img-sm" />
 51. [[Next]] 버튼을 클릭합니다.
 52. **Stack name**에 `step8-data`를 입력합니다.
+    <img src="/images/step8/8-1-step52-data-params.png" alt="Data 스택 이름 및 Parameters" class="guide-img-sm" />
 53. **Parameters** 섹션에서 다음을 설정합니다:
 
 | 파라미터         | 값               | 설명                               |
@@ -736,9 +778,12 @@ Step 0~7에서 수동으로 만들었던 모든 인프라를 AWS CloudFormation 
 
 54. [[Next]] 버튼을 클릭합니다.
 55. **Configure stack options** 페이지에서 [[Next]] 버튼을 클릭합니다.
+    <img src="/images/step8/8-1-step55-data-complete.png" alt="Data 스택 Configure options" class="guide-img-sm" />
 56. **Review and create** 페이지에서 설정을 확인합니다.  
     (DBMasterPassword는 `****`로 마스킹되어 표시되므로 입력 시 정확히 입력했는지 유의)
+    <img src="/images/step8/8-1-step56-frontend-stack.png" alt="Data 스택 Review" class="guide-img-sm" />
 57. [[Submit]] 버튼을 클릭합니다.
+    <img src="/images/step8/8-1-step57-frontend-complete.png" alt="Data 스택 Submit" class="guide-img-sm" />
 58. Status가 `CREATE_COMPLETE`가 될 때까지 기다립니다 (약 **8~10분**, Amazon RDS 생성 소요).
 
 > [!TIP]
@@ -755,17 +800,23 @@ Step 0~7에서 수동으로 만들었던 모든 인프라를 AWS CloudFormation 
 > Network 스택 완료를 기다릴 필요 없이 바로 생성할 수 있습니다.
 
 59. [[Create stack]] 드롭다운 → **With new resources (standard)**를 선택합니다.
+    <img src="/images/step8/8-1-step59-frontend-create.png" alt="Frontend 스택 생성" class="guide-img-sm" />
 60. `Upload a template file` → `step8-frontend.yaml` 파일을 선택합니다.
+    <img src="/images/step8/8-1-step60-frontend-params.png" alt="Frontend 템플릿 업로드" class="guide-img-sm" />
 61. [[Next]] 버튼을 클릭합니다.
 62. **Stack name**에 `step8-frontend`를 입력합니다.
+    <img src="/images/step8/8-1-step62-backend-create.png" alt="Frontend Stack name 입력" class="guide-img-sm" />
 63. **Parameters** 섹션에서 다음을 설정합니다:
     - **ProjectName**: `my-3tier-app` (4개 스택 모두 동일)
     - **BucketSuffix**: 본인만의 고유한 값 입력 (예: `hong01`, `myname-dev`).  
       S3 버킷 이름은 전 세계에서 고유해야 하므로 이니셜+번호 등을 사용합니다.
 64. [[Next]] 버튼을 클릭합니다.
 65. **Configure stack options** 페이지에서 [[Next]] 버튼을 클릭합니다.
+    <img src="/images/step8/8-1-step65-backend-params.png" alt="Frontend Configure options" class="guide-img-sm" />
 66. **Review and create** 페이지에서 확인 후 [[Submit]] 버튼을 클릭합니다.
+    <img src="/images/step8/8-1-step66-all-stacks.png" alt="Frontend Review and Submit" class="guide-img-sm" />
 67. Status가 `CREATE_COMPLETE`가 될 때까지 기다립니다 (약 1분).
+    <img src="/images/step8/8-1-step67-frontend-complete.png" alt="Frontend 스택 생성 완료" class="guide-img-sm" />
 
 ### 4-4. Backend 스택 생성 (ALB)
 
@@ -775,9 +826,12 @@ Step 0~7에서 수동으로 만들었던 모든 인프라를 AWS CloudFormation 
 > Network 스택이 `CREATE_COMPLETE` 상태여야 합니다 (VPC, Subnet, SG를 Import).
 
 68. [[Create stack]] 드롭다운 → **With new resources (standard)**를 선택합니다.
+    <img src="/images/step8/8-1-step68-backend-create.png" alt="Backend 스택 생성 시작" class="guide-img-sm" />
 69. `Upload a template file` → `step8-backend.yaml` 파일을 선택합니다.
+    <img src="/images/step8/8-1-step69-backend-template.png" alt="Backend 템플릿 업로드" class="guide-img-sm" />
 70. [[Next]] 버튼을 클릭합니다.
 71. **Stack name**에 `step8-backend`를 입력합니다.
+    <img src="/images/step8/8-1-step71-backend-params.png" alt="Backend Stack name 및 Parameters" class="guide-img-sm" />
 72. **Parameters** 섹션에서 다음을 설정합니다:
 
 | 파라미터        | 값                 | 설명                       |
@@ -788,8 +842,11 @@ Step 0~7에서 수동으로 만들었던 모든 인프라를 AWS CloudFormation 
 
 73. [[Next]] 버튼을 클릭합니다.
 74. **Configure stack options** 페이지에서 [[Next]] 버튼을 클릭합니다.
+    <img src="/images/step8/8-1-step74-backend-options.png" alt="Backend Configure options" class="guide-img-sm" />
 75. **Review and create** 페이지에서 확인 후 [[Submit]] 버튼을 클릭합니다.
+    <img src="/images/step8/8-1-step75-backend-review.png" alt="Backend Review and Submit" class="guide-img-sm" />
 76. Status가 `CREATE_COMPLETE`가 될 때까지 기다립니다 (약 2~3분).
+    <img src="/images/step8/8-1-step76-all-complete.png" alt="4개 스택 모두 생성 완료" class="guide-img-sm" />
 
 ### 4-5. 전체 스택 상태 확인
 
@@ -835,6 +892,7 @@ AWS CloudFormation이 생성한 리소스를 확인합니다.
 78. 상단 검색창에 `CloudFormation`을 입력하고 **CloudFormation** 서비스를 선택합니다.
 79. **Stacks** 목록에서 `step8-network`를 클릭합니다.
 80. **Outputs** 탭을 클릭합니다.
+    <img src="/images/step8/8-1-step80-vpc-check.png" alt="CloudFormation Outputs 탭" class="guide-img-sm" />
 81. 다음 값들을 메모합니다:
 
 | Output Key         | 예시 값                                                                    | 용도                 |
@@ -861,11 +919,14 @@ AWS CloudFormation이 생성한 리소스를 확인합니다.
 > ```
 >
 > 이 명령을 실행하면 모든 Output 값을 표 형태로 볼 수 있습니다.
+>
+> <img src="/images/step8/8-1-step81-outputs-tip.png" alt="Outputs CLI 확인 결과" class="guide-img-sm" />
 
 ### 5-2. VPC 확인
 
 82. 상단 검색창에 `VPC`를 입력하고 **VPC** 서비스를 선택합니다.
 83. 왼쪽 메뉴에서 **Your VPCs**를 클릭합니다.
+    <img src="/images/step8/8-1-step83-vpc-list.png" alt="VPC 목록 확인" class="guide-img-sm" />
 84. `my-3tier-app-vpc`가 생성되었는지 확인합니다.
 
 > [!OUTPUT]
@@ -876,6 +937,7 @@ AWS CloudFormation이 생성한 리소스를 확인합니다.
     - `my-3tier-app-public-subnet-2` (10.0.2.0/24)
     - `my-3tier-app-private-subnet-1` (10.0.11.0/24)
     - `my-3tier-app-private-subnet-2` (10.0.12.0/24)
+      <img src="/images/step8/8-1-step85-subnets.png" alt="서브넷 4개 확인" class="guide-img-sm" />
 
 ### 5-3. RDS 확인
 
@@ -883,6 +945,7 @@ AWS CloudFormation이 생성한 리소스를 확인합니다.
 87. 왼쪽 메뉴에서 **Databases**를 클릭합니다.
 88. `my-3tier-app-db`를 클릭합니다.
 89. **Connectivity & security** 탭을 클릭하고, **Connect using** 섹션에서 **Endpoints**를 선택하면 Endpoint 주소가 표시됩니다.
+    <img src="/images/step8/8-1-step89-rds-check.png" alt="RDS Endpoint 확인" class="guide-img-sm" />
 90. Status가 `Available`인지 확인합니다.
 
 > [!OUTPUT]
@@ -897,16 +960,21 @@ AWS CloudFormation이 생성한 리소스를 확인합니다.
 ### 5-4. S3 버킷 확인
 
 91. 상단 검색창에 `S3`를 입력하고 **S3** 서비스를 선택합니다.
+    <img src="/images/step8/8-1-step91-alb-check.png" alt="S3 버킷 확인" class="guide-img-sm" />
 92. `my-3tier-app-frontend-{BucketSuffix}` 버킷이 생성되었는지 확인합니다.
 93. **Properties** 탭 → **Static website hosting**이 활성화되었는지 확인합니다.
+    <img src="/images/step8/8-1-step93-sg-check.png" alt="S3 Static website hosting 확인" class="guide-img-md" />
 
 ### 5-5. ALB 확인
 
 94. 상단 검색창에 `EC2`를 입력하고 **EC2** 서비스를 선택합니다.
 95. 왼쪽 메뉴에서 **Load Balancers**를 클릭합니다.
 96. `my-3tier-app-alb`가 생성되었는지 확인합니다.
+    <img src="/images/step8/8-1-step96-alb-list.png" alt="ALB 목록 확인" class="guide-img-sm" />
 97. **DNS name**을 복사합니다 (Step 8-3에서 사용).
+    <img src="/images/step8/8-1-step97-alb-dns.png" alt="ALB DNS name 복사" class="guide-img-sm" />
 98. **Target Groups**에서 `my-3tier-app-tg`를 확인합니다 (아직 등록된 타겟 없음).
+    <img src="/images/step8/8-1-step98-target-group.png" alt="Target Group 확인" class="guide-img-sm" />
 
 > [!OUTPUT]
 > ALB 상세 정보:
@@ -920,6 +988,7 @@ AWS CloudFormation이 생성한 리소스를 확인합니다.
 ### 5-6. Security Groups 확인
 
 99. 왼쪽 메뉴에서 **Security Groups**를 클릭합니다.
+    <img src="/images/step8/8-1-step99-sg-list.png" alt="Security Groups 목록" class="guide-img-sm" />
 100. 3개의 SG를 확인합니다:
      - `my-3tier-app-alb-sg`: 80, 443 포트 열림
      - `my-3tier-app-ec2-sg`: 8080 (ALB-SG에서만), 22 (전체)
