@@ -63,7 +63,7 @@ CloudFormation으로 생성한 리소스는 스택 삭제로 일괄 정리됩니
 📍 **실행 위치: AWS 콘솔 + CloudShell**
 
 > [!TIP]
-> AWS 콘솔 하단의 **CloudShell** 아이콘(>\_)을 클릭하면 브라우저에서 바로 AWS CLI를 실행할 수 있습니다.  
+> AWS 콘솔 우측 상단의 **CloudShell** 아이콘(>\_)을 클릭하면 브라우저에서 바로 AWS CLI를 실행할 수 있습니다.  
 > 로컬에 AWS CLI가 설치되어 있지 않아도 S3 비우기, SSM 삭제 등을 CloudShell에서 수행할 수 있습니다.
 
 아래 리소스는 CloudFormation이 아닌 수동으로 생성한 것이므로 개별 삭제합니다:
@@ -93,7 +93,7 @@ CloudFormation으로 생성한 리소스는 스택 삭제로 일괄 정리됩니
 
 📍 **실행 위치: AWS CloudShell 또는 로컬 터미널**
 
-18. CloudShell(콘솔 하단 >\_ 아이콘)을 열고 다음 명령어를 실행합니다:
+18. CloudShell(콘솔 우측 상단 >\_ 아이콘)을 열고 다음 명령어를 실행합니다:
 
 ```bash
 # 배포용 버킷 비우기 + 삭제 (<> 부분을 본인 버킷명으로 변경)
@@ -254,7 +254,8 @@ aws ssm delete-parameter --name "/my-3tier-app/db/password"
 > | S3 (소량 데이터)         | -           | -             | ~$0.01         | 🟢 낮음              |
 >
 > ※ 금액은 참고용이며, 리전·환율·AWS 정책 변경에 따라 달라질 수 있습니다.  
-> ※ 2024.02부터 모든 Public IPv4 주소에 $0.005/hr 과금됩니다 (NAT Gateway, ALB, EC2 포함).
+> ※ 2024.02부터 모든 Public IPv4 주소에 $0.005/hr 과금됩니다 (NAT Gateway, ALB, EC2 포함).  
+> [Amazon EC2 요금](https://aws.amazon.com/ec2/pricing/) | [Amazon VPC 요금](https://aws.amazon.com/vpc/pricing/) | [Amazon RDS 요금](https://aws.amazon.com/rds/pricing/)
 >
 > ⚠️ **모든 리소스를 방치하면 월 ~$87 이상 발생할 수 있습니다!**
 >
@@ -298,7 +299,7 @@ aws ssm delete-parameter --name "/my-3tier-app/db/password"
 ```
 
 > [!TIP]
-> 삭제가 실패하면 "이 리소스를 참조하는 다른 리소스가 아직 존재한다"는 의미입니다.
+> 삭제가 실패하면 "이 리소스를 참조하는 다른 리소스가 아직 존재한다"는 의미입니다.  
 > 에러 메시지에서 참조하는 리소스를 확인하고 먼저 삭제하세요.
 
 ---
@@ -307,32 +308,32 @@ aws ssm delete-parameter --name "/my-3tier-app/db/password"
 
 Auto Scaling Group이 있다면 먼저 삭제합니다 (Amazon EC2 인스턴스가 자동 생성되는 것을 방지).
 
-65. 상단 검색창에 `EC2`를 입력하고 **EC2** 서비스를 선택합니다.
-66. 왼쪽 메뉴에서 **Auto Scaling Groups**를 클릭합니다.
-67. 해당 ASG를 선택합니다.
-68. [[Delete]] 버튼을 클릭합니다.
-69. 확인 입력란에 `delete`를 입력하고 [[Delete]]를 클릭합니다.
+66. 상단 검색창에 `EC2`를 입력하고 **EC2** 서비스를 선택합니다.
+67. 왼쪽 메뉴에서 **Auto Scaling Groups**를 클릭합니다.
+68. 해당 ASG를 선택합니다.
+69. [[Delete]] 버튼을 클릭합니다.
+70. 확인 입력란에 `delete`를 입력하고 [[Delete]]를 클릭합니다.
 
 ---
 
 ### 단계 2: ALB (Application Load Balancer) 삭제
 
-70. 왼쪽 메뉴에서 **Load Balancers**를 클릭합니다.
-71. `my-3tier-app-alb`를 선택합니다.
-72. **Actions** → [[Delete load balancer]]를 클릭합니다.
-73. 확인 입력란에 `confirm`을 입력하고 [[Delete]]를 클릭합니다.
+71. 왼쪽 메뉴에서 **Load Balancers**를 클릭합니다.
+72. `my-3tier-app-alb`를 선택합니다.
+73. **Actions** → [[Delete load balancer]]를 클릭합니다.
+74. 확인 입력란에 `confirm`을 입력하고 [[Delete]]를 클릭합니다.
 
-74. 왼쪽 메뉴에서 **Target Groups**를 클릭합니다.
-75. `my-3tier-app-tg`를 선택합니다.
-76. **Actions** → [[Delete]]를 클릭합니다.
-77. 확인 팝업에서 [[Yes, delete]]를 클릭합니다.
+75. 왼쪽 메뉴에서 **Target Groups**를 클릭합니다.
+76. `my-3tier-app-tg`를 선택합니다.
+77. **Actions** → [[Delete]]를 클릭합니다.
+78. 확인 팝업에서 [[Yes, delete]]를 클릭합니다.
 
 > [!NOTE]
-> ALB를 삭제하면 즉시 비용 발생이 중단됩니다 (~$0.0225/시간).
+> ALB를 삭제하면 즉시 비용 발생이 중단됩니다 (~$0.0225/시간).  
 > Target Group은 ALB 삭제 후에 삭제할 수 있습니다.
 
 > [!TIP]
-> ALB 삭제 전에 Target Group에서 인스턴스를 먼저 Deregister하면 더 깔끔합니다.
+> ALB 삭제 전에 Target Group에서 인스턴스를 먼저 Deregister하면 더 깔끔합니다.  
 > 하지만 ALB를 삭제하면 Target Group의 등록도 자동으로 해제됩니다.
 
 ---
@@ -341,11 +342,11 @@ Auto Scaling Group이 있다면 먼저 삭제합니다 (Amazon EC2 인스턴스�
 
 NAT Gateway는 시간당 비용이 발생하므로 빠르게 삭제합니다.
 
-78. 상단 검색창에 `VPC`를 입력하고 **VPC** 서비스를 선택합니다.
-79. 왼쪽 메뉴에서 **NAT Gateways**를 클릭합니다.
-80. `my-3tier-app-nat-gw`를 선택합니다.
-81. **Actions** → [[Delete NAT gateway]]를 클릭합니다.
-82. 확인 입력란에 `delete`를 입력하고 [[Delete]]를 클릭합니다 (삭제에 1~2분 소요).
+79. 상단 검색창에 `VPC`를 입력하고 **VPC** 서비스를 선택합니다.
+80. 왼쪽 메뉴에서 **NAT Gateways**를 클릭합니다.
+81. `my-3tier-app-nat-gw`를 선택합니다.
+82. **Actions** → [[Delete NAT gateway]]를 클릭합니다.
+83. 확인 입력란에 `delete`를 입력하고 [[Delete]]를 클릭합니다 (삭제에 1~2분 소요).
 
 ---
 
@@ -354,13 +355,13 @@ NAT Gateway는 시간당 비용이 발생하므로 빠르게 삭제합니다.
 NAT Gateway에 연결된 EIP를 해제합니다.
 
 > [!NOTE]
-> NAT Gateway 삭제 후 1~2분 대기해야 EIP 해제가 가능합니다.
+> NAT Gateway 삭제 후 1~2분 대기해야 EIP 해제가 가능합니다.  
 > "EIP is still associated" 에러가 나오면 잠시 후 다시 시도하세요.
 
-83. 왼쪽 메뉴에서 **Elastic IPs**를 클릭합니다.
-84. `my-3tier-app-nat-eip`를 선택합니다.
-85. **Actions** → [[Release Elastic IP addresses]]를 클릭합니다.
-86. [[Release]] 버튼을 클릭합니다.
+84. 왼쪽 메뉴에서 **Elastic IPs**를 클릭합니다.
+85. `my-3tier-app-nat-eip`를 선택합니다.
+86. **Actions** → [[Release Elastic IP addresses]]를 클릭합니다.
+87. [[Release]] 버튼을 클릭합니다.
 
 > [!WARNING]
 > 사용하지 않는 Elastic IP는 시간당 비용이 발생합니다.  
@@ -378,28 +379,29 @@ NAT Gateway에 연결된 EIP를 해제합니다.
 > - 하단 **Deletion protection** 섹션에서 **Enable deletion protection** 체크를 해제합니다.
 > - [[Continue]] → **Apply immediately** 선택 → [[Modify DB instance]]를 클릭합니다.
 
-87. 상단 검색창에 `RDS`를 입력하고 **RDS** 서비스를 선택합니다.
-88. 왼쪽 메뉴에서 **Databases**를 클릭합니다.
-89. `my-3tier-app-db`를 선택합니다.
-90. **Actions** → [[Delete]]를 클릭합니다.
-91. 설정:
+88. 상단 검색창에 `RDS`를 입력하고 **RDS** 서비스를 선택합니다.
+89. 왼쪽 메뉴에서 **Databases**를 클릭합니다.
+90. `my-3tier-app-db`를 선택합니다.
+91. **Actions** → [[Delete]]를 클릭합니다.
+92. 설정:
     - ❌ Create final snapshot: 체크 해제
     - ✅ I acknowledge that upon instance deletion...
     - 확인 입력: `delete me`
-92. [[Delete]] 버튼을 클릭합니다.
+93. [[Delete]] 버튼을 클릭합니다.
 
 > [!NOTE]
-> RDS 삭제에 5~10분 소요됩니다. 삭제 완료를 기다리지 않고 다음 단계를 진행해도 됩니다.
+> RDS 삭제에 5~10분 소요됩니다.  
+> 삭제 완료를 기다리지 않고 다음 단계를 진행해도 됩니다.
 
 ---
 
 ### 단계 6: Amazon EC2 인스턴스 종료
 
-93. 상단 검색창에 `EC2`를 입력하고 **EC2** 서비스를 선택합니다.
-94. 왼쪽 메뉴에서 **Instances**를 클릭합니다.
-95. Step 8에서 생성한 인스턴스 (`my-3tier-app-server`)를 선택합니다.
-96. **Instance state** → [[Terminate (delete) instance]]를 클릭합니다.
-97. 이전 Step에서 생성한 EC2도 함께 종료합니다.
+94. 상단 검색창에 `EC2`를 입력하고 **EC2** 서비스를 선택합니다.
+95. 왼쪽 메뉴에서 **Instances**를 클릭합니다.
+96. Step 8에서 생성한 인스턴스 (`my-3tier-app-server`)를 선택합니다.
+97. **Instance state** → [[Terminate (delete) instance]]를 클릭합니다.
+98. 이전 Step에서 생성한 EC2도 함께 종료합니다.
 
 ---
 
@@ -407,12 +409,12 @@ NAT Gateway에 연결된 EIP를 해제합니다.
 
 Amazon CloudFront 배포는 비활성화 후 삭제해야 합니다.
 
-98. 상단 검색창에 `CloudFront`를 입력하고 **CloudFront** 서비스를 선택합니다.
-99. Distributions 목록에서 배포를 선택합니다.
-100.  [[Disable]] 버튼을 클릭합니다.
-101.  확인 팝업에서 [[Disable distribution]]을 클릭합니다.
-102.  Status가 `Disabled`로 변경될 때까지 대기합니다 (5~10분).
-103.  다시 선택하고 [[Delete]] 버튼을 클릭합니다.
+99. 상단 검색창에 `CloudFront`를 입력하고 **CloudFront** 서비스를 선택합니다.
+100. Distributions 목록에서 배포를 선택합니다.
+101.  [[Disable]] 버튼을 클릭합니다.
+102.  확인 팝업에서 [[Disable distribution]]을 클릭합니다.
+103.  Status가 `Disabled`로 변경될 때까지 대기합니다 (5~10분).
+104.  다시 선택하고 [[Delete]] 버튼을 클릭합니다.
 
 > [!TIP]
 > CloudFront 비활성화에 시간이 걸리므로, 다른 리소스를 먼저 정리하고 마지막에 돌아와서 삭제하면 효율적입니다.
@@ -435,13 +437,13 @@ aws s3 rb s3://<FRONTEND_BUCKET_NAME>
 
 또는 Console에서:
 
-104. 상단 검색창에 `S3`를 입력하고 **S3** 서비스를 선택합니다.
-105. 프론트엔드 배포 버킷을 선택합니다.
-106. [[Empty]] 버튼을 클릭합니다.
-107. 확인 문구 `permanently delete`를 입력하고 [[Empty]]를 클릭합니다.
-108. 다시 버킷을 선택하고 [[Delete]] 버튼을 클릭합니다.
-109. 버킷 이름을 입력하고 [[Delete bucket]]을 클릭합니다.
-110. 배포용 S3 버킷 (JAR/WAR 업로드용)도 같은 방식으로 비우기 + 삭제합니다.
+105. 상단 검색창에 `S3`를 입력하고 **S3** 서비스를 선택합니다.
+106. 프론트엔드 배포 버킷을 선택합니다.
+107. [[Empty]] 버튼을 클릭합니다.
+108. 확인 문구 `permanently delete`를 입력하고 [[Empty]]를 클릭합니다.
+109. 다시 버킷을 선택하고 [[Delete]] 버튼을 클릭합니다.
+110. 버킷 이름을 입력하고 [[Delete bucket]]을 클릭합니다.
+111. 배포용 S3 버킷 (JAR/WAR 업로드용)도 같은 방식으로 비우기 + 삭제합니다.
 
 > [!TIP]
 > 이전 Step에서 생성한 S3 버킷도 확인하세요.  
@@ -468,41 +470,39 @@ aws ssm delete-parameter --name "/my-3tier-app/s3/region"
 
 또는 Console에서:
 
-111. 상단 검색창에 `Systems Manager`를 입력하고 선택합니다.
-112. 왼쪽 메뉴에서 **Parameter Store**를 클릭합니다.
-113. `/my-3tier-app/` 접두사 파라미터를 모두 선택하고 [[Delete]] 버튼을 클릭합니다.
+112. 상단 검색창에 `Systems Manager`를 입력하고 선택합니다.
+113. 왼쪽 메뉴에서 **Parameter Store**를 클릭합니다.
+114. `/my-3tier-app/` 접두사 파라미터를 모두 선택하고 [[Delete]] 버튼을 클릭합니다.
 
 ---
 
 ### 단계 10: Security Groups 삭제
 
 > [!NOTE]
-> Security Group은 다른 리소스가 참조하고 있으면 삭제할 수 없습니다.
+> Security Group은 다른 리소스가 참조하고 있으면 삭제할 수 없습니다.  
 > EC2, RDS, ALB를 먼저 삭제한 후 진행하세요.
 >
-> **상호 참조 해결:** SG끼리 서로 참조하는 경우 삭제가 실패합니다.
+> **상호 참조 해결:** SG끼리 서로 참조하는 경우 삭제가 실패합니다.  
 > 이 경우 먼저 각 SG의 Inbound/Outbound 규칙에서 다른 SG를 참조하는 규칙을 삭제한 뒤 SG를 삭제하세요.
 
-114. 상단 검색창에 `VPC`를 입력하고 **VPC** 서비스를 선택합니다.
-115. 왼쪽 메뉴에서 **Security Groups**를 클릭합니다.
-116. 다음 SG를 삭제합니다 (default SG는 삭제 불가):
+115. 상단 검색창에 `VPC`를 입력하고 **VPC** 서비스를 선택합니다.
+116. 왼쪽 메뉴에서 **Security Groups**를 클릭합니다.
+117. 다음 SG를 삭제합니다 (default SG는 삭제 불가):
+     - `my-3tier-app-rds-sg`
+     - `my-3tier-app-ec2-sg`
+     - `my-3tier-app-alb-sg`
 
-
-    - `my-3tier-app-rds-sg`
-    - `my-3tier-app-ec2-sg`
-    - `my-3tier-app-alb-sg`
-
-117. 각 SG를 선택합니다.
-118. **Actions** → [[Delete security groups]]를 클릭합니다.
-119. 확인 팝업에서 [[Delete]]를 클릭합니다.
+118. 각 SG를 선택합니다.
+119. **Actions** → [[Delete security groups]]를 클릭합니다.
+120. 확인 팝업에서 [[Delete]]를 클릭합니다.
 
 ---
 
 ### 단계 11: DB Subnet Group 삭제
 
-120. 상단 검색창에 `RDS`를 입력하고 **RDS** 서비스를 선택합니다.
-121. 왼쪽 메뉴에서 **Subnet groups**를 클릭합니다.
-122. `my-3tier-app-db-subnet-group`을 선택하고 [[Delete]] 버튼을 클릭합니다.
+121. 상단 검색창에 `RDS`를 입력하고 **RDS** 서비스를 선택합니다.
+122. 왼쪽 메뉴에서 **Subnet groups**를 클릭합니다.
+123. `my-3tier-app-db-subnet-group`을 선택하고 [[Delete]] 버튼을 클릭합니다.
 
 > [!NOTE]
 > Amazon RDS 인스턴스가 완전히 삭제된 후에만 Subnet Group을 삭제할 수 있습니다.
@@ -513,11 +513,11 @@ aws ssm delete-parameter --name "/my-3tier-app/s3/region"
 
 VPC를 삭제하면 연결된 서브넷, 라우트 테이블, IGW가 함께 삭제됩니다.
 
-123. 상단 검색창에 `VPC`를 입력하고 **VPC** 서비스를 선택합니다.
-124. 왼쪽 메뉴에서 **Your VPCs**를 클릭합니다.
-125. `my-3tier-app-vpc`를 선택합니다.
-126. **Actions** → [[Delete VPC]]를 클릭합니다.
-127. 확인 입력란에 `delete`를 입력하고 [[Delete]]를 클릭합니다.
+124. 상단 검색창에 `VPC`를 입력하고 **VPC** 서비스를 선택합니다.
+125. 왼쪽 메뉴에서 **Your VPCs**를 클릭합니다.
+126. `my-3tier-app-vpc`를 선택합니다.
+127. **Actions** → [[Delete VPC]]를 클릭합니다.
+128. 확인 입력란에 `delete`를 입력하고 [[Delete]]를 클릭합니다.
 
 > [!WARNING]
 > VPC 삭제가 실패하면 아직 연결된 리소스가 있는 것입니다.  
@@ -538,10 +538,10 @@ VPC를 삭제하면 연결된 서브넷, 라우트 테이블, IGW가 함께 삭�
 
 📍 **실행 위치: AWS 콘솔**
 
-128. 상단 검색창에 `DynamoDB`를 입력하고 **DynamoDB** 서비스를 선택합니다.
-129. 왼쪽 메뉴에서 **Tables**를 클릭합니다.
-130. 이전 Step에서 생성한 테이블을 선택하고 [[Delete]] 버튼을 클릭합니다.
-131. 확인 입력란에 `confirm`을 입력하고 [[Delete table]]을 클릭합니다.
+129. 상단 검색창에 `DynamoDB`를 입력하고 **DynamoDB** 서비스를 선택합니다.
+130. 왼쪽 메뉴에서 **Tables**를 클릭합니다.
+131. 이전 Step에서 생성한 테이블을 선택하고 [[Delete]] 버튼을 클릭합니다.
+132. 확인 입력란에 `confirm`을 입력하고 [[Delete table]]을 클릭합니다.
 
 > [!NOTE]
 > Step 10(서버리스)을 진행하지 않았다면 이 단계를 건너뛰세요.
@@ -556,10 +556,10 @@ VPC를 삭제하면 연결된 서브넷, 라우트 테이블, IGW가 함께 삭�
 
 📍 **실행 위치: AWS 콘솔 (CloudFormation)**
 
-132. 상단 검색창에 `CloudFormation`을 입력하고 **CloudFormation** 서비스를 선택합니다.
-133. **Stacks** 목록에서 이전 Step에서 생성한 스택이 있는지 확인합니다.
-134. 있다면 각 스택을 선택하고 [[Delete]] 버튼을 클릭합니다.
-135. 확인 팝업에서 [[Delete stack]]을 클릭합니다.
+133. 상단 검색창에 `CloudFormation`을 입력하고 **CloudFormation** 서비스를 선택합니다.
+134. **Stacks** 목록에서 이전 Step에서 생성한 스택이 있는지 확인합니다.
+135. 있다면 각 스택을 선택하고 [[Delete]] 버튼을 클릭합니다.
+136. 확인 팝업에서 [[Delete stack]]을 클릭합니다.
 
 스택 삭제가 `DELETE_FAILED` 상태가 되면:
 
@@ -581,12 +581,12 @@ VPC를 삭제하면 연결된 서브넷, 라우트 테이블, IGW가 함께 삭�
 
 📍 **실행 위치: AWS 콘솔 (Certificate Manager)**
 
-136. 우측 상단 리전을 **US East (N. Virginia) us-east-1**로 변경합니다.
-137. 상단 검색창에 `Certificate Manager`를 입력하고 선택합니다.
-138. 사용하지 않는 인증서를 선택합니다.
-139. [[Delete]] 버튼을 클릭합니다.
-140. 확인 팝업에서 [[Delete]]를 클릭합니다.
-141. 리전을 **ap-northeast-2 (서울)** 로 돌아와서 같은 작업을 반복합니다.
+137. 우측 상단 리전을 **US East (N. Virginia) us-east-1**로 변경합니다.
+138. 상단 검색창에 `Certificate Manager`를 입력하고 선택합니다.
+139. 사용하지 않는 인증서를 선택합니다.
+140. [[Delete]] 버튼을 클릭합니다.
+141. 확인 팝업에서 [[Delete]]를 클릭합니다.
+142. 리전을 **ap-northeast-2 (서울)** 로 돌아와서 같은 작업을 반복합니다.
 
 > [!NOTE]
 > CloudFront나 ALB에 연결된 인증서는 삭제할 수 없습니다.  
@@ -598,12 +598,12 @@ VPC를 삭제하면 연결된 서브넷, 라우트 테이블, IGW가 함께 삭�
 
 📍 **실행 위치: AWS 콘솔 (Route 53)**
 
-142. 상단 검색창에 `Route 53`을 입력하고 **Route 53** 서비스를 선택합니다.
-143. 왼쪽 메뉴에서 **Hosted zones**를 클릭합니다.
-144. 본인의 도메인을 클릭합니다.
-145. 생성한 A 레코드 (CloudFront Alias, ALB Alias)를 선택합니다.
-146. [[Delete records]] 버튼을 클릭합니다.
-147. 확인 팝업에서 [[Delete]]를 클릭합니다.
+143. 상단 검색창에 `Route 53`을 입력하고 **Route 53** 서비스를 선택합니다.
+144. 왼쪽 메뉴에서 **Hosted zones**를 클릭합니다.
+145. 본인의 도메인을 클릭합니다.
+146. 생성한 A 레코드 (CloudFront Alias, ALB Alias)를 선택합니다.
+147. [[Delete records]] 버튼을 클릭합니다.
+148. 확인 팝업에서 [[Delete]]를 클릭합니다.
 
 > [!TIP]
 > Hosted zone 자체는 삭제하지 않아도 됩니다 (월 $0.50).  
@@ -616,21 +616,21 @@ VPC를 삭제하면 연결된 서브넷, 라우트 테이블, IGW가 함께 삭�
 
 📍 **실행 위치: AWS 콘솔 (IAM)**
 
-148. 상단 검색창에 `IAM`을 입력하고 **IAM** 서비스를 선택합니다.
-149. 왼쪽 메뉴에서 **Users**를 클릭합니다.
-150. `github-actions-frontend`를 선택합니다.
-151. [[Delete]] 버튼을 클릭합니다.
-152. 확인 입력란에 사용자 이름을 입력하고 [[Delete]]를 클릭합니다.
-153. `github-actions-backend`도 같은 방식으로 삭제합니다.
-154. 왼쪽 메뉴에서 **Roles**를 클릭합니다.
-155. 검색창에 `my-3tier-app-ec2-role` (또는 `ec2-starter-role`)을 입력합니다.
-156. 해당 Role을 선택합니다.
-157. [[Delete]] 버튼을 클릭합니다.
-158. 확인 입력란에 Role 이름을 입력하고 [[Delete]]를 클릭합니다.
-159. 왼쪽 메뉴에서 **Policies**를 클릭합니다.
-160. 커스텀 정책이 있다면 선택합니다.
-161. **Actions** → [[Delete]]를 클릭합니다.
-162. 확인 팝업에서 [[Delete]]를 클릭합니다.
+149. 상단 검색창에 `IAM`을 입력하고 **IAM** 서비스를 선택합니다.
+150. 왼쪽 메뉴에서 **Users**를 클릭합니다.
+151. `github-actions-frontend`를 선택합니다.
+152. [[Delete]] 버튼을 클릭합니다.
+153. 확인 입력란에 사용자 이름을 입력하고 [[Delete]]를 클릭합니다.
+154. `github-actions-backend`도 같은 방식으로 삭제합니다.
+155. 왼쪽 메뉴에서 **Roles**를 클릭합니다.
+156. 검색창에 `my-3tier-app-ec2-role` (또는 `ec2-starter-role`)을 입력합니다.
+157. 해당 Role을 선택합니다.
+158. [[Delete]] 버튼을 클릭합니다.
+159. 확인 입력란에 Role 이름을 입력하고 [[Delete]]를 클릭합니다.
+160. 왼쪽 메뉴에서 **Policies**를 클릭합니다.
+161. 커스텀 정책이 있다면 선택합니다.
+162. **Actions** → [[Delete]]를 클릭합니다.
+163. 확인 팝업에서 [[Delete]]를 클릭합니다.
 
 > [!TIP]
 > IAM 리소스는 무료이므로 급하게 삭제하지 않아도 됩니다.  
@@ -652,19 +652,19 @@ VPC를 삭제하면 연결된 서브넷, 라우트 테이블, IGW가 함께 삭�
 
 📍 **실행 위치: AWS 콘솔**
 
-163. 상단 검색창에 `Resource Groups & Tag Editor`를 입력하고 선택합니다.
-164. 왼쪽 메뉴에서 **Tag Editor**를 선택합니다.
-165. Tag key `Step`, Tag value `step8`로 검색합니다.
-166. 검색 결과에 리소스가 없으면 정리 완료입니다.
+164. 상단 검색창에 `Resource Groups & Tag Editor`를 입력하고 선택합니다.
+165. 왼쪽 메뉴에서 **Tag Editor**를 선택합니다.
+166. Tag key `Step`, Tag value `step8`로 검색합니다.
+167. 검색 결과에 리소스가 없으면 정리 완료입니다.
 
 > [!TIP]
 > `step1` ~ `step7`로도 검색하여 이전 Step에서 남긴 리소스가 있는지 확인하세요.
 
 #### 비용 발생 리소스 확인
 
-167. 상단 검색창에 `Billing`을 입력하고 **Billing and Cost Management** 서비스를 선택합니다.
-168. 왼쪽 메뉴에서 **Bills** 또는 **Cost Explorer**를 클릭하여 현재 비용을 확인합니다.
-169. 다음 서비스에 비용이 0인지 확인합니다:
+168. 상단 검색창에 `Billing`을 입력하고 **Billing and Cost Management** 서비스를 선택합니다.
+169. 왼쪽 메뉴에서 **Bills** 또는 **Cost Explorer**를 클릭하여 현재 비용을 확인합니다.
+170. 다음 서비스에 비용이 0인지 확인합니다:
 
 | 서비스     | 확인 사항                  |
 | ---------- | -------------------------- |
