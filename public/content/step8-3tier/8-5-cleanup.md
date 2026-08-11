@@ -15,6 +15,10 @@ estimatedCost: 이전 차시(8-1~8-3)에서 생성한 리소스로 인해 비용
 Step 0 ~ 8에서 생성한 모든 AWS 리소스를 체계적으로 정리합니다.  
 **비용이 발생하는 리소스부터 우선 삭제합니다.**
 
+### Step 8 전체 아키텍처
+
+<img src="/images/step8/8-architecture.png" alt="Step 8 3-Tier 아키텍처" class="guide-img-lg" />
+
 ---
 
 ## 본인 환경에 맞는 정리 방법 선택

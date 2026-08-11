@@ -16,6 +16,10 @@ estimatedCost: 이전 차시(8-1~8-3)에서 생성한 리소스로 인해 비용
 이 실습에서는 Step 8-1 ~ 8-3에서 구축한 3-Tier 아키텍처의 전체 연동을 확인하고,
 선택적으로 도메인과 HTTPS를 적용합니다.
 
+### Step 8 전체 아키텍처
+
+<img src="/images/step8/8-architecture.png" alt="Step 8 3-Tier 아키텍처" class="guide-img-lg" />
+
 > [!NOTE]
 > 이 세션의 구성:
 >
@@ -30,6 +34,8 @@ estimatedCost: 이전 차시(8-1~8-3)에서 생성한 리소스로 인해 비용
 
 CloudFront(HTTPS)에서 ALB(HTTP)로 직접 호출하면 Mixed Content로 차단됩니다.  
 아래 두 방법 중 하나를 선택하세요:
+
+<img src="/images/step8/8-4-mixed-content-error.png" alt="Mixed Content 에러 화면" class="guide-img-sm" />
 
 | 방법                         | 조건               | 장점                               | 단점                              |
 | ---------------------------- | ------------------ | ---------------------------------- | --------------------------------- |
@@ -67,12 +73,14 @@ CloudFront의 경로 패턴으로 요청을 분기합니다:
 1. 상단 검색창에 `CloudFront`를 입력하고 **CloudFront** 서비스를 선택합니다.
 2. Distributions 목록에서 프론트엔드 배포를 클릭합니다.
 3. **Origins** 탭을 클릭합니다.
+   <img src="/images/step8/8-4-step3-cf-origins.png" alt="CloudFront Origins 탭" class="guide-img-sm" />
 4. [[Create origin]] 버튼을 클릭합니다.
 5. 다음과 같이 설정합니다:
    - **Origin domain**: 드롭다운에서 **Elastic Load Balancer** 섹션의 `my-3tier-app-alb`를 선택합니다
    - **Protocol**: `HTTP only` 선택
    - **HTTP port**: `80` (기본값)
    - **Name**: ALB DNS가 자동 입력됩니다 (변경 불필요)
+     <img src="/images/step8/8-4-step5-origin-settings.png" alt="Origin 설정" class="guide-img-sm" />
 6. [[Create origin]] 버튼을 클릭합니다.
 
 > [!NOTE]
@@ -83,6 +91,7 @@ CloudFront의 경로 패턴으로 요청을 분기합니다:
 **A-2. `/api/*` 경로를 ALB로 라우팅하는 Behavior 추가**
 
 7. **Behaviors** 탭을 클릭합니다.
+   <img src="/images/step8/8-4-step7-behavior-create.png" alt="Behaviors 탭" class="guide-img-sm" />
 8. [[Create behavior]] 버튼을 클릭합니다.
 9. 다음과 같이 설정합니다:
    - **Path pattern**: `/api/*`
@@ -91,6 +100,7 @@ CloudFront의 경로 패턴으로 요청을 분기합니다:
    - **Allowed HTTP methods**: `GET, HEAD, OPTIONS, PUT, POST, PATCH, DELETE`
    - **Cache policy**: `CachingDisabled` (Recommended로 자동 선택됨)
    - **Origin request policy**: `AllViewer` (Recommended로 자동 선택됨)
+     <img src="/images/step8/8-4-step9-behavior-settings.png" alt="Behavior 설정" class="guide-img-sm" />
 
    나머지 설정은 기본값을 유지합니다.
 
@@ -127,6 +137,9 @@ CloudFront의 경로 패턴으로 요청을 분기합니다:
 12. `VITE_API_URL` Secret을 클릭하고 값을 본인의 CloudFront URL로 변경합니다:
     - 📗 기존 프로젝트: `https://<CLOUDFRONT_DOMAIN>.cloudfront.net`
     - 📘 새 프로젝트: `https://<CLOUDFRONT_DOMAIN>.cloudfront.net/api`
+      <img src="/images/step8/8-4-step12-env-update-1.png" alt="VITE_API_URL Secret 변경 1" class="guide-img-sm" />
+      <img src="/images/step8/8-4-step12-env-update-2.png" alt="VITE_API_URL Secret 변경 2" class="guide-img-sm" />
+      <img src="/images/step8/8-4-step12-env-update-3.png" alt="Secret 값 업데이트 완료" class="guide-img-sm" />
 
 > [!TIP]
 > CloudFront URL은 AWS Console → CloudFront → Distributions에서 **Distribution domain name** 열에서 확인할 수 있습니다.
@@ -140,6 +153,8 @@ CloudFront의 경로 패턴으로 요청을 분기합니다:
 13. GitHub → `my-frontend` 리포지토리 → **Actions** 탭
 14. 가장 최근 워크플로우 실행을 클릭합니다.
 15. 우측 상단 [[Re-run all jobs]] 버튼을 클릭합니다.
+    <img src="/images/step8/8-4-step15-rerun-1.png" alt="Re-run all jobs 1" class="guide-img-sm" />
+    <img src="/images/step8/8-4-step15-rerun-2.png" alt="Re-run all jobs 2" class="guide-img-sm" />
 
 **방법 2: push (`.env.production`을 git에서 관리하는 경우)**
 
@@ -156,6 +171,8 @@ git add .env.production
 git commit -m "feat: route API through CloudFront"
 git push origin main
 ```
+
+<img src="/images/step8/8-4-step15-invalidation.png" alt="git push 재배포" class="guide-img-sm" />
 
 > [!TIP]
 > `.env.production`이 `.gitignore`에 포함된 경우 `git add`가 무시됩니다.  
@@ -178,6 +195,9 @@ git push origin main
 >
 > 페이지 origin과 API origin이 다르면 브라우저가 CORS로 차단합니다.  
 > CloudFront URL과 커스텀 도메인은 같은 배포를 가리키지만, 브라우저는 도메인이 다르면 별개의 origin으로 취급합니다.
+>
+> <img src="/images/step8/8-4-task1-warning-1.png" alt="CORS 에러 예시 1" class="guide-img-sm" />
+> <img src="/images/step8/8-4-task1-warning-2.png" alt="CORS 에러 예시 2" class="guide-img-sm" />
 
 ✅ **방법 A 완료** — CloudFront Origin 추가로 프론트 ↔ 백엔드 연동이 완성되었습니다. 태스크 2로 이동하세요.
 
@@ -233,7 +253,7 @@ ALB에 사용할 인증서는 ALB가 있는 리전에서 발급합니다.
 
 21. 상단 검색창에 `CloudFront`를 입력하고 **CloudFront** 서비스를 선택합니다.
 22. Distributions 목록에서 배포를 클릭합니다.
-23. **Settings** 섹션에서 [[Edit]] 버튼을 클릭합니다.
+23. **General** 탭 → **Settings** 섹션에서 [[Edit]] 버튼을 클릭합니다.
 24. **Alternate domain name (CNAME)** 섹션에서 [[Add item]]을 클릭합니다.
 25. `<YOUR_DOMAIN>`을 입력합니다.
 26. **Custom SSL certificate** 드롭다운에서 us-east-1에서 발급한 인증서를 선택합니다.
@@ -253,6 +273,11 @@ ALB에 사용할 인증서는 ALB가 있는 리전에서 발급합니다.
     - **Default SSL/TLS server certificate**: ap-northeast-2에서 발급한 `api.<YOUR_DOMAIN>` 인증서 선택
 34. [[Add]] 버튼을 클릭합니다.
 
+> [!WARNING]
+> ALB Security Group(`my-3tier-app-alb-sg`)에 **443 포트**가 열려있어야 합니다.  
+> CloudFormation에서 80, 443을 모두 열어놨다면 추가 작업 불필요합니다.  
+> 443이 없다면: EC2 → Security Groups → `my-3tier-app-alb-sg` → Inbound rules → [[Edit inbound rules]] → Add rule → HTTPS(443), Source: 0.0.0.0/0 추가.
+
 ### B-5. Route 53 레코드 생성
 
 35. 상단 검색창에 `Route 53`을 입력하고 **Route 53** 서비스를 선택합니다.
@@ -260,7 +285,7 @@ ALB에 사용할 인증서는 ALB가 있는 리전에서 발급합니다.
 37. 본인의 도메인을 클릭합니다.
 38. [[Create record]] 버튼을 클릭합니다.
 39. 프론트엔드용 레코드를 생성합니다:
-    - **Record name**: (비워두기 = 루트 도메인)
+    - **Record name**: `app` (결과: `app.<YOUR_DOMAIN>`)
     - **Record type**: `A`
     - **Alias**: ✅ 토글 ON
     - **Route traffic to**: `Alias to CloudFront distribution` 선택
@@ -332,7 +357,7 @@ Amazon RDS MySQL (Private Subnet)
 
 ### 2-2. 프론트엔드 → 백엔드 연동 확인
 
-1. 브라우저에서 접속합니다:
+51. 브라우저에서 접속합니다:
 
 ```
 # 커스텀 도메인이 있는 경우 (Step 8-2 태스크 7 완료 시)
@@ -342,17 +367,21 @@ https://app.<YOUR_DOMAIN>
 https://<CLOUDFRONT_DOMAIN>.cloudfront.net
 ```
 
-2. 메인 페이지가 정상 로드되는지 확인합니다.
+52. 메인 페이지가 정상 로드되는지 확인합니다.
 
 ---
 
 📘 **방법 B 사용자 (새 프로젝트 — `/api/items`):**
 
-3. **📋 아이템 관리** 페이지로 이동합니다.
-4. 아이템을 추가합니다:
-   - 이름: `테스트 아이템`
-   - 설명: `3-Tier 연동 테스트`
-5. 아이템이 목록에 표시되는지 확인합니다.
+53. **📋 아이템 관리** 페이지로 이동합니다.
+    <img src="/images/step8/8-4-step53-items-page.png" alt="아이템 관리 페이지 이동" class="guide-img-sm" />
+54. 아이템을 추가합니다:
+    - 이름: `테스트 아이템`
+    - 설명: `3-Tier 연동 테스트`
+      <img src="/images/step8/8-4-step54-add-item.png" alt="아이템 추가" class="guide-img-sm" />
+
+55. 아이템이 목록에 표시되는지 확인합니다.
+    <img src="/images/step8/8-4-step55-item-list.png" alt="아이템 목록 표시 확인" class="guide-img-sm" />
 
 > [!OUTPUT]
 > 아이템 관리 페이지에서:
@@ -367,9 +396,9 @@ https://<CLOUDFRONT_DOMAIN>.cloudfront.net
 
 📗 **방법 A 사용자 (기존 프로젝트 — `/api/board`, `/api/travel` 등):**
 
-3. 게시판 또는 메인 기능 페이지로 이동합니다.
-4. 데이터가 정상적으로 조회되는지 확인합니다 (목록 로드).
-5. 글 작성 등 CRUD 기능을 테스트합니다 (로그인 필요 시 먼저 로그인).
+56. 게시판 또는 메인 기능 페이지로 이동합니다.
+57. 데이터가 정상적으로 조회되는지 확인합니다 (목록 로드).
+58. 글 작성 등 CRUD 기능을 테스트합니다 (로그인 필요 시 먼저 로그인).
 
 > [!OUTPUT]
 > 게시판 목록이 정상적으로 로드되거나, 글 작성 후 목록에 반영되면 프론트엔드 ↔ 백엔드 ↔ DB 연동이 성공한 것입니다.
@@ -385,7 +414,7 @@ https://<CLOUDFRONT_DOMAIN>.cloudfront.net
 
 📍 **EC2 (Session Manager)**
 
-6. Amazon EC2에 SSM Session Manager로 접속하여 Amazon RDS에서 데이터를 확인합니다:
+59. Amazon EC2에 SSM Session Manager로 접속하여 Amazon RDS에서 데이터를 확인합니다:
 
 ```bash
 mysql -h <RDS_ENDPOINT> -u admin -p
@@ -398,6 +427,8 @@ USE myapp;
 SELECT * FROM items;
 EXIT;
 ```
+
+<img src="/images/step8/8-4-step59-db-check.png" alt="EC2에서 RDS 데이터 확인" class="guide-img-sm" />
 
 📗 **방법 A (기존 프로젝트):**
 
@@ -415,8 +446,9 @@ EXIT;
 
 📍 **로컬 PC (브라우저)**
 
-7. 브라우저에서 F12 → **Network** 탭을 엽니다.
-8. 페이지를 새로고침하거나 데이터 추가/조회 시 API 호출을 확인합니다:
+60. 브라우저에서 F12 → **Network** 탭을 엽니다.
+61. 페이지를 새로고침하거나 데이터 추가/조회 시 API 호출을 확인합니다:
+    <img src="/images/step8/8-4-step61-network-tab.png" alt="Network 탭 API 호출 확인" class="guide-img-sm" />
 
 📘 **방법 B:** Request URL에 `/api/items`가 보이고 Status `200`/`201`이면 정상.
 
