@@ -1,5 +1,5 @@
 ---
-title: '전체 연동 확인 및 리소스 정리'
+title: '🔗 전체 연동 확인'
 week: 8
 session: 4
 awsServices:
@@ -8,15 +8,13 @@ awsServices:
 learningObjectives:
   - 프론트엔드 ↔ 백엔드 ↔ DB 전체 연동을 확인할 수 있습니다.
   - 도메인과 HTTPS를 최종 적용할 수 있습니다.
-  - 전체 AWS 리소스를 체계적으로 정리할 수 있습니다.
 prerequisites:
   - Step 8-1, 8-2, 8-3 완료
-estimatedCost: 무료 (정리 작업)
+estimatedCost: 이전 차시(8-1~8-3)에서 생성한 리소스로 인해 비용 발생 가능
 ---
 
 이 실습에서는 Step 8-1 ~ 8-3에서 구축한 3-Tier 아키텍처의 전체 연동을 확인하고,
-선택적으로 도메인과 HTTPS를 적용합니다.  
-마지막으로 이전 Step에서 생성한 모든 AWS 리소스를 체계적으로 정리합니다.
+선택적으로 도메인과 HTTPS를 적용합니다.
 
 > [!NOTE]
 > 이 세션의 구성:

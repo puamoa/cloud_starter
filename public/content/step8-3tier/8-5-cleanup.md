@@ -9,7 +9,7 @@ learningObjectives:
   - 비용 발생 리소스를 식별하고 우선 삭제할 수 있습니다.
 prerequisites:
   - Step 8-1 ~ 8-4 완료
-estimatedCost: 무료 (정리 작업)
+estimatedCost: 이전 차시(8-1~8-3)에서 생성한 리소스로 인해 비용 발생 가능
 ---
 
 Step 0 ~ 8에서 생성한 모든 AWS 리소스를 체계적으로 정리합니다.  
@@ -381,9 +381,9 @@ Amazon CloudFront 배포는 비활성화 후 삭제해야 합니다.
 
 98. 상단 검색창에 `CloudFront`를 입력하고 **CloudFront** 서비스를 선택합니다.
 99. Distributions 목록에서 배포를 선택합니다.
-100. [[Disable]] 버튼을 클릭합니다.
-101. Status가 `Disabled`로 변경될 때까지 대기합니다 (5~10분).
-102. 다시 선택하고 [[Delete]] 버튼을 클릭합니다.
+100.  [[Disable]] 버튼을 클릭합니다.
+101.  Status가 `Disabled`로 변경될 때까지 대기합니다 (5~10분).
+102.  다시 선택하고 [[Delete]] 버튼을 클릭합니다.
 
 > [!TIP]
 > CloudFront 비활성화에 시간이 걸리므로, 다른 리소스를 먼저 정리하고
@@ -455,9 +455,12 @@ aws ssm delete-parameter --name "/my-3tier-app/s3/region"
 113. 상단 검색창에 `VPC`를 입력하고 **VPC** 서비스를 선택합니다.
 114. 왼쪽 메뉴에서 **Security Groups**를 클릭합니다.
 115. 다음 SG를 삭제합니다 (default SG는 삭제 불가):
+
+
     - `my-3tier-app-rds-sg`
     - `my-3tier-app-ec2-sg`
     - `my-3tier-app-alb-sg`
+
 116. 각 SG를 선택합니다.
 117. **Actions** → [[Delete security groups]]를 클릭합니다.
 118. 확인 팝업에서 [[Delete]]를 클릭합니다.

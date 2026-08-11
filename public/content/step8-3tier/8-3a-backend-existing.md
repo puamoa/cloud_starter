@@ -1,7 +1,7 @@
 ---
 title: '기존 백엔드 배포: Spring MVC WAR (EC2 + Tomcat + ALB)'
 week: 8
-session: '3a'
+session: '3A'
 awsServices:
   - Amazon EC2
   - Elastic Load Balancing
@@ -1071,7 +1071,7 @@ curl -X POST http://$ALB_DNS/api/board \
 
 > [!WARNING]
 > 이 세션에서 생성한 리소스를 지금 삭제하지 마세요!
-> Step 8-4에서 전체 연동 확인 후 정리합니다.  
-> **Step 8-4에서 전체 정리합니다.**
+> Step 8-4에서 전체 연동을 확인합니다.  
+> **Step 8-5에서 전체 정리합니다.**
 
-✅ **실습 종료**: Step 8-4에서 전체 연동을 확인하고 리소스를 정리합니다.
+✅ **실습 종료**: Step 8-4에서 전체 연동을 확인합니다.

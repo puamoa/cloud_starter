@@ -492,13 +492,13 @@ export const curriculum: WeekCurriculum[] = [
       {
         session: 4,
         type: 'lab',
-        title: '전체 연동 확인 및 리소스 정리',
+        title: '🔗 전체 연동 확인',
         hasContent: true,
-        markdownPath: '/content/step8-3tier/8-4-integration-cleanup.md',
-        description:
-          '프론트↔백엔드↔DB 연동 테스트, 도메인 연결, 전체 리소스 정리 체크리스트',
+        markdownPath: '/content/step8-3tier/8-4-integration.md',
+        description: '프론트↔백엔드↔DB 연동 테스트, 도메인 연결',
         awsServices: ['Amazon Route 53', 'AWS Certificate Manager'],
-        estimatedCost: '무료 (정리 작업)',
+        estimatedCost:
+          '이전 차시(8-1~8-3)에서 생성한 리소스로 인해 비용 발생 가능',
       },
       {
         session: 5,
@@ -509,7 +509,8 @@ export const curriculum: WeekCurriculum[] = [
         description:
           'Step 0~8에서 생성한 모든 AWS 리소스를 의존 관계 순서에 따라 체계적으로 삭제',
         awsServices: [],
-        estimatedCost: '무료 (정리 작업)',
+        estimatedCost:
+          '이전 차시(8-1~8-3)에서 생성한 리소스로 인해 비용 발생 가능',
       },
     ],
     difficulty: 'advanced',

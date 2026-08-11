@@ -1,7 +1,7 @@
 ---
 title: '기존 Vue.js 프론트엔드 배포 (S3 + CloudFront)'
 week: 8
-session: '2a'
+session: '2A'
 awsServices:
   - Amazon S3
   - Amazon CloudFront
@@ -779,6 +779,6 @@ Amazon Route 53 A 레코드를 추가하여 `app.mydomain.shop` 같은 커스텀
 > [!WARNING]
 > 이 세션에서 생성한 리소스를 지금 삭제하지 마세요!  
 > Step 8-3, 8-4에서 계속 사용합니다.  
-> **Step 8-4에서 전체 정리합니다.**
+> **Step 8-5에서 전체 정리합니다.**
 
 ✅ **실습 종료**: Step 8-3에서 백엔드를 배포합니다.
