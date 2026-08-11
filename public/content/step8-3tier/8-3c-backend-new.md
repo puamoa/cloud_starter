@@ -171,6 +171,12 @@ aws ssm put-parameter \
   --type SecureString
 ```
 
+<img src="/images/step8/8-3-step1-ssm-1.png" alt="SSM Parameter Store 저장 1" class="guide-img-sm" />
+<img src="/images/step8/8-3-step1-ssm-2.png" alt="SSM Parameter Store 저장 2" class="guide-img-sm" />
+<img src="/images/step8/8-3-step1-ssm-3.png" alt="SSM Parameter Store 저장 3" class="guide-img-sm" />
+<img src="/images/step8/8-3-step1-ssm-4.png" alt="SSM Parameter Store 저장 4" class="guide-img-sm" />
+<img src="/images/step8/8-3-step1-ssm-5.png" alt="SSM Parameter Store 저장 5" class="guide-img-sm" />
+
 > [!TIP]
 > `SecureString` 타입은 AWS KMS로 자동 암호화됩니다.  
 > 비밀번호, API 키 등 민감한 값은 항상 SecureString을 사용하세요.
@@ -442,6 +448,7 @@ public class WebConfig implements WebMvcConfigurer {
 > AWS Console 우측 상단에서 리전이 **Asia Pacific (Seoul) ap-northeast-2**인지 확인하세요.
 
 13. 상단 검색창에 `EC2`를 입력하고 **EC2** 서비스를 선택합니다. [[Launch instances]] 버튼을 클릭합니다.
+    <img src="/images/step8/8-3-ec2-launch.png" alt="EC2 Launch instances" class="guide-img-sm" />
 14. **Name**: `my-3tier-app-server`
     - **Tags** 섹션: [[Add new tag]]를 클릭하여 추가
       - `CreatedBy` = `admin-user`
@@ -471,6 +478,8 @@ public class WebConfig implements WebMvcConfigurer {
 > 7. EC2 생성 화면으로 돌아와서 IAM instance profile에 `my-3tier-app-ec2-role` 선택
 
 20. [[Launch instance]] 버튼을 클릭합니다.
+    <img src="/images/step8/8-3-launch-instance-1.png" alt="Launch instance 클릭" class="guide-img-sm" />
+    <img src="/images/step8/8-3-launch-instance-2.png" alt="인스턴스 생성 완료" class="guide-img-sm" />
 
 ### 5-2. EC2 초기 설정
 
@@ -483,6 +492,10 @@ public class WebConfig implements WebMvcConfigurer {
 # 또는 AWS CLI로 접속 (Instance ID는 EC2 콘솔에서 확인)
 aws ssm start-session --target <INSTANCE_ID> --region ap-northeast-2
 ```
+
+<img src="/images/step8/8-3-ssm-connect-1.png" alt="EC2 Connect 화면" class="guide-img-sm" />
+<img src="/images/step8/8-3-ssm-connect-2.png" alt="Session Manager 탭" class="guide-img-sm" />
+<img src="/images/step8/8-3-ssm-connect-3.png" alt="SSM 접속 완료" class="guide-img-sm" />
 
 > [!TIP]
 > **AWS CLI로 접속하려면** 로컬에 Session Manager plugin이 필요합니다:
@@ -512,6 +525,11 @@ mysql -h $(aws ssm get-parameter --name "/my-3tier-app/db/endpoint" --query "Par
   -p$(aws ssm get-parameter --name "/my-3tier-app/db/password" --with-decryption --query "Parameter.Value" --output text --region ap-northeast-2) \
   -e "SELECT 1;"
 ```
+
+<img src="/images/step8/8-3-ec2-setup-1.png" alt="Java 설치" class="guide-img-sm" />
+<img src="/images/step8/8-3-ec2-setup-2.png" alt="MySQL 클라이언트 설치" class="guide-img-sm" />
+<img src="/images/step8/8-3-ec2-setup-3.png" alt="RDS 접속 테스트" class="guide-img-sm" />
+<img src="/images/step8/8-3-ec2-setup-4.png" alt="접속 테스트 성공" class="guide-img-sm" />
 
 ### 5-3. start.sh 생성
 

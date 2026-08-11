@@ -121,6 +121,12 @@ aws ssm put-parameter \
   --type SecureString
 ```
 
+<img src="/images/step8/8-3-step1-ssm-1.png" alt="SSM Parameter Store 저장 1" class="guide-img-sm" />
+<img src="/images/step8/8-3-step1-ssm-2.png" alt="SSM Parameter Store 저장 2" class="guide-img-sm" />
+<img src="/images/step8/8-3-step1-ssm-3.png" alt="SSM Parameter Store 저장 3" class="guide-img-sm" />
+<img src="/images/step8/8-3-step1-ssm-4.png" alt="SSM Parameter Store 저장 4" class="guide-img-sm" />
+<img src="/images/step8/8-3-step1-ssm-5.png" alt="SSM Parameter Store 저장 5" class="guide-img-sm" />
+
 > [!TIP]
 > 프로젝트에서 S3 업로드 기능을 사용하거나 추가 설정이 필요한 경우 아래 파라미터도 등록하세요:
 >
@@ -202,6 +208,9 @@ aws ssm put-parameter \
   --type String \
   --overwrite
 ```
+
+<img src="/images/step8/8-3-step3-ssm-verify-1.png" alt="SSM 파라미터 업데이트 1" class="guide-img-sm" />
+<img src="/images/step8/8-3-step3-ssm-verify-2.png" alt="SSM 파라미터 업데이트 2" class="guide-img-sm" />
 
 > [!TIP]
 > 이 경우 `application.yml`은 수정하지 않아도 됩니다.  
@@ -370,9 +379,14 @@ public class WebConfig implements WebMvcConfigurer {
 > AWS Console 우측 상단에서 리전이 **Asia Pacific (Seoul) ap-northeast-2**인지 확인하세요.
 
 10. **EC2** → [[Launch instances]]를 클릭합니다.
+    <img src="/images/step8/8-3-ec2-launch.png" alt="EC2 Launch instances" class="guide-img-sm" />
 
 11. 다음과 같이 인스턴스를 설정합니다:
     - **Name**: `my-3tier-app-server`
+    - **Tags** 섹션: [[Add new tag]]를 클릭하여 추가
+      - `CreatedBy` = `admin-user`
+      - `Step` = `step8`
+      - `Session` = `8-3`
     - **AMI**: `Amazon Linux 2023`
     - **Instance type**: `t3.micro`
     - **Key pair**: `Proceed without a key pair`
@@ -399,6 +413,8 @@ public class WebConfig implements WebMvcConfigurer {
 > 7. EC2 생성 화면으로 돌아와서 IAM instance profile에 `my-3tier-app-ec2-role` 선택
 
 14. [[Launch instance]]를 클릭하여 인스턴스를 생성합니다.
+    <img src="/images/step8/8-3-launch-instance-1.png" alt="Launch instance 클릭" class="guide-img-sm" />
+    <img src="/images/step8/8-3-launch-instance-2.png" alt="인스턴스 생성 완료" class="guide-img-sm" />
 
 > [!TIP]
 > IAM Role에 필요한 정책: `AmazonSSMManagedInstanceCore` + `AmazonSSMReadOnlyAccess` + `AmazonS3FullAccess`  
@@ -415,6 +431,10 @@ public class WebConfig implements WebMvcConfigurer {
 # 또는 AWS CLI로 접속 (Instance ID는 EC2 콘솔에서 확인)
 aws ssm start-session --target <INSTANCE_ID> --region ap-northeast-2
 ```
+
+<img src="/images/step8/8-3-ssm-connect-1.png" alt="EC2 Connect 화면" class="guide-img-sm" />
+<img src="/images/step8/8-3-ssm-connect-2.png" alt="Session Manager 탭" class="guide-img-sm" />
+<img src="/images/step8/8-3-ssm-connect-3.png" alt="SSM 접속 완료" class="guide-img-sm" />
 
 > [!TIP]
 > **AWS CLI로 접속하려면** 로컬에 Session Manager plugin이 필요합니다:
@@ -444,6 +464,11 @@ mysql -h $(aws ssm get-parameter --name "/my-3tier-app/db/endpoint" --query "Par
   -p$(aws ssm get-parameter --name "/my-3tier-app/db/password" --with-decryption --query "Parameter.Value" --output text --region ap-northeast-2) \
   -e "SELECT 1;"
 ```
+
+<img src="/images/step8/8-3-ec2-setup-1.png" alt="Java 설치" class="guide-img-sm" />
+<img src="/images/step8/8-3-ec2-setup-2.png" alt="MySQL 클라이언트 설치" class="guide-img-sm" />
+<img src="/images/step8/8-3-ec2-setup-3.png" alt="RDS 접속 테스트" class="guide-img-sm" />
+<img src="/images/step8/8-3-ec2-setup-4.png" alt="접속 테스트 성공" class="guide-img-sm" />
 
 ### 5-3. SQL 실행 (MyBatis + SQL 파일 사용 시)
 

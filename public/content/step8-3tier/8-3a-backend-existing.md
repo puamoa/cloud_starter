@@ -57,6 +57,8 @@ public class HealthController {
 }
 ```
 
+<img src="/images/step8/8-3a-task1-health-check.png" alt="Health Check 컨트롤러 추가" class="guide-img-sm" />
+
 Target Group Health Check 경로를 `/health`로 설정합니다.
 
 > [!TIP]
@@ -126,6 +128,12 @@ aws ssm put-parameter \
   --type String
 ```
 
+<img src="/images/step8/8-3-step1-ssm-1.png" alt="SSM Parameter Store 저장 1" class="guide-img-sm" />
+<img src="/images/step8/8-3-step1-ssm-2.png" alt="SSM Parameter Store 저장 2" class="guide-img-sm" />
+<img src="/images/step8/8-3-step1-ssm-3.png" alt="SSM Parameter Store 저장 3" class="guide-img-sm" />
+<img src="/images/step8/8-3-step1-ssm-4.png" alt="SSM Parameter Store 저장 4" class="guide-img-sm" />
+<img src="/images/step8/8-3-step1-ssm-5.png" alt="SSM Parameter Store 저장 5" class="guide-img-sm" />
+
 > [!TIP]
 > `SecureString` 타입은 AWS KMS로 자동 암호화됩니다.  
 > 비밀번호, API 키 등 민감한 값은 항상 SecureString을 사용하세요.
@@ -153,6 +161,8 @@ jdbc.username=${DB_USERNAME}
 jdbc.password=${DB_PASSWORD}
 ```
 
+<img src="/images/step8/8-3a-step2-application-properties.png" alt="application.properties 환경 변수 설정" class="guide-img-sm" />
+
 > [!TIP]
 > 기존 프로젝트의 `RootConfig.java`에서 `@Value("${jdbc.url}")` 등으로 값을 읽는 구조라면, `application.properties`의 값만 환경 변수 형태로 변경하면 됩니다.  
 > Java 코드 수정은 불필요합니다.
@@ -179,6 +189,9 @@ aws ssm put-parameter \
   --type String \
   --overwrite
 ```
+
+<img src="/images/step8/8-3-step3-ssm-verify-1.png" alt="SSM 파라미터 업데이트 1" class="guide-img-sm" />
+<img src="/images/step8/8-3-step3-ssm-verify-2.png" alt="SSM 파라미터 업데이트 2" class="guide-img-sm" />
 
 > [!TIP]
 > 이 경우 `application.properties`는 수정하지 않아도 됩니다.  
@@ -227,6 +240,8 @@ cd ~/3tier-project/my-backend
 ls build/libs/*.war
 ```
 
+<img src="/images/step8/8-3a-step4-gradle-build.png" alt="Gradle WAR 빌드 결과" class="guide-img-sm" />
+
 > [!NOTE]
 > 빌드 성공 시 `build/libs/` 안에 WAR 파일이 생성됩니다.  
 > 파일명은 `settings.gradle`의 `rootProject.name`과 `build.gradle`의 `version`에 따라 결정됩니다.
@@ -259,6 +274,8 @@ ls build/libs/*.war
 >     UploadFiles.downloadImage(response, file);
 > }
 > ```
+>
+> <img src="/images/step8/8-3a-task3-s3-warning.png" alt="S3 이미지 저장 구조" class="guide-img-sm" />
 >
 > 또한 기존 이미지 파일을 S3에 업로드하는 마이그레이션이 필요합니다:
 >
@@ -301,6 +318,8 @@ public CorsFilter corsFilter() {
     return new CorsFilter(source);
 }
 ```
+
+<img src="/images/step8/8-3a-step5-cors-config.png" alt="CORS 설정 코드" class="guide-img-sm" />
 
 **Spring Security 미사용 시 (WebMvcConfigurer):**
 
@@ -359,20 +378,31 @@ public class WebConfig implements WebMvcConfigurer {
 > AWS Console 우측 상단에서 리전이 **Asia Pacific (Seoul) ap-northeast-2**인지 확인하세요.
 
 7. 상단 검색창에 `EC2`를 입력하고 **EC2** 서비스를 선택합니다.
+   <img src="/images/step8/8-3-ec2-launch.png" alt="EC2 서비스 이동" class="guide-img-sm" />
 8. [[Launch instances]] 버튼을 클릭합니다.
-9. **Name**: `my-3tier-app-server`
-10. **AMI**: `Amazon Linux 2023` 선택
+9. **Name and tags** 섹션에서 다음과 같이 설정합니다:
+   - **Name**: `my-3tier-app-server`
+   - [[Add additional tags]]를 클릭하여 다음 태그를 추가합니다:
+     - `CreatedBy` = `admin-user`
+     - `Step` = `step8`
+     - `Session` = `8-3`
+       <img src="/images/step8/8-3a-step9-name-tags.png" alt="Name and tags 설정" class="guide-img-sm" />
+10. **Application and OS Images (Amazon Machine Image)**: `Amazon Linux 2023` 선택
+    <img src="/images/step8/8-3a-step10-ami.png" alt="AMI 선택" class="guide-img-sm" />
 11. **Instance type**: `t3.micro`
+    <img src="/images/step8/8-3a-step11-instance-type.png" alt="Instance type 선택" class="guide-img-sm" />
 12. **Key pair**: `Proceed without a key pair (Not recommended)` 선택
 13. **Network settings** 섹션에서 [[Edit]] 버튼을 클릭하고 다음과 같이 설정합니다:
     - **VPC**: `my-3tier-app-vpc` 선택
     - **Subnet**: `my-3tier-app-private-subnet-1` 선택
     - **Auto-assign public IP**: `Disable`
     - **Security groups**: `my-3tier-app-ec2-sg` 선택
+      <img src="/images/step8/8-3a-step13-network.png" alt="Network settings 설정" class="guide-img-sm" />
 
-14. **Advanced details** → **IAM instance profile**: SSM + Parameter Store 읽기 권한이 있는 IAM Role을 선택합니다.
+14. **Advanced details** → **IAM instance profile**: `my-3tier-app-ec2-role` (또는 `ec2-starter-role`)을 선택합니다.
     - 필요 정책: `AmazonSSMManagedInstanceCore` + `AmazonSSMReadOnlyAccess` + `AmazonS3FullAccess`
     - 앞차시에서 `ec2-starter-role`을 이미 만든 경우 해당 Role에 위 정책을 추가하여 선택합니다.
+      <img src="/images/step8/8-3a-step14-iam-role.png" alt="IAM instance profile 선택" class="guide-img-sm" />
 
 > [!TIP]
 > **Role이 없는 경우 새로 생성:**
@@ -386,6 +416,8 @@ public class WebConfig implements WebMvcConfigurer {
 > 7. EC2 생성 화면으로 돌아와서 IAM instance profile에 `my-3tier-app-ec2-role` 선택
 
 15. [[Launch instance]] 버튼을 클릭합니다.
+    <img src="/images/step8/8-3-launch-instance-1.png" alt="Launch instance 클릭" class="guide-img-sm" />
+    <img src="/images/step8/8-3-launch-instance-2.png" alt="인스턴스 생성 완료" class="guide-img-sm" />
 
 > [!TIP]
 > IAM Role에 필요한 정책: `AmazonSSMManagedInstanceCore` + `AmazonSSMReadOnlyAccess` + `AmazonS3FullAccess`
@@ -402,6 +434,10 @@ public class WebConfig implements WebMvcConfigurer {
 # 또는 AWS CLI로 접속 (Instance ID는 EC2 콘솔에서 확인)
 aws ssm start-session --target <INSTANCE_ID> --region ap-northeast-2
 ```
+
+<img src="/images/step8/8-3-ssm-connect-1.png" alt="EC2 Connect 화면" class="guide-img-sm" />
+<img src="/images/step8/8-3-ssm-connect-2.png" alt="Session Manager 탭" class="guide-img-sm" />
+<img src="/images/step8/8-3-ssm-connect-3.png" alt="SSM 접속 완료" class="guide-img-sm" />
 
 > [!TIP]
 > **AWS CLI로 접속하려면** 로컬에 Session Manager plugin이 필요합니다:
@@ -436,6 +472,11 @@ mysql -h $(aws ssm get-parameter --name "/my-3tier-app/db/endpoint" --query "Par
   -e "SELECT 1;"
 ```
 
+<img src="/images/step8/8-3-ec2-setup-1.png" alt="Java 설치" class="guide-img-sm" />
+<img src="/images/step8/8-3-ec2-setup-2.png" alt="MySQL 클라이언트 설치" class="guide-img-sm" />
+<img src="/images/step8/8-3-ec2-setup-3.png" alt="RDS 접속 테스트" class="guide-img-sm" />
+<img src="/images/step8/8-3-ec2-setup-4.png" alt="접속 테스트 성공" class="guide-img-sm" />
+
 ### 5-3. Tomcat 9 설치
 
 17. Tomcat 9를 설치합니다:
@@ -449,6 +490,8 @@ sudo tar -xzf apache-tomcat-9.0.106.tar.gz -C /opt/tomcat --strip-components=1
 rm apache-tomcat-9.0.106.tar.gz
 sudo chown -R ec2-user:ec2-user /opt/tomcat
 ```
+
+<img src="/images/step8/8-3a-step17-tomcat-install.png" alt="Tomcat 9 설치 완료" class="guide-img-sm" />
 
 ### 5-4. systemd 서비스 등록
 
@@ -480,6 +523,9 @@ sudo systemctl daemon-reload
 sudo systemctl enable tomcat
 ```
 
+<img src="/images/step8/8-3a-step18-setenv-1.png" alt="systemd 서비스 등록" class="guide-img-sm" />
+<img src="/images/step8/8-3a-step18-setenv-2.png" alt="systemctl enable 완료" class="guide-img-sm" />
+
 ### 5-5. setenv.sh 생성 (환경 변수 주입)
 
 19. SSM Parameter Store에서 환경 변수를 주입하는 `setenv.sh`를 생성합니다:
@@ -503,6 +549,8 @@ export CATALINA_OPTS="$CATALINA_OPTS -DDB_ENDPOINT=$DB_ENDPOINT -DDB_NAME=$DB_NA
 EOF
 chmod +x /opt/tomcat/bin/setenv.sh
 ```
+
+<img src="/images/step8/8-3a-step19-tomcat-start.png" alt="setenv.sh 생성 완료" class="guide-img-sm" />
 
 > [!NOTE]
 > `setenv.sh`는 Tomcat이 시작될 때 자동으로 실행됩니다.  
@@ -542,6 +590,10 @@ aws s3 cp travel.csv s3://$S3_DEPLOY_BUCKET/sql/
 aws s3 cp travel_image.csv s3://$S3_DEPLOY_BUCKET/sql/
 ```
 
+<img src="/images/step8/8-3a-step20-sql-upload-1.png" alt="S3 버킷 생성 및 SQL 업로드 1" class="guide-img-sm" />
+<img src="/images/step8/8-3a-step20-sql-upload-2.png" alt="SQL 파일 업로드 2" class="guide-img-sm" />
+<img src="/images/step8/8-3a-step20-sql-upload-3.png" alt="업로드 완료 확인" class="guide-img-sm" />
+
 **② EC2에서 — S3에서 다운로드 후 RDS에 적용:**
 
 📍 **실행 위치: EC2** (SSM Session Manager 접속 상태)
@@ -552,8 +604,15 @@ aws s3 cp travel_image.csv s3://$S3_DEPLOY_BUCKET/sql/
 cd /home/ec2-user
 export S3_DEPLOY_BUCKET=my-3tier-app-deploy-<BucketSuffix>
 export DB_ENDPOINT=$(aws ssm get-parameter --name "/my-3tier-app/db/endpoint" --query "Parameter.Value" --output text --region ap-northeast-2)
+export DB_NAME=$(aws ssm get-parameter --name "/my-3tier-app/db/name" --query "Parameter.Value" --output text --region ap-northeast-2)
 export DB_USERNAME=$(aws ssm get-parameter --name "/my-3tier-app/db/username" --query "Parameter.Value" --output text --region ap-northeast-2)
 export DB_PASSWORD=$(aws ssm get-parameter --name "/my-3tier-app/db/password" --with-decryption --query "Parameter.Value" --output text --region ap-northeast-2)
+
+# 환경변수 확인 (값이 출력되면 정상)
+echo "S3_DEPLOY_BUCKET=$S3_DEPLOY_BUCKET"
+echo "DB_ENDPOINT=$DB_ENDPOINT"
+echo "DB_NAME=$DB_NAME"
+echo "DB_USERNAME=$DB_USERNAME"
 
 # S3에서 SQL/CSV 파일 다운로드
 aws s3 cp s3://$S3_DEPLOY_BUCKET/sql/ . --recursive
@@ -562,15 +621,21 @@ aws s3 cp s3://$S3_DEPLOY_BUCKET/sql/ . --recursive
 mysql -h $DB_ENDPOINT -u $DB_USERNAME -p$DB_PASSWORD
 ```
 
+<img src="/images/step8/8-3a-step21-sql-download.png" alt="S3에서 SQL 다운로드" class="guide-img-sm" />
+<img src="/images/step8/8-3a-step21-sql-execute.png" alt="RDS 접속" class="guide-img-sm" />
+
 22. MySQL에 접속 후 SQL 파일을 실행합니다:
 
 ```sql
 source /home/ec2-user/board.sql;
 source /home/ec2-user/member.sql;
-source /home/ec2-user/travel.sql;
 SHOW TABLES;
 EXIT;
 ```
+
+<img src="/images/step8/8-3a-step22-sql-source-1.png" alt="SQL source 실행 1" class="guide-img-sm" />
+<img src="/images/step8/8-3a-step22-sql-source-2.png" alt="SQL source 실행 2" class="guide-img-sm" />
+<img src="/images/step8/8-3a-step22-sql-source-3.png" alt="SHOW TABLES 결과" class="guide-img-sm" />
 
 > [!WARNING]
 > 기존 SQL에 `CREATE DATABASE scoula_db` + `USE scoula_db`가 포함된 경우,
@@ -600,6 +665,8 @@ mysql -h $DB_ENDPOINT -u $DB_USERNAME -p$DB_PASSWORD --local-infile=1 $DB_NAME -
 mysql -h $DB_ENDPOINT -u $DB_USERNAME -p$DB_PASSWORD $DB_NAME -e "SELECT COUNT(*) FROM tbl_travel;"
 ```
 
+<img src="/images/step8/8-3a-step22-csv-import.png" alt="CSV import 결과" class="guide-img-sm" />
+
 > [!TIP]
 > `--local-infile`이 없으면 `ERROR 3948: Loading local data is disabled` 에러가 발생합니다.
 
@@ -619,6 +686,9 @@ export S3_DEPLOY_BUCKET=my-3tier-app-deploy-<BucketSuffix>
 WAR_FILE=$(ls build/libs/*.war | head -1)
 aws s3 cp "$WAR_FILE" s3://$S3_DEPLOY_BUCKET/app.war
 ```
+
+<img src="/images/step8/8-3a-step23-war-build.png" alt="WAR 빌드" class="guide-img-sm" />
+<img src="/images/step8/8-3a-step23-war-upload.png" alt="S3에 WAR 업로드" class="guide-img-sm" />
 
 **EC2에서 다운로드 + Tomcat 배포:**
 
@@ -649,18 +719,31 @@ tail -f /opt/tomcat/logs/catalina.out
 curl http://localhost:8080/
 ```
 
+<img src="/images/step8/8-3a-step24-deploy-1.png" alt="WAR 다운로드 및 배포 1" class="guide-img-sm" />
+<img src="/images/step8/8-3a-step24-deploy-2.png" alt="Tomcat 배포 2" class="guide-img-sm" />
+<img src="/images/step8/8-3a-step24-deploy-3.png" alt="Tomcat 시작 3" class="guide-img-sm" />
+<img src="/images/step8/8-3a-step24-deploy-4.png" alt="systemctl status 확인" class="guide-img-sm" />
+<img src="/images/step8/8-3a-step24-deploy-5.png" alt="catalina.out 로그" class="guide-img-sm" />
+<img src="/images/step8/8-3a-step24-deploy-6.png" alt="curl 정상 응답" class="guide-img-sm" />
+
 ### 5-8. ALB Target Group에 EC2 등록
 
 25. 상단 검색창에 `EC2`를 입력하고 **EC2** 서비스를 선택합니다.
 26. 왼쪽 메뉴에서 **Target Groups**를 클릭합니다.
+    <img src="/images/step8/8-3a-step26-target-groups.png" alt="Target Groups 메뉴" class="guide-img-sm" />
 27. `my-3tier-app-tg`를 클릭합니다.
 28. **Targets** 탭을 클릭합니다.
+    <img src="/images/step8/8-3a-step28-targets-tab.png" alt="Targets 탭" class="guide-img-sm" />
 29. [[Register targets]] 버튼을 클릭합니다.
 30. **Available instances**에서 `my-3tier-app-server`를 체크합니다.
 31. **Ports for the selected instances**에 `8080`을 입력합니다.
+    <img src="/images/step8/8-3a-step31-port-8080.png" alt="Port 8080 입력" class="guide-img-sm" />
 32. [[Include as pending below]] 버튼을 클릭합니다.
+    <img src="/images/step8/8-3a-step32-include-pending.png" alt="Include as pending below" class="guide-img-sm" />
 33. 하단의 **Review** 섹션에서 인스턴스가 추가된 것을 확인합니다.
 34. [[Register pending targets]] 버튼을 클릭하여 등록을 완료합니다.
+    <img src="/images/step8/8-3a-step34-register-1.png" alt="Register pending targets 1" class="guide-img-sm" />
+    <img src="/images/step8/8-3a-step34-register-2.png" alt="Register pending targets 2" class="guide-img-sm" />
 
 > [!NOTE]
 > Health Check 경로를 확인하세요:
@@ -745,16 +828,21 @@ curl http://localhost:8080/
 
 35. 상단 검색창에 `IAM`을 입력하고 **IAM** 서비스를 선택합니다.
 36. 왼쪽 메뉴에서 **Users**를 클릭합니다.
+    <img src="/images/step8/8-3a-step36-health-check.png" alt="IAM Users 메뉴" class="guide-img-sm" />
 37. [[Create user]]를 클릭합니다.
 38. **User name**: `github-actions-backend`를 입력합니다.
+    <img src="/images/step8/8-3a-step38-alb-test.png" alt="User name 입력" class="guide-img-sm" />
 39. **Provide user access to the AWS Management Console** 체크를 **하지 않습니다** (콘솔 접근 불필요).
 40. [[Next]]를 클릭합니다.
 41. **Permissions options**에서 `Attach policies directly`를 선택합니다.
 42. 다음 정책을 검색하여 체크합니다:
     - `AmazonS3FullAccess` (WAR 업로드용)
     - `AmazonSSMFullAccess` (SSM Run Command 실행용)
+      <img src="/images/step8/8-3a-step42-iam-user.png" alt="정책 선택" class="guide-img-sm" />
 43. [[Next]]를 클릭합니다.
 44. **Review and create** 페이지에서 설정을 확인하고 [[Create user]]를 클릭합니다.
+    <img src="/images/step8/8-3a-step44-secrets-1.png" alt="Review and create" class="guide-img-sm" />
+    <img src="/images/step8/8-3a-step44-secrets-2.png" alt="Create user 완료" class="guide-img-sm" />
 
 **📙 옵션 B: 기존 `github-actions-frontend` 사용자에 정책 추가**
 
@@ -762,9 +850,13 @@ curl http://localhost:8080/
 46. 왼쪽 메뉴에서 **Users**를 클릭합니다.
 47. `github-actions-frontend`를 클릭합니다.
 48. **Permissions** 탭 → [[Add permissions]] → **Add permissions**를 클릭합니다.
+    <img src="/images/step8/8-3a-step48-access-key.png" alt="Add permissions 클릭" class="guide-img-sm" />
 49. **Permissions options**에서 `Attach policies directly`를 선택합니다.
 50. 검색창에 `SSMFull`을 입력하고 `AmazonSSMFullAccess`를 체크합니다 (`AmazonS3FullAccess`는 이미 있음).
+    <img src="/images/step8/8-3a-step50-github-secrets.png" alt="SSMFullAccess 정책 추가" class="guide-img-sm" />
 51. [[Next]] → [[Add permissions]]를 클릭합니다.
+    <img src="/images/step8/8-3a-step51-secrets-1.png" alt="Add permissions 확인 1" class="guide-img-sm" />
+    <img src="/images/step8/8-3a-step51-secrets-2.png" alt="Add permissions 확인 2" class="guide-img-sm" />
 
 > [!NOTE]
 > 옵션 B를 선택한 경우 아래 "Access Key 생성"을 건너뛰세요.  
@@ -787,6 +879,7 @@ curl http://localhost:8080/
 56. 하단의 확인 체크박스를 선택하고 [[Next]]를 클릭합니다.
 57. [[Create access key]]를 클릭합니다.
 58. **Access key ID**와 **Secret access key**를 복사하여 안전한 곳에 저장합니다.
+    <img src="/images/step8/8-3a-step58-copy-keys.png" alt="Access Key 복사" class="guide-img-sm" />
 
 > [!WARNING]
 > Secret access key는 이 화면에서만 확인할 수 있습니다.  
@@ -797,6 +890,7 @@ curl http://localhost:8080/
 59. 브라우저에서 GitHub → `my-backend` 리포지토리 페이지로 이동합니다.
 60. **Settings** 탭을 클릭합니다.
 61. 왼쪽 메뉴에서 **Secrets and variables** → **Actions**를 클릭합니다.
+    <img src="/images/step8/8-3a-step61-github-settings.png" alt="Secrets and variables 메뉴" class="guide-img-sm" />
 62. [[New repository secret]] 버튼을 클릭합니다.
 63. 다음 Secrets를 하나씩 추가합니다:
     - `AWS_ACCESS_KEY_ID`: 51번에서 복사한 Access Key ID
@@ -804,6 +898,29 @@ curl http://localhost:8080/
     - `AWS_REGION`: `ap-northeast-2`
     - `S3_DEPLOY_BUCKET`: `<태스크 5-6에서 생성한 배포용 S3 버킷명>`
     - `EC2_INSTANCE_ID`: `<태스크 5-1에서 생성한 Amazon EC2 인스턴스 ID (예: i-0abc123def456)>`
+      <img src="/images/step8/8-3a-step63-secrets-1.png" alt="GitHub Secrets 추가 1" class="guide-img-sm" />
+      <img src="/images/step8/8-3a-step63-secrets-2.png" alt="GitHub Secrets 추가 2" class="guide-img-sm" />
+      <img src="/images/step8/8-3a-step63-secrets-3.png" alt="GitHub Secrets 추가 3" class="guide-img-sm" />
+      <img src="/images/step8/8-3a-step63-secrets-4.png" alt="GitHub Secrets 추가 4" class="guide-img-sm" />
+      <img src="/images/step8/8-3a-step63-secrets-5.png" alt="GitHub Secrets 추가 5" class="guide-img-sm" />
+      <img src="/images/step8/8-3a-step63-secrets-6.png" alt="GitHub Secrets 추가 6" class="guide-img-sm" />
+
+> [!TIP]
+> **`application.properties`를 git에 포함하지 않는 경우:**  
+> `APPLICATION_PROPERTIES` Secret에 파일 내용 전체를 등록하면 워크플로우 빌드 시 자동 생성됩니다.
+>
+> ```
+> APPLICATION_PROPERTIES 값 예시:
+> jdbc.driver=net.sf.log4jdbc.sql.jdbcapi.DriverSpy
+> jdbc.url=jdbc:log4jdbc:mysql://my-3tier-app-db.xxxx.rds.amazonaws.com:3306/myapp
+> jdbc.username=admin
+> jdbc.password=MyPassword123!
+> ```
+>
+> `application.properties`가 이미 git에 포함되어 있고 환경 변수(`${DB_ENDPOINT}`) 형태라면 이 Secret은 등록하지 않아도 됩니다 (setenv.sh가 처리).
+>
+> <img src="/images/step8/8-3a-step63-app-props-1.png" alt="APPLICATION_PROPERTIES Secret 등록 1" class="guide-img-sm" />
+> <img src="/images/step8/8-3a-step63-app-props-2.png" alt="APPLICATION_PROPERTIES Secret 등록 2" class="guide-img-sm" />
 
 > [!CONCEPT] Private Subnet Amazon EC2에 배포하는 방법
 >
@@ -830,8 +947,11 @@ curl http://localhost:8080/
 > git commit -m "chore: add gradle wrapper for CI/CD"
 > git push origin main
 > ```
+>
+> <img src="/images/step8/8-3a-step64-gradle-wrapper.png" alt="Gradle Wrapper 추가" class="guide-img-sm" />
 
 64. `.github/workflows/deploy.yml` 파일을 생성합니다:
+    <img src="/images/step8/8-3a-step64-workflow-file.png" alt="워크플로우 파일 생성" class="guide-img-sm" />
 
 ```yaml
 # .github/workflows/deploy.yml (WAR + Tomcat 버전)
@@ -955,7 +1075,12 @@ git commit -m "feat: initial backend with CI/CD"
 git push origin main
 ```
 
+<img src="/images/step8/8-3a-step65-push-deploy.png" alt="git push 후 배포 확인" class="guide-img-sm" />
+
 66. GitHub → `my-backend` 리포지토리 → **Actions** 탭에서 워크플로우 실행을 확인합니다.
+    <img src="/images/step8/8-3a-step66-actions-1.png" alt="Actions 탭 확인 1" class="guide-img-sm" />
+    <img src="/images/step8/8-3a-step66-actions-2.png" alt="워크플로우 실행 2" class="guide-img-sm" />
+    <img src="/images/step8/8-3a-step66-actions-3.png" alt="배포 성공 3" class="guide-img-sm" />
 
 > [!TIP]
 > 첫 빌드는 Gradle 의존성 다운로드로 3 ~ 4분 소요됩니다.  
@@ -1036,6 +1161,11 @@ curl http://$ALB_DNS/api/board
 curl http://$ALB_DNS/api/travel
 ```
 
+<img src="/images/step8/8-3a-step71-alb-test-1.png" alt="ALB Health Check 테스트" class="guide-img-sm" />
+<img src="/images/step8/8-3a-step71-alb-test-2.png" alt="API 목록 조회 테스트" class="guide-img-sm" />
+<img src="/images/step8/8-3a-step71-alb-test-3.png" alt="API 응답 확인" class="guide-img-sm" />
+<img src="/images/step8/8-3a-step71-alb-test-4.png" alt="API 추가 테스트" class="guide-img-sm" />
+
 > 위 요청에 JSON 응답이 오면 **백엔드 배포 + DB 연동 성공**입니다.
 
 **인증 필요 API 테스트 (선택):**
@@ -1058,10 +1188,35 @@ curl -X POST http://$ALB_DNS/api/board \
   -F "writer=admin"
 ```
 
+<img src="/images/step8/8-3a-step72-browser-1.png" alt="인증 API 테스트 1" class="guide-img-sm" />
+<img src="/images/step8/8-3a-step72-browser-2.png" alt="인증 API 테스트 2" class="guide-img-sm" />
+
 > [!NOTE]
 > 이 시점에서 브라우저(CloudFront HTTPS)에서 프론트엔드 → 백엔드(ALB HTTP) API 호출은 **Mixed Content**로 차단됩니다.  
 > 프론트엔드 ↔ 백엔드 연동은 **Step 8-4 태스크 1**을 완료한 뒤 동작합니다.  
 > 현재 단계에서는 `curl`로 API가 정상 응답하는 것을 확인했으면 충분합니다.
+
+### 7-3. RDS 데이터 확인 (선택)
+
+📍 **실행 위치: EC2** (SSM Session Manager 접속 상태)
+
+API 호출로 생성한 데이터가 실제 Amazon RDS에 저장되었는지 확인합니다.
+
+73. EC2에서 RDS에 접속하여 데이터를 확인합니다:
+
+```bash
+mysql -h $DB_ENDPOINT -u $DB_USERNAME -p$DB_PASSWORD
+```
+
+```sql
+USE myapp;
+SHOW TABLES;
+-- 본인 테이블명으로 변경 (예: board, tbl_board, travel 등)
+SELECT * FROM tbl_board LIMIT 5;
+EXIT;
+```
+
+<img src="/images/step8/8-3a-step73-rds-check.png" alt="RDS 데이터 확인" class="guide-img-sm" />
 
 ✅ **태스크 완료** — ALB Health Check를 확인하고 API 테스트를 완료했습니다.
 
