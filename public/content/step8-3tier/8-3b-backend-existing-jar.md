@@ -390,16 +390,19 @@ public class WebConfig implements WebMvcConfigurer {
     - **AMI**: `Amazon Linux 2023`
     - **Instance type**: `t3.micro`
     - **Key pair**: `Proceed without a key pair`
+      <img src="/images/step8/8-3-ec2-name-tags.png" alt="EC2 인스턴스 설정" class="guide-img-sm" />
 
 12. **Network settings** → [[Edit]]를 클릭하여 다음과 같이 설정합니다:
     - **VPC**: `my-3tier-app-vpc`
     - **Subnet**: `my-3tier-app-private-subnet-1`
     - **Auto-assign public IP**: `Disable`
     - **Security groups**: `my-3tier-app-ec2-sg`
+      <img src="/images/step8/8-3-ec2-network.png" alt="Network settings 설정" class="guide-img-sm" />
 
-13. **Advanced details** → **IAM instance profile**에서 SSM + Parameter Store 읽기 권한이 있는 IAM Role을 선택합니다.
+13. **Advanced details** → **IAM instance profile**에서 `my-3tier-app-ec2-role` (또는 `ec2-starter-role`)을 선택합니다.
     - 필요 정책: `AmazonSSMManagedInstanceCore` + `AmazonSSMReadOnlyAccess` + `AmazonS3FullAccess`
     - 앞차시에서 `ec2-starter-role`을 이미 만든 경우 해당 Role에 위 정책을 추가하여 선택합니다.
+      <img src="/images/step8/8-3-ec2-iam-role.png" alt="IAM instance profile 선택" class="guide-img-sm" />
 
 > [!TIP]
 > **Role이 없는 경우 새로 생성:**
@@ -623,20 +626,26 @@ curl http://localhost:8080/actuator/health
 22. 상단 검색창에 `EC2`를 입력하고 **EC2** 서비스를 선택합니다.
 
 23. 왼쪽 메뉴에서 **Target Groups**를 클릭합니다.
+    <img src="/images/step8/8-3-target-groups.png" alt="Target Groups 메뉴" class="guide-img-sm" />
 
 24. `my-3tier-app-tg`를 클릭합니다.
 
 25. **Targets** 탭을 클릭하고 [[Register targets]] 버튼을 클릭합니다.
+    <img src="/images/step8/8-3-targets-tab.png" alt="Targets 탭" class="guide-img-sm" />
 
 26. **Available instances**에서 `my-3tier-app-server`를 체크합니다.
 
 27. **Ports for the selected instances**에 `8080`을 입력합니다.
+    <img src="/images/step8/8-3-port-8080.png" alt="Port 8080 입력" class="guide-img-sm" />
 
 28. [[Include as pending below]] 버튼을 클릭합니다.
+    <img src="/images/step8/8-3-include-pending.png" alt="Include as pending below" class="guide-img-sm" />
 
 29. 하단의 **Review** 섹션에서 인스턴스가 추가된 것을 확인합니다.
 
 30. [[Register pending targets]] 버튼을 클릭하여 등록을 완료합니다.
+    <img src="/images/step8/8-3-register-targets-1.png" alt="Register pending targets 1" class="guide-img-sm" />
+    <img src="/images/step8/8-3-register-targets-2.png" alt="Register pending targets 2" class="guide-img-sm" />
 
 > [!NOTE]
 > Health Check 경로 확인:
@@ -720,6 +729,7 @@ curl http://localhost:8080/actuator/health
 33. [[Create user]]를 클릭합니다.
 
 34. **User name**: `github-actions-backend`를 입력합니다.
+    <img src="/images/step8/8-3a-step38-alb-test.png" alt="User name 입력" class="guide-img-sm" />
 
 35. **Provide user access to the AWS Management Console** 체크를 **하지 않습니다** (콘솔 접근 불필요).
 
@@ -728,10 +738,13 @@ curl http://localhost:8080/actuator/health
 37. **Permissions options**에서 `Attach policies directly`를 선택합니다.
 
 38. 다음 정책을 검색하여 체크합니다: - `AmazonS3FullAccess` (JAR 업로드용) - `AmazonSSMFullAccess` (SSM Run Command 실행용)
+    <img src="/images/step8/8-3a-step42-iam-user.png" alt="정책 선택" class="guide-img-sm" />
 
 39. [[Next]]를 클릭합니다.
 
 40. **Review and create** 페이지에서 설정을 확인하고 [[Create user]]를 클릭합니다.
+    <img src="/images/step8/8-3a-step44-secrets-1.png" alt="Review and create" class="guide-img-sm" />
+    <img src="/images/step8/8-3a-step44-secrets-2.png" alt="Create user 완료" class="guide-img-sm" />
 
 **📙 옵션 B: 기존 `github-actions-frontend` 사용자에 정책 추가**
 
@@ -742,12 +755,16 @@ curl http://localhost:8080/actuator/health
 43. `github-actions-frontend`를 클릭합니다.
 
 44. **Permissions** 탭 → [[Add permissions]] → **Add permissions**를 클릭합니다.
+    <img src="/images/step8/8-3a-step48-access-key.png" alt="Add permissions 클릭" class="guide-img-sm" />
 
 45. **Permissions options**에서 `Attach policies directly`를 선택합니다.
 
 46. 검색창에 `SSMFull`을 입력하고 `AmazonSSMFullAccess`를 체크합니다 (`AmazonS3FullAccess`는 이미 있음).
+    <img src="/images/step8/8-3a-step50-github-secrets.png" alt="SSMFullAccess 정책 추가" class="guide-img-sm" />
 
 47. [[Next]] → [[Add permissions]]를 클릭합니다.
+    <img src="/images/step8/8-3a-step51-secrets-1.png" alt="Add permissions 확인 1" class="guide-img-sm" />
+    <img src="/images/step8/8-3a-step51-secrets-2.png" alt="Add permissions 확인 2" class="guide-img-sm" />
 
 > [!NOTE]
 > 옵션 B를 선택한 경우 아래 "Access Key 생성"을 건너뛰세요.  
@@ -776,6 +793,7 @@ curl http://localhost:8080/actuator/health
 53. [[Create access key]]를 클릭합니다.
 
 54. **Access key ID**와 **Secret access key**를 복사하여 안전한 곳에 저장합니다.
+    <img src="/images/step8/8-3a-step58-copy-keys.png" alt="Access Key 복사" class="guide-img-sm" />
 
 > [!WARNING]
 > Secret access key는 이 화면에서만 확인할 수 있습니다.  
@@ -788,6 +806,7 @@ curl http://localhost:8080/actuator/health
 56. **Settings** 탭을 클릭합니다.
 
 57. 왼쪽 메뉴에서 **Secrets and variables** → **Actions**를 클릭합니다.
+    <img src="/images/step8/8-3a-step61-github-settings.png" alt="Secrets and variables 메뉴" class="guide-img-sm" />
 
 58. [[New repository secret]] 버튼을 클릭합니다.
 
@@ -797,6 +816,11 @@ curl http://localhost:8080/actuator/health
     - `AWS_REGION`: `ap-northeast-2`
     - `S3_DEPLOY_BUCKET`: `<태스크 5-5에서 생성한 배포용 S3 버킷명>`
     - `EC2_INSTANCE_ID`: `<태스크 5-1에서 생성한 Amazon EC2 인스턴스 ID (예: i-0abc123def456)>`
+      <img src="/images/step8/8-3a-step63-secrets-1.png" alt="GitHub Secrets 추가 1" class="guide-img-sm" />
+      <img src="/images/step8/8-3a-step63-secrets-2.png" alt="GitHub Secrets 추가 2" class="guide-img-sm" />
+      <img src="/images/step8/8-3a-step63-secrets-3.png" alt="GitHub Secrets 추가 3" class="guide-img-sm" />
+      <img src="/images/step8/8-3a-step63-secrets-4.png" alt="GitHub Secrets 추가 4" class="guide-img-sm" />
+      <img src="/images/step8/8-3a-step63-secrets-5.png" alt="GitHub Secrets 추가 5" class="guide-img-sm" />
 
 > [!CONCEPT] Private Subnet Amazon EC2에 배포하는 방법
 >

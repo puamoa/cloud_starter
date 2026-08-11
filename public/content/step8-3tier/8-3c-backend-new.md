@@ -60,8 +60,10 @@ Spring Initializr로 프로젝트를 생성합니다.
    - MySQL Driver
    - Spring Boot Actuator
    - Validation
+     <img src="/images/step8/8-3c-step3-spring-init.png" alt="Spring Initializr 설정" class="guide-img-sm" />
 
 4. [[GENERATE]]를 클릭하여 ZIP 파일을 다운로드합니다.
+   <img src="/images/step8/8-3c-step4-generate.png" alt="Spring Initializr GENERATE" class="guide-img-sm" />
 
 ### 1-2. 프로젝트 설정
 
@@ -75,6 +77,8 @@ cp -a ~/Downloads/my-backend-temp/my-backend/. ~/3tier-project/my-backend/
 rm -rf ~/Downloads/my-backend-temp
 ```
 
+<img src="/images/step8/8-3c-step5-extract-mac.png" alt="macOS 압축 해제" class="guide-img-sm" />
+
 **🪟 Windows (PowerShell):**
 
 ```powershell
@@ -82,6 +86,8 @@ Expand-Archive ~/Downloads/my-backend.zip -DestinationPath ~/Downloads/my-backen
 Copy-Item ~/Downloads/my-backend-temp/my-backend/* ~/3tier-project/my-backend/ -Recurse -Force
 Remove-Item ~/Downloads/my-backend-temp -Recurse
 ```
+
+<img src="/images/step8/8-3c-step5-extract-windows.png" alt="Windows 압축 해제" class="guide-img-sm" />
 
 > [!TIP]
 > ZIP 파일명이나 다운로드 경로가 다르면 본인 환경에 맞게 변경하세요.  
@@ -95,6 +101,8 @@ ls -la
 # build.gradle, gradlew, settings.gradle, src/ 등이 보이면 성공
 ```
 
+<img src="/images/step8/8-3c-step5-verify-mac.png" alt="macOS 복사 확인" class="guide-img-sm" />
+
 **🪟 Windows — 복사 확인:**
 
 ```powershell
@@ -103,6 +111,8 @@ dir
 # build.gradle, gradlew, settings.gradle, src/ 등이 보이면 성공
 ```
 
+<img src="/images/step8/8-3c-step5-verify-windows.png" alt="Windows 복사 확인" class="guide-img-sm" />
+
 6. IDE에서 `~/3tier-project/my-backend` 폴더를 프로젝트로 엽니다:
    - **IntelliJ IDEA**: File → Open → `my-backend` 폴더 선택 → Open as Project
    - **VS Code**: File → Open Folder → `my-backend` 폴더 선택
@@ -110,6 +120,8 @@ dir
 > [!TIP]
 > 프로젝트 폴더명과 `settings.gradle`의 `rootProject.name`이 다르면 빌드 산출물(JAR) 파일명이 달라집니다.  
 > `settings.gradle`을 열어 `rootProject.name`을 폴더명과 일치시킨 뒤, IntelliJ에서 Gradle Sync(🐘 코끼리 아이콘)를 클릭하세요.
+>
+> <img src="/images/step8/8-3c-step6-ssm-tip.png" alt="settings.gradle 확인" class="guide-img-sm" />
 
 완성 시 프로젝트 구조:
 
@@ -175,7 +187,6 @@ aws ssm put-parameter \
 <img src="/images/step8/8-3-step1-ssm-2.png" alt="SSM Parameter Store 저장 2" class="guide-img-sm" />
 <img src="/images/step8/8-3-step1-ssm-3.png" alt="SSM Parameter Store 저장 3" class="guide-img-sm" />
 <img src="/images/step8/8-3-step1-ssm-4.png" alt="SSM Parameter Store 저장 4" class="guide-img-sm" />
-<img src="/images/step8/8-3-step1-ssm-5.png" alt="SSM Parameter Store 저장 5" class="guide-img-sm" />
 
 > [!TIP]
 > `SecureString` 타입은 AWS KMS로 자동 암호화됩니다.  
@@ -235,6 +246,8 @@ app:
     allowed-origins: <https://CloudFront 도메인>,http://localhost:5173
 ```
 
+<img src="/images/step8/8-3c-step8-application-yml.png" alt="application.yml 설정" class="guide-img-sm" />
+
 ✅ **태스크 완료** — Amazon RDS 연동 설정을 완료했습니다.
 
 ---
@@ -248,6 +261,8 @@ app:
 > [!TIP]
 > **IntelliJ 파일 생성:** 기본 패키지(`com.example.mybackend`) 우클릭 → New → Java Class → `entity.Item` 입력 → Class 선택  
 > "Add File to Git" 팝업이 뜨면 [[Add]]를 클릭하세요. 이후 파일 생성 시에도 동일합니다.
+>
+> <img src="/images/step8/8-3c-step9-tip.png" alt="IntelliJ 파일 생성" class="guide-img-sm" />
 
 ```java
 package com.example.mybackend.entity;
@@ -290,6 +305,10 @@ public class Item {
 }
 ```
 
+<img src="/images/step8/8-3c-step9-build-1.png" alt="Entity 클래스 작성 1" class="guide-img-sm" />
+<img src="/images/step8/8-3c-step9-build-2.png" alt="Entity 클래스 작성 2" class="guide-img-sm" />
+<img src="/images/step8/8-3c-step9-build-3.png" alt="Entity 클래스 작성 3" class="guide-img-sm" />
+
 ### 3-2. Repository 인터페이스
 
 10. `src/main/java/com/example/mybackend/repository/ItemRepository.java` 파일을 생성하고 다음 내용을 작성한 뒤 저장합니다:
@@ -306,6 +325,9 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface ItemRepository extends JpaRepository<Item, Long> {
 }
 ```
+
+<img src="/images/step8/8-3c-step10-repository-1.png" alt="Repository 인터페이스 1" class="guide-img-sm" />
+<img src="/images/step8/8-3c-step10-repository-2.png" alt="Repository 인터페이스 2" class="guide-img-sm" />
 
 ### 3-3. Controller 클래스
 
@@ -387,6 +409,8 @@ public class ItemController {
 }
 ```
 
+<img src="/images/step8/8-3c-step11-controller.png" alt="Controller 클래스 작성" class="guide-img-sm" />
+
 ✅ **태스크 완료** — CRUD REST API와 Health Check 엔드포인트를 작성했습니다.
 
 ---
@@ -432,6 +456,8 @@ public class WebConfig implements WebMvcConfigurer {
 }
 ```
 
+<img src="/images/step8/8-3c-step12-build-test.png" alt="WebConfig CORS 설정" class="guide-img-sm" />
+
 > [!NOTE]
 > CORS 에러는 **브라우저에서만** 발생합니다.  
 > `curl`로 테스트하면 CORS 에러가 나타나지 않습니다.
@@ -449,22 +475,28 @@ public class WebConfig implements WebMvcConfigurer {
 
 13. 상단 검색창에 `EC2`를 입력하고 **EC2** 서비스를 선택합니다. [[Launch instances]] 버튼을 클릭합니다.
     <img src="/images/step8/8-3-ec2-launch.png" alt="EC2 Launch instances" class="guide-img-sm" />
-14. **Name**: `my-3tier-app-server`
-    - **Tags** 섹션: [[Add new tag]]를 클릭하여 추가
+14. **Name and tags** 섹션에서 다음과 같이 설정합니다:
+    - **Name**: `my-3tier-app-server`
+    - [[Add additional tags]]를 클릭하여 다음 태그를 추가합니다:
       - `CreatedBy` = `admin-user`
       - `Step` = `step8`
       - `Session` = `8-3`
-15. **AMI**: `Amazon Linux 2023`
+        <img src="/images/step8/8-3-ec2-name-tags.png" alt="Name and tags 설정" class="guide-img-sm" />
+15. **Application and OS Images (Amazon Machine Image)**: `Amazon Linux 2023`을 선택합니다.
+    <img src="/images/step8/8-3-ec2-ami.png" alt="AMI 선택" class="guide-img-sm" />
 16. **Instance type**: `t3.micro`
-17. **Key pair**: `Proceed without a key pair`
+    <img src="/images/step8/8-3-ec2-instance-type.png" alt="Instance type 선택" class="guide-img-sm" />
+17. **Key pair**: `Proceed without a key pair (Not recommended)`를 선택합니다.
 18. **Network settings** 섹션에서 [[Edit]] 버튼을 클릭하고 다음과 같이 설정합니다:
-    - **VPC**: `my-3tier-app-vpc`
-    - **Subnet**: `my-3tier-app-private-subnet-1`
+    - **VPC**: `my-3tier-app-vpc` 선택
+    - **Subnet**: `my-3tier-app-private-subnet-1` 선택
     - **Auto-assign public IP**: `Disable`
-    - **Security groups**: `my-3tier-app-ec2-sg`
-19. **Advanced details** → **IAM instance profile**: SSM + Parameter Store 읽기 권한이 있는 IAM Role을 선택합니다.
+    - **Security groups**: `my-3tier-app-ec2-sg` 선택
+      <img src="/images/step8/8-3-ec2-network.png" alt="Network settings 설정" class="guide-img-sm" />
+19. **Advanced details** → **IAM instance profile**: `my-3tier-app-ec2-role` (또는 `ec2-starter-role`)을 선택합니다.
     - 필요 정책: `AmazonSSMManagedInstanceCore` + `AmazonSSMReadOnlyAccess` + `AmazonS3FullAccess`
     - 앞차시에서 `ec2-starter-role`을 이미 만든 경우 해당 Role에 위 정책을 추가하여 선택합니다.
+      <img src="/images/step8/8-3-ec2-iam-role.png" alt="IAM instance profile 선택" class="guide-img-sm" />
 
 > [!TIP]
 > **Role이 없는 경우 새로 생성:**
@@ -559,6 +591,8 @@ SCRIPT
 chmod +x /home/ec2-user/app/start.sh
 ```
 
+<img src="/images/step8/8-3c-step22-start-sh.png" alt="start.sh 생성" class="guide-img-sm" />
+
 ### 5-4. systemd 서비스 등록
 
 23. Spring Boot를 systemd 서비스로 등록합니다:
@@ -587,6 +621,8 @@ sudo systemctl daemon-reload
 sudo systemctl enable spring-app
 ```
 
+<img src="/images/step8/8-3c-step23-jar-deploy.png" alt="systemd 서비스 등록" class="guide-img-sm" />
+
 ### 5-5. JAR 빌드 및 배포
 
 📍 **실행 위치: 로컬 PC**
@@ -608,6 +644,9 @@ JAR_FILE=$(ls build/libs/*.jar | head -1)
 aws s3 cp "$JAR_FILE" s3://$S3_DEPLOY_BUCKET/app.jar
 ```
 
+<img src="/images/step8/8-3c-step24-target-group-1.png" alt="JAR 빌드 및 S3 업로드 1" class="guide-img-sm" />
+<img src="/images/step8/8-3c-step24-target-group-2.png" alt="JAR 빌드 및 S3 업로드 2" class="guide-img-sm" />
+
 📍 **실행 위치: EC2** (SSM Session Manager 접속 상태)
 
 25. EC2에서 JAR을 다운로드하고 애플리케이션을 실행합니다 (아래 `<>` 부분을 본인 값으로 수정한 후 실행합니다):
@@ -627,17 +666,26 @@ sudo journalctl -u spring-app -f
 curl http://localhost:8080/actuator/health
 ```
 
+<img src="/images/step8/8-3c-step25-jar-run-1.png" alt="JAR 다운로드 및 실행 1" class="guide-img-sm" />
+<img src="/images/step8/8-3c-step25-jar-run-2.png" alt="Health Check 확인" class="guide-img-sm" />
+
 ### 5-6. ALB Target Group에 EC2 등록
 
 26. 상단 검색창에 `EC2`를 입력하고 **EC2** 서비스를 선택합니다.
 27. 왼쪽 메뉴에서 **Target Groups**를 클릭합니다.
+    <img src="/images/step8/8-3-target-groups.png" alt="Target Groups 메뉴" class="guide-img-sm" />
 28. `my-3tier-app-tg`를 클릭합니다.
 29. **Targets** 탭을 클릭하고 [[Register targets]] 버튼을 클릭합니다.
+    <img src="/images/step8/8-3-targets-tab.png" alt="Targets 탭" class="guide-img-sm" />
 30. **Available instances**에서 `my-3tier-app-server`를 체크합니다.
 31. **Ports for the selected instances**에 `8080`을 입력합니다.
+    <img src="/images/step8/8-3-port-8080.png" alt="Port 8080 입력" class="guide-img-sm" />
 32. [[Include as pending below]] 버튼을 클릭합니다.
+    <img src="/images/step8/8-3-include-pending.png" alt="Include as pending below" class="guide-img-sm" />
 33. 하단의 **Review** 섹션에서 인스턴스가 추가된 것을 확인합니다.
 34. [[Register pending targets]] 버튼을 클릭하여 등록을 완료합니다.
+    <img src="/images/step8/8-3-register-targets-1.png" alt="Register pending targets 1" class="guide-img-sm" />
+    <img src="/images/step8/8-3-register-targets-2.png" alt="Register pending targets 2" class="guide-img-sm" />
 
 > [!OUTPUT]
 > Target Group의 Targets 탭에서 등록된 인스턴스를 확인합니다:
@@ -709,16 +757,21 @@ curl http://localhost:8080/actuator/health
 
 35. 상단 검색창에 `IAM`을 입력하고 **IAM** 서비스를 선택합니다.
 36. 왼쪽 메뉴에서 **Users**를 클릭합니다.
+    <img src="/images/step8/8-3a-step36-health-check.png" alt="IAM Users 메뉴" class="guide-img-sm" />
 37. [[Create user]]를 클릭합니다.
 38. **User name**: `github-actions-backend`를 입력합니다.
+    <img src="/images/step8/8-3a-step38-alb-test.png" alt="User name 입력" class="guide-img-sm" />
 39. **Provide user access to the AWS Management Console** 체크를 **하지 않습니다** (콘솔 접근 불필요).
 40. [[Next]]를 클릭합니다.
 41. **Permissions options**에서 `Attach policies directly`를 선택합니다.
 42. 다음 정책을 검색하여 체크합니다:
     - `AmazonS3FullAccess` (JAR 업로드용)
     - `AmazonSSMFullAccess` (SSM Run Command 실행용)
+      <img src="/images/step8/8-3a-step42-iam-user.png" alt="정책 선택" class="guide-img-sm" />
 43. [[Next]]를 클릭합니다.
 44. **Review and create** 페이지에서 설정을 확인하고 [[Create user]]를 클릭합니다.
+    <img src="/images/step8/8-3a-step44-secrets-1.png" alt="Review and create" class="guide-img-sm" />
+    <img src="/images/step8/8-3a-step44-secrets-2.png" alt="Create user 완료" class="guide-img-sm" />
 
 **📙 옵션 B: 기존 `github-actions-frontend` 사용자에 정책 추가**
 
@@ -726,9 +779,13 @@ curl http://localhost:8080/actuator/health
 46. 왼쪽 메뉴에서 **Users**를 클릭합니다.
 47. `github-actions-frontend`를 클릭합니다.
 48. **Permissions** 탭 → [[Add permissions]] → **Add permissions**를 클릭합니다.
+    <img src="/images/step8/8-3a-step48-access-key.png" alt="Add permissions 클릭" class="guide-img-sm" />
 49. **Permissions options**에서 `Attach policies directly`를 선택합니다.
 50. 검색창에 `SSMFull`을 입력하고 `AmazonSSMFullAccess`를 체크합니다 (`AmazonS3FullAccess`는 이미 있음).
+    <img src="/images/step8/8-3a-step50-github-secrets.png" alt="SSMFullAccess 정책 추가" class="guide-img-sm" />
 51. [[Next]] → [[Add permissions]]를 클릭합니다.
+    <img src="/images/step8/8-3a-step51-secrets-1.png" alt="Add permissions 확인 1" class="guide-img-sm" />
+    <img src="/images/step8/8-3a-step51-secrets-2.png" alt="Add permissions 확인 2" class="guide-img-sm" />
 
 > [!NOTE]
 > 옵션 B를 선택한 경우 아래 "Access Key 생성"을 건너뛰세요.  
@@ -774,6 +831,7 @@ curl http://localhost:8080/actuator/health
 56. 하단의 확인 체크박스를 선택하고 [[Next]]를 클릭합니다.
 57. [[Create access key]]를 클릭합니다.
 58. **Access key ID**와 **Secret access key**를 복사하여 안전한 곳에 저장합니다.
+    <img src="/images/step8/8-3a-step58-copy-keys.png" alt="Access Key 복사" class="guide-img-sm" />
 
 > [!WARNING]
 > Secret access key는 이 화면에서만 확인할 수 있습니다.  
@@ -784,6 +842,7 @@ curl http://localhost:8080/actuator/health
 59. 브라우저에서 GitHub → `my-backend` 리포지토리 페이지로 이동합니다.
 60. **Settings** 탭을 클릭합니다.
 61. 왼쪽 메뉴에서 **Secrets and variables** → **Actions**를 클릭합니다.
+    <img src="/images/step8/8-3a-step61-github-settings.png" alt="Secrets and variables 메뉴" class="guide-img-sm" />
 62. [[New repository secret]] 버튼을 클릭합니다.
 63. 다음 Secrets를 하나씩 추가합니다:
     - `AWS_ACCESS_KEY_ID`: 50번에서 복사한 Access Key ID
@@ -791,6 +850,11 @@ curl http://localhost:8080/actuator/health
     - `AWS_REGION`: `ap-northeast-2`
     - `S3_DEPLOY_BUCKET`: `<태스크 5-5에서 생성한 배포용 S3 버킷명>`
     - `EC2_INSTANCE_ID`: `<태스크 5-1에서 생성한 Amazon EC2 인스턴스 ID (예: i-0abc123def456)>`
+      <img src="/images/step8/8-3a-step63-secrets-1.png" alt="GitHub Secrets 추가 1" class="guide-img-sm" />
+      <img src="/images/step8/8-3a-step63-secrets-2.png" alt="GitHub Secrets 추가 2" class="guide-img-sm" />
+      <img src="/images/step8/8-3a-step63-secrets-3.png" alt="GitHub Secrets 추가 3" class="guide-img-sm" />
+      <img src="/images/step8/8-3a-step63-secrets-4.png" alt="GitHub Secrets 추가 4" class="guide-img-sm" />
+      <img src="/images/step8/8-3a-step63-secrets-5.png" alt="GitHub Secrets 추가 5" class="guide-img-sm" />
 
 > [!CONCEPT] Private Subnet Amazon EC2에 배포하는 방법
 >
@@ -820,6 +884,7 @@ curl http://localhost:8080/actuator/health
 > ```
 
 64. `.github/workflows/deploy.yml` 파일을 생성합니다:
+    <img src="/images/step8/8-3c-step64-workflow-file.png" alt="워크플로우 파일 생성" class="guide-img-sm" />
 
 ```bash
 # 프로젝트 루트에서 실행 (~/3tier-project/my-backend)
@@ -957,7 +1022,10 @@ git commit -m "feat: initial backend with CI/CD"
 git push origin main
 ```
 
+<img src="/images/step8/8-3c-step65-push-deploy.png" alt="git push 후 배포 트리거" class="guide-img-sm" />
+
 66. GitHub → `my-backend` 리포지토리 → **Actions** 탭에서 워크플로우 실행을 확인합니다.
+    <img src="/images/step8/8-3c-step66-actions-success.png" alt="Actions 워크플로우 성공" class="guide-img-sm" />
 
 > [!TIP]
 > 첫 빌드는 Gradle 의존성 다운로드로 3 ~ 4분 소요됩니다.  
@@ -1052,6 +1120,8 @@ curl -X PUT http://$ALB_DNS/api/items/1 \
 curl -X DELETE http://$ALB_DNS/api/items/1
 ```
 
+<img src="/images/step8/8-3c-step71-alb-test.png" alt="ALB API 테스트 결과" class="guide-img-sm" />
+
 ### 7-3. RDS 데이터 확인 (선택)
 
 📍 **실행 위치: EC2 (SSM Session Manager)**
@@ -1067,6 +1137,8 @@ USE myapp;
 SELECT * FROM items;
 EXIT;
 ```
+
+<img src="/images/step8/8-3c-step72-rds-check.png" alt="RDS 데이터 확인" class="guide-img-sm" />
 
 > [!NOTE]
 > 이 시점에서 브라우저(CloudFront HTTPS)에서 프론트엔드 → 백엔드(ALB HTTP) API 호출은 **Mixed Content**로 차단됩니다.  

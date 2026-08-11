@@ -386,23 +386,23 @@ public class WebConfig implements WebMvcConfigurer {
      - `CreatedBy` = `admin-user`
      - `Step` = `step8`
      - `Session` = `8-3`
-       <img src="/images/step8/8-3a-step9-name-tags.png" alt="Name and tags 설정" class="guide-img-sm" />
-10. **Application and OS Images (Amazon Machine Image)**: `Amazon Linux 2023` 선택
-    <img src="/images/step8/8-3a-step10-ami.png" alt="AMI 선택" class="guide-img-sm" />
+       <img src="/images/step8/8-3-ec2-name-tags.png" alt="Name and tags 설정" class="guide-img-sm" />
+10. **Application and OS Images (Amazon Machine Image)**: `Amazon Linux 2023`을 선택합니다.
+    <img src="/images/step8/8-3-ec2-ami.png" alt="AMI 선택" class="guide-img-sm" />
 11. **Instance type**: `t3.micro`
-    <img src="/images/step8/8-3a-step11-instance-type.png" alt="Instance type 선택" class="guide-img-sm" />
-12. **Key pair**: `Proceed without a key pair (Not recommended)` 선택
+    <img src="/images/step8/8-3-ec2-instance-type.png" alt="Instance type 선택" class="guide-img-sm" />
+12. **Key pair**: `Proceed without a key pair (Not recommended)`를 선택합니다.
 13. **Network settings** 섹션에서 [[Edit]] 버튼을 클릭하고 다음과 같이 설정합니다:
-    - **VPC**: `my-3tier-app-vpc` 선택
-    - **Subnet**: `my-3tier-app-private-subnet-1` 선택
+    - **VPC**: `my-3tier-app-vpc`
+    - **Subnet**: `my-3tier-app-private-subnet-1`
     - **Auto-assign public IP**: `Disable`
-    - **Security groups**: `my-3tier-app-ec2-sg` 선택
-      <img src="/images/step8/8-3a-step13-network.png" alt="Network settings 설정" class="guide-img-sm" />
+    - **Security groups**: `my-3tier-app-ec2-sg`
+      <img src="/images/step8/8-3-ec2-network.png" alt="Network settings 설정" class="guide-img-sm" />
 
 14. **Advanced details** → **IAM instance profile**: `my-3tier-app-ec2-role` (또는 `ec2-starter-role`)을 선택합니다.
     - 필요 정책: `AmazonSSMManagedInstanceCore` + `AmazonSSMReadOnlyAccess` + `AmazonS3FullAccess`
     - 앞차시에서 `ec2-starter-role`을 이미 만든 경우 해당 Role에 위 정책을 추가하여 선택합니다.
-      <img src="/images/step8/8-3a-step14-iam-role.png" alt="IAM instance profile 선택" class="guide-img-sm" />
+      <img src="/images/step8/8-3-ec2-iam-role.png" alt="IAM instance profile 선택" class="guide-img-sm" />
 
 > [!TIP]
 > **Role이 없는 경우 새로 생성:**
@@ -730,20 +730,20 @@ curl http://localhost:8080/
 
 25. 상단 검색창에 `EC2`를 입력하고 **EC2** 서비스를 선택합니다.
 26. 왼쪽 메뉴에서 **Target Groups**를 클릭합니다.
-    <img src="/images/step8/8-3a-step26-target-groups.png" alt="Target Groups 메뉴" class="guide-img-sm" />
+    <img src="/images/step8/8-3-target-groups.png" alt="Target Groups 메뉴" class="guide-img-sm" />
 27. `my-3tier-app-tg`를 클릭합니다.
 28. **Targets** 탭을 클릭합니다.
-    <img src="/images/step8/8-3a-step28-targets-tab.png" alt="Targets 탭" class="guide-img-sm" />
+    <img src="/images/step8/8-3-targets-tab.png" alt="Targets 탭" class="guide-img-sm" />
 29. [[Register targets]] 버튼을 클릭합니다.
 30. **Available instances**에서 `my-3tier-app-server`를 체크합니다.
 31. **Ports for the selected instances**에 `8080`을 입력합니다.
-    <img src="/images/step8/8-3a-step31-port-8080.png" alt="Port 8080 입력" class="guide-img-sm" />
+    <img src="/images/step8/8-3-port-8080.png" alt="Port 8080 입력" class="guide-img-sm" />
 32. [[Include as pending below]] 버튼을 클릭합니다.
-    <img src="/images/step8/8-3a-step32-include-pending.png" alt="Include as pending below" class="guide-img-sm" />
+    <img src="/images/step8/8-3-include-pending.png" alt="Include as pending below" class="guide-img-sm" />
 33. 하단의 **Review** 섹션에서 인스턴스가 추가된 것을 확인합니다.
 34. [[Register pending targets]] 버튼을 클릭하여 등록을 완료합니다.
-    <img src="/images/step8/8-3a-step34-register-1.png" alt="Register pending targets 1" class="guide-img-sm" />
-    <img src="/images/step8/8-3a-step34-register-2.png" alt="Register pending targets 2" class="guide-img-sm" />
+    <img src="/images/step8/8-3-register-targets-1.png" alt="Register pending targets 1" class="guide-img-sm" />
+    <img src="/images/step8/8-3-register-targets-2.png" alt="Register pending targets 2" class="guide-img-sm" />
 
 > [!NOTE]
 > Health Check 경로를 확인하세요:
