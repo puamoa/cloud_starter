@@ -497,26 +497,35 @@ export const HelpPanelContent: React.FC<HelpPanelContentProps> = ({
       }
     }
 
-    if (element) {
-      // 메인 콘텐츠 영역 찾기
-      const mainContent = document.querySelector(
-        '.awsui-app-layout__content-main',
-      );
+    // id로 못 찾으면 전체 DOM에서 해당 id를 포함하는 요소를 찾기 (slugified id 매칭)
+    if (!element) {
+      // 모든 id가 있는 요소에서 찾기
+      const allElements = document.querySelectorAll('[id]');
+      for (const el of allElements) {
+        if (el.id === id) {
+          element = el as HTMLElement;
+          break;
+        }
+      }
+    }
 
-      // 모바일 헤더 높이 고려 (모바일: 120px, 데스크톱: 80px)
+    if (element) {
+      // scrollIntoView를 사용하여 확실하게 스크롤
+      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+      // 헤더 높이만큼 보정 (scrollIntoView 후 약간 위로)
       const isMobile = window.innerWidth < 768;
       const offset = isMobile ? 120 : 80;
-
-      if (mainContent) {
-        // 메인 콘텐츠 영역 내에서 스크롤
-        const elementTop = element.offsetTop;
-        mainContent.scrollTo({ top: elementTop - offset, behavior: 'smooth' });
-      } else {
-        // 폴백: 전체 페이지 스크롤
-        const y =
-          element.getBoundingClientRect().top + window.pageYOffset - offset;
-        window.scrollTo({ top: y, behavior: 'smooth' });
-      }
+      setTimeout(() => {
+        const mainContent = document.querySelector(
+          '.awsui-app-layout__content-main',
+        );
+        if (mainContent) {
+          mainContent.scrollBy({ top: -offset, behavior: 'smooth' });
+        } else {
+          window.scrollBy({ top: -offset, behavior: 'smooth' });
+        }
+      }, 100);
     }
 
     // 모바일에서 목차 패널 닫기
