@@ -54,6 +54,11 @@ Vite를 사용하여 Vue.js 프로젝트를 새로 생성합니다.
 > nvm use 22
 > node --version   # v22.x.x 확인
 > ```
+>
+> <img src="/images/step8/8-2b-task1-node-test1.png" alt="Node.js 버전 확인" class="guide-img-sm" />
+> <img src="/images/step8/8-2b-task1-node-test2.png" alt="nvm install 완료" class="guide-img-sm" />
+> <img src="/images/step8/8-2b-task1-nvm-windows.png" alt="Windows nvm 설치 화면" class="guide-img-sm" />
+> <img src="/images/step8/8-2b-task1-warning.png" alt="Node.js 22 설치 완료 확인" class="guide-img-sm" />
 
 1. Vue.js 프로젝트를 생성합니다:
 
@@ -81,6 +86,10 @@ npm create vue@latest .
 > 이전 버전은 항목별 Yes/No 질문, 최신 버전(3.23+)은 체크박스 목록으로 표시됩니다.  
 > 핵심은 **Router**와 **Pinia**를 선택하는 것입니다.
 
+<img src="/images/step8/8-2b-step1-vue-options-1.png" alt="Vue 프로젝트 옵션 선택 1" class="guide-img-sm" />
+<img src="/images/step8/8-2b-step1-vue-options-2.png" alt="Vue 프로젝트 옵션 선택 2" class="guide-img-sm" />
+<img src="/images/step8/8-2b-step1-vue-options-3.png" alt="Vue 프로젝트 생성 완료" class="guide-img-sm" />
+
 2. 의존성을 설치합니다:
 
 ```bash
@@ -88,12 +97,16 @@ npm create vue@latest .
 npm install
 ```
 
+<img src="/images/step8/8-2b-step2-npm-install.png" alt="npm install 완료" class="guide-img-sm" />
+
 3. Axios를 추가 설치합니다 (API 호출용):
 
 ```bash
 # axios 추가 설치 (API 호출용)
 npm install axios
 ```
+
+<img src="/images/step8/8-2b-step3-npm-build.png" alt="axios 설치 완료" class="guide-img-sm" />
 
 ### 1-2. 완성 목표 프로젝트 구조
 
@@ -126,6 +139,8 @@ my-frontend/
 
 VS Code 또는 IDE에서 `~/3tier-project/my-frontend` 폴더를 프로젝트로 엽니다.
 
+<img src="/images/step8/8-2b-task1-2-complete.png" alt="프로젝트 구조 확인" class="guide-img-sm" />
+
 ### 1-3. 불필요한 예제 파일 삭제
 
 create-vue가 생성한 예제 파일을 삭제합니다. 이 프로젝트에서는 사용하지 않습니다.
@@ -150,6 +165,8 @@ rm src/assets/base.css
 rm src/assets/logo.svg
 ```
 
+<img src="/images/step8/8-2b-step4-delete-files.png" alt="예제 파일 삭제" class="guide-img-sm" />
+
 > [!NOTE]
 > 파일이 없다는 에러가 나오면 무시해도 됩니다.  
 > create-vue 버전에 따라 생성되는 예제 파일이 다를 수 있습니다.
@@ -163,6 +180,8 @@ rm src/assets/logo.svg
   <router-view />
 </template>
 ```
+
+<img src="/images/step8/8-2b-step5-env-production.png" alt="App.vue 교체" class="guide-img-sm" />
 
 ### 1-5. Vue Router 설정
 
@@ -193,6 +212,8 @@ const router = createRouter({
 export default router;
 ```
 
+<img src="/images/step8/8-2b-step6-main-js.png" alt="Router 설정" class="guide-img-sm" />
+
 ### 1-6. main.js 수정
 
 7. `src/main.js` 파일을 열고 기존 내용을 모두 삭제한 뒤 다음으로 교체하고 저장합니다:
@@ -210,6 +231,8 @@ app.use(createPinia());
 app.use(router);
 app.mount('#app');
 ```
+
+<img src="/images/step8/8-2b-step7-build-test.png" alt="main.js 수정 완료" class="guide-img-sm" />
 
 > [!NOTE]
 > Pinia를 선택하지 않았다면 `createPinia` 관련 2줄을 제거하세요.
@@ -236,6 +259,9 @@ app.mount('#app');
 VITE_API_URL=http://localhost:8080/api
 ```
 
+<img src="/images/step8/8-2b-step8-s3-check-1.png" alt="환경 변수 파일 생성 1" class="guide-img-sm" />
+<img src="/images/step8/8-2b-step8-s3-check-2.png" alt="환경 변수 파일 생성 2" class="guide-img-sm" />
+
 9. 프로젝트 루트에 `.env.production` 파일을 생성하고 다음 내용을 입력한 뒤 저장합니다 (아래 `<>` 부분을 본인 값으로 수정한 후 실행합니다):
 
 ```bash
@@ -243,6 +269,8 @@ VITE_API_URL=http://localhost:8080/api
 # .env.production
 VITE_API_URL=http://<ALB_DNS_NAME>/api
 ```
+
+<img src="/images/step8/8-2b-task2-3.png" alt=".env.production 설정" class="guide-img-sm" />
 
 > [!WARNING]
 > **`/api`를 포함하는 이유:**
@@ -315,6 +343,9 @@ export default {
 };
 ```
 
+<img src="/images/step8/8-2b-task2-4.png" alt="Axios 설정 1" class="guide-img-sm" />
+<img src="/images/step8/8-2b-task2-5.png" alt="Axios 설정 2" class="guide-img-sm" />
+
 ### 2-3. 메인 페이지 (HomeView.vue)
 
 11. `src/views/HomeView.vue` 파일을 열고 기존 내용을 모두 삭제한 뒤 다음으로 교체하고 저장합니다:
@@ -359,6 +390,8 @@ const checkHealth = async () => {
 checkHealth();
 </script>
 ```
+
+<img src="/images/step8/8-2b-task2-6.png" alt="HomeView.vue 작성" class="guide-img-sm" />
 
 ### 2-4. CRUD 페이지 (ItemsView.vue)
 
@@ -431,6 +464,9 @@ const removeItem = async (id) => {
 onMounted(fetchItems);
 </script>
 ```
+
+<img src="/images/step8/8-2b-task2-7.png" alt="ItemsView.vue 작성 1" class="guide-img-sm" />
+<img src="/images/step8/8-2b-task2-8.png" alt="ItemsView.vue 작성 2" class="guide-img-sm" />
 
 ### 2-5. 글로벌 스타일 (main.css)
 
@@ -550,6 +586,8 @@ nav a:hover {
 }
 ```
 
+<img src="/images/step8/8-2b-task2-9.png" alt="main.css 스타일 작성" class="guide-img-sm" />
+
 ### 2-6. 개발 모드로 확인
 
 14. 터미널을 열고 프로젝트 폴더에서 개발 서버를 실행합니다:
@@ -558,7 +596,10 @@ nav a:hover {
 npm run dev
 ```
 
+<img src="/images/step8/8-2b-task2-10.png" alt="npm run dev 실행" class="guide-img-sm" />
+
 15. 브라우저에서 `http://localhost:5173`으로 접속합니다.
+    <img src="/images/step8/8-2b-task2-11.png" alt="브라우저 접속 확인" class="guide-img-sm" />
 
 > [!OUTPUT]
 >
@@ -567,6 +608,8 @@ npm run dev
 >
 > API 서버가 아직 없으므로 "연결 실패"는 정상입니다.  
 > 화면이 정상 렌더링되면 성공입니다.
+>
+> <img src="/images/step8/8-2b-task2-12.png" alt="개발 서버 실행 결과" class="guide-img-sm" />
 
 16. 확인 후 터미널에서 `Ctrl+C`로 개발 서버를 종료합니다.
 
@@ -603,10 +646,12 @@ AWS CloudFormation에서 이미 Amazon S3 버킷과 정적 웹 호스팅을 설�
     - **S3 static website hosting**: Enabled
     - **Hosting type**: Bucket hosting
     - **Bucket website endpoint**: URL이 표시됨
+      <img src="/images/step8/8-2a-step9-s3-sync.png" alt="S3 Static website hosting 확인" class="guide-img-sm" />
 
 21. Index/Error document를 확인하려면 [[Edit]] 버튼을 클릭합니다:
     - **Index document**: `index.html`
     - **Error document**: `index.html`
+      <img src="/images/step8/8-2a-step10-s3-website.png" alt="Index/Error document 확인" class="guide-img-sm" />
 
 22. 확인만 하고 변경하지 않으므로 [[Cancel]] 버튼을 클릭하여 나갑니다.
 
@@ -614,6 +659,7 @@ AWS CloudFormation에서 이미 Amazon S3 버킷과 정적 웹 호스팅을 설�
 
 23. **Permissions** 탭을 클릭합니다.
 24. **Block public access (bucket settings)** 섹션에서 모든 항목이 **Off**인지 확인합니다.
+    <img src="/images/step8/8-2a-step14-bucket-policy.png" alt="Block public access 확인" class="guide-img-sm" />
 
 ### 버킷 정책 확인
 
@@ -635,11 +681,14 @@ AWS CloudFormation에서 이미 Amazon S3 버킷과 정적 웹 호스팅을 설�
 }
 ```
 
+<img src="/images/step8/8-2a-step15-iam-user.png" alt="Bucket policy JSON 확인" class="guide-img-sm" />
+
 ### 웹사이트 엔드포인트 확인
 
 27. **Properties** 탭으로 돌아갑니다.
 28. 페이지 하단의 **Static website hosting** 섹션에서 **Bucket website endpoint** URL을 복사합니다.
 29. 브라우저에서 해당 URL로 접속합니다.
+    <img src="/images/step8/8-2a-step18-website-endpoint.png" alt="S3 웹사이트 엔드포인트 접속" class="guide-img-sm" />
 
 > [!OUTPUT]
 > Amazon S3 웹사이트 엔드포인트 형식:
@@ -666,6 +715,8 @@ cd ~/3tier-project/my-frontend
 npm run build
 ```
 
+<img src="/images/step8/8-2b-task4-1.png" alt="npm run build 결과" class="guide-img-sm" />
+
 빌드 결과물이 `dist/` 디렉토리에 생성됩니다:
 
 ```
@@ -690,6 +741,8 @@ echo $BUCKET_NAME   # 값이 출력되는지 확인
 aws s3 sync dist/ s3://$BUCKET_NAME --delete
 ```
 
+<img src="/images/step8/8-2b-task4-3.png" alt="S3 sync 업로드 완료" class="guide-img-sm" />
+
 > [!NOTE]
 > `--delete` 옵션은 S3에 있지만 로컬 dist에 없는 파일을 삭제합니다.  
 > 이전 배포의 잔여 파일을 정리하여 깔끔한 상태를 유지합니다.
@@ -703,6 +756,8 @@ aws s3 sync dist/ s3://$BUCKET_NAME --delete
 aws s3 ls s3://$BUCKET_NAME --recursive
 ```
 
+<img src="/images/step8/8-2b-task4-4.png" alt="S3 파일 목록 확인" class="guide-img-sm" />
+
 ### 4-4. 브라우저에서 확인
 
 33. Amazon S3 웹사이트 엔드포인트로 접속합니다 (본인 버킷명으로 변경):
@@ -710,6 +765,8 @@ aws s3 ls s3://$BUCKET_NAME --recursive
 ```
 http://<S3BucketName>.s3-website.ap-northeast-2.amazonaws.com
 ```
+
+<img src="/images/step8/8-2b-task4-5.png" alt="S3 웹사이트 브라우저 확인" class="guide-img-sm" />
 
 > [!TIP]
 > 이 시점에서는 API 서버가 아직 없으므로 "API 연결 실패" 메시지가 표시됩니다.  
@@ -726,16 +783,19 @@ S3 앞에 Amazon CloudFront를 배치하여 CDN + HTTPS를 적용합니다.
 ### Amazon CloudFront 콘솔 이동
 
 34. 상단 검색창에 `CloudFront`를 입력하고 **CloudFront** 서비스를 선택합니다.
+    <img src="/images/step8/8-2a-step24-cloudfront-create.png" alt="CloudFront 서비스 이동" class="guide-img-sm" />
 35. [[Create distribution]] 버튼을 클릭합니다.
 
 ### Step 1: Choose a plan
 
 36. **Pay as you go** (맨 아래)를 선택합니다.
+    <img src="/images/step8/8-2a-step26-origin-domain.png" alt="Pay as you go 선택" class="guide-img-sm" />
 37. [[Next]]를 클릭합니다.
 
 ### Step 2: Get started
 
 38. **Distribution name**: `3tier-frontend` (또는 본인이 원하는 이름) 입력합니다.
+    <img src="/images/step8/8-2a-step28-cache-behavior.png" alt="Distribution name 입력" class="guide-img-sm" />
 39. **Description**: 비워둡니다 (선택사항).
 40. **Distribution type**: `Single website or app` 선택 (기본값).
 41. **Domain** 섹션: 비워둡니다 (커스텀 도메인은 태스크 7에서 설정).
@@ -748,6 +808,7 @@ S3 앞에 Amazon CloudFront를 배치하여 CDN + HTTPS를 적용합니다.
 ### Step 3: Specify origin
 
 44. **Origin type**: `Other`를 선택합니다.
+    <img src="/images/step8/8-2a-step34-create-distribution.png" alt="Origin 설정" class="guide-img-md" />
 
 > [!WARNING]
 > **`Amazon S3`를 선택하지 마세요!**  
@@ -776,6 +837,7 @@ S3 앞에 Amazon CloudFront를 배치하여 CDN + HTTPS를 적용합니다.
 ### Step 4: Enable security
 
 55. **Web Application Firewall (WAF)**: `Do not enable security protections` 선택
+    <img src="/images/step8/8-2a-step45-waf-disable.png" alt="WAF 비활성화 선택" class="guide-img-sm" />
 
 > [!WARNING]
 > `Enable security protections`를 선택하면 **AWS WAF 비용이 월 $14 이상** 발생할 수 있습니다.  
@@ -786,23 +848,28 @@ S3 앞에 Amazon CloudFront를 배치하여 CDN + HTTPS를 적용합니다.
 ### Step 5: Review and create
 
 57. 설정 내용을 확인하고 [[Create distribution]] 버튼을 클릭합니다.
+    <img src="/images/step8/8-2a-step47-review.png" alt="Create distribution 클릭" class="guide-img-sm" />
 
 ### Default root object 설정 (필수)
 
 58. 생성 직후 상세 페이지의 **General** 탭 → **Settings** 섹션에서 [[Edit]] 버튼을 클릭합니다.
+    <img src="/images/step8/8-2a-step48-deploying.png" alt="Distribution Settings Edit" class="guide-img-sm" />
 59. **Default root object** 필드에 `index.html`을 입력합니다.
+    <img src="/images/step8/8-2a-step49-default-root.png" alt="Default root object 설정" class="guide-img-sm" />
 60. **Price class**를 `Use only North America and Europe`로 변경합니다 (비용 절약, 선택사항).
 61. [[Save changes]]를 클릭합니다.
 
 ### 에러 페이지 설정 (SPA 라우팅)
 
 62. 생성된 Distribution 상세 페이지에서 **Error pages** 탭을 클릭합니다.
+    <img src="/images/step8/8-2a-step52-error-pages.png" alt="Error pages 탭" class="guide-img-sm" />
 63. [[Create custom error response]] 버튼을 클릭합니다.
 64. 다음과 같이 설정합니다:
     - **HTTP error code**: `403` 선택
     - **Customize error response**: `Yes` 선택
     - **Response page path**: `/index.html` 입력
     - **HTTP response code**: `200` 선택
+      <img src="/images/step8/8-2a-step54-error-403.png" alt="403 에러 응답 설정" class="guide-img-sm" />
 65. [[Create custom error response]] 버튼을 클릭하여 저장합니다.
 
 66. 같은 방식으로 `404` 에러도 추가합니다:
@@ -810,6 +877,7 @@ S3 앞에 Amazon CloudFront를 배치하여 CDN + HTTPS를 적용합니다.
     - **Customize error response**: `Yes` 선택
     - **Response page path**: `/index.html` 입력
     - **HTTP response code**: `200` 선택
+      <img src="/images/step8/8-2a-step55-error-404.png" alt="404 에러 응답 설정" class="guide-img-sm" />
 67. [[Create custom error response]] 버튼을 클릭하여 저장합니다.
 
 > [!CONCEPT] SPA 라우팅과 에러 페이지 설정
@@ -821,8 +889,10 @@ S3 앞에 Amazon CloudFront를 배치하여 CDN + HTTPS를 적용합니다.
 ### Amazon CloudFront URL 접속 확인
 
 68. Status가 `Enabled`로 변경되었는지 확인합니다 (약 5 ~ 10분 소요).
+    <img src="/images/step8/8-2a-step58-cf-deployed.png" alt="CloudFront Status Enabled" class="guide-img-sm" />
 69. **Distribution domain name**을 복사합니다 (예: `d1234abcdef.cloudfront.net`).
 70. 브라우저에서 `https://d1234abcdef.cloudfront.net`으로 접속합니다.
+    <img src="/images/step8/8-2b-step70-https-check.png" alt="HTTPS로 접속 확인" class="guide-img-sm" />
 71. Vue.js 앱이 HTTPS로 정상 로드되는지 확인합니다.
 72. `https://d1234abcdef.cloudfront.net/items`를 직접 입력하여 SPA 라우팅이 동작하는지 확인합니다.
 
@@ -849,24 +919,31 @@ S3 앞에 Amazon CloudFront를 배치하여 CDN + HTTPS를 적용합니다.
 
 73. 상단 검색창에 `IAM`을 입력하고 **IAM** 서비스를 선택합니다.
 74. 왼쪽 메뉴에서 **IAM Users**를 클릭합니다.
+    <img src="/images/step8/8-2a-step65-iam-user.png" alt="IAM Users 목록" class="guide-img-sm" />
 75. [[Create user]]를 클릭합니다.
 76. **User name**: `github-actions-frontend`를 입력합니다.
+    <img src="/images/step8/8-2a-step67-create-user.png" alt="User name 입력" class="guide-img-sm" />
 77. **Provide user access to the AWS Management Console** 체크를 **하지 않습니다**.
 78. [[Next]]를 클릭합니다.
 79. **Permissions options**에서 `Attach policies directly`를 선택합니다.
+    <img src="/images/step8/8-2a-step70-attach-policies.png" alt="Attach policies directly 선택" class="guide-img-sm" />
 80. 검색창에 `S3`를 입력하고 `AmazonS3FullAccess`를 체크합니다.
 81. 검색창을 지우고 `CloudFront`를 입력하고 `CloudFrontFullAccess`를 체크합니다.
 82. [[Next]]를 클릭합니다.
 83. 설정을 확인하고 [[Create user]]를 클릭합니다.
+    <img src="/images/step8/8-2a-step75-create-user.png" alt="Create user 완료" class="guide-img-sm" />
 
 ### Access Key 생성
 
 84. 생성된 `github-actions-frontend` 사용자를 클릭하여 상세 페이지로 이동합니다.
 85. **Security credentials** 탭 → **Access keys** 섹션에서 [[Create access key]]를 클릭합니다.
+    <img src="/images/step8/8-2a-step77-security-credentials.png" alt="Security credentials 탭" class="guide-img-sm" />
 86. **Use case**에서 `Third-party service`를 선택합니다.
+    <img src="/images/step8/8-2a-step79-use-case.png" alt="Use case 선택" class="guide-img-sm" />
 87. 하단의 확인 체크박스를 선택하고 [[Next]]를 클릭합니다.
 88. [[Create access key]]를 클릭합니다.
 89. **Access key ID**와 **Secret access key**를 복사하여 안전한 곳에 저장합니다.
+    <img src="/images/step8/8-2a-step82-copy-keys.png" alt="Access Key 복사" class="guide-img-sm" />
 
 > [!WARNING]
 > Secret access key는 이 화면에서만 확인할 수 있습니다.  
@@ -877,6 +954,7 @@ S3 앞에 Amazon CloudFront를 배치하여 CDN + HTTPS를 적용합니다.
 90. 브라우저에서 GitHub → `my-frontend` 리포지토리 페이지로 이동합니다.
 91. **Settings** 탭을 클릭합니다.
 92. 왼쪽 메뉴에서 **Secrets and variables** → **Actions**를 클릭합니다.
+    <img src="/images/step8/8-2a-step85-github-settings.png" alt="Secrets and variables 메뉴" class="guide-img-sm" />
 93. [[New repository secret]] 버튼을 클릭하고 다음 Secrets를 추가합니다:
     - `AWS_ACCESS_KEY_ID`: 83번에서 복사한 Access Key ID
     - `AWS_SECRET_ACCESS_KEY`: 83번에서 복사한 Secret Access Key
@@ -888,10 +966,13 @@ S3 앞에 Amazon CloudFront를 배치하여 CDN + HTTPS를 적용합니다.
 ### GitHub Actions 워크플로우 작성
 
 94. 프론트엔드 리포지토리 루트에 `.github/workflows/deploy.yml` 파일을 생성합니다:
+    <img src="/images/step8/8-2b-task6-1.png" alt="워크플로우 파일 생성" class="guide-img-sm" />
 
 > [!TIP]
 > VS Code에서 "GitHub Actions 확장을 설치하시겠습니까?" 팝업이 뜨면 [[설치]]를 클릭하세요.  
 > 워크플로우 YAML 자동완성과 문법 검사가 활성화됩니다 (선택사항).
+>
+> <img src="/images/step8/8-2b-task6-2.png" alt="GitHub Actions 확장 설치" class="guide-img-sm" />
 
 ```yaml
 # .github/workflows/deploy.yml
@@ -969,6 +1050,8 @@ git commit -m "feat: initial frontend with CI/CD"
 git push origin main
 ```
 
+<img src="/images/step8/8-2b-task6-3.png" alt="git push 배포 트리거" class="guide-img-sm" />
+
 > [!TIP]
 > **자동 배포 확인 꿀팁:** push 전에 간단한 텍스트(예: 푸터 문구)를 수정해두면 배포 완료 후 브라우저에서 변경 사항을 쉽게 확인할 수 있습니다.
 
@@ -977,6 +1060,7 @@ git push origin main
 > GitHub → Settings → Developer settings → Personal access tokens에서 토큰을 재발급하세요.
 
 96. GitHub 리포지토리 페이지에서 **Actions** 탭을 클릭합니다.
+    <img src="/images/step8/8-2b-task6-4.png" alt="Actions 탭 워크플로우 확인" class="guide-img-sm" />
 97. 모든 스텝이 ✅ 성공하면 Amazon CloudFront URL에서 최신 버전을 확인합니다.
 
 > [!NOTE]
@@ -1004,29 +1088,39 @@ git push origin main
 
 98. AWS Console 우측 상단에서 리전을 **US East (N. Virginia) us-east-1**로 변경합니다.
 99. 상단 검색창에 `Certificate Manager`를 입력하고 **Certificate Manager** 서비스를 선택합니다.
+    <img src="/images/step8/8-2a-step94-acm-cert.png" alt="ACM 인증서 확인" class="guide-img-sm" />
 100.  `mydomain.shop` 또는 `*.mydomain.shop` 인증서가 **Issued** 상태인지 확인합니다.
 
 ### Amazon CloudFront에 CNAME + 인증서 연결
 
 101. **CloudFront** 서비스로 이동하여 배포를 선택하고 **General** 탭에서 [[Edit]] 버튼을 클릭합니다.
-102. **Alternate domain name (CNAME)**: `app.<mydomain.shop>`
-103. **Custom SSL certificate**: us-east-1 인증서 선택
-104. [[Save changes]] 버튼을 클릭합니다.
+     <img src="/images/step8/8-2a-step99-cf-edit.png" alt="CloudFront General Edit" class="guide-img-sm" />
+102. **Alternate domain name (CNAME)** 섹션에서 [[Add item]]을 클릭합니다.
+     <img src="/images/step8/8-2a-step100-cname-add.png" alt="CNAME 추가" class="guide-img-sm" />
+103. 도메인을 입력합니다: `app.<mydomain.shop>` (본인 도메인으로 변경)
+104. **Custom SSL certificate** 드롭다운에서 us-east-1에서 발급한 인증서를 선택합니다.
+     <img src="/images/step8/8-2a-step101-ssl-cert.png" alt="SSL 인증서 선택" class="guide-img-sm" />
+105. [[Save changes]] 버튼을 클릭합니다.
+     <img src="/images/step8/8-2a-step103-save-changes.png" alt="Save changes 클릭" class="guide-img-sm" />
 
 ### Amazon Route 53 A 레코드 추가
 
-105. **Route 53** → Hosted zones에서 본인의 도메인을 클릭하고 [[Create record]] 버튼을 클릭합니다.
-106. 설정:
+106. **Route 53** → Hosted zones에서 본인의 도메인을 클릭하고 [[Create record]] 버튼을 클릭합니다.
+     <img src="/images/step8/8-2a-step106-route53-hosted.png" alt="Route 53 레코드 생성" class="guide-img-sm" />
+107. 설정:
      - **Record name**: `app`
      - **Record type**: `A`
      - **Alias**: ON → `Alias to CloudFront distribution` → 본인 Distribution 선택
+       <img src="/images/step8/8-2a-step108-create-record-1.png" alt="Route 53 A 레코드 설정" class="guide-img-sm" />
+       <img src="/images/step8/8-2a-step108-create-record-2.png" alt="Route 53 레코드 생성 완료" class="guide-img-sm" />
 
-107. [[Create records]] 버튼을 클릭합니다.
+108. [[Create records]] 버튼을 클릭합니다.
 
 ### 커스텀 도메인 접속 확인
 
-108. 브라우저에서 `https://app.<mydomain.shop>`으로 접속합니다.
-109. 🔒 자물쇠 아이콘이 표시되고 Vue.js 화면이 로드되면 성공입니다.
+109. 브라우저에서 `https://app.<mydomain.shop>`으로 접속합니다.
+     <img src="/images/step8/8-2b-step109-custom-domain.png" alt="커스텀 도메인 HTTPS 접속 확인" class="guide-img-sm" />
+110. 🔒 자물쇠 아이콘이 표시되고 Vue.js 화면이 로드되면 성공입니다.
 
 ✅ **태스크 완료** — Amazon CloudFront에 커스텀 도메인과 HTTPS를 적용했습니다.
 
