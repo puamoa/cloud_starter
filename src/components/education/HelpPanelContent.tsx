@@ -126,7 +126,7 @@ export const HelpPanelContent: React.FC<HelpPanelContentProps> = ({
 
       // SessionGuide 페이지인지 확인
       const pathMatch = location.pathname.match(
-        /^\/week\/(\d+)\/session\/(\d+)$/,
+        /^\/week\/(\d+)\/session\/([^/]+)$/,
       );
       if (!pathMatch) {
         setTableOfContents([]);
@@ -134,12 +134,15 @@ export const HelpPanelContent: React.FC<HelpPanelContentProps> = ({
       }
 
       const weekNumber = parseInt(pathMatch[1]);
-      const sessionNumber = parseInt(pathMatch[2]);
+      const sessionRaw = pathMatch[2];
+      const sessionValue = /^\d+$/.test(sessionRaw)
+        ? parseInt(sessionRaw)
+        : sessionRaw.toUpperCase();
 
       // 커리큘럼에서 세션 데이터 찾기
       const weekData = curriculum.find((w) => w.week === weekNumber);
       const sessionData = weekData?.sessions.find(
-        (s) => s.session === sessionNumber,
+        (s) => String(s.session).toUpperCase() === String(sessionValue),
       );
 
       if (!sessionData?.hasContent || !sessionData.markdownPath) {
@@ -243,6 +246,28 @@ export const HelpPanelContent: React.FC<HelpPanelContentProps> = ({
                 level: 2,
                 emoji: '📝',
               });
+            }
+          }
+
+          // 태스크가 없으면 h2 섹션 제목을 대신 사용 (8-5 cleanup 등)
+          if (seenTaskIds.size === 0) {
+            const sectionRegex = /^##\s+(.+)$/gm;
+            let sectionIndex = 0;
+            let sectionMatch;
+            while ((sectionMatch = sectionRegex.exec(mainContent)) !== null) {
+              const sectionTitle = sectionMatch[1].trim();
+              const sectionId = sectionTitle
+                .toLowerCase()
+                .replace(/[^a-z0-9가-힣]/g, '-')
+                .replace(/-+/g, '-')
+                .replace(/^-|-$/g, '');
+              toc.push({
+                id: sectionId || `section-${sectionIndex}`,
+                title: sectionTitle,
+                level: 2,
+                emoji: '📋',
+              });
+              sectionIndex++;
             }
           }
 
