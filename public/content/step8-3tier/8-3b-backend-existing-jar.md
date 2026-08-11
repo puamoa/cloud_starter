@@ -168,6 +168,8 @@ spring:
     driver-class-name: com.mysql.cj.jdbc.Driver
 ```
 
+<img src="/images/step8/8-3c-step8-application-yml.png" alt="application.yml 환경 변수 설정" class="guide-img-sm" />
+
 **application.properties 사용 시:**
 
 ```properties
@@ -248,6 +250,8 @@ cd ~/3tier-project/my-backend
 ./gradlew clean bootJar
 ls build/libs/*.jar
 ```
+
+<img src="/images/step8/8-3b-step7-gradle-build.png" alt="Gradle JAR 빌드 결과" class="guide-img-sm" />
 
 > [!NOTE]
 > `bootJar`로 빌드하면 실행 가능한 Fat JAR이 생성됩니다.  
@@ -347,6 +351,8 @@ public class WebConfig implements WebMvcConfigurer {
     }
 }
 ```
+
+<img src="/images/step8/8-3c-step12-build-test.png" alt="CORS 설정 완료" class="guide-img-sm" />
 
 > [!TIP]
 > 학습용이라면 `*`로 유지해도 무방합니다.
@@ -500,6 +506,9 @@ aws s3 cp schema.sql s3://$S3_DEPLOY_BUCKET/sql/
 # aws s3 cp member.sql s3://$S3_DEPLOY_BUCKET/sql/
 ```
 
+<img src="/images/step8/8-3a-step20-sql-upload-1.png" alt="S3 버킷 생성 및 SQL 업로드 1" class="guide-img-sm" />
+<img src="/images/step8/8-3a-step20-sql-upload-2.png" alt="SQL 파일 업로드 2" class="guide-img-sm" />
+
 **② EC2에서 — S3에서 다운로드 후 RDS에 적용:**
 
 📍 **실행 위치: EC2 (SSM Session Manager)**
@@ -519,6 +528,9 @@ mysql -h $DB_ENDPOINT -u $DB_USERNAME -p$DB_PASSWORD < schema.sql
 # mysql -h $DB_ENDPOINT -u $DB_USERNAME -p$DB_PASSWORD < board.sql
 # mysql -h $DB_ENDPOINT -u $DB_USERNAME -p$DB_PASSWORD < member.sql
 ```
+
+<img src="/images/step8/8-3a-step21-sql-download.png" alt="SQL 다운로드 및 RDS 적용" class="guide-img-sm" />
+<img src="/images/step8/8-3a-step21-sql-execute.png" alt="SQL 실행 확인" class="guide-img-sm" />
 
 ### 5-4. start.sh 생성
 
@@ -543,6 +555,8 @@ SCRIPT
 
 chmod +x /home/ec2-user/app/start.sh
 ```
+
+<img src="/images/step8/8-3c-step22-start-sh.png" alt="start.sh 생성" class="guide-img-sm" />
 
 > [!TIP]
 > **ParameterStoreService를 사용하는 경우:**
@@ -587,6 +601,8 @@ sudo systemctl daemon-reload
 sudo systemctl enable spring-app
 ```
 
+<img src="/images/step8/8-3c-step23-jar-deploy.png" alt="systemd 서비스 등록" class="guide-img-sm" />
+
 ### 5-6. JAR 빌드 및 배포
 
 📍 **실행 위치: 로컬 PC (터미널)** — ALB가 Internet-facing이므로 인터넷이 되는 곳이면 어디서든 가능
@@ -601,6 +617,9 @@ export S3_DEPLOY_BUCKET=my-3tier-app-deploy-<BucketSuffix>
 JAR_FILE=$(ls build/libs/*.jar | head -1)
 aws s3 cp "$JAR_FILE" s3://$S3_DEPLOY_BUCKET/app.jar
 ```
+
+<img src="/images/step8/8-3c-step24-target-group-1.png" alt="JAR 빌드 및 S3 업로드 1" class="guide-img-sm" />
+<img src="/images/step8/8-3c-step24-target-group-2.png" alt="JAR 빌드 및 S3 업로드 2" class="guide-img-sm" />
 
 📍 **실행 위치: EC2 (SSM Session Manager)**
 
@@ -620,6 +639,9 @@ sudo journalctl -u spring-app -f
 # Health Check
 curl http://localhost:8080/actuator/health
 ```
+
+<img src="/images/step8/8-3c-step25-jar-run-1.png" alt="JAR 다운로드 및 실행" class="guide-img-sm" />
+<img src="/images/step8/8-3c-step25-jar-run-2.png" alt="Health Check 확인" class="guide-img-sm" />
 
 ### 5-7. ALB Target Group에 EC2 등록
 
@@ -849,6 +871,7 @@ curl http://localhost:8080/actuator/health
 > ```
 
 60. `.github/workflows/deploy.yml` 파일을 생성합니다:
+    <img src="/images/step8/8-3c-step64-workflow-file.png" alt="워크플로우 파일 생성" class="guide-img-sm" />
 
 > [!NOTE]
 > 아래 워크플로우는 기본 구성입니다. 본인 프로젝트에 맞게 수정하세요:
@@ -988,7 +1011,11 @@ git commit -m "feat: initial backend with CI/CD"
 git push origin main
 ```
 
+<img src="/images/step8/8-3a-step65-push-deploy.png" alt="git push 후 배포 트리거" class="guide-img-sm" />
+
 62. GitHub → `my-backend` 리포지토리 → **Actions** 탭에서 워크플로우 실행을 확인합니다.
+    <img src="/images/step8/8-3a-step66-actions-1.png" alt="Actions 탭 확인" class="guide-img-sm" />
+    <img src="/images/step8/8-3a-step66-actions-2.png" alt="워크플로우 실행" class="guide-img-sm" />
 
 > [!TIP]
 > 첫 빌드는 Gradle 의존성 다운로드로 3 ~ 4분 소요됩니다.  
@@ -1067,6 +1094,9 @@ curl http://$ALB_DNS/actuator/health
 curl http://$ALB_DNS/api/items
 curl http://$ALB_DNS/api/boards
 ```
+
+<img src="/images/step8/8-3a-step71-alb-test-1.png" alt="ALB Health Check 테스트" class="guide-img-sm" />
+<img src="/images/step8/8-3a-step71-alb-test-2.png" alt="API 목록 조회 테스트" class="guide-img-sm" />
 
 > [!TIP]
 > 본인 프로젝트의 Controller `@RequestMapping` 경로에 맞게 테스트하세요.  
