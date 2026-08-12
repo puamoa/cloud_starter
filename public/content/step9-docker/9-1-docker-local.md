@@ -136,6 +136,22 @@ docker run hello-world
 
 ## 태스크 2: 프로젝트 구조 준비
 
+> [!DOWNLOAD]
+> [step9-sample.zip](/files/step9/step9-sample/step9-sample.zip)
+>
+> - `my-backend.zip` - Spring Legacy MVC 백엔드 소스 (WAR 패키징)
+> - `my-frontend.zip` - Vue.js 프론트엔드 소스
+> - `sql.zip` - DB 초기화 파일 (schema + 샘플 데이터 + CSV)
+>
+> **관련 태스크:**
+>
+> - 모든 태스크: 위 파일을 압축 해제하여 프로젝트 구조를 준비합니다
+
+> [!NOTE]
+> 본인 프로젝트가 있다면 위 파일 대신 그대로 사용해도 됩니다 (Step 8 리포 등).  
+> 여행지 이미지(S3 업로드용)는 용량이 커서 별도 제공:  
+> [travel-image.zip (Google Drive)](https://drive.google.com/file/d/10cNMIze0TbbEzu61UHCglrhhKZXqUBea/view?usp=drive_link)
+
 ### 2-1. 작업 디렉토리 구성
 
 14. 작업할 디렉토리를 만듭니다:
