@@ -55,6 +55,10 @@ Amazon EC2에서 MySQL Client를 설치하여 Amazon RDS에 접속하고 정상 
 > [step4-1-rds-lab.zip](/files/step4/step4-1-rds-lab.zip)
 >
 > - `step4-1-rds-prereq.yaml` - CloudFormation 템플릿 (VPC, 서브넷 4개, IGW, Route Table, Security Group 자동 생성)
+>
+> **관련 태스크:**
+>
+> - 태스크 0: 실습 환경 구축 (VPC, 서브넷 4개, IGW, Route Table, Security Group을 CloudFormation으로 자동 생성)
 
 이미 Step 1에서 생성한 VPC(`my-vpc`), Public/Private Subnet 2개(서로 다른 AZ), Security Group이 있다면 이 태스크를 건너뛰고 태스크 1로 이동합니다.
 

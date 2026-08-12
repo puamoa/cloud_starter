@@ -2146,6 +2146,10 @@ CloudFormation으로 Amazon EC2를 생성하면서 UserData로 Java 17, MySQL, T
 > - `step5-2-ec2.yaml` — 기존 Amazon VPC가 있는 경우 (EC2 + Security Group만 생성)
 > - `step5-2-ec2-with-vpc.yaml` — VPC 없는 경우 (2AZ 고가용성 네트워크 + EC2 올인원 생성)
 >
+> **관련 태스크:**
+>
+> - 태스크 0: 실습 환경 구축 (본인 상황에 맞는 yaml 선택 후 CloudFormation 스택 생성)>
+
 > 다운로드 후 zip을 풀어서 본인 상황에 맞는 yaml 파일을 준비해 두세요.
 
 | 상황                                                                      | 사용할 파일                 |

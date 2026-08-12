@@ -692,6 +692,10 @@ Step 0~7에서 수동으로 만들었던 모든 인프라를 AWS CloudFormation 
 > - `step8-frontend.yaml` — 프론트엔드 스택 (Amazon S3 버킷, 정적 호스팅)
 > - `step8-backend.yaml` — 백엔드 스택 (ALB, Target Group, Listener)
 > - `README.md` — 템플릿 파라미터 및 사용 방법 안내
+>
+> **관련 태스크:**
+>
+> - 태스크 3: CloudFormation으로 인프라 한 번에 구축 (4개 스택 순서대로 배포: network → data → frontend → backend)
 
 > [!NOTE]
 > 이 템플릿들은 다음 리소스를 4개 스택으로 나누어 생성합니다:

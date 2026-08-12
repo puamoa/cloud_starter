@@ -48,6 +48,10 @@ estimatedCost: 크레딧 내 사용 가능 (비용 발생 가능)
 >
 > - `step2-1-ec2-prereq.yaml` - CloudFormation 템플릿 (VPC, 서브넷 4개, IGW, Route Table, Security Group 자동 생성)
 > - `README.md` - 템플릿 설명 문서 (생성되는 리소스, 파라미터, 아키텍처 등)
+>
+> **관련 태스크:**
+>
+> - 태스크 0: 실습 환경 구축 (VPC, 서브넷, IGW, Security Group을 CloudFormation으로 자동 생성)
 
 이미 Step 1-2에서 생성한 VPC(`my-vpc`), Public/Private Subnet, Security Group이 있다면 이 태스크를 건너뛰고 태스크 1로 이동합니다.
 
@@ -709,8 +713,8 @@ SSH에 이어 두 번째 접속 방식인 **SSM Session Manager**를 사용해 �
 > | 조건                | 설명                                                                         | 이 실습에서의 상태                                 |
 > | ------------------- | ---------------------------------------------------------------------------- | -------------------------------------------------- |
 > | ① IAM Role 연결     | EC2에 `AmazonSSMManagedInstanceCore` 정책이 포함된 Role이 연결되어 있어야 함 | ✅ 태스크 1-1에서 `my-ec2-ssm-role` 연결 완료      |
-> | ② SSM Agent 실행 중 | Amazon EC2 내부에서 SSM Agent가 실행 중이어야 함                                    | ✅ Amazon Linux 2023은 기본 설치·자동 실행         |
-> | ③ 네트워크 접근     | Amazon EC2가 SSM 서비스 엔드포인트에 접근 가능해야 함                               | ✅ Public Subnet + IGW이므로 인터넷 통해 접근 가능 |
+> | ② SSM Agent 실행 중 | Amazon EC2 내부에서 SSM Agent가 실행 중이어야 함                             | ✅ Amazon Linux 2023은 기본 설치·자동 실행         |
+> | ③ 네트워크 접근     | Amazon EC2가 SSM 서비스 엔드포인트에 접근 가능해야 함                        | ✅ Public Subnet + IGW이므로 인터넷 통해 접근 가능 |
 >
 > Private Subnet에서는 ③이 문제가 됩니다.  
 > NAT Gateway가 있거나, VPC Endpoint(`ssm`, `ssmmessages`, `ec2messages`)를 생성해야 합니다.  

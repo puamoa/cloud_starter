@@ -966,6 +966,10 @@ Run Configuration → VM options에 `-Dspring.profiles.active=aws` 추가 후 To
 > [step6-2-rds-rotation-lab.zip](/files/step6/step6-2-rds-rotation-lab.zip)
 >
 > - `step6-2-rds-rotation-prereq.yaml` - AWS CloudFormation 템플릿 (VPC, 서브넷 4개, Security Group, DB Subnet Group, Amazon RDS MySQL 자동 생성)
+>
+> **관련 태스크:**
+>
+> - 태스크 5: 선택 실습 — Secrets Manager + RDS 자동 로테이션 환경 구축 (VPC, 서브넷, Security Group, RDS를 CloudFormation으로 자동 생성)
 
 > [!CONCEPT] 이 템플릿이 생성하는 리소스
 >

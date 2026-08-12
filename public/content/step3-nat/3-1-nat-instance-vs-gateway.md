@@ -75,6 +75,10 @@ NAT Instance와 NAT Gateway 두 가지 방식을 모두 실습하고 비교합�
 > [step3-1-nat-lab.zip](/files/step3/step3-1-nat-lab.zip)
 >
 > - `step3-1-nat-prereq.yaml` - CloudFormation 템플릿 (VPC, Public/Private Subnet 4개, IGW, Route Table, Security Group, IAM Role 자동 생성)
+>
+> **관련 태스크:**
+>
+> - 태스크 0: 실습 환경 구축 (VPC, Public/Private Subnet, IGW, Route Table, Security Group, IAM Role을 CloudFormation으로 자동 생성)
 
 | 상황                                                     | 선택            |
 | -------------------------------------------------------- | --------------- |

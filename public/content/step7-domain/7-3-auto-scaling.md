@@ -72,6 +72,10 @@ Launch Template으로 인스턴스 설정을 템플릿화하고, ALB와 연동�
 >
 > - `step7-3-asg-prereq.yaml` — AWS CloudFormation 템플릿 (VPC, 서브넷, IGW, ALB, Target Group, Security Group 자동 생성)
 > - `README.md` — 템플릿 파라미터 및 사용 방법 안내
+>
+> **관련 태스크:**
+>
+> - 태스크 0: 실습 환경 구축 (VPC, 서브넷, IGW, ALB, Target Group, Security Group을 CloudFormation으로 자동 생성)
 
 ### 필요한 리소스 체크리스트
 

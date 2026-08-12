@@ -67,6 +67,10 @@ Health Check를 통해 비정상 인스턴스를 자동으로 제외하는 과�
 >
 > - `step7-2-alb-prereq.yaml` — AWS CloudFormation 템플릿 (VPC, 서브넷, IGW, EC2, Security Group 자동 생성)
 > - `README.md` — 템플릿 파라미터 및 사용 방법 안내
+>
+> **관련 태스크:**
+>
+> - 태스크 0: 실습 환경 구축 (VPC, 서브넷, IGW, EC2 2대, Security Group을 CloudFormation으로 자동 생성)
 
 ### 필요한 리소스 체크리스트
 
