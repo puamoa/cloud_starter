@@ -547,7 +547,7 @@ export const curriculum: WeekCurriculum[] = [
         session: 1,
         type: 'lab',
         title: 'Dockerfile + docker-compose (로컬)',
-        hasContent: false,
+        hasContent: true,
         markdownPath: '/content/step9-docker/9-1-docker-local.md',
         description:
           'Dockerfile 작성(JAR/WAR), 프론트(Nginx) + 백엔드(Spring) + MySQL, 로컬 풀스택 실행',
@@ -558,7 +558,7 @@ export const curriculum: WeekCurriculum[] = [
         session: 2,
         type: 'lab',
         title: 'ECR Push + Fargate 맛보기',
-        hasContent: false,
+        hasContent: true,
         markdownPath: '/content/step9-docker/9-2-fargate.md',
         description:
           'CloudFormation 인프라(NAT 없음), VPC Endpoint 수동 생성, ECR Push, ECS Fargate 사이드카 배포',
@@ -569,7 +569,7 @@ export const curriculum: WeekCurriculum[] = [
         session: 3,
         type: 'lab',
         title: 'EC2 docker-compose 배포 (운영용)',
-        hasContent: false,
+        hasContent: true,
         markdownPath: '/content/step9-docker/9-3-ec2-docker.md',
         description:
           'CloudFormation 인프라(NAT 포함), EC2에서 docker-compose 실행, RDS 연결',
@@ -580,7 +580,7 @@ export const curriculum: WeekCurriculum[] = [
         session: 4,
         type: 'lab',
         title: 'GitHub Actions → ECR → EC2 자동 배포',
-        hasContent: false,
+        hasContent: true,
         markdownPath: '/content/step9-docker/9-4-cicd.md',
         description:
           'Docker 빌드 → ECR Push → EC2 docker pull 자동화 파이프라인',
@@ -591,7 +591,7 @@ export const curriculum: WeekCurriculum[] = [
         session: 5,
         type: 'lab',
         title: '(선택) CloudFront + Fargate 프로덕션 구성',
-        hasContent: false,
+        hasContent: true,
         markdownPath: '/content/step9-docker/9-5-production.md',
         description:
           'S3+CloudFront 프론트 + Fargate 백엔드, ALB 연동, 프로덕션 분리 구성',
@@ -607,7 +607,7 @@ export const curriculum: WeekCurriculum[] = [
         session: 6,
         type: 'lab',
         title: '리소스 정리',
-        hasContent: false,
+        hasContent: true,
         markdownPath: '/content/step9-docker/9-6-cleanup.md',
         description: '전체 AWS 리소스 삭제 (CloudFormation 스택, ECR, S3)',
         awsServices: [],

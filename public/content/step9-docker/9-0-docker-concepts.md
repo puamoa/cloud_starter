@@ -383,7 +383,7 @@ backend  → db:3306       (서비스명 = DNS)
 ### Docker 네트워크 동작 원리
 
 > [!CONCEPT] Docker 내부 DNS
-> docker-compose를 실행하면 자동으로 **전용 네트워크**가 생성됩니다.
+> docker-compose를 실행하면 자동으로 **전용 네트워크**가 생성됩니다.  
 > 이 네트워크 안에서 각 서비스의 이름이 DNS로 자동 등록됩니다.
 >
 > ```
@@ -398,7 +398,7 @@ backend  → db:3306       (서비스명 = DNS)
 > └────────────────────────────────────────────────┘
 > ```
 >
-> 이 덕분에 IP 주소를 하드코딩하지 않고 서비스명으로 통신할 수 있습니다.
+> 이 덕분에 IP 주소를 하드코딩하지 않고 서비스명으로 통신할 수 있습니다.  
 > EC2에서 docker-compose를 실행해도 동일하게 동작합니다.
 
 ### Nginx 리버스 프록시
@@ -649,7 +649,7 @@ Task Definition:
 
 ### 컨테이너 로그 확인 (CloudWatch Logs)
 
-로컬에서는 `docker logs` 또는 `docker-compose logs`로 로그를 확인합니다.
+로컬에서는 `docker logs` 또는 `docker-compose logs`로 로그를 확인합니다.  
 AWS(ECS/Fargate)에서는 컨테이너 로그가 자동으로 **Amazon CloudWatch Logs**에 전송됩니다.
 
 ```
@@ -671,7 +671,7 @@ Task Definition에서 로그 설정:
 ```
 
 > [!TIP]
-> ECS Task Execution Role에 `AmazonECSTaskExecutionRolePolicy`를 연결하면 CloudWatch Logs 전송 권한이 자동으로 포함됩니다.
+> ECS Task Execution Role에 `AmazonECSTaskExecutionRolePolicy`를 연결하면 CloudWatch Logs 전송 권한이 자동으로 포함됩니다.  
 > 배포 후 앱이 시작되지 않으면 CloudWatch Logs에서 에러 로그를 확인하세요.
 
 ---
@@ -802,7 +802,7 @@ Task Definition에서 로그 설정:
 >
 > 비유: 회사 내부에서 은행(AWS 서비스)에 갈 때, 매번 정문(NAT)을 나가서 대로(인터넷)를 타는 대신, 회사와 은행 사이에 전용 터널을 뚫어두는 것입니다.
 >
-> **왜 필요한가?**
+> **왜 필요한가?**  
 > Private Subnet의 EC2/Fargate는 인터넷에 접근할 수 없습니다.  
 > NAT Gateway($0.059/hr)를 쓰면 가능하지만 비용이 발생합니다.  
 > VPC Endpoint를 사용하면 NAT 없이도 S3, ECR 등 AWS 서비스에 접근할 수 있습니다.
