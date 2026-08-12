@@ -1033,13 +1033,11 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
       }
 
       return (
-        <Box
-          variant="h1"
-          margin={{ top: 'l', bottom: 'm' }}
-          id={id || undefined}
-        >
-          <span className="markdown-h1">{children}</span>
-        </Box>
+        <div id={id || undefined}>
+          <Box variant="h1" margin={{ top: 'l', bottom: 'm' }}>
+            <span className="markdown-h1">{children}</span>
+          </Box>
+        </div>
       );
     },
     h2: ({ children }: ChildrenProps) => {
@@ -1114,13 +1112,11 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
             <Box margin={{ top: 'xl', bottom: 'm' }}>
               <hr className="markdown-divider" />
             </Box>
-            <Box
-              variant="h3"
-              margin={{ top: 'm', bottom: 's' }}
-              id={id || undefined}
-            >
-              <span className="markdown-h2">{children}</span>
-            </Box>
+            <div id={id || undefined}>
+              <Box variant="h3" margin={{ top: 'm', bottom: 's' }}>
+                <span className="markdown-h2">{children}</span>
+              </Box>
+            </div>
           </>
         );
       }
@@ -1131,26 +1127,22 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
             <Box margin={{ top: 'xl', bottom: 'm' }}>
               <hr className="markdown-divider" />
             </Box>
-            <Box
-              variant="h2"
-              margin={{ top: 'm', bottom: 's' }}
-              id={id || undefined}
-            >
-              <span className="markdown-h2">{children}</span>
-            </Box>
+            <div id={id || undefined}>
+              <Box variant="h2" margin={{ top: 'm', bottom: 's' }}>
+                <span className="markdown-h2">{children}</span>
+              </Box>
+            </div>
           </>
         );
       }
 
       // 일반 h2 (구분선 없음)
       return (
-        <Box
-          variant="h2"
-          margin={{ top: 'l', bottom: 's' }}
-          id={id || undefined}
-        >
-          <span className="markdown-h2">{children}</span>
-        </Box>
+        <div id={id || undefined}>
+          <Box variant="h2" margin={{ top: 'l', bottom: 's' }}>
+            <span className="markdown-h2">{children}</span>
+          </Box>
+        </div>
       );
     },
     h3: ({ children }: ChildrenProps) => {

@@ -497,11 +497,10 @@ export const HelpPanelContent: React.FC<HelpPanelContentProps> = ({
       }
     }
 
-    // id로 못 찾으면 전체 DOM에서 해당 id를 포함하는 요소를 찾기 (slugified id 매칭)
+    // id로 못 찾으면 slugified id로 DOM 전체 검색
     if (!element) {
-      // 모든 id가 있는 요소에서 찾기
-      const allElements = document.querySelectorAll('[id]');
-      for (const el of allElements) {
+      const allWithId = document.querySelectorAll('[id]');
+      for (const el of allWithId) {
         if (el.id === id) {
           element = el as HTMLElement;
           break;
@@ -509,23 +508,50 @@ export const HelpPanelContent: React.FC<HelpPanelContentProps> = ({
       }
     }
 
-    if (element) {
-      // scrollIntoView를 사용하여 확실하게 스크롤
-      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    // 여전히 못 찾으면 목차 제목 텍스트로 heading 검색
+    if (!element) {
+      const tocItem = tableOfContents.find((item) => item.id === id);
+      if (tocItem) {
+        const allHeadings = document.querySelectorAll(
+          '[class*="markdown-h1"], [class*="markdown-h2"], [class*="markdown-h3"]',
+        );
+        for (const heading of allHeadings) {
+          const headingText = heading.textContent || '';
+          if (
+            headingText.includes(tocItem.title.replace(/^[📋📝🎯🗑️📚📌] /, ''))
+          ) {
+            element =
+              (heading.closest('[id]') as HTMLElement) ||
+              (heading.parentElement as HTMLElement);
+            break;
+          }
+        }
+      }
+    }
 
-      // 헤더 높이만큼 보정 (scrollIntoView 후 약간 위로)
+    if (element) {
+      // 헤더 높이 고려하여 정확한 위치로 스크롤
       const isMobile = window.innerWidth < 768;
       const offset = isMobile ? 120 : 80;
-      setTimeout(() => {
-        const mainContent = document.querySelector(
-          '.awsui-app-layout__content-main',
-        );
-        if (mainContent) {
-          mainContent.scrollBy({ top: -offset, behavior: 'smooth' });
-        } else {
-          window.scrollBy({ top: -offset, behavior: 'smooth' });
-        }
-      }, 100);
+
+      const mainContent = document.querySelector(
+        '.awsui-app-layout__content-main',
+      );
+
+      if (mainContent) {
+        // element의 절대 위치 계산 (스크롤 컨테이너 기준)
+        const containerRect = mainContent.getBoundingClientRect();
+        const elementRect = element.getBoundingClientRect();
+        const scrollTop = mainContent.scrollTop;
+        const targetPosition =
+          scrollTop + (elementRect.top - containerRect.top) - offset;
+        mainContent.scrollTo({ top: targetPosition, behavior: 'smooth' });
+      } else {
+        // 폴백: 전체 페이지 스크롤
+        const y =
+          element.getBoundingClientRect().top + window.pageYOffset - offset;
+        window.scrollTo({ top: y, behavior: 'smooth' });
+      }
     }
 
     // 모바일에서 목차 패널 닫기

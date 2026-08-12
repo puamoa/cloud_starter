@@ -1064,6 +1064,16 @@ git push origin main
 
 ✅ **태스크 완료** — GitHub Actions로 JAR 자동 배포 파이프라인을 구축했습니다.
 
+> [!TIP]
+> **워크플로우 개선 아이디어 (선택):**
+>
+> - **Health Check 강화**: 배포 후 `curl`을 여러 번 재시도하여 앱 시작 대기 (retry loop)
+> - **수동 배포 트리거**: `workflow_dispatch`를 추가하면 Actions 탭에서 수동 실행 가능
+> - **롤백 자동화**: 배포 전 현재 JAR을 백업 → 배포 실패 시 `if: failure()` 스텝에서 백업 복원
+> - **Slack/Discord 알림**: 배포 성공/실패 시 팀 채널에 알림 전송
+>
+> 이런 개선은 프로덕션 운영에서 매우 유용합니다. 관심 있다면 GitHub Actions 공식 문서를 참고하세요.
+
 ---
 
 ## 태스크 7: ALB Health Check 확인 + API 테스트

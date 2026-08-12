@@ -411,18 +411,29 @@ export const curriculum: WeekCurriculum[] = [
   },
   {
     week: 8,
-    title: '3-Tier 아키텍처 통합 배포',
+    title: '3-Tier 아키텍처 + CI/CD 배포',
     description:
-      'Step 0~7에서 배운 모든 것을 통합하여 Vue.js + Spring Boot + RDS 3-Tier 서비스를 완성합니다. 프론트엔드와 백엔드를 별도 리포지토리로 운영하며 각각 독립 배포합니다.',
+      'Step 0~7에서 배운 모든 것을 통합하여 Vue.js + Spring Boot + RDS 3-Tier 서비스를 완성합니다. 프론트엔드와 백엔드를 별도 리포지토리로 운영하며 GitHub Actions로 배포를 자동화합니다.',
     sessions: [
       {
-        session: 0,
+        session: '0A',
         type: 'theory',
         title: '웹 아키텍처 설계 패턴 이론',
         hasContent: true,
-        markdownPath: '/content/step8-3tier/8-0-architecture-concepts.md',
+        markdownPath: '/content/step8-3tier/8-0a-architecture-concepts.md',
         description:
-          '모놀리식 vs 마이크로서비스, N-Tier, REST API, Stateless, 캐싱, 메시지 큐',
+          '모놀리식 vs 마이크로서비스, N-Tier, REST API, Stateless, 캐싱, 메시지 큐, IaC',
+        awsServices: [],
+        estimatedCost: '무료 (이론)',
+      },
+      {
+        session: '0B',
+        type: 'theory',
+        title: 'CI/CD 파이프라인 이론',
+        hasContent: true,
+        markdownPath: '/content/step8-3tier/8-0b-cicd-concepts.md',
+        description:
+          'CI/CD 개념, 배포 전략(Rolling/Blue-Green/Canary), Git 브랜치 전략, 환경 분리, GitHub Actions',
         awsServices: [],
         estimatedCost: '무료 (이론)',
       },
@@ -517,9 +528,9 @@ export const curriculum: WeekCurriculum[] = [
   },
   {
     week: 9,
-    title: 'CI/CD와 컨테이너 배포',
+    title: 'Docker 컨테이너 배포',
     description:
-      '수동 배포의 불편함을 GitHub Actions로 자동화하고, Docker 컨테이너로 패키징하여 ECS Fargate에 배포하는 전체 흐름을 학습합니다.',
+      '기존 프로젝트를 Docker로 컨테이너화하고, docker-compose로 로컬 풀스택 환경을 구성한 뒤, EC2에서 Docker 기반 배포를 실습합니다.',
     sessions: [
       {
         session: 0,

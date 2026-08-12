@@ -137,12 +137,21 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
     sessions: (typeof curriculum)[0]['sessions'],
     weekNum: number,
   ) => {
-    const common = sessions.filter((s) => typeof s.session === 'number');
+    const theoryAndInfra = sessions.filter(
+      (s) =>
+        ['0A', '0B', '1'].includes(String(s.session)) ||
+        (typeof s.session === 'number' && s.session <= 1),
+    );
     const existing = sessions.filter((s) =>
       ['2A', '3A', '3B'].includes(String(s.session)),
     );
     const fresh = sessions.filter((s) =>
       ['2B', '3C'].includes(String(s.session)),
+    );
+    const commonAfter = sessions.filter(
+      (s) =>
+        (typeof s.session === 'number' && s.session >= 4) ||
+        ['4', '5'].includes(String(s.session)),
     );
 
     const toLink = (s: (typeof sessions)[0]) => {
@@ -154,11 +163,8 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
       };
     };
 
-    const commonBefore = common.filter((s) => Number(s.session) <= 1);
-    const commonAfter = common.filter((s) => Number(s.session) >= 4);
-
     return [
-      ...commonBefore.map(toLink),
+      ...theoryAndInfra.map(toLink),
       { type: 'link' as const, text: '── 🏠 기존 프로젝트 ──', href: '#' },
       ...existing.map(toLink),
       { type: 'link' as const, text: '── 🌱 새 프로젝트 ──', href: '#' },
