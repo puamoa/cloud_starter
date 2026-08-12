@@ -221,6 +221,30 @@ EXPOSE 8080
 > JAR은 내장 Tomcat으로 단독 실행하고, WAR은 Tomcat 이미지 위에 배포합니다.  
 > 9-1 실습에서 본인 프로젝트에 맞는 Dockerfile을 작성합니다.
 
+### 이미지 태그 전략
+
+| 태그 방식     | 예시             | 장점                         | 단점                                |
+| ------------- | ---------------- | ---------------------------- | ----------------------------------- |
+| **latest**    | `myapp:latest`   | 항상 최신                    | 어떤 버전인지 알 수 없음, 롤백 불가 |
+| **버전 번호** | `myapp:1.2.3`    | 명확한 버전 추적, 롤백 용이  | 수동 관리 필요                      |
+| **Git SHA**   | `myapp:a1b2c3d`  | 커밋과 1:1 매핑, 정확한 추적 | 사람이 읽기 어려움                  |
+| **날짜**      | `myapp:20260812` | 배포 시점 파악 쉬움          | 같은 날 여러 번 배포 시 구분 어려움 |
+
+> [!WARNING]
+> **프로덕션에서 `latest` 태그를 사용하지 마세요!**
+>
+> - `docker pull myapp:latest`는 매번 다른 이미지를 가져올 수 있음
+> - 문제 발생 시 "어떤 버전에서 문제가 생겼는지" 추적 불가
+> - 롤백 시 "이전 latest가 뭐였는지" 알 수 없음
+>
+> 권장: CI/CD에서 Git SHA 또는 버전 번호로 태그 자동 생성
+>
+> ```bash
+> # GitHub Actions에서 자동 태그 예시
+> docker build -t myapp:${{ github.sha }} .
+> docker build -t myapp:v1.2.3 .
+> ```
+
 ---
 
 ## 4. 멀티스테이지 빌드
@@ -355,6 +379,83 @@ backend  → db:3306       (서비스명 = DNS)
 
 - 브라우저 → `http://localhost:80` → frontend 컨테이너
 - DB 클라이언트 → `localhost:3306` → db 컨테이너
+
+### Docker 네트워크 동작 원리
+
+> [!CONCEPT] Docker 내부 DNS
+> docker-compose를 실행하면 자동으로 **전용 네트워크**가 생성됩니다.
+> 이 네트워크 안에서 각 서비스의 이름이 DNS로 자동 등록됩니다.
+>
+> ```
+> ┌─── docker-compose 네트워크 (myapp_default) ────┐
+> │                                                │
+> │  DNS: frontend → 172.18.0.2                    │
+> │  DNS: backend  → 172.18.0.3                    │
+> │  DNS: db       → 172.18.0.4                    │
+> │                                                │
+> │  → backend 컨테이너에서 `db:3306` 접속 가능    │
+> │  → 외부에서는 접근 불가 (ports 매핑 제외)      │
+> └────────────────────────────────────────────────┘
+> ```
+>
+> 이 덕분에 IP 주소를 하드코딩하지 않고 서비스명으로 통신할 수 있습니다.
+> EC2에서 docker-compose를 실행해도 동일하게 동작합니다.
+
+### Nginx 리버스 프록시
+
+> [!CONCEPT] 리버스 프록시란?
+> 클라이언트(브라우저)의 요청을 받아서 **내부 서버(백엔드)로 전달**해주는 중간 서버입니다.
+>
+> 왜 필요한가?
+>
+> - 프론트엔드(Vue.js)와 백엔드(Spring)가 다른 포트/서버에서 실행됨
+> - 브라우저는 같은 도메인이 아니면 API 호출 시 CORS 에러 발생
+> - Nginx가 중간에서 `/api/*` 요청을 백엔드로 전달하면 CORS 문제 해결
+>
+> ```
+> 브라우저 → http://example.com/           → Nginx → Vue.js 정적 파일 응답
+> 브라우저 → http://example.com/api/boards → Nginx → backend:8080/api/boards 프록시
+> ```
+
+이 실습에서 Nginx의 역할:
+
+- **정적 파일 서빙**: Vue.js 빌드 결과(`dist/`)를 호스팅
+- **SPA 라우팅**: `/about`, `/login` 등 클라이언트 라우팅 → `index.html`로 fallback
+- **API 프록시**: `/api/*` 요청을 백엔드 컨테이너로 전달
+
+```nginx
+# nginx.conf 예시
+server {
+    listen 80;
+
+    # Vue.js 정적 파일 서빙 + SPA 라우팅
+    location / {
+        root /usr/share/nginx/html;
+        try_files $uri $uri/ /index.html;
+    }
+
+    # 백엔드 API 프록시
+    location /api/ {
+        proxy_pass http://${BACKEND_HOST}:${BACKEND_PORT}/;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+}
+```
+
+> [!TIP]
+> `${BACKEND_HOST}`는 환경변수입니다. Nginx 공식 이미지는 `/etc/nginx/templates/*.template` 파일을 시작 시 `envsubst`로 자동 치환합니다.
+>
+> - 로컬/EC2 (docker-compose): `BACKEND_HOST=backend` (서비스명)
+> - Fargate (사이드카): `BACKEND_HOST=localhost` (같은 Task)
+>
+> **같은 이미지, 환경변수만 바꾸면 어디서든 동작합니다.**
+>
+> 프로젝트에 따라 프록시 경로가 다를 수 있습니다:
+>
+> - Spring Boot REST: `location /api/ { ... }`
+> - Spring Legacy: `location ~ ^/(board|member|travel)/ { ... }`
+> - 범용: 정적 파일에 없으면 백엔드로 → `try_files $uri @backend;`
 
 ### 주요 명령어
 
@@ -545,6 +646,33 @@ Task Definition:
 > [!NOTE]
 > 이 실습(9-2)에서는 **사이드카 패턴**으로 Fargate를 체험합니다.  
 > 소규모 서비스에서 간단하고, docker-compose 경험과 유사하여 이해하기 쉽습니다.
+
+### 컨테이너 로그 확인 (CloudWatch Logs)
+
+로컬에서는 `docker logs` 또는 `docker-compose logs`로 로그를 확인합니다.
+AWS(ECS/Fargate)에서는 컨테이너 로그가 자동으로 **Amazon CloudWatch Logs**에 전송됩니다.
+
+```
+로컬:   docker-compose logs -f backend  → 터미널에서 직접 확인
+AWS:    ECS Task → CloudWatch Logs → 로그 그룹에서 확인
+```
+
+Task Definition에서 로그 설정:
+
+```json
+"logConfiguration": {
+  "logDriver": "awslogs",
+  "options": {
+    "awslogs-group": "/ecs/step9-backend",
+    "awslogs-region": "ap-northeast-2",
+    "awslogs-stream-prefix": "ecs"
+  }
+}
+```
+
+> [!TIP]
+> ECS Task Execution Role에 `AmazonECSTaskExecutionRolePolicy`를 연결하면 CloudWatch Logs 전송 권한이 자동으로 포함됩니다.
+> 배포 후 앱이 시작되지 않으면 CloudWatch Logs에서 에러 로그를 확인하세요.
 
 ---
 
