@@ -45,40 +45,104 @@ localhost:80  → Nginx (Vue.js 정적 파일 + /api 프록시)
 
 본인 운영체제에 맞는 방법을 선택합니다.
 
-**macOS:**
+**🍎 macOS (방법 1 — Homebrew + Colima, 권장):**
 
-1. [Docker Desktop for Mac](https://docs.docker.com/desktop/install/mac-install/) 페이지에서 본인 칩에 맞는 설치 파일을 다운로드합니다.
-   - Apple Silicon (M1/M2/M3/M4): `Docker Desktop for Mac with Apple Silicon`
-   - Intel: `Docker Desktop for Mac with Intel chip`
+> [!TIP]
+> Homebrew가 설치되어 있어야 합니다.  
+> 미설치 시: `/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"`
+
+1. 터미널에서 Homebrew로 Docker CLI와 Colima를 설치합니다:
+
+```bash
+brew install docker docker-compose colima
+```
+
+2. Colima를 시작합니다 (Docker 런타임 실행):
+
+```bash
+colima start
+```
+
+3. Docker가 정상적으로 설치되었는지 확인합니다:
+
+```bash
+docker ps
+```
+
+> [!TIP]
+> **Colima**는 가벼운 Linux VM으로 Docker를 실행합니다. Docker Desktop보다 리소스를 적게 사용합니다.  
+> 종료: `colima stop` / 시작: `colima start`
+
+**🍎 macOS (방법 2 — Docker Desktop):**
+
+1. [Docker Desktop for Mac](https://docs.docker.com/desktop/install/mac-install/) 페이지에서 본인 칩에 맞는 버튼을 클릭하여 다운로드합니다.
+   - Apple Silicon (M1/M2/M3/M4): [[Docker Desktop for Mac with Apple silicon]]
+   - Intel: [[Docker Desktop for Mac with Intel chip]]
 2. 다운로드된 `.dmg` 파일을 더블클릭합니다.
 3. Docker 아이콘을 **Applications** 폴더로 드래그합니다.
 4. Applications에서 **Docker**를 실행합니다.
 5. 상단 메뉴바에 Docker 아이콘(고래)이 나타나면 설치 완료입니다.
 
-**Windows:**
-
-6. [Docker Desktop for Windows](https://docs.docker.com/desktop/install/windows-install/) 페이지에서 설치 파일을 다운로드합니다.
-7. 다운로드된 `Docker Desktop Installer.exe`를 실행합니다.
-8. 설치 과정에서 **Use WSL 2 instead of Hyper-V** 옵션이 체크되어 있는지 확인합니다.
-9. 설치 완료 후 **Close and restart**를 클릭하여 PC를 재시작합니다.
-10. 재시작 후 Docker Desktop이 자동 실행됩니다.
+**🪟 Windows:**
 
 > [!WARNING]
-> **WSL2 미설치 에러가 나오면:**
+> **먼저 WSL2를 설치해야 합니다.**  
+> Docker Desktop은 WSL2(Windows Subsystem for Linux 2) 위에서 동작합니다.  
+> WSL2가 없으면 Docker Desktop 실행 시 daemon이 `stopped` 상태로 멈춥니다.
+
+**① WSL2 설치 (Docker Desktop 설치 전 필수)**
+
+1. **PowerShell을 관리자 권한으로** 실행합니다.
+   - 시작 메뉴에서 `PowerShell` 검색 → 우클릭 → **관리자 권한으로 실행**
+2. WSL2를 설치합니다:
+
+```powershell
+wsl --install
+```
+
+3. 설치가 끝나면 **PC를 재시작**합니다.
+4. 재시작 후 Ubuntu 터미널 창이 자동으로 열리면, 사용할 리눅스 사용자 이름과 비밀번호를 입력합니다.
+   - (창이 안 열려도 무방합니다. Docker Desktop이 WSL2 백엔드를 사용합니다.)
+5. WSL2가 정상 설치되었는지 PowerShell에서 확인합니다:
+
+```powershell
+wsl --status
+```
+
+> [!OUTPUT]
 >
-> PowerShell을 **관리자 권한**으로 열고 다음을 실행합니다:
->
-> ```powershell
-> wsl --install
 > ```
->
-> 설치 후 PC를 재시작하고 Docker Desktop을 다시 실행하세요.
+> 기본 버전: 2
+> ```
+
+> [!TIP]
+> `wsl --install`이 동작하지 않는 구버전 Windows라면, 아래 순서로 수동 설치합니다:  
+> ① PowerShell(관리자): `dism.exe /online /enable-feature /featurename:Microsoft-Windows-Subsystem-Linux /all /norestart`  
+> ② PowerShell(관리자): `dism.exe /online /enable-feature /featurename:VirtualMachinePlatform /all /norestart`  
+> ③ 재부팅 후 [WSL2 Linux 커널 업데이트 패키지](https://wslstorestorage.blob.core.windows.net/wslblob/wsl_update_x64.msi) 설치  
+> ④ PowerShell: `wsl --set-default-version 2`
+
+**② Docker Desktop 설치**
+
+6. [Docker Desktop for Windows](https://docs.docker.com/desktop/install/windows-install/) 페이지에서 [[Docker Desktop for Windows - x86_64]] 버튼을 클릭하여 다운로드합니다.
+7. 다운로드된 `Docker Desktop Installer.exe`를 실행합니다.
+8. Configuration 화면에서 기본값(**Use WSL 2 instead of Hyper-V** 체크)을 확인하고 [[OK]]를 클릭합니다.
+9. 설치가 끝나면 [[Close and restart]]를 클릭하여 PC를 재시작합니다.
+10. 재시작 후 Docker Desktop이 자동 실행됩니다.
+11. 첫 실행 시 Docker Subscription Service Agreement 화면이 나타나면 [[Accept]]를 클릭합니다.
+12. 다음 화면에서 로그인을 요구하면 건너뜁니다 — 우측 하단 [[Skip]] 또는 창을 닫습니다. (로그인 없이도 실습 가능합니다.)
+13. Docker Desktop 창 좌측 하단 상태 표시가 **녹색 + `Engine running`**이 될 때까지 대기합니다.
+
+> [!WARNING]
+> Docker Desktop이 완전히 시작되기 전에 `docker` 명령어를 실행하면  
+> `error during connect` 또는 `daemon is not running` 에러가 발생합니다.  
+> 좌측 하단 상태가 녹색(`Engine running`)이 될 때까지 기다린 후 명령어를 실행하세요.
 
 > [!TIP]
 > **Windows Home** 에디션에서도 Docker Desktop 사용 가능합니다 (WSL2 기반).  
 > Windows 10 버전 2004 이상 또는 Windows 11이 필요합니다.
 
-**Linux:**
+**🐧 Linux:**
 
 - [Docker Engine 공식 설치 가이드](https://docs.docker.com/engine/install/) 참조
 - Ubuntu: `sudo apt install docker.io docker-compose-v2`
@@ -86,13 +150,16 @@ localhost:80  → Nginx (Vue.js 정적 파일 + /api 프록시)
 
 ### 1-2. 설치 확인
 
-11. 터미널(macOS/Linux) 또는 PowerShell(Windows)을 열고 다음 명령어를 실행합니다:
+> [!NOTE]
+> 위 설치 단계는 운영체제별 선택 사항입니다. 아래 확인 절차는 모든 OS 공통입니다.
+
+1. 터미널(macOS/Linux) 또는 PowerShell(Windows)을 열고 다음 명령어를 실행합니다:
 
 ```bash
 docker --version
 ```
 
-12. docker-compose 버전도 확인합니다:
+2. docker-compose 버전도 확인합니다:
 
 ```bash
 docker compose version
@@ -109,7 +176,7 @@ docker compose version
 > 최신 Docker Desktop에서는 `docker-compose`(하이픈) 대신 `docker compose`(스페이스)가 기본입니다.  
 > 둘 다 동일하게 동작하며, 이 가이드에서는 `docker-compose`(하이픈)를 사용합니다.
 
-13. Docker가 정상 실행되는지 테스트합니다:
+3. Docker가 정상 실행되는지 테스트합니다:
 
 ```bash
 docker run hello-world
@@ -154,14 +221,14 @@ docker run hello-world
 
 ### 2-1. 작업 디렉토리 구성
 
-14. 작업할 디렉토리를 만듭니다:
+1. 작업할 디렉토리를 만듭니다:
 
 ```bash
 mkdir ~/step9-docker
 cd ~/step9-docker
 ```
 
-15. 프론트엔드와 백엔드 리포지토리를 clone합니다:
+2. 프론트엔드와 백엔드 리포지토리를 clone합니다:
 
 ```bash
 # 본인 리포지토리로 변경하세요
@@ -173,7 +240,7 @@ git clone https://github.com/<username>/my-backend.git backend
 > Step 8에서 만든 리포가 있다면 그대로 사용하세요.  
 > 없다면 샘플 리포를 fork하여 사용할 수 있습니다.
 
-16. 최종 디렉토리 구조를 확인합니다:
+3. 최종 디렉토리 구조를 확인합니다:
 
 ```
 ~/step9-docker/
@@ -208,7 +275,7 @@ git clone https://github.com/<username>/my-backend.git backend
 
 ### 방법 A: Spring Boot (JAR) Dockerfile
 
-17. `backend/Dockerfile`을 생성합니다:
+1. `backend/Dockerfile`을 생성합니다:
 
 ```dockerfile
 # ──── 1단계: 빌드 (Gradle + JDK) ────
@@ -244,7 +311,7 @@ ENTRYPOINT ["java", "-jar", "app.jar"]
 
 ### 방법 B: Spring Legacy MVC (WAR) Dockerfile
 
-17. `backend/Dockerfile`을 생성합니다:
+1. `backend/Dockerfile`을 생성합니다:
 
 ```dockerfile
 # ──── 1단계: 빌드 (Gradle + JDK) ────
@@ -273,7 +340,7 @@ EXPOSE 8080
 
 ### 빌드 테스트 (방법 A/B 공통)
 
-18. 이미지가 정상적으로 빌드되는지 테스트합니다:
+2. 이미지가 정상적으로 빌드되는지 테스트합니다:
 
 ```bash
 cd ~/step9-docker/backend
@@ -290,7 +357,7 @@ docker build -t step9-backend:test .
 >  => => naming to docker.io/library/step9-backend:test
 > ```
 
-19. 빌드된 이미지를 확인합니다:
+3. 빌드된 이미지를 확인합니다:
 
 ```bash
 docker images | grep step9-backend
@@ -314,7 +381,7 @@ docker images | grep step9-backend
 
 ### 4-1. nginx.conf 작성
 
-20. 프로젝트 루트(`~/step9-docker/`)에 `nginx.conf`를 생성합니다:
+1. 프로젝트 루트(`~/step9-docker/`)에 `nginx.conf`를 생성합니다:
 
 ```nginx
 server {
@@ -366,7 +433,7 @@ server {
 
 ### 4-2. 프론트엔드 Dockerfile 작성
 
-21. `frontend/Dockerfile`을 생성합니다:
+2. `frontend/Dockerfile`을 생성합니다:
 
 ```dockerfile
 # ──── 1단계: 빌드 (Node.js) ────
@@ -429,7 +496,7 @@ EXPOSE 80
 >
 > 이 구조는 태스크 5에서 docker-compose.yml을 작성할 때 확인합니다.
 
-22. 프로젝트 루트에 `Dockerfile.frontend`를 생성합니다:
+3. 프로젝트 루트에 `Dockerfile.frontend`를 생성합니다:
 
 ```dockerfile
 # ~/step9-docker/Dockerfile.frontend
@@ -458,7 +525,7 @@ EXPOSE 80
 
 ### 5-1. .env 파일 작성
 
-23. 프로젝트 루트에 `.env` 파일을 생성합니다:
+1. 프로젝트 루트에 `.env` 파일을 생성합니다:
 
 ```bash
 # ~/step9-docker/.env
@@ -474,7 +541,7 @@ SPRING_DATASOURCE_USERNAME=root
 SPRING_DATASOURCE_PASSWORD=devpassword123
 ```
 
-24. `.env.example` 파일도 생성합니다 (git에 포함용):
+2. `.env.example` 파일도 생성합니다 (git에 포함용):
 
 ```bash
 # ~/step9-docker/.env.example (이 파일은 git에 커밋)
@@ -489,7 +556,7 @@ SPRING_DATASOURCE_USERNAME=root
 SPRING_DATASOURCE_PASSWORD=YOUR_PASSWORD_HERE
 ```
 
-25. `.gitignore`에 `.env`를 추가합니다:
+3. `.gitignore`에 `.env`를 추가합니다:
 
 ```bash
 echo ".env" >> .gitignore
@@ -497,13 +564,13 @@ echo ".env" >> .gitignore
 
 ### 5-2. SQL 초기화 파일 준비
 
-26. `sql/` 디렉토리를 만들고 초기화 파일을 준비합니다:
+4. `sql/` 디렉토리를 만들고 초기화 파일을 준비합니다:
 
 ```bash
 mkdir -p sql
 ```
 
-27. `sql/01-schema.sql`에 테이블 생성 SQL을 작성합니다 (본인 프로젝트 기준):
+5. `sql/01-schema.sql`에 테이블 생성 SQL을 작성합니다 (본인 프로젝트 기준):
 
 ```sql
 -- sql/01-schema.sql
@@ -528,7 +595,7 @@ CREATE TABLE IF NOT EXISTS board (
 
 ### 5-3. docker-compose.yml 작성
 
-28. 프로젝트 루트에 `docker-compose.yml`을 생성합니다:
+6. 프로젝트 루트에 `docker-compose.yml`을 생성합니다:
 
 ```yaml
 services:
@@ -624,7 +691,7 @@ volumes:
 
 ### 6-1. 전체 서비스 실행
 
-29. docker-compose로 모든 서비스를 시작합니다:
+1. docker-compose로 모든 서비스를 시작합니다:
 
 ```bash
 docker-compose up -d --build
@@ -634,7 +701,7 @@ docker-compose up -d --build
 > `--build`: 이미지를 새로 빌드합니다. 코드 변경 후에는 항상 이 플래그를 붙이세요.  
 > `-d`: 백그라운드 실행. 로그를 바로 보려면 `-d` 없이 실행합니다.
 
-30. 서비스 상태를 확인합니다:
+2. 서비스 상태를 확인합니다:
 
 ```bash
 docker-compose ps
@@ -649,7 +716,7 @@ docker-compose ps
 > step9-docker-frontend-1  Up             0.0.0.0:80->80/tcp
 > ```
 
-31. 모든 서비스가 `Up` 상태가 될 때까지 대기합니다 (DB → Backend → Frontend 순서로 시작):
+3. 모든 서비스가 `Up` 상태가 될 때까지 대기합니다 (DB → Backend → Frontend 순서로 시작):
 
 ```bash
 # 로그 실시간 확인
@@ -662,11 +729,11 @@ docker-compose logs -f
 
 ### 6-2. 동작 확인
 
-32. 브라우저에서 `http://localhost` 접속합니다.
+4. 브라우저에서 `http://localhost` 접속합니다.
 
 - Vue.js 화면이 정상적으로 표시되면 프론트엔드 성공
 
-33. API 프록시를 테스트합니다:
+5. API 프록시를 테스트합니다:
 
 ```bash
 # 백엔드 직접 접근 테스트
@@ -676,7 +743,7 @@ curl http://localhost:8080/api/boards
 curl http://localhost/api/boards
 ```
 
-34. DB 연결을 확인합니다:
+6. DB 연결을 확인합니다:
 
 ```bash
 # MySQL 컨테이너에 직접 접속
@@ -695,7 +762,7 @@ docker-compose exec db mysql -u root -pdevpassword123 appdb -e "SHOW TABLES;"
 
 ### 6-3. 서비스 중지 및 정리
 
-35. 모든 서비스를 중지합니다:
+7. 모든 서비스를 중지합니다:
 
 ```bash
 # 컨테이너 중지 + 삭제 (DB 데이터는 Volume에 유지)
