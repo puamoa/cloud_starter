@@ -50,6 +50,12 @@ coverage
 # Kiro IDE
 .kiro/
 
+# Antigravity IDE
+GEMINI.md
+AGENTS.md
+.agent/
+.agents/
+
 # Husky
 .husky/
 
