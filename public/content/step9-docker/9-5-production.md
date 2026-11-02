@@ -13,28 +13,40 @@ learningObjectives:
   - 백엔드를 ECS Fargate + ALB로 배포할 수 있습니다.
   - 프로덕션 수준의 3-Tier Docker 아키텍처를 구성할 수 있습니다.
 prerequisites:
-  - Step 9-3 또는 9-4 완료
-  - ECR에 이미지 Push 완료
+  - Step 9-2 ~ 9-4 완료
+  - Amazon ECR에 이미지 Push 완료
 estimatedCost: 크레딧 내 사용 가능 (Fargate + ALB + CloudFront, 실습 후 삭제)
 ---
 
 > [!WARNING]
 > 이 세션은 **선택 사항**입니다.  
-> 추가 비용이 발생하며(Fargate + ALB), 실습 후 즉시 삭제해야 합니다.  
+> 추가 비용이 발생하며(AWS Fargate + Application Load Balancer), 실습 후 즉시 삭제해야 합니다.  
 > 건너뛰려면 → [9-6: 리소스 정리](/week/9/session/6)로 이동하세요.
 
-EC2 docker-compose 구성을 **프로덕션 수준**으로 업그레이드합니다:
+Amazon EC2 `docker-compose` 구성을 **프로덕션 수준**으로 업그레이드합니다:
 
-- 프론트엔드: S3 + CloudFront (CDN, HTTPS)
-- 백엔드: ECS Fargate + ALB (서버리스, 오토스케일링)
+- 프론트엔드: Amazon S3 + Amazon CloudFront (글로벌 CDN, HTTPS)
+- 백엔드: Amazon ECS (AWS Fargate) + Application Load Balancer (서버리스, 오토스케일링)
 
-> [!CONCEPT] EC2 단일 서버 vs 프로덕션 분리 구성
-> | 항목 | 9-3 (EC2 docker-compose) | 9-5 (프로덕션) |
-> |------|-------------------------|----------------|
-> | 프론트 | EC2 안의 Nginx 컨테이너 | S3 + CloudFront (글로벌 CDN) |
-> | 백엔드 | EC2 안의 Spring 컨테이너 | Fargate + ALB (오토스케일링) |
-> | 장점 | 저렴, 단순 | 고가용성, 확장성, HTTPS |
-> | 적합 | 개발/소규모 | 프로덕션/중규모 이상 |
+### Step 9 전체 구성
+
+| 세션                 | 주제                               | 핵심                                          |
+| -------------------- | ---------------------------------- | --------------------------------------------- |
+| 9-0                  | Docker + 컨테이너 이론             | 개념 학습                                     |
+| 9-1                  | Dockerfile + docker-compose (로컬) | 프론트+백엔드+DB 로컬 풀스택 실행             |
+| 9-2                  | ECR Push + EC2 docker-compose 배포 | 통합 인프라(EC2+RDS), VPC Endpoint, EC2 운영  |
+| 9-3                  | AWS Fargate 서버리스 컨테이너 체험 | 9-2 이미지+RDS 재사용, Fargate 사이드카 체험  |
+| 9-4                  | GitHub Actions → ECR → EC2         | Docker CI/CD 파이프라인 (멀티레포 & 모노레포) |
+| **9-5 (이번 실습)**  | (선택) CloudFront + Fargate        | 프로덕션 분리 구성                            |
+| 9-6                  | 리소스 정리                        | 전체 삭제                                     |
+
+> [!CONCEPT] 9-2 (EC2 단일 서버) vs 9-3 (Fargate 사이드카) vs 9-5 (프로덕션 분리 구성)
+> | 항목 | 9-2 (EC2 docker-compose) | 9-3 (Fargate 사이드카 체험) | 9-5 (프로덕션 분리 구성) |
+> |------|-------------------------|----------------------------|-------------------------|
+> | 프론트 | EC2 안의 Nginx 컨테이너 | Fargate Task 안의 Nginx 컨테이너 | **Amazon S3 + Amazon CloudFront (CDN)** |
+> | 백엔드 | EC2 안의 Spring 컨테이너 | Fargate Task 안의 Spring 컨테이너 | **AWS Fargate + ALB (독립 스케일링)** |
+> | 장점 | 저렴, 단순 | 서버 관리 불필요 | 고가용성, 독립 확장성, HTTPS |
+> | 적합 | 개발/소규모 | 소규모 서버리스 | 프로덕션/중규모 이상 |
 
 ### 아키텍처
 
@@ -79,8 +91,8 @@ TODO: S3 버킷 생성, CloudFront 배포, dist/ 업로드, 동작 확인
 
 📍 **실행 위치: AWS 콘솔**
 
-9-2에서 사이드카로 체험한 것과 달리, 이번에는 **백엔드만 단독 Service**로 배포합니다.  
-ALB를 앞에 두어 Health Check + 로드밸런싱을 적용합니다.
+9-3에서 프론트+백엔드를 하나의 Task(사이드카)로 묶어 체험한 것과 달리, 이번에는 **백엔드만 단독 Service**로 배포합니다.  
+Application Load Balancer(ALB)를 앞에 두어 Health Check + 로드밸런싱을 적용합니다.
 
 TODO:
 

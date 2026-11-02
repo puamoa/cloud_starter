@@ -7,23 +7,34 @@ learningObjectives:
   - Step 9에서 생성한 모든 AWS 리소스를 체계적으로 삭제할 수 있습니다.
   - 비용 발생 리소스를 식별하고 우선 삭제할 수 있습니다.
 prerequisites:
-  - Step 9-3 또는 9-4 완료
+  - Step 9-2 ~ 9-5 완료
 estimatedCost: 무료 (삭제 작업)
 ---
 
 Step 9에서 생성한 모든 AWS 리소스를 체계적으로 정리합니다.  
 **비용이 발생하는 리소스부터 우선 삭제합니다.**
 
+### Step 9 전체 구성
+
+| 세션                 | 주제                               | 핵심                                          |
+| -------------------- | ---------------------------------- | --------------------------------------------- |
+| 9-0                  | Docker + 컨테이너 이론             | 개념 학습                                     |
+| 9-1                  | Dockerfile + docker-compose (로컬) | 프론트+백엔드+DB 로컬 풀스택 실행             |
+| 9-2                  | ECR Push + EC2 docker-compose 배포 | 통합 인프라(EC2+RDS), VPC Endpoint, EC2 운영  |
+| 9-3                  | AWS Fargate 서버리스 컨테이너 체험 | 9-2 이미지+RDS 재사용, Fargate 사이드카 체험  |
+| 9-4                  | GitHub Actions → ECR → EC2         | Docker CI/CD 파이프라인 (멀티레포 & 모노레포) |
+| 9-5                  | (선택) CloudFront + Fargate        | 프로덕션 분리 구성                            |
+| **9-6 (이번 실습)**  | 리소스 정리                        | 전체 삭제                                     |
+
 > [!WARNING]
 > **비용 발생 리소스 (즉시 삭제 필요):**
 >
 > | 리소스                | 시간당 비용 | 월 비용 (방치 시) |
 > | --------------------- | ----------- | ----------------- |
-> | NAT Gateway           | ~$0.059     | ~$42              |
-> | EC2 (t3.small)        | ~$0.026     | ~$19              |
-> | RDS (db.t3.micro)     | ~$0.02      | ~$14              |
-> | ALB (9-5 진행 시)     | ~$0.025     | ~$18              |
-> | Fargate (9-5 진행 시) | ~$0.04      | ~$29              |
+> | Amazon EC2 (t3.small) | ~\$0.026    | ~\$19             |
+> | Amazon RDS (db.t3.micro) | ~\$0.02  | ~\$14             |
+> | ALB (9-5 진행 시)     | ~\$0.025    | ~\$18             |
+> | AWS Fargate (9-3/9-5 방치 시) | ~\$0.04 | ~\$29         |
 >
 > ※ 금액은 참고용이며, 리전·환율·AWS 정책 변경에 따라 달라질 수 있습니다.
 
@@ -31,11 +42,11 @@ Step 9에서 생성한 모든 AWS 리소스를 체계적으로 정리합니다.
 
 ## 진행한 세션에 따른 삭제 범위
 
-| 진행 세션  | 삭제할 리소스                         |
-| ---------- | ------------------------------------- |
-| 9-2만      | ✅ 이미 9-2에서 삭제 완료 (확인만)    |
-| 9-3~4      | EC2 스택 (VPC, NAT, EC2, RDS, ECR)    |
-| 9-5도 진행 | 위 + CloudFront, S3, ALB, ECS Service |
+| 진행 세션      | 삭제할 리소스                                                     |
+| -------------- | ----------------------------------------------------------------- |
+| 9-2 ~ 9-4 완료 | S3 Gateway Endpoint + ECR 이미지 + 통합 CloudFormation 스택(EC2, RDS, VPC) |
+| 9-3 Fargate    | ✅ 9-3 마지막에 ECS Service/Cluster 삭제 완료 (미삭제 시 함께 정리) |
+| 9-5도 진행     | 위 + Amazon CloudFront, Amazon S3, ALB, Amazon ECS Service        |
 
 ---
 
@@ -68,14 +79,13 @@ TODO: ECR 리포지토리 내 이미지 삭제 (리포 자체는 스택 삭제 �
 
 ---
 
-## 단계 4: CloudFormation 스택 삭제
+## 단계 4: VPC Endpoint 및 CloudFormation 스택 삭제
 
-📍 **실행 위치: AWS 콘솔 (CloudFormation)**
+📍 **실행 위치: AWS 콘솔 (VPC / CloudFormation)**
 
-TODO: step9-ec2-infra 스택 삭제 (VPC, NAT, EC2, RDS 일괄 삭제)
-
-> [!WARNING]
-> NAT Gateway가 포함된 스택이므로 삭제 시 즉시 비용 발생이 중단됩니다.
+TODO:
+- 9-2에서 수동 생성한 S3 Gateway Endpoint 삭제 (VPC 삭제 전 선행 필요)
+- `step9-infra` CloudFormation 스택 삭제 (VPC, EC2, RDS, ECR, S3 일괄 삭제)
 
 ---
 
@@ -140,11 +150,11 @@ docker system prune -a
 Step 9에서 달성한 것:
 
 - ✅ 기존 프로젝트를 Docker 이미지로 컨테이너화
-- ✅ docker-compose로 로컬 풀스택 환경 구성
-- ✅ ECS Fargate 서버리스 컨테이너 체험
-- ✅ EC2 + docker-compose 비용 절감 운영 방식 실습
-- ✅ GitHub Actions → ECR → EC2 Docker CI/CD 파이프라인 구축
-- ✅ (선택) CloudFront + Fargate 프로덕션 구성
+- ✅ `docker-compose`로 로컬 풀스택 환경 구성
+- ✅ Amazon ECR에 이미지 Push 및 Amazon EC2 + `docker-compose` + Amazon RDS 운영 배포
+- ✅ AWS Fargate 서버리스 컨테이너(사이드카 패턴) 체험 및 비용 비교
+- ✅ GitHub Actions → Amazon ECR → Amazon EC2 Docker CI/CD 파이프라인 구축
+- ✅ (선택) Amazon CloudFront + AWS Fargate 프로덕션 구성
 
 **Docker의 핵심 가치**: 같은 이미지를 로컬에서든, Fargate에서든, EC2에서든 동일하게 실행할 수 있습니다.  
 환경 차이로 인한 배포 문제가 사라집니다.

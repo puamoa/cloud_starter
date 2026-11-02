@@ -646,7 +646,7 @@ Task Definition:
 | **별도 Service** (각각 독립)       | 서비스 디스커버리 or ALB | 독립 스케일 가능          |
 
 > [!NOTE]
-> 이 실습(9-2)에서는 **사이드카 패턴**으로 Fargate를 체험합니다.  
+> 이 실습(9-3)에서는 **사이드카 패턴**으로 AWS Fargate를 체험합니다.  
 > 소규모 서비스에서 간단하고, docker-compose 경험과 유사하여 이해하기 쉽습니다.
 
 ### 컨테이너 로그 확인 (CloudWatch Logs)
@@ -764,11 +764,11 @@ Task Definition에서 로그 설정:
 
 ### 이 실습에서의 사용
 
-| 환경                   | 방식                          | 이유                                 |
-| ---------------------- | ----------------------------- | ------------------------------------ |
-| 로컬 (docker-compose)  | `.env` 파일                   | 간단, `docker-compose up`만으로 실행 |
-| CI/CD (GitHub Actions) | GitHub Secrets                | Step 8과 동일 패턴, 학습자에게 익숙  |
-| Fargate (9-2)          | Task Definition `environment` | 콘솔에서 직접 설정                   |
+| 환경                     | 방식                          | 이유                                 |
+| ------------------------ | ----------------------------- | ------------------------------------ |
+| 로컬 / EC2 (9-1, 9-2)    | `.env` 파일                   | 간단, `docker-compose up`만으로 실행 |
+| Fargate (9-3)            | Task Definition `environment` | 콘솔에서 직접 설정                   |
+| CI/CD (9-4 GitHub Actions) | GitHub Secrets              | Step 8과 동일 패턴, 학습자에게 익숙  |
 
 ### SSM Parameter Store 방식 (참고)
 
@@ -852,25 +852,23 @@ S3로 가는 트래픽이 NAT를 거치지 않고 Endpoint를 통해 직접 전�
 
 ### 이 실습에서의 활용
 
-| 세션          | 네트워크 구성 | AWS 서비스 접근 방법                     |
-| ------------- | ------------- | ---------------------------------------- |
-| 9-2 (Fargate) | NAT 없음      | S3 Gateway Endpoint (콘솔에서 수동 생성) |
-| 9-3 (EC2)     | NAT 있음      | NAT Gateway 통해 인터넷 접근             |
+| 세션                       | 네트워크 구성 | AWS 서비스 접근 방법                                    |
+| -------------------------- | ------------- | ------------------------------------------------------- |
+| 9-2 (EC2) / 9-3 (Fargate)  | NAT 없음      | Public Subnet 배치 + S3 Gateway Endpoint (콘솔 수동 생성) |
 
-9-2에서 NAT 없이 구성하면:
+9-2에서 NAT Gateway 없이 단일 CloudFormation 스택으로 구성하면:
 
-- 비용 절감 ($0.059/hr × 24h × 30일 = **~$42/월** 절약)
+- 비용 절감 (\$0.059/hr × 24h × 30일 = **~\$42/월** 절약)
 - VPC Endpoint의 개념과 동작을 직접 체험
-- "Private Subnet에서 AWS 서비스 접근하는 또 다른 방법"을 학습
+- 9-2에서 배포한 하나의 인프라 스택(Amazon EC2 + Amazon RDS + Amazon ECR)을 9-3(AWS Fargate 체험)과 9-4(CI/CD 자동 배포)까지 삭제 없이 그대로 이어서 재사용 가능
 
 > [!NOTE]
-> Fargate에서 ECR 이미지를 Pull하려면 ECR에 접근할 수 있어야 합니다.
+> Amazon EC2나 AWS Fargate에서 Amazon ECR 이미지를 Pull하려면 ECR에 접근할 수 있어야 합니다.
 >
-> - NAT Gateway가 있으면 → 인터넷 경유로 자동
-> - NAT Gateway가 없으면 → ECR Interface Endpoint 필요 (또는 Public Subnet에 배치)
+> - NAT Gateway가 있으면 → Private Subnet에서도 인터넷 경유로 자동 접근
+> - NAT Gateway가 없으면 → ECR Interface Endpoint(유료)를 만들거나 **Public Subnet에 배치**
 >
-> 9-2 실습에서는 Fargate를 **Public Subnet**에 배치하여 ECR 접근 문제를 피하고,  
-> S3 Gateway Endpoint만 수동으로 생성하여 학습합니다.
+> 이번 Step 9 실습에서는 비용 절감을 위해 Amazon EC2(9-2)와 AWS Fargate(9-3)를 **Public Subnet**에 배치하여 NAT Gateway 없이도 ECR 이미지를 Pull할 수 있게 하고, 무료인 **S3 Gateway Endpoint**를 수동으로 생성하여 VPC Endpoint를 학습합니다.
 
 ---
 
@@ -1086,15 +1084,15 @@ on:
 
 ## Step 9 전체 구성
 
-| 세션                | 주제                               | 핵심                            |
-| ------------------- | ---------------------------------- | ------------------------------- |
-| **9-0 (이번 세션)** | Docker + 컨테이너 이론             | 개념 학습                       |
-| 9-1                 | Dockerfile + docker-compose (로컬) | 프론트+백엔드+DB 로컬 실행      |
-| 9-2                 | ECR Push + Fargate 맛보기          | 서버리스 컨테이너, VPC Endpoint |
-| 9-3                 | EC2 docker-compose 배포            | 비용 절감 운영 방식             |
-| 9-4                 | GitHub Actions → ECR → EC2         | Docker CI/CD 파이프라인         |
-| 9-5                 | (선택) CloudFront + Fargate        | 프로덕션 분리 구성              |
-| 9-6                 | 리소스 정리                        | 전체 삭제                       |
+| 세션                | 주제                               | 핵심                                          |
+| ------------------- | ---------------------------------- | --------------------------------------------- |
+| **9-0 (이번 세션)** | Docker + 컨테이너 이론             | 개념 학습                                     |
+| 9-1                 | Dockerfile + docker-compose (로컬) | 프론트+백엔드+DB 로컬 풀스택 실행             |
+| 9-2                 | ECR Push + EC2 docker-compose 배포 | 통합 인프라(EC2+RDS), VPC Endpoint, EC2 운영  |
+| 9-3                 | AWS Fargate 서버리스 컨테이너 체험 | 9-2 이미지+RDS 재사용, Fargate 사이드카 체험  |
+| 9-4                 | GitHub Actions → ECR → EC2         | Docker CI/CD 파이프라인 (멀티레포 & 모노레포) |
+| 9-5                 | (선택) CloudFront + Fargate        | 프로덕션 분리 구성                            |
+| 9-6                 | 리소스 정리                        | 전체 삭제                                     |
 
 ---
 
@@ -1103,8 +1101,8 @@ on:
 이 이론을 바탕으로 **9-1: Dockerfile + docker-compose (로컬)** 실습에서 프론트엔드와 백엔드를 직접 Docker 이미지로 만들고, 로컬에서 풀스택을 실행해봅니다.
 
 > [!NOTE]
-> 9-1 실습에는 **Docker Desktop**이 설치되어 있어야 합니다.
+> 9-1 실습에는 **Docker 실행 환경**(macOS: Colima 또는 Docker Desktop / Windows: Docker Desktop + WSL2 / Linux: Docker Engine)이 설치되어 있어야 합니다.
 >
-> - macOS: [Docker Desktop for Mac](https://docs.docker.com/desktop/install/mac-install/)
-> - Windows: [Docker Desktop for Windows](https://docs.docker.com/desktop/install/windows-install/) (WSL2 필요)
+> - macOS: Homebrew + Colima (`brew install docker docker-compose colima`) 또는 [Docker Desktop for Mac](https://docs.docker.com/desktop/install/mac-install/)
+> - Windows: [Docker Desktop for Windows](https://docs.docker.com/desktop/install/windows-install/) (WSL2 백엔드 권장)
 > - Linux: [Docker Engine 설치](https://docs.docker.com/engine/install/)

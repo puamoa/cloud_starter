@@ -19,6 +19,18 @@ estimatedCost: 무료 (로컬 실행)
 프론트엔드(Vue.js)와 백엔드(Spring)를 각각 Docker 이미지로 만들고,  
 docker-compose로 로컬에서 **프론트 + 백엔드 + DB**를 한번에 실행합니다.
 
+### Step 9 전체 구성
+
+| 세션                 | 주제                               | 핵심                                          |
+| -------------------- | ---------------------------------- | --------------------------------------------- |
+| 9-0                  | Docker + 컨테이너 이론             | 개념 학습                                     |
+| **9-1 (이번 실습)**  | Dockerfile + docker-compose (로컬) | 프론트+백엔드+DB 로컬 풀스택 실행             |
+| 9-2                  | ECR Push + EC2 docker-compose 배포 | 통합 인프라(EC2+RDS), VPC Endpoint, EC2 운영  |
+| 9-3                  | AWS Fargate 서버리스 컨테이너 체험 | 9-2 이미지+RDS 재사용, Fargate 사이드카 체험  |
+| 9-4                  | GitHub Actions → ECR → EC2         | Docker CI/CD 파이프라인 (멀티레포 & 모노레포) |
+| 9-5                  | (선택) CloudFront + Fargate        | 프로덕션 분리 구성                            |
+| 9-6                  | 리소스 정리                        | 전체 삭제                                     |
+
 ### 실습 흐름
 
 ```
@@ -794,7 +806,7 @@ docker-compose down -v
 
 ### 다음 단계
 
-**9-2: ECR Push + Fargate 맛보기**에서는 이 이미지를 Amazon ECR에 Push하고, AWS Fargate에서 서버리스로 실행해봅니다.
+**9-2: ECR Push + EC2 docker-compose 배포**에서는 이 이미지를 Amazon ECR에 Push하고, Amazon EC2 + Amazon RDS 환경에서 그대로 실행해봅니다.
 
 > [!CONCEPT] 로컬에서 잘 돌아가는 이미지 = AWS에서도 동일하게 동작
 > 이것이 Docker의 핵심 가치입니다. 로컬에서 검증한 이미지를 그대로 AWS에 올리면 됩니다.  

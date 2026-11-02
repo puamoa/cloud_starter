@@ -530,7 +530,7 @@ export const curriculum: WeekCurriculum[] = [
     week: 9,
     title: 'Docker 컨테이너 배포',
     description:
-      '기존 프로젝트를 Docker로 컨테이너화하고, docker-compose로 로컬 풀스택 환경을 구성한 뒤, ECS Fargate 체험과 EC2 Docker 기반 배포를 실습합니다.',
+      '기존 프로젝트를 Docker로 컨테이너화하고, docker-compose로 로컬 및 EC2 운영 환경을 구성한 뒤, AWS Fargate 서버리스 컨테이너와 CI/CD 자동 배포를 실습합니다.',
     sessions: [
       {
         session: 0,
@@ -539,7 +539,7 @@ export const curriculum: WeekCurriculum[] = [
         hasContent: true,
         markdownPath: '/content/step9-docker/9-0-docker-concepts.md',
         description:
-          'Docker, Compose, 멀티스테이지 빌드, ECR, ECS/Fargate, DB 분리, 환경변수 관리, VPC Endpoint',
+          'Docker, Compose, 멀티스테이지 빌드, ECR, ECS/Fargate, DB 분리, 환경변수 관리, VPC Endpoint, 멀티레포 vs 모노레포',
         awsServices: [],
         estimatedCost: '무료 (이론)',
       },
@@ -557,24 +557,24 @@ export const curriculum: WeekCurriculum[] = [
       {
         session: 2,
         type: 'lab',
-        title: 'ECR Push + Fargate 맛보기',
+        title: 'ECR Push + EC2 docker-compose 배포',
         hasContent: true,
-        markdownPath: '/content/step9-docker/9-2-fargate.md',
+        markdownPath: '/content/step9-docker/9-2-ec2-docker.md',
         description:
-          'CloudFormation 인프라(NAT 없음), VPC Endpoint 수동 생성, ECR Push, ECS Fargate 사이드카 배포',
-        awsServices: ['Amazon ECR', 'Amazon ECS', 'AWS Fargate'],
-        estimatedCost: '크레딧 내 사용 가능 (Fargate 과금, 실습 후 즉시 삭제)',
+          '통합 CloudFormation 인프라 배포, VPC Endpoint 수동 생성, ECR Push, EC2 docker-compose + RDS 운영 배포',
+        awsServices: ['Amazon EC2', 'Amazon RDS', 'Amazon ECR', 'Amazon VPC'],
+        estimatedCost: '크레딧 내 사용 가능',
       },
       {
         session: 3,
         type: 'lab',
-        title: 'EC2 docker-compose 배포 (운영용)',
+        title: 'AWS Fargate 서버리스 컨테이너 체험',
         hasContent: true,
-        markdownPath: '/content/step9-docker/9-3-ec2-docker.md',
+        markdownPath: '/content/step9-docker/9-3-fargate.md',
         description:
-          'CloudFormation 인프라(NAT 포함), EC2에서 docker-compose 실행, RDS 연결',
-        awsServices: ['Amazon EC2', 'Amazon RDS', 'Amazon ECR'],
-        estimatedCost: '크레딧 내 사용 가능',
+          '9-2의 ECR 이미지와 RDS를 재사용하여 ECS Fargate 사이드카 배포 체험 및 EC2 방식과 비교 후 Fargate만 삭제',
+        awsServices: ['Amazon ECS', 'AWS Fargate', 'Amazon ECR'],
+        estimatedCost: '크레딧 내 사용 가능 (Fargate 과금, 실습 후 즉시 삭제)',
       },
       {
         session: 4,
