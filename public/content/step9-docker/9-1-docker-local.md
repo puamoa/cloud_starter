@@ -10,8 +10,8 @@ learningObjectives:
   - docker-compose로 프론트엔드 + 백엔드 + MySQL을 한번에 실행할 수 있습니다.
   - 환경변수(.env)로 DB 접속 정보를 분리할 수 있습니다.
 prerequisites:
-  - Docker Desktop 설치 (macOS/Windows) 또는 Docker Engine 설치 (Linux)
-  - 프론트엔드/백엔드 GitHub 리포지토리 준비 (Step 8 또는 샘플 리포 fork)
+  - Docker 실행 환경 준비 (macOS: Homebrew + Colima / Windows: WSL2 + Docker Desktop)
+  - 프론트엔드/백엔드 GitHub 리포지토리 준비 (Step 8 또는 샘플 코드)
   - 기본적인 터미널 사용법
 estimatedCost: 무료 (로컬 실행)
 ---
@@ -51,19 +51,29 @@ localhost:80  → Nginx (Vue.js 정적 파일 + /api 프록시)
 
 ## 태스크 1: Docker 설치 확인
 
-### 1-1. Docker Desktop 설치
+### 1-1. 운영체제별 Docker 설치
 
 📍 **실행 위치: 로컬 PC**
 
-본인 운영체제에 맞는 방법을 선택합니다.
+> [!TIP]
+> **설치 전, 내 PC에 이미 Docker가 설치되어 있는지 먼저 확인해보세요!**  
+> 터미널(macOS/Linux) 또는 PowerShell(Windows)에서 아래 명령어를 실행했을 때 버전 정보가 출력된다면, 이미 설치된 상태이므로 **1-2. 설치 확인**으로 바로 건너뛰세요.
+>
+> ```bash
+> docker --version
+> docker-compose --version
+> ```
 
-**🍎 macOS (방법 1 — Homebrew + Colima, 권장):**
+Docker가 설치되어 있지 않다면 본인 운영체제에 맞는 방법을 선택해 설치합니다.
+
+**🍎 macOS (Homebrew + Colima):**
 
 > [!TIP]
 > Homebrew가 설치되어 있어야 합니다.  
-> 미설치 시: `/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"`
+> 미설치 시: `/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"`  
+> 만약 맥에 이미 **Docker Desktop**이 설치되어 있다면 Colima를 추가로 설치할 필요 없이 Docker Desktop 앱만 실행하고 **1-2. 설치 확인**으로 이동하면 됩니다.
 
-1. 터미널에서 Homebrew로 Docker CLI와 Colima를 설치합니다:
+1. 터미널에서 Homebrew로 Docker CLI, `docker-compose`, Colima를 설치합니다:
 
 ```bash
 brew install docker docker-compose colima
@@ -75,27 +85,24 @@ brew install docker docker-compose colima
 colima start
 ```
 
-3. Docker가 정상적으로 설치되었는지 확인합니다:
+3. Docker가 정상적으로 동작하는지 확인합니다:
 
 ```bash
 docker ps
 ```
 
 > [!TIP]
-> **Colima**는 가벼운 Linux VM으로 Docker를 실행합니다. Docker Desktop보다 리소스를 적게 사용합니다.  
-> 종료: `colima stop` / 시작: `colima start`
+> **Colima**는 가벼운 Linux 가상머신으로 Docker를 실행하여 Docker Desktop보다 메모리·배터리 소모가 훨씬 적고 개인/기업 모두 무료입니다.  
+> 실습이 끝난 후 종료할 때는 `colima stop`, 다시 시작할 때는 `colima start`를 실행합니다.
+>
+> **macOS에서 GUI 환경(Docker Desktop)으로 설치하고 싶다면:**
+> - [Docker Desktop for Mac](https://docs.docker.com/desktop/install/mac-install/) 페이지에서 본인 맥 칩에 맞는 버튼을 클릭하여 다운로드합니다.
+>   - Apple Silicon (M1/M2/M3/M4): [[Docker Desktop for Mac with Apple silicon]]
+>   - Intel: [[Docker Desktop for Mac with Intel chip]]
+> - 다운로드된 `.dmg` 파일을 더블클릭하고, Docker 아이콘을 **Applications** 폴더로 드래그합니다.
+> - **Applications**에서 **Docker**를 실행한 뒤, 상단 메뉴바에 고래 아이콘이 나타나면 설치 완료입니다 (Colima와 동시에 실행하지 마세요).
 
-**🍎 macOS (방법 2 — Docker Desktop):**
-
-1. [Docker Desktop for Mac](https://docs.docker.com/desktop/install/mac-install/) 페이지에서 본인 칩에 맞는 버튼을 클릭하여 다운로드합니다.
-   - Apple Silicon (M1/M2/M3/M4): [[Docker Desktop for Mac with Apple silicon]]
-   - Intel: [[Docker Desktop for Mac with Intel chip]]
-2. 다운로드된 `.dmg` 파일을 더블클릭합니다.
-3. Docker 아이콘을 **Applications** 폴더로 드래그합니다.
-4. Applications에서 **Docker**를 실행합니다.
-5. 상단 메뉴바에 Docker 아이콘(고래)이 나타나면 설치 완료입니다.
-
-**🪟 Windows:**
+**🪟 Windows (WSL2 + Docker Desktop):**
 
 > [!WARNING]
 > **먼저 WSL2를 설치해야 합니다.**  
@@ -154,27 +161,27 @@ wsl --status
 > **Windows Home** 에디션에서도 Docker Desktop 사용 가능합니다 (WSL2 기반).  
 > Windows 10 버전 2004 이상 또는 Windows 11이 필요합니다.
 
-**🐧 Linux:**
+**🐧 Linux (참고):**
 
 - [Docker Engine 공식 설치 가이드](https://docs.docker.com/engine/install/) 참조
-- Ubuntu: `sudo apt install docker.io docker-compose-v2`
-- 설치 후 `sudo usermod -aG docker $USER` → 로그아웃/로그인
+- Ubuntu 기준: `sudo apt update && sudo apt install -y docker.io docker-compose`
+- 설치 후 현재 사용자에 권한 부여: `sudo usermod -aG docker $USER` (재로그인 필요)
 
 ### 1-2. 설치 확인
 
 > [!NOTE]
 > 위 설치 단계는 운영체제별 선택 사항입니다. 아래 확인 절차는 모든 OS 공통입니다.
 
-1. 터미널(macOS/Linux) 또는 PowerShell(Windows)을 열고 다음 명령어를 실행합니다:
+1. 터미널(macOS/Linux) 또는 PowerShell(Windows)을 열고 Docker 버전을 확인합니다:
 
 ```bash
 docker --version
 ```
 
-2. docker-compose 버전도 확인합니다:
+2. `docker-compose` 버전도 확인합니다:
 
 ```bash
-docker compose version
+docker-compose --version
 ```
 
 > [!OUTPUT]
@@ -185,10 +192,10 @@ docker compose version
 > ```
 
 > [!NOTE]
-> 최신 Docker Desktop에서는 `docker-compose`(하이픈) 대신 `docker compose`(스페이스)가 기본입니다.  
-> 둘 다 동일하게 동작하며, 이 가이드에서는 `docker-compose`(하이픈)를 사용합니다.
+> `docker-compose`(하이픈 포함)와 `docker compose`(띄어쓰기)는 모두 Docker Compose v2를 실행합니다.  
+> macOS(Colima + Homebrew)와 Windows(Docker Desktop) 모두에서 별도 설정 없이 동일하게 동작하도록, 이 실습에서는 **`docker-compose`(하이픈 포함)** 명령어로 통일하여 진행합니다.
 
-3. Docker가 정상 실행되는지 테스트합니다:
+3. Docker 컨테이너가 정상 실행되는지 테스트합니다:
 
 ```bash
 docker run hello-world
@@ -204,16 +211,72 @@ docker run hello-world
 > [!TROUBLESHOOTING]
 > | 증상 | 원인 | 해결 방법 |
 > |------|------|-----------|
-> | `docker: command not found` | Docker 미설치 또는 PATH 미등록 | Docker Desktop 재설치 후 터미널 재시작 |
-> | `Cannot connect to the Docker daemon` | Docker Desktop 미실행 | Docker Desktop 앱을 실행하세요 |
-> | Windows에서 `WSL 2 is not installed` | WSL2 미설치 | PowerShell(관리자): `wsl --install` 후 재부팅 |
-> | macOS에서 `permission denied` | Docker Desktop 미실행 | 상단 메뉴바에서 Docker 아이콘 확인, 앱 실행 |
+> | `docker: command not found` | Docker 미설치 또는 PATH 미등록 | 설치 후 터미널(또는 PowerShell)을 닫고 다시 실행 |
+> | `Cannot connect to the Docker daemon` | Docker 런타임 미실행 | macOS: `colima start` 실행 / Windows: Docker Desktop 앱 실행 후 좌측 하단 `Engine running` 확인 |
+> | Windows에서 `WSL 2 is not installed` | WSL2 미설치 | PowerShell(관리자): `wsl --install` 실행 후 PC 재부팅 |
+> | macOS에서 `permission denied` | Colima(또는 Docker Desktop) 미실행 | 터미널에서 `colima start`를 실행하여 런타임을 시작하세요 |
 
 ✅ **태스크 완료** — Docker가 정상 설치되었습니다.
 
 ---
 
-## 태스크 2: 프로젝트 구조 준비
+## 태스크 2: 프로젝트 구조 및 설정 파일 준비
+
+### 2-1. 작업 디렉토리 및 소스 코드 준비
+
+📍 **실행 위치: 로컬 PC**
+
+Step 9 실습에서는 아래 **3가지 방법** 중 본인 상황에 맞는 **한 가지**를 선택하여 프로젝트를 준비합니다:
+
+| 방법 | 대상 수강생 | 백엔드 유형 |
+| :--- | :--- | :---: |
+| **🟢 방법 1: 기존 Step 8 로컬 폴더 활용** | Step 8을 이미 진행하여 로컬에 **3tier-project** 폴더가 있는 경우 (클론 불필요) | **WAR** (8-3A) 또는 **JAR** (8-3B·3C) |
+| **🟡 방법 2: 샘플 압축 파일 활용** | Step 8을 안 했거나, Git 설정 없이 빠르게 Docker 실습을 시작할 경우 | **WAR** (Spring Legacy 기본 샘플) |
+| **🔵 방법 3: 샘플 GitHub 리포지토리 클론** | Step 8을 안 했지만, Git으로 클론하여 **9-4(CI/CD)**까지 이어서 진행할 경우 | **WAR** (Spring Legacy 기본 샘플) |
+
+> [!TIP]
+> **Spring Boot(JAR) 환경으로 실습하고 싶다면?**
+> - Step 9에서 기본 제공하는 샘플(압축 파일 및 샘플 리포지토리)은 **Spring Legacy MVC(WAR)** 기준입니다.
+> - 만약 **Spring Boot(JAR)** 테스트 코드로 실습해보고 싶은데 아직 프로젝트가 없다면, [Step 8-2B: 새 Vue.js 프론트엔드](/week/8/session/2B)와 [Step 8-3C: 새 Spring Boot 백엔드](/week/8/session/3C)의 프로젝트 생성 단계를 먼저 진행한 뒤 **🟢 방법 1**로 이어가세요.
+> - 본인이 직접 개발한 **자체 보유 프로젝트(Spring Boot/Legacy)**를 적용할 수도 있습니다 (아래 **2-4**의 자체 프로젝트 적용 포인트 참고).
+
+---
+
+#### 🟢 방법 1: Step 8을 진행한 경우 (클론 불필요 — 기존 로컬 폴더 활용)
+
+1. 기존 Step 8 작업 디렉토리로 이동하여 폴더 목록을 확인합니다:
+
+```bash
+cd ~/3tier-project
+ls
+```
+
+- **my-frontend**, **my-backend** 폴더가 이미 존재하므로 새로 클론할 필요가 없습니다.
+
+2. Step 8 프론트엔드 배포 실습에서 만들었던 **.env.production** 파일이 남아 있다면 삭제합니다:
+
+```bash
+rm -f ~/3tier-project/my-frontend/.env.production
+```
+
+> [!WARNING]
+> **왜 .env.production 파일을 삭제해야 하나요?**  
+> Step 8에서는 프론트엔드(Amazon CloudFront)가 외부 ALB 주소로 직접 요청을 보냈지만, Step 9(Docker)에서는 프론트엔드 컨테이너 안의 **Nginx 리버스 프록시**가 API 요청을 받아 백엔드 컨테이너로 전달합니다.  
+> 이전 Step 8의 ALB 주소가 남아 있으면 이미 삭제된 ALB로 요청을 보내 에러가 발생하므로 반드시 삭제(또는 빈 값으로 변경)해야 합니다.
+
+3. 로컬 MySQL 컨테이너 초기화용 **sql** 폴더를 준비합니다:
+   - **Step 8-3A(레거시)**를 진행한 경우 백엔드 안의 sql 폴더를 복사합니다:
+     ```bash
+     cp -r ~/3tier-project/my-backend/sql ~/3tier-project/sql
+     ```
+   - **Step 8-3C(Spring Boot)**를 진행한 경우 빈 sql 폴더만 생성합니다 (JPA가 테이블을 자동 생성합니다):
+     ```bash
+     mkdir -p ~/3tier-project/sql
+     ```
+
+---
+
+#### 🟡 방법 2: 샘플 압축 파일을 활용하는 경우
 
 > [!DOWNLOAD]
 > [step9-sample.zip](/files/step9/step9-sample/step9-sample.zip)
@@ -224,86 +287,257 @@ docker run hello-world
 >
 > **관련 태스크:**
 >
-> - 모든 태스크: 위 파일을 압축 해제하여 프로젝트 구조를 준비합니다
+> - 태스크 2 (방법 2): 위 파일을 다운로드하고 압축 해제하여 프로젝트 구조를 준비합니다
 
-> [!NOTE]
-> 본인 프로젝트가 있다면 위 파일 대신 그대로 사용해도 됩니다 (Step 8 리포 등).  
-> 여행지 이미지(S3 업로드용)는 용량이 커서 별도 제공:  
-> [travel-image.zip (Google Drive)](https://drive.google.com/file/d/10cNMIze0TbbEzu61UHCglrhhKZXqUBea/view?usp=drive_link)
+1. 위 다운로드 블록에서 **step9-sample.zip**을 다운로드합니다.
+2. 작업 디렉토리를 만들고 압축을 해제합니다:
 
-### 2-1. 작업 디렉토리 구성
-
-1. 작업할 디렉토리를 만듭니다:
+**Mac/Linux:**
 
 ```bash
-mkdir ~/step9-docker
-cd ~/step9-docker
+mkdir -p ~/3tier-project
+cd ~/3tier-project
+
+# 다운로드한 step9-sample.zip을 현재 폴더로 복사 후 압축 해제
+cp ~/Downloads/step9-sample.zip .
+unzip step9-sample.zip
+
+# 내부 압축 파일 3개 해제 (각각 my-frontend, my-backend, sql 폴더 생성)
+unzip my-frontend.zip -d my-frontend
+unzip my-backend.zip -d my-backend
+unzip sql.zip -d sql
 ```
 
-2. 프론트엔드와 백엔드 리포지토리를 clone합니다:
+**Windows (PowerShell):**
+
+```powershell
+mkdir -Force ~/3tier-project
+cd ~/3tier-project
+
+# 다운로드한 step9-sample.zip을 현재 폴더로 복사 후 압축 해제
+Copy-Item ~/Downloads/step9-sample.zip .
+Expand-Archive -Path step9-sample.zip -DestinationPath . -Force
+
+# 내부 압축 파일 3개 해제 (각각 my-frontend, my-backend, sql 폴더 생성)
+Expand-Archive -Path my-frontend.zip -DestinationPath my-frontend -Force
+Expand-Archive -Path my-backend.zip -DestinationPath my-backend -Force
+Expand-Archive -Path sql.zip -DestinationPath sql -Force
+```
+
+> [!NOTE]
+> 압축 해제 후 **my-frontend/my-frontend/**처럼 하위 폴더가 한 겹 더 생겼다면, 내부 파일들을 상위 **my-frontend/** 바로 아래로 이동시켜 주세요.
+
+---
+
+#### 🔵 방법 3: 샘플 GitHub 리포지토리를 클론하는 경우
+
+> [!TIP]
+> **지금은 Fork 없이 원본 주소 그대로 클론하세요!**  
+> 9-1(로컬) ~ 9-3(EC2·Fargate) 실습은 원본 샘플 리포지토리를 그대로 클론하여 바로 진행할 수 있습니다.  
+> 이후 **9-4 (GitHub Actions CI/CD)** 실습을 진행할 때 본인 GitHub 계정에 새 리포지토리를 만들고 원격 주소만 변경하여 연결합니다 ([Step 9-0 이론](/week/9/session/0) 참고).
+
+1. 작업 디렉토리를 만들고 프론트엔드와 백엔드를 클론합니다:
 
 ```bash
-# 본인 리포지토리로 변경하세요
-git clone https://github.com/<username>/my-frontend.git frontend
-git clone https://github.com/<username>/my-backend.git backend
+mkdir -p ~/3tier-project
+cd ~/3tier-project
+
+git clone https://github.com/puamoa/my-frontend.git my-frontend
+git clone https://github.com/puamoa/my-backend.git my-backend
+```
+
+2. 로컬 MySQL 초기화용 **sql** 폴더를 복사합니다:
+
+```bash
+cp -r ~/3tier-project/my-backend/sql ~/3tier-project/sql
+```
+
+---
+
+### 2-2. (선택) 여행지 이미지 파일 준비 — 제공 샘플(레거시) 등 해당 프로젝트만 진행
+
+📍 **실행 위치: 로컬 PC**
+
+> [!NOTE]
+> **이 단계는 필요한 경우에만 진행합니다 (해당하지 않으면 2-3으로 건너뛰세요)**
+>
+> - **❌ 건너뛰는 대상**  
+>   **Step 8-3C(Spring Boot 테스트 코드)** 또는 **별도 초기 이미지 파일이 없는 자체 보유 프로젝트**를 사용하는 경우 이 단계는 필요하지 않습니다.
+> - **✅ 진행 대상**  
+>   **Step 9 기본 제공 샘플(방법 2·3)**, **Step 8-3A(기존 레거시 프로젝트)** 등 여행지 게시판(travel) 이미지 파일이 필요한 프로젝트를 사용하는 경우에만 진행합니다 (텍스트 목록만 확인하려면 생략 가능).
+
+> [!TIP]
+> **여행지 이미지 파일은 어디에 사용되나요?**  
+> 기본 제공 샘플(Spring Legacy MVC)의 여행지 게시판에는 전국 여행지 112곳의 사진 560장이 연결되어 있으나, 용량 문제로 Git 리포지토리와 **step9-sample.zip**에는 사진 파일명 목록(**travel_image.csv**)만 포함되어 있고 실제 원본 이미지(.jpg)는 빠져 있습니다.
+>
+> - **9-1 (로컬 docker-compose 실습)**  
+>   **~/3tier-project/travel-image/** 폴더에 압축을 풀고 백엔드 컨테이너의 **/tmp/upload/travel/** 경로로 **볼륨 마운트(Volume Mount)**하면 로컬에서도 여행지 사진이 화면에 표시됩니다 (**upload.storage.type=local**).
+> - **9-2 (AWS 배포 실습)**  
+>   Amazon S3 버킷의 **public/travel/** 경로에 업로드하여 백엔드 컨테이너가 S3에서 직접 이미지를 불러오게 합니다 (**upload.storage.type=s3**).
+
+1. 아래 Google Drive 링크에서 **travel-image.zip**을 다운로드합니다:
+   - [travel-image.zip 다운로드 (Google Drive)](https://drive.google.com/file/d/10cNMIze0TbbEzu61UHCglrhhKZXqUBea/view?usp=drive_link)
+
+2. **~/3tier-project/travel-image** 폴더에 압축을 해제합니다:
+
+**Mac/Linux:**
+
+```bash
+cd ~/3tier-project
+mkdir -p travel-image
+unzip ~/Downloads/travel-image.zip -d travel-image
+```
+
+**Windows (PowerShell):**
+
+```powershell
+cd ~/3tier-project
+mkdir -Force travel-image
+Expand-Archive -Path ~/Downloads/travel-image.zip -DestinationPath travel-image -Force
 ```
 
 > [!TIP]
-> Step 8에서 만든 리포가 있다면 그대로 사용하세요.  
-> 없다면 샘플 리포를 fork하여 사용할 수 있습니다.
+> 압축 해제 후 **travel-image/travel-image/001-1.jpg**처럼 폴더가 두 겹으로 생겼다면, 사진 파일들이 **~/3tier-project/travel-image/** 바로 아래에 위치하도록 꺼내 주세요.
 
-3. 최종 디렉토리 구조를 확인합니다:
+---
+
+### 2-3. 디렉토리 구조 확인
+
+위 과정을 마친 후, 작업 디렉토리 구조가 아래와 같은지 확인합니다:
 
 ```
-~/step9-docker/
-├── frontend/          ← Vue.js 프로젝트
+~/3tier-project/
+├── my-frontend/          ← Vue.js 프론트엔드 프로젝트
 │   ├── src/
 │   ├── package.json
-│   └── (Dockerfile은 이 실습에서 생성)
-├── backend/           ← Spring 프로젝트
+│   ├── Dockerfile        ← (태스크 4에서 생성)
+│   └── nginx.conf        ← (태스크 4에서 생성)
+├── my-backend/           ← Spring 백엔드 프로젝트
 │   ├── src/
 │   ├── build.gradle
-│   └── (Dockerfile은 이 실습에서 생성)
-├── sql/               ← DB 초기화 파일 (이 실습에서 생성)
-├── docker-compose.yml ← (이 실습에서 생성)
-├── .env               ← (이 실습에서 생성)
-└── nginx.conf         ← (이 실습에서 생성)
+│   └── Dockerfile        ← (태스크 3에서 생성)
+├── sql/                  ← 로컬 MySQL 초기화 파일 (자체/부트 프로젝트는 비어 있어도 무방)
+├── travel-image/         ← (선택) 2-2에서 준비한 경우에만 존재 (여행지 사진 파일)
+├── docker-compose.yml    ← (태스크 5에서 생성)
+└── .env                  ← (태스크 5에서 생성)
 ```
 
-✅ **태스크 완료** — 프로젝트 구조를 준비했습니다.
+---
+
+### 2-4. 백엔드 보안 설정 파일 확인 및 생성 (필수)
+
+📍 **실행 위치: 로컬 PC**
+
+> [!WARNING]
+> **왜 이 단계가 필요한가요?**  
+> 백엔드 설정 파일(**application.properties** 또는 **application.yaml**)에는 DB 접속 정보와 비밀키가 들어가므로 **.gitignore**에 의해 Git 저장소와 샘플 압축 파일에서 제외되어 있습니다.  
+> 따라서 **새로 압축을 풀었거나 클론한 경우에는 이 파일이 없으며**, 파일 없이 이미지를 빌드하면 컨테이너 실행 시 에러가 발생합니다.  
+> Docker에서는 파일 안에 실제 비밀번호를 적는 대신 **환경변수 플레이스홀더**만 적어두고, 실제 값은 **.env** 파일이나 CI/CD Secrets에서 안전하게 주입합니다.
+
+내 백엔드 프로젝트 종류에 맞춰 설정 파일이 존재하는지 확인하고, 없다면 생성합니다:
+
+**🅰️ 기본 제공 샘플(Spring Legacy WAR) 또는 Step 8-3A 프로젝트인 경우:**
+
+`~/3tier-project/my-backend/src/main/resources/application.properties` 파일을 확인하고, 없다면 아래 내용으로 생성합니다:
+
+```properties
+# 데이터베이스 설정 (환경변수에서 주입)
+jdbc.driver=com.mysql.cj.jdbc.Driver
+jdbc.url=jdbc:mysql://${DB_ENDPOINT}/${DB_NAME}
+jdbc.username=${DB_USERNAME}
+jdbc.password=${DB_PASSWORD}
+
+# 파일 업로드 및 스토리지 타입 설정
+# - 로컬(9-1): STORAGE_TYPE=local → /tmp/upload/travel 에서 이미지 조회
+# - AWS(9-2~): STORAGE_TYPE=s3    → S3 버킷(public/travel/)에서 이미지 조회
+upload.local.path=/tmp/upload
+upload.storage.type=${STORAGE_TYPE:local}
+
+# AWS S3 설정 (로컬에서는 기본값 사용, 9-2 AWS 배포 시 환경변수로 주입)
+cloud.aws.s3.bucket=${S3_BUCKET:my-bucket}
+cloud.aws.region=${AWS_REGION:ap-northeast-2}
+
+# 로그 레벨
+logging.level.org.scoula=INFO
+```
+
+**🅱️ Step 8-3B / 8-3C (Spring Boot JAR) 프로젝트인 경우:**
+
+`~/3tier-project/my-backend/src/main/resources/application.yaml` 파일에 아래처럼 환경변수 참조가 설정되어 있는지 확인합니다:
+
+```yaml
+spring:
+  datasource:
+    url: jdbc:mysql://${DB_ENDPOINT}/${DB_NAME}?useSSL=false&allowPublicKeyRetrieval=true&characterEncoding=UTF-8&serverTimezone=Asia/Seoul
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+```
+
+> [!TIP]
+> **자체 보유 프로젝트(개인/팀 프로젝트)를 적용할 때 꼭 맞춰야 할 5가지 포인트**
+>
+> 본인이 직접 개발한 프로젝트를 가져와 Docker로 구성할 때는 아래 5가지를 본인 프로젝트에 맞게 수정하세요:
+>
+> - **① DB 접속 주소를 환경변수로 변경**  
+>   설정 파일에 **localhost:3306**이 하드코딩되어 있으면 컨테이너 내부 자기 자신을 찾다가 연결에 실패합니다.  
+>   위 예시처럼 **DB_ENDPOINT**, **DB_NAME**, **DB_USERNAME**, **DB_PASSWORD** 환경변수를 사용하도록 수정하세요.
+> - **② 초기 SQL 및 DB 이름 일치**  
+>   본인 프로젝트의 테이블 생성 SQL 파일을 **sql/** 폴더에 넣고, SQL 안의 데이터베이스 이름과 태스크 5에서 만들 **.env**의 **DB_NAME**을 일치시키세요 (JPA **ddl-auto: update** 사용 시 자동 생성됨).
+> - **③ Java 버전 확인 (JDK 17 vs 21)**  
+>   **build.gradle**의 Java 버전을 확인하고, 태스크 3의 **Dockerfile** 베이스 이미지 버전(17 또는 21)을 맞추세요.
+> - **④ 프론트엔드 API 경로와 Nginx 프록시 일치**  
+>   프론트엔드가 백엔드를 호출하는 경로 접두사(예: **/api/**, **/board/**, **/member/**)를 확인하고 태스크 4의 **nginx.conf**에 반영하세요.
+> - **⑤ 파일 업로드 경로 Linux 표준화**  
+>   설정 파일에 Windows 경로(**C:/upload** 등)가 있다면 컨테이너 내부(Linux)에서 동작하도록 **/tmp/upload**로 변경하세요.
+
+> [!NOTE]
+> **9-4 (GitHub Actions CI/CD)와의 연결**:  
+> 로컬에서는 방금 만든 설정 파일이 Docker 빌드 시 이미지 안에 포함됩니다.  
+> 하지만 Git에는 이 파일이 올라가지 않으므로, **9-4 실습(GitHub Actions 자동 배포)**에서는 Step 8과 동일하게 GitHub Secrets(`APPLICATION_PROPERTIES`)에 이 내용을 등록하여 빌드 직전에 파일을 자동 생성하게 됩니다.
+
+✅ **태스크 완료** — 프로젝트 구조와 백엔드 설정 파일을 준비했습니다.
 
 ---
 
 ## 태스크 3: 백엔드 Dockerfile 작성
 
-📍 **실행 위치: 로컬 PC (`~/step9-docker/backend/`)**
+📍 **실행 위치: 로컬 PC**
 
-본인 프로젝트에 맞는 방법을 선택합니다:
+태스크 2에서 준비한 백엔드 프로젝트의 패키징 방식에 따라 **방법 A(JAR)** 또는 **방법 B(WAR)** 중 **한 가지**만 선택하여 Dockerfile을 작성합니다:
 
-- **방법 A**: Spring Boot (JAR) — `java -jar`로 실행
-- **방법 B**: Spring Legacy MVC (WAR) — Tomcat에 배포
+| 구분 | 대상 프로젝트 | 확인 방법 (my-backend/build.gradle) | 2단계 실행 이미지 |
+| :--- | :--- | :--- | :--- |
+| **🟢 방법 A: Spring Boot (JAR)** | Step 8-3B / 8-3C 부트 테스트 프로젝트, 또는 자체 Spring Boot 프로젝트 | plugins 블록에 **id 'war'**가 없음 | `eclipse-temurin:17-jre-alpine` |
+| **🟡 방법 B: Spring Legacy MVC (WAR)** | **Step 9 기본 제공 샘플**, Step 8-3A 프로젝트 | plugins 블록에 **id 'war'**가 있음 | `tomcat:9-jre17` |
+
+> [!TIP]
+> Dockerfile의 각 명령어(FROM, WORKDIR, COPY, RUN, EXPOSE, ENTRYPOINT)와 베이스 이미지 태그에 대한 자세한 원리는 [Step 9-0 이론: Dockerfile 핵심 명령어](/week/9/session/0)를 참고하세요.
 
 ---
 
-### 방법 A: Spring Boot (JAR) Dockerfile
+### 🟢 방법 A: Spring Boot (JAR) Dockerfile
 
-1. `backend/Dockerfile`을 생성합니다:
+1. `~/3tier-project/my-backend/Dockerfile` 파일을 생성하고 아래 내용을 작성합니다:
 
 ```dockerfile
-# ──── 1단계: 빌드 (Gradle + JDK) ────
+# ──── 1단계: 빌드 환경 (Gradle + JDK 17) ────
 FROM eclipse-temurin:17-jdk-alpine AS build
 WORKDIR /app
 
-# Gradle Wrapper 복사 + 의존성 캐싱
+# Gradle Wrapper 및 설정 복사 + 의존성 캐싱 (Windows CRLF 줄바꿈 제거 포함)
 COPY gradlew build.gradle settings.gradle ./
 COPY gradle ./gradle
-RUN chmod +x ./gradlew && ./gradlew dependencies --no-daemon
+RUN sed -i 's/\r$//' ./gradlew && chmod +x ./gradlew && ./gradlew dependencies --no-daemon
 
-# 소스 복사 + 빌드
+# 소스 코드 복사 + 실행 가능한 JAR 빌드 (테스트 생략)
 COPY src ./src
 RUN ./gradlew bootJar --no-daemon -x test
 
-# ──── 2단계: 실행 (JRE만) ────
+# ──── 2단계: 실행 환경 (가벼운 JRE 17만 포함) ────
 FROM eclipse-temurin:17-jre-alpine
 WORKDIR /app
 COPY --from=build /app/build/libs/*.jar app.jar
@@ -312,50 +546,60 @@ ENTRYPOINT ["java", "-jar", "app.jar"]
 ```
 
 > [!NOTE]
-> 멀티스테이지 빌드를 사용합니다:
+> **주요 설정값 의미 (방법 A)**
 >
-> - 1단계: JDK + Gradle로 빌드 (이미지에 포함 안 됨)
-> - 2단계: JRE만 포함된 경량 이미지로 실행
->
-> 최종 이미지 크기: ~200MB (JDK 전체 포함 시 ~500MB)
+> - **sed -i 's/\r$//' ./gradlew**  
+>   Windows에서 파일을 클론·저장할 때 생기는 줄바꿈 문자(CRLF)를 Linux 형식(LF)으로 변환하여 스크립트 실행 에러를 방지합니다.
+> - **--no-daemon -x test**  
+>   컨테이너 빌드 시 불필요한 Gradle 백그라운드 데몬과 단위 테스트 실행을 생략하여 빌드 속도를 높입니다.
+> - **COPY --from=build**  
+>   1단계(build)에서 생성된 JAR 파일만 2단계 JRE 이미지로 가져옵니다 (최종 이미지 크기 ~200MB).
 
 ---
 
-### 방법 B: Spring Legacy MVC (WAR) Dockerfile
+### 🟡 방법 B: Spring Legacy MVC (WAR) Dockerfile (기본 제공 샘플)
 
-1. `backend/Dockerfile`을 생성합니다:
+1. `~/3tier-project/my-backend/Dockerfile` 파일을 생성하고 아래 내용을 작성합니다:
 
 ```dockerfile
-# ──── 1단계: 빌드 (Gradle + JDK) ────
+# ──── 1단계: 빌드 환경 (Gradle + JDK 17) ────
 FROM eclipse-temurin:17-jdk-alpine AS build
 WORKDIR /app
 
+# Gradle Wrapper 및 설정 복사 + 의존성 캐싱 (Windows CRLF 줄바꿈 제거 포함)
 COPY gradlew build.gradle settings.gradle ./
 COPY gradle ./gradle
-RUN chmod +x ./gradlew && ./gradlew dependencies --no-daemon
+RUN sed -i 's/\r$//' ./gradlew && chmod +x ./gradlew && ./gradlew dependencies --no-daemon
 
+# 소스 코드 복사 + WAR 파일 빌드 (테스트 생략)
 COPY src ./src
 RUN ./gradlew build --no-daemon -x test
 
-# ──── 2단계: 실행 (Tomcat) ────
-FROM tomcat:10-jre17
+# ──── 2단계: 실행 환경 (Tomcat 9 + JRE 17) ────
+FROM tomcat:9-jre17
 RUN rm -rf /usr/local/tomcat/webapps/*
 COPY --from=build /app/build/libs/*.war /usr/local/tomcat/webapps/ROOT.war
 EXPOSE 8080
 ```
 
 > [!NOTE]
-> WAR 파일은 Tomcat이 자동으로 풀어서(explode) 배포합니다.  
-> `ROOT.war`로 복사하면 `/` 경로로 접근 가능합니다.
+> **주요 설정값 의미 (방법 B)**
+>
+> - **FROM tomcat:9-jre17**  
+>   기본 제공 샘플(Spring 5.3.37)은 javax.servlet 패키지를 사용하므로 반드시 **Tomcat 9** 이미지를 사용해야 합니다 (Tomcat 10 이상은 jakarta.servlet 전용이라 서블릿 에러가 발생합니다).
+> - **rm -rf /usr/local/tomcat/webapps/***  
+>   Tomcat 기본 예제 파일들을 삭제합니다.
+> - **.../webapps/ROOT.war**  
+>   빌드된 WAR 파일을 **ROOT.war**라는 이름으로 복사하면 Tomcat이 자동으로 압축을 풀어 루트 경로(/)로 배포합니다 (별도의 ENTRYPOINT 없이도 Tomcat이 자동 시작됩니다).
 
 ---
 
 ### 빌드 테스트 (방법 A/B 공통)
 
-2. 이미지가 정상적으로 빌드되는지 테스트합니다:
+2. 백엔드 디렉토리로 이동하여 이미지가 정상적으로 빌드되는지 테스트합니다 (첫 빌드는 의존성 다운로드로 인해 1 ~ 3분 정도 소요됩니다):
 
 ```bash
-cd ~/step9-docker/backend
+cd ~/3tier-project/my-backend
 docker build -t step9-backend:test .
 ```
 
@@ -369,19 +613,25 @@ docker build -t step9-backend:test .
 >  => => naming to docker.io/library/step9-backend:test
 > ```
 
-3. 빌드된 이미지를 확인합니다:
+3. 빌드된 이미지가 생성되었는지 확인합니다 (macOS/Linux/Windows PowerShell 공통):
 
 ```bash
-docker images | grep step9-backend
+docker images step9-backend
 ```
+
+> [!OUTPUT]
+>
+> ```
+> REPOSITORY      TAG       IMAGE ID       CREATED          SIZE
+> step9-backend   test      a1b2c3d4e5f6   10 seconds ago   265MB
+> ```
 
 > [!TROUBLESHOOTING]
 > | 증상 | 원인 | 해결 방법 |
 > |------|------|-----------|
-> | `gradlew: Permission denied` | 실행 권한 없음 | Dockerfile에 `RUN chmod +x ./gradlew` 확인 |
-> | `COPY failed: file not found` | 빌드 컨텍스트 외부 파일 | `docker build`를 프로젝트 루트에서 실행 |
-> | Gradle 빌드 실패 | 의존성 다운로드 실패 | 로컬에서 `./gradlew build` 먼저 성공하는지 확인 |
-> | `no main manifest attribute` | bootJar가 아닌 jar 사용 | `./gradlew bootJar` (Boot) 또는 WAR 방식 사용 |
+> | `gradlew: Permission denied` 또는 `not found` | 실행 권한 없음 또는 Windows 줄바꿈(CRLF) | Dockerfile에 `RUN sed -i 's/\r$//' ./gradlew && chmod +x ./gradlew`가 포함되었는지 확인 |
+> | `COPY failed: file not found` | 다른 폴더에서 빌드 실행 | 반드시 `cd ~/3tier-project/my-backend` 이동 후 마지막 마침표(`.`)까지 입력하여 실행 |
+> | `no main manifest attribute` | Spring Boot에서 일반 jar 사용 | `./gradlew bootJar` (방법 A) 또는 WAR 방식 (방법 B) 사용 |
 
 ✅ **태스크 완료** — 백엔드 Docker 이미지를 빌드했습니다.
 

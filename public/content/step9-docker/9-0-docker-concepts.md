@@ -168,6 +168,42 @@ VM (가상 머신):                      컨테이너 (Docker):
 └──────────────────────────────────────────────────────────────┘
 ```
 
+### Dockerfile 핵심 명령어 (지시어)
+
+`Dockerfile`은 위에서 아래로 한 줄씩 실행되며, 자주 사용하는 핵심 명령어와 입력값은 다음과 같습니다:
+
+| 명령어 | 역할 설명 | 들어가는 값 (문법 예시) | 실행 시점 |
+| :--- | :--- | :--- | :---: |
+| **`FROM`** | 바탕이 될 **베이스 이미지** 지정 (모든 Dockerfile의 첫 줄) | `FROM eclipse-temurin:17-jdk-alpine`<br>`FROM tomcat:9-jre17` | 이미지 빌드 시 |
+| **`WORKDIR`** | 컨테이너 내부의 **작업 디렉토리** 생성 및 이동 (`mkdir` + `cd` 역할) | `WORKDIR /app`<br>(이후 명령어는 모두 `/app` 안에서 실행됨) | 이미지 빌드 시 |
+| **`COPY`** | 내 PC(호스트)의 파일/폴더를 **컨테이너 내부로 복사** | `COPY <내PC경로> <컨테이너경로>`<br>예: `COPY src ./src` | 이미지 빌드 시 |
+| **`RUN`** | 이미지를 만드는 과정에서 **리눅스 명령어 실행** (패키지 설치, 빌드 등) | `RUN npm ci`<br>`RUN ./gradlew build --no-daemon -x test` | **이미지 빌드 시** (`docker build`) |
+| **`ENV`** | 컨테이너 내부에서 사용할 **기본 환경변수** 설정 | `ENV BACKEND_HOST=backend`<br>`ENV TZ=Asia/Seoul` | 빌드 및 실행 시 |
+| **`EXPOSE`** | 컨테이너가 수신 대기할 **포트 번호 명시** (문서화 목적) | `EXPOSE 8080` (백엔드)<br>`EXPOSE 80` (Nginx 프론트엔드) | 문서화 (실제 포트 개방은 `-p`) |
+| **`ENTRYPOINT`** / **`CMD`** | 컨테이너가 **켜질 때 실행할 최종 명령어** 지정 | `ENTRYPOINT ["java", "-jar", "app.jar"]` | **컨테이너 시작 시** (`docker run`) |
+
+> [!CONCEPT] 초보자가 가장 많이 헷갈리는 차이: `RUN` vs `ENTRYPOINT` (`CMD`)
+> - **`RUN`**: **붕어빵 틀(이미지)을 만들 때(`docker build`)** 딱 한 번 실행됩니다. (예: 라이브러리 설치 `npm ci`, 소스 코드 컴파일 `./gradlew build`)
+> - **`ENTRYPOINT` / `CMD`**: 완성된 이미지로 **컨테이너를 켤 때(`docker run`, `docker-compose up`)** 실행됩니다. (예: 서버 기동 `java -jar app.jar`)
+> - 참고로 `tomcat`이나 `nginx` 공식 이미지는 베이스 이미지 자체에 이미 실행 명령어(`catalina.sh run`, `nginx -g daemon off;`)가 내장되어 있어서 `ENTRYPOINT`를 생략해도 컨테이너 시작 시 웹 서버가 자동으로 켜집니다.
+
+### 베이스 이미지 이름(`FROM`) 읽는 법
+
+`FROM` 뒤에 적는 이미지 이름은 보통 **`<소프트웨어>:<버전>-<세부종류>-<운영체제>`** 형태로 구성됩니다:
+
+```
+eclipse-temurin : 17 - jdk - alpine
+───────────────   ──   ───   ──────
+  ① 배포판 이름   ②버전 ③종류 ④경량 리눅스
+```
+
+| 구성 요소 | 값 예시 | 의미 및 선택 기준 |
+| :--- | :--- | :--- |
+| **① 이미지 이름** | `eclipse-temurin`<br>`tomcat`<br>`node`, `nginx` | - `eclipse-temurin`: 공식 OpenJDK 표준 배포판 (구 `openjdk` 이미지 대체)<br>- `tomcat`: Apache Tomcat 웹 애플리케이션 서버<br>- `node`: Node.js 런타임 / `nginx`: Nginx 웹 서버 |
+| **② 버전** | `17`, `20`, `9` | - 프로젝트의 언어/서버 버전 (`Java 17`, `Node 20`, `Tomcat 9`) |
+| **③ `jdk` vs `jre`** | `jdk` (개발 도구 포함)<br>`jre` (실행기만 포함) | - **`jdk` (Java Development Kit)**: 소스 코드를 컴파일(`gradlew build`)할 때 필수 (~300MB)<br>- **`jre` (Java Runtime Environment)**: 이미 빌드된 `.jar`/`.war`를 실행만 할 때 사용 (~100MB, 가벼움) |
+| **④ `-alpine`** | `alpine` | - Docker 컨테이너용 초경량 Linux 배포판 (**크기 약 5MB**)<br>- 일반 Ubuntu 기반 이미지(~80MB+)보다 훨씬 가볍고 다운로드가 빨라 실무에서 널리 사용됨 |
+
 ### 레이어 캐싱
 
 Docker는 Dockerfile의 각 명령어를 레이어로 캐싱합니다. 변경되지 않은 레이어는 재사용하므로 빌드가 빨라집니다.
@@ -289,32 +325,59 @@ EXPOSE 80
 | 보안               | 소스 코드 노출 가능            | 최소한의 파일만 포함   |
 | 빌드 속도          | 매번 전체                      | 레이어 캐싱 활용       |
 
-### 백엔드 멀티스테이지 빌드 (Spring Boot)
+### 백엔드 멀티스테이지 빌드: Spring Boot (JAR) vs Spring Legacy (WAR)
+
+멀티스테이지 빌드에서 1단계(Gradle 빌드)는 동일하고, **2단계(실행 환경)**만 프로젝트 패키징 방식(JAR 또는 WAR)에 따라 달라집니다:
+
+- **`AS build`와 `COPY --from=build`의 의미**:
+  - 1단계 `FROM ... AS build`는 첫 번째 빌드 스테이지에 `build`라는 별명을 붙이는 것입니다.
+  - 2단계 `COPY --from=build <1단계경로> <2단계경로>`는 **내 PC가 아니라 1단계(`build`) 컨테이너 안에서 방금 만들어진 `.jar` 또는 `.war` 파일만 쏙 꺼내오는 명령어**입니다.
 
 ```dockerfile
-# ──── 1단계: 빌드 (Gradle + JDK) ────
+# ─── [방법 A] Spring Boot (JAR) 멀티스테이지 ───
+# 1단계: 빌드 (Gradle + JDK)
 FROM eclipse-temurin:17-jdk-alpine AS build
 WORKDIR /app
 COPY gradlew build.gradle settings.gradle ./
 COPY gradle ./gradle
-RUN chmod +x ./gradlew && ./gradlew dependencies --no-daemon
+RUN sed -i 's/\r$//' ./gradlew && chmod +x ./gradlew && ./gradlew dependencies --no-daemon
 COPY src ./src
 RUN ./gradlew bootJar --no-daemon -x test
 
-# ──── 2단계: 실행 (JRE만) ────
+# 2단계: 실행 (가벼운 JRE만 포함)
 FROM eclipse-temurin:17-jre-alpine
 WORKDIR /app
 COPY --from=build /app/build/libs/*.jar app.jar
 EXPOSE 8080
 ENTRYPOINT ["java", "-jar", "app.jar"]
-
-# JDK(~300MB) 대신 JRE(~100MB)만 포함
-# Gradle, 소스코드, 테스트 코드 미포함
 ```
 
+```dockerfile
+# ─── [방법 B] Spring Legacy MVC (WAR + Tomcat 9) 멀티스테이지 ───
+# 1단계: 빌드 (Gradle + JDK)
+FROM eclipse-temurin:17-jdk-alpine AS build
+WORKDIR /app
+COPY gradlew build.gradle settings.gradle ./
+COPY gradle ./gradle
+RUN sed -i 's/\r$//' ./gradlew && chmod +x ./gradlew && ./gradlew dependencies --no-daemon
+COPY src ./src
+RUN ./gradlew build --no-daemon -x test
+
+# 2단계: 실행 (Tomcat 9 서버에 ROOT.war로 배포)
+FROM tomcat:9-jre17
+RUN rm -rf /usr/local/tomcat/webapps/*
+COPY --from=build /app/build/libs/*.war /usr/local/tomcat/webapps/ROOT.war
+EXPOSE 8080
+```
+
+> [!NOTE]
+> **왜 WAR 파일을 `ROOT.war`라는 이름으로 복사하나요?**  
+> Tomcat은 `webapps/` 폴더 아래의 파일 이름을 URL 경로(Context Path)로 사용합니다.  
+> 예를 들어 `myapp.war`로 복사하면 주소가 `http://localhost:8080/myapp/api/...`가 되지만, **`ROOT.war`로 이름을 바꿔서 복사하면 루트 경로(`http://localhost:8080/api/...`)로 바로 배포**되어 Spring Boot(JAR)와 똑같은 주소 체계를 갖게 됩니다.
+
 > [!TIP]
-> GitHub Actions에서 빌드한 JAR을 직접 복사하는 방식도 가능합니다.  
-> 이 경우 멀티스테이지가 필요 없지만, **로컬에서도 동일하게 빌드**하려면 멀티스테이지가 편합니다.
+> GitHub Actions에서 빌드한 JAR/WAR를 직접 복사하는 싱글스테이지 방식도 가능합니다.  
+> 하지만 **로컬 PC의 Java/Gradle 설치 여부와 무관하게 어디서나 동일하게 빌드**하려면 위와 같은 멀티스테이지 방식이 훨씬 안정적입니다.
 
 ---
 
@@ -1052,12 +1115,45 @@ on:
 
 ---
 
+### 외부(샘플·팀) 저장소를 가져오는 두 가지 방식: Fork vs Clone 후 새 저장소 연결
+
+외부에 공개된 샘플 코드나 팀의 보일러플레이트 저장소를 가져와 내 프로젝트(및 CI/CD 실습)로 시작할 때는 크게 **두 가지 방식**이 있습니다:
+
+```
+[방식 1: GitHub Fork 후 Clone]
+원본 저장소 (puamoa/my-backend)
+     │  (1) GitHub 웹에서 [[Fork]] 클릭 (원본과 연결 유지)
+     ▼
+내 Fork 저장소 (내ID/my-backend) ──(2) git clone──► 내 PC 로컬 폴더
+
+[방식 2: 단순 Clone 후 내 새 저장소(New Repo)에 연결]
+원본 저장소 (puamoa/my-backend)
+     │  (1) git clone으로 코드만 내 PC로 가져옴
+     ▼
+내 PC 로컬 폴더 ──(2) git remote set-url origin──► 내가 새로 만든 독립 저장소 (내ID/my-backend)
+```
+
+| 비교 항목 | 🍴 방식 1: GitHub Fork | 🔗 방식 2: 단순 Clone 후 새 저장소 연결 (실습 권장) |
+| :--- | :--- | :--- |
+| **원본 저장소와의 관계** | 원본 저장소(`upstream`)와 **연결 고리가 유지**됨 | 원본과 완전히 분리된 **독립 저장소**가 됨 |
+| **주 사용 목적** | 오픈소스 프로젝트에 기여(PR)하거나, 팀 원본 저장소에 코드를 합칠 때 | 보일러플레이트/샘플 코드를 바탕으로 **내 개인 프로젝트나 독립 CI/CD를 구축**할 때 |
+| **GitHub Actions 동작** | ⚠️ 보안 정책상 **Fork 직후 GitHub Actions가 기본 비활성화(Disabled)**됨 (`Actions` 탭에서 수동 활성화 클릭 필수) | ✅ 내가 직접 생성한 저장소이므로 **GitHub Actions가 처음부터 100% 자동 활성화**됨 |
+| **Pull Request 기본 대상** | 실수로 PR 생성 시 **원본(강사/타인) 저장소**로 PR이 날아감 | 내 저장소 내부 브랜치끼리만 PR이 생성됨 |
+| **로컬 실습 시작 속도** | GitHub 웹에서 먼저 Fork를 떠야 클론 가능 | 아무 설정 없이 즉시 `git clone` 한 줄로 로컬 실습 시작 가능 |
+
+> [!TIP]
+> **왜 이번 실습에서는 `단순 Clone 후 새 저장소 연결(방식 2)`을 사용하나요?**
+> - `9-1(로컬)` ~ `9-3(EC2·Fargate)` 실습에서는 GitHub에 Push할 일이 없으므로, 복잡한 사전 작업 없이 원본 샘플 저장소를 바로 `git clone`하여 즉시 시작할 수 있습니다.
+> - 이후 **`9-4 (GitHub Actions CI/CD)`** 실습에서만 내 GitHub 계정에 빈 저장소를 만들고 `git remote set-url origin https://github.com/<내ID>/my-backend.git` 한 줄로 원격 주소만 바꿔주면, Fork의 GitHub Actions 비활성화 문제 없이 깔끔하게 자동 배포가 동작합니다.
+
+---
+
 ### 이 실습(Step 9)에서의 적용 가이드
 
-이번 Step 9에서는 `frontend/` 폴더 안에 프론트엔드 `Dockerfile`을, `backend/` 폴더 안에 백엔드 `Dockerfile`을 배치합니다.  
+이번 Step 9에서는 `my-frontend/` 폴더 안에 프론트엔드 `Dockerfile`을, `my-backend/` 폴더 안에 백엔드 `Dockerfile`을 배치합니다.  
 이 구조를 사용하면 **멀티레포든 모노레포든 똑같이 실습을 진행**할 수 있습니다:
 
-- **9-1 (로컬 Compose) ~ 9-3 (Amazon EC2 배포)**: 멀티레포와 모노레포의 로컬 폴더 구조가 `step9-docker/{frontend, backend}`로 동일하므로 **실습 과정이 100% 똑같습니다.**
+- **9-1 (로컬 Compose) ~ 9-3 (Amazon EC2 · AWS Fargate 배포)**: 멀티레포와 모노레포의 로컬 폴더 구조가 `~/3tier-project/{my-frontend, my-backend}`로 동일하므로 **실습 과정이 100% 똑같습니다.**
 - **9-4 (GitHub Actions CI/CD)**: 기본 가이드는 Step 8과 이어지는 **멀티레포** 기준으로 설명하며, **모노레포** 사용자를 위한 `paths` 필터 설정 예시도 함께 안내합니다.
 
 ---
