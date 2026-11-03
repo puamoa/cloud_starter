@@ -73,11 +73,20 @@ Docker가 설치되어 있지 않다면 본인 운영체제에 맞는 방법을 
 > 미설치 시: `/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"`  
 > 만약 맥에 이미 **Docker Desktop**이 설치되어 있다면 Colima를 추가로 설치할 필요 없이 Docker Desktop 앱만 실행하고 **1-2. 설치 확인**으로 이동하면 됩니다.
 
-1. 터미널에서 Homebrew로 Docker CLI, `docker-compose`, Colima를 설치합니다:
+1. 터미널에서 Homebrew로 Docker CLI, `docker-compose`, `docker-buildx`(확장 빌더), Colima를 설치하고 플러그인을 연결합니다:
 
 ```bash
-brew install docker docker-compose colima
+brew install docker docker-compose docker-buildx colima
+
+# Docker CLI가 buildx 플러그인을 인식하도록 연결 (최초 1회)
+mkdir -p ~/.docker/cli-plugins
+ln -sfn $(brew --prefix)/opt/docker-buildx/bin/docker-buildx ~/.docker/cli-plugins/docker-buildx
 ```
+
+> [!TIP]
+> **docker-buildx는 왜 함께 설치하나요? (Windows는 별도 설치 불필요)**  
+> - **Windows 및 Mac용 Docker Desktop**에는 `docker-buildx`가 기본 내장되어 있어 별도로 설치할 필요가 없습니다.  
+> - 이번 **9-1 실습에서는 기본 `docker build` 명령어만 사용**하지만, macOS에서 Homebrew + Colima로 설치할 때 `docker-buildx`를 함께 연결해 두어야 `docker build` 실행 시 구버전 빌더 경고(DEPRECATED)가 뜨지 않고, 다음 **9-2(AWS 배포)**에서 크로스플랫폼 빌드를 바로 사용할 수 있습니다.
 
 2. Colima를 시작합니다 (Docker 런타임 실행):
 
@@ -240,6 +249,14 @@ Step 9 실습에서는 아래 **3가지 방법** 중 본인 상황에 맞는 **�
 > - 만약 **Spring Boot(JAR)** 테스트 코드로 실습해보고 싶은데 아직 프로젝트가 없다면, [Step 8-2B: 새 Vue.js 프론트엔드](/week/8/session/2B)와 [Step 8-3C: 새 Spring Boot 백엔드](/week/8/session/3C)의 프로젝트 생성 단계를 먼저 진행한 뒤 **🟢 방법 1**로 이어가세요.
 > - 본인이 직접 개발한 **자체 보유 프로젝트(Spring Boot/Legacy)**를 적용할 수도 있습니다 (아래 **2-4**의 자체 프로젝트 적용 포인트 참고).
 
+> [!NOTE]
+> **작업 디렉토리 및 폴더명 안내 (~/3tier-project)**
+>
+> - **기본 작업 경로**  
+>   이 가이드에서는 Step 8과 동일하게 기본 작업 경로를 **~/3tier-project** (하위 폴더 **my-frontend**, **my-backend**)로 표기합니다.
+> - **다른 경로 또는 자체 보유 프로젝트를 사용하는 경우**  
+>   Step 8에서 다른 상위 폴더(예: **~/workspace**, **~/dev**)를 사용했거나 본인이 직접 만든 프로젝트의 폴더명이 다르다면(예: **frontend**, **backend** 등), 이후 안내되는 명령어와 **태스크 5의 docker-compose.yml**에서 본인의 실제 폴더 경로와 이름으로 바꾸어 진행하세요.
+
 ---
 
 #### 🟢 방법 1: Step 8을 진행한 경우 (클론 불필요 — 기존 로컬 폴더 활용)
@@ -253,16 +270,24 @@ ls
 
 - **my-frontend**, **my-backend** 폴더가 이미 존재하므로 새로 클론할 필요가 없습니다.
 
-2. Step 8 프론트엔드 배포 실습에서 만들었던 **.env.production** 파일이 남아 있다면 삭제합니다:
+2. Step 8 프론트엔드 배포 실습에서 만들었던 `~/3tier-project/my-frontend/.env.production` 파일을 열어, 기존 ALB 주소 설정을 **주석 처리(`#`)**합니다:
 
-```bash
-rm -f ~/3tier-project/my-frontend/.env.production
+```ini
+# ~/3tier-project/my-frontend/.env.production
+
+# 1) Step 8에서 설정했던 외부 ALB/CloudFront 주소는 앞에 #을 붙여 주석 처리합니다
+# VITE_API_URL=http://<ALB_DNS_NAME>
+
+# 2) [Step 8-2B (새 Vue.js 프로젝트) 진행자만 해당]
+#    코드에서 /items 처럼 /api 없이 호출하는 경우에는 아래 한 줄의 주석(#)을 해제하여 /api만 붙여줍니다.
+#    (Step 8-2A 기존 레거시 프로젝트는 코드에 이미 /api/board가 포함되어 있으므로 아래 줄도 주석 상태로 둡니다)
+# VITE_API_URL=/api
 ```
 
 > [!WARNING]
-> **왜 .env.production 파일을 삭제해야 하나요?**  
-> Step 8에서는 프론트엔드(Amazon CloudFront)가 외부 ALB 주소로 직접 요청을 보냈지만, Step 9(Docker)에서는 프론트엔드 컨테이너 안의 **Nginx 리버스 프록시**가 API 요청을 받아 백엔드 컨테이너로 전달합니다.  
-> 이전 Step 8의 ALB 주소가 남아 있으면 이미 삭제된 ALB로 요청을 보내 에러가 발생하므로 반드시 삭제(또는 빈 값으로 변경)해야 합니다.
+> **왜 기존 VITE_API_URL 주소를 주석 처리해야 하나요?**  
+> Step 8에서는 프론트엔드(Amazon CloudFront)가 외부 ALB 주소로 직접 요청을 보냈지만, Step 9(Docker)에서는 프론트엔드 컨테이너 안의 **Nginx 리버스 프록시**가 `/api/...` 요청을 받아 백엔드 컨테이너로 전달합니다.  
+> 이전 Step 8의 ALB 주소가 그대로 켜져 있으면 이미 삭제된 ALB로 요청을 보내 에러가 발생하므로, 반드시 `#`으로 주석 처리하여 상대 경로(`/api/...`)로 호출되게 해야 합니다 (파일을 삭제하지 않고 주석 처리해 두면 나중에 9-5 프로덕션 실습에서 다시 참고하기 편리합니다).
 
 3. 로컬 MySQL 컨테이너 초기화용 **sql** 폴더를 준비합니다:
    - **Step 8-3A(레거시)**를 진행한 경우 백엔드 안의 sql 폴더를 복사합니다:
@@ -514,8 +539,13 @@ spring:
 | **🟢 방법 A: Spring Boot (JAR)** | Step 8-3B / 8-3C 부트 테스트 프로젝트, 또는 자체 Spring Boot 프로젝트 | plugins 블록에 **id 'war'**가 없음 | `eclipse-temurin:17-jre-alpine` |
 | **🟡 방법 B: Spring Legacy MVC (WAR)** | **Step 9 기본 제공 샘플**, Step 8-3A 프로젝트 | plugins 블록에 **id 'war'**가 있음 | `tomcat:9-jre17` |
 
-> [!TIP]
-> Dockerfile의 각 명령어(FROM, WORKDIR, COPY, RUN, EXPOSE, ENTRYPOINT)와 베이스 이미지 태그에 대한 자세한 원리는 [Step 9-0 이론: Dockerfile 핵심 명령어](/week/9/session/0)를 참고하세요.
+> [!CONCEPT] Dockerfile 안의 명령어는 어디서 실행되며, 데이터는 어떻게 연결될까요?
+> - **내 PC가 아니라 '격리된 컨테이너 내부'에서 실행됩니다**  
+>   Dockerfile에 적는 `WORKDIR /app`, `RUN ./gradlew build`, `RUN npm ci`는 내 PC의 폴더를 바꾸는 것이 아니라, Docker가 띄운 임시 빌드 컨테이너 안에서 실행됩니다 (내 PC에 Java나 Node.js가 없어도 빌드 가능).
+> - **'이미지를 만드는 곳'과 '실행하는 곳'의 분리**  
+>   이번 **9-1**에서는 내 PC에서 빌드하고 내 PC에서 실행하지만, **9-2·9-3**에서는 내 PC에서 빌드한 이미지를 Amazon ECR에 올려 EC2·Fargate가 내려받아 실행하며, **9-4(CI/CD)**에서는 GitHub Actions 서버가 내 PC 대신 이 Dockerfile을 읽어 자동 빌드합니다.
+> - **주의: 외부 데이터(DB, 사진 파일)는 이미지 안에 들어가지 않습니다!**  
+>   이미지 안에는 오직 애플리케이션 코드(`.jar`/`.war`/`dist/`)만 포장됩니다. DB 초기 데이터(`sql/`)나 여행지 사진(`travel-image/`)은 이미지에 포함되지 않으므로, 로컬(9-1)에서는 태스크 5의 **볼륨 마운트(volumes)**로 연결하고 AWS(9-2~)에서는 **Amazon RDS**와 **Amazon S3**로 연결합니다. (자세한 내용은 [Step 9-0 이론: 이미지를 빌드하는 곳 vs 실행하는 곳](/week/9/session/0) 참고)
 
 ---
 
@@ -603,6 +633,26 @@ cd ~/3tier-project/my-backend
 docker build -t step9-backend:test .
 ```
 
+> [!NOTE]
+> **docker build 명령어 구문 상세 설명**
+>
+> - **-t step9-backend:test (--tag 옵션)**  
+>   생성될 이미지의 **이름(step9-backend)**과 **태그(test)**를 지정합니다. 콜론(`:`) 뒤의 태그를 생략하면 자동으로 **:latest**가 붙습니다.
+> - **. (마지막 마침표 — 필수!)**  
+>   **현재 디렉토리(.)를 '빌드 컨텍스트(Build Context)'로 지정**한다는 뜻입니다. Docker는 이 마침표가 가리키는 폴더 안에서 `Dockerfile`을 찾고, 그 폴더 안의 파일들을 대상으로 `COPY` 명령을 수행합니다.
+
+> [!TIP]
+> **크로스플랫폼 빌드 조건일 때는? (docker build vs docker buildx)**
+>
+> - **로컬 실행(9-1) 또는 동일 아키텍처 환경**: 지금처럼 내 PC에서 바로 띄워볼 때나 Windows PC(`amd64`)에서 빌드할 때는 기본 `docker build`만으로도 충분합니다.
+> - **다른 CPU 서버 배포(9-2) 또는 공개 리포지토리/팀 공유 시**:  
+>   ① **Apple Silicon 맥(M1~M4, `arm64`)**에서 빌드한 이미지를 AWS EC2/Fargate(`linux/amd64`) 서버에 올릴 때, 또는  
+>   ② **공개 리포지토리(Docker Hub 등)**에 올려서 맥(`arm64`)과 윈도우/리눅스(`amd64`) 사용자 모두가 받아 쓸 수 있는 멀티 아키텍처 이미지를 만들 때는 아래와 같이 **`docker buildx`**와 **`--platform`** 옵션을 활용합니다 ([Step 9-0 이론](/week/9/session/0) 참고):
+>   ```bash
+>   # (참고) 9-2 AWS 서버(linux/amd64) 배포용 크로스플랫폼 빌드 예시
+>   docker buildx build --platform linux/amd64 -t step9-backend:latest --load .
+>   ```
+
 > [!OUTPUT]
 >
 > ```
@@ -639,25 +689,40 @@ docker images step9-backend
 
 ## 태스크 4: 프론트엔드 Dockerfile + Nginx 설정
 
-📍 **실행 위치: 로컬 PC (`~/step9-docker/`)**
+📍 **실행 위치: 로컬 PC (`~/3tier-project/my-frontend/`)**
+
+프론트엔드(Vue.js) 프로젝트를 빌드하고 정적 파일을 서빙할 **nginx.conf**와 **Dockerfile**을 작성합니다.
+
+> [!CONCEPT] 왜 프론트엔드 컨테이너에 Nginx가 필요한가요? (npm run dev와의 차이)
+> 로컬에서 개발할 때 사용하던 `npm run dev`(Vite 개발 서버)와 `vite.config.js`의 프록시(`server.proxy`) 설정은 **오직 개발 중에만 동작**합니다.  
+> 운영 배포를 위해 `npm run build`를 실행하면 Vue.js 코드는 순수 정적 파일(`index.html`, `.js`, `.css`)로 변환되어 `dist/` 폴더에 저장되고 Vite 서버는 사라집니다.
+>
+> 따라서 컨테이너 환경에서는 다음 두 가지 역할을 수행할 **실제 웹 서버**가 필요합니다:
+> - **정적 파일 서빙**: 브라우저가 접속했을 때 `dist/` 폴더의 HTML·JS·CSS 화면 파일을 전달합니다.
+> - **API 리버스 프록시**: 개발 환경의 `vite.config.js`를 대신하여, 브라우저가 요청한 `/api/...` 호출을 백엔드 컨테이너로 전달합니다 (브라우저 입장에서는 프론트엔드와 백엔드가 같은 주소로 보이므로 **CORS 에러가 원천 차단**됩니다).
+>
+> 꼭 Nginx만 써야 하는 것은 아니며 **Caddy**, **Apache(httpd)** 같은 다른 웹 서버를 쓰거나, Step 8처럼 컨테이너 대신 **Amazon S3 + Amazon CloudFront**로 분리할 수도 있습니다 (9-5 프로덕션 구성에서 다룸). 다만 컨테이너 환경에서는 이미지 크기가 매우 작고(~45MB) 가벼운 **Nginx**가 실무 표준으로 가장 널리 사용됩니다.
+
+---
 
 ### 4-1. nginx.conf 작성
 
-1. 프로젝트 루트(`~/step9-docker/`)에 `nginx.conf`를 생성합니다:
+1. 프론트엔드 디렉토리(`~/3tier-project/my-frontend/`) 안에 `nginx.conf` 파일을 생성하고 아래 내용을 작성합니다:
 
 ```nginx
+# ~/3tier-project/my-frontend/nginx.conf
 server {
     listen 80;
     server_name localhost;
 
-    # Vue.js 정적 파일 서빙 + SPA 라우팅
+    # 1) Vue.js 정적 파일 서빙 + SPA 라우팅 처리
     location / {
         root /usr/share/nginx/html;
         index index.html;
         try_files $uri $uri/ /index.html;
     }
 
-    # 백엔드 API 프록시 (본인 프로젝트에 맞게 수정)
+    # 2) 백엔드 API 리버스 프록시
     location /api/ {
         proxy_pass http://${BACKEND_HOST}:${BACKEND_PORT}/api/;
         proxy_set_header Host $host;
@@ -668,13 +733,41 @@ server {
 }
 ```
 
+> [!NOTE]
+> **nginx.conf 핵심 설정 상세 설명 (Step 8 설정과의 비교)**
+>
+> 위 `nginx.conf`는 앞선 **Step 8에서 Amazon S3와 Amazon CloudFront 콘솔로 설정했던 기능들을 컨테이너 안에서 똑같이 구현**한 것입니다:
+>
+> | 기능 역할 | Step 8 (S3 + CloudFront 콘솔 설정) | Step 9 (`nginx.conf` 코드 설정) |
+> | :--- | :--- | :--- |
+> | **기본 시작 페이지** | S3 `Index document` & CloudFront `Default root object`: **`index.html`** | `index index.html;` |
+> | **SPA 라우팅 (새로고침 404 방지)** | CloudFront `Custom Error Response`: 403·404 발생 시 **`/index.html` (200)** 반환 | `try_files $uri $uri/ /index.html;` |
+> | **백엔드 API 분기 (프록시)** | Step 8-4 CloudFront `Behavior`: **`/api/*` → ALB Origin** 전달 | `location /api/ { proxy_pass ... }` |
+>
+> - **root /usr/share/nginx/html; & index index.html;**  
+>   Nginx가 정적 웹 파일을 찾는 기본 디렉토리입니다. 잠시 후 작성할 Dockerfile에서 Vue.js 빌드 결과물(`dist/`)을 이 경로로 복사합니다.
+> - **try_files $uri $uri/ /index.html; (SPA 라우팅 필수 설정)**  
+>   Vue.js 같은 SPA(Single Page Application)는 실제 HTML 파일이 `index.html` 하나뿐이고, `/board`나 `/travel` 같은 경로 이동은 Vue Router가 브라우저에서 처리합니다.  
+>   만약 이 설정이 없으면 사용자가 브라우저 주소창에 `http://localhost/board`를 직접 입력하거나 새로고침(F5)했을 때 Nginx가 `/board`라는 실제 파일을 찾지 못해 **404 Not Found 에러**를 반환합니다. 이 설정을 넣으면 파일이 없을 때 항상 `/index.html`을 대신 반환하여 화면이 정상 표시됩니다.
+> - **proxy_pass http://${BACKEND_HOST}:${BACKEND_PORT}/api/;**  
+>   `/api/`로 시작하는 모든 요청을 백엔드 서버로 전달합니다. 주소를 고정(하드코딩)하지 않고 `${BACKEND_HOST}`, `${BACKEND_PORT}` 환경변수로 적어두면 실행 환경에 따라 백엔드 주소를 유연하게 바꿀 수 있습니다.
+> - **proxy_set_header ... (클라이언트 원본 정보 전달)**  
+>   Nginx가 요청을 대신 전달할 때 원래 접속한 사용자의 도메인(**Host**), 실제 IP 주소(**X-Real-IP**, **X-Forwarded-For**), 접속 프로토콜(**X-Forwarded-Proto**, http/https)을 백엔드(Spring)가 알 수 있도록 HTTP 헤더에 담아 넘겨줍니다.
+
+> [!CONCEPT] 왜 백엔드 주소를 환경변수(${BACKEND_HOST})로 작성하나요?
+> 앞으로 진행할 실습 환경마다 백엔드 컨테이너를 찾아가는 주소가 달라지기 때문입니다:
+> - **9-1 (로컬 docker-compose) & 9-2 (Amazon EC2 docker-compose)**: 컨테이너 이름으로 통신하므로 **BACKEND_HOST=backend**
+> - **9-3 (AWS Fargate 사이드카 배포)**: 하나의 Task 안에서 프론트와 백엔드가 네트워크를 공유하므로 **BACKEND_HOST=localhost**
+>
+> 이처럼 환경변수로 설정해 두면 **단 한 번 빌드한 프론트엔드 이미지를 로컬, Amazon EC2, AWS Fargate 어디서든 수정 없이 그대로 재사용**할 수 있습니다.
+
 > [!TIP]
-> **프로젝트별 프록시 경로 설정:**
+> **자체 보유 프로젝트의 API 경로가 다른 경우**
 >
-> 본인 백엔드의 API 경로에 맞게 `location` 블록을 수정하세요:
+> Step 9 기본 제공 샘플(Spring Legacy)과 Step 8-3C(Spring Boot)는 모두 `/api/board`, `/api/travel`처럼 `/api/` 접두사를 사용하므로 위 `nginx.conf`를 **수정 없이 그대로 사용**하면 됩니다.  
+> 만약 본인이 직접 개발한 프로젝트에서 `/api/` 없이 `/board/`, `/member/` 등을 호출한다면 `location /api/` 블록을 아래와 같이 수정하세요:
 >
-> - Spring Boot REST API: `location /api/ { ... }` (위 예시 그대로)
-> - Spring Legacy (board, member 등):
+> - **특정 경로들만 백엔드로 전달할 때**:
 >   ```nginx
 >   location ~ ^/(board|member|travel|upload)/ {
 >       proxy_pass http://${BACKEND_HOST}:${BACKEND_PORT};
@@ -682,7 +775,7 @@ server {
 >       proxy_set_header X-Real-IP $remote_addr;
 >   }
 >   ```
-> - 정적 파일 외 모두 백엔드로:
+> - **정적 파일 외의 모든 요청을 백엔드로 전달할 때**:
 >   ```nginx
 >   location / {
 >       root /usr/share/nginx/html;
@@ -690,94 +783,123 @@ server {
 >   }
 >   location @backend {
 >       proxy_pass http://${BACKEND_HOST}:${BACKEND_PORT};
+>       proxy_set_header Host $host;
+>       proxy_set_header X-Real-IP $remote_addr;
 >   }
 >   ```
 
+---
+
 ### 4-2. 프론트엔드 Dockerfile 작성
 
-2. `frontend/Dockerfile`을 생성합니다:
+2. 같은 프론트엔드 디렉토리(`~/3tier-project/my-frontend/`) 안에 확장자 없는 `Dockerfile`을 생성하고 아래 내용을 작성합니다:
 
 ```dockerfile
-# ──── 1단계: 빌드 (Node.js) ────
+# ~/3tier-project/my-frontend/Dockerfile
+# ──── 1단계: 빌드 환경 (Node.js 20) ────
 FROM node:20-alpine AS build
 WORKDIR /app
 
-# 의존성 캐싱
+# 의존성 파일 먼저 복사 및 설치 (레이어 캐싱)
 COPY package*.json ./
 RUN npm ci
 
-# 소스 복사 + 빌드
+# 전체 소스 복사 및 정적 파일 빌드 (/app/dist 생성)
 COPY . .
 RUN npm run build
 
-# ──── 2단계: 실행 (Nginx) ────
+# ──── 2단계: 실행 환경 (Nginx) ────
 FROM nginx:alpine
 
-# 빌드 결과물을 Nginx 서빙 디렉토리에 복사
+# 1단계(build)에서 생성된 정적 파일만 Nginx 서빙 디렉토리로 복사
 COPY --from=build /app/dist /usr/share/nginx/html
 
-# Nginx 설정 (envsubst 템플릿)
-COPY ../nginx.conf /etc/nginx/templates/default.conf.template
-
-EXPOSE 80
-```
-
-> [!WARNING]
-> `COPY ../nginx.conf`는 Docker 빌드 컨텍스트 밖의 파일을 참조하므로 에러가 발생합니다.  
-> docker-compose에서 빌드 컨텍스트를 프로젝트 루트로 설정하거나, nginx.conf를 frontend/ 안에 두어야 합니다.
->
-> 이 실습에서는 **docker-compose의 build context 설정**으로 해결합니다 (태스크 5에서 처리).
-
-### 4-3. 프론트엔드 Dockerfile (수정 — nginx.conf 경로 대응)
-
-실제로 사용할 Dockerfile:
-
-```dockerfile
-# ──── 1단계: 빌드 (Node.js) ────
-FROM node:20-alpine AS build
-WORKDIR /app
-
-COPY frontend/package*.json ./
-RUN npm ci
-
-COPY frontend/ .
-RUN npm run build
-
-# ──── 2단계: 실행 (Nginx) ────
-FROM nginx:alpine
-
-COPY --from=build /app/dist /usr/share/nginx/html
+# Nginx 설정 템플릿 복사 (컨테이너 시작 시 환경변수 자동 치환)
 COPY nginx.conf /etc/nginx/templates/default.conf.template
 
 EXPOSE 80
 ```
 
 > [!NOTE]
-> docker-compose에서 `build.context: .` (프로젝트 루트)로 설정하고,  
-> `build.dockerfile: Dockerfile.frontend`로 지정하면 루트의 nginx.conf에 접근할 수 있습니다.
+> **Dockerfile 핵심 코드 상세 설명**
 >
-> 이 구조는 태스크 5에서 docker-compose.yml을 작성할 때 확인합니다.
+> - **COPY package*.json ./ → RUN npm ci (레이어 캐싱 최적화)**  
+>   전체 소스(`COPY . .`)를 복사하기 전에 `package.json`과 `package-lock.json`만 먼저 복사해서 라이브러리를 설치합니다.  
+>   이렇게 분리하면 나중에 Vue.js 화면 코드(`src/`)만 수정하고 다시 빌드할 때, Docker가 이전의 라이브러리 설치 단계(`npm ci`)를 캐시에서 그대로 재사용하여 빌드 시간이 몇 초로 단축됩니다 (`npm ci`는 `package-lock.json`에 명시된 정확한 버전을 설치하는 배포 표준 명령어입니다).
+> - **COPY --from=build /app/dist /usr/share/nginx/html**  
+>   1단계(`build`) 컨테이너에서 `npm run build`로 만들어진 `/app/dist` 폴더 안의 결과물만 2단계 Nginx 이미지로 가져옵니다. 빌드에 쓰인 무거운 Node.js와 `node_modules` 폴더(수백 MB)는 최종 이미지에서 완전히 제외됩니다.
+> - **COPY nginx.conf /etc/nginx/templates/default.conf.template (환경변수 자동 치환)**  
+>   Nginx 공식 이미지는 컨테이너가 시작될 때 `/etc/nginx/templates/` 폴더 안에 있는 `*.template` 파일을 읽어, 그 안의 `${BACKEND_HOST}`, `${BACKEND_PORT}` 같은 환경변수를 실제 값으로 바꾼 뒤(`envsubst`) 최종 설정 파일(`/etc/nginx/conf.d/default.conf`)을 자동으로 생성해 줍니다.
 
-3. 프로젝트 루트에 `Dockerfile.frontend`를 생성합니다:
+> [!NOTE]
+> **왜 Dockerfile과 nginx.conf를 모두 my-frontend/ 폴더 안에 두나요?**
+>
+> - **① Docker 빌드 컨텍스트(Build Context) 보안 규칙**  
+>   Docker는 빌드 명령어를 실행한 폴더(컨텍스트) 바깥의 상위 폴더 파일(`COPY ../nginx.conf` 등)에 접근하는 것을 차단합니다. 두 파일이 모두 `my-frontend/` 안에 있어야 에러 없이 복사됩니다.
+> - **② Git 저장소 및 9-4 CI/CD 완벽 호환 (멀티레포·모노레포 공통)**  
+>   `my-frontend/` 폴더가 독립된 Git 리포지토리(멀티레포)이든 상위 폴더가 하나의 Git 리포지토리(모노레포)이든, `my-frontend/` 안에 두 파일이 함께 들어 있으면 **9-4 세션(GitHub Actions 자동 배포)**에서 단 한 줄의 수정도 없이 그대로 이미지를 빌드할 수 있습니다.
 
-```dockerfile
-# ~/step9-docker/Dockerfile.frontend
-FROM node:20-alpine AS build
-WORKDIR /app
+> [!WARNING]
+> **Windows에서 파일 생성 시 확장자(.txt) 주의!**  
+> Windows 메모장이나 탐색기에서 파일을 만들 때 `Dockerfile.txt` 또는 `nginx.conf.txt`처럼 뒤에 `.txt`가 숨겨진 채로 붙으면 빌드 시 `no such file or directory` 에러가 발생합니다. VS Code나 IntelliJ의 좌측 파일 트리에서 `my-frontend` 우클릭 → **New File**로 생성하는 것을 권장합니다.
 
-COPY frontend/package*.json ./
-RUN npm ci
+---
 
-COPY frontend/ .
-RUN npm run build
+### 4-3. 프론트엔드 빌드 테스트
 
-FROM nginx:alpine
-COPY --from=build /app/dist /usr/share/nginx/html
-COPY nginx.conf /etc/nginx/templates/default.conf.template
-EXPOSE 80
+3. 프론트엔드 디렉토리로 이동하여 이미지가 정상적으로 빌드되는지 테스트합니다 (마지막의 마침표 `.`까지 반드시 입력하세요):
+
+```bash
+cd ~/3tier-project/my-frontend
+docker build -t step9-frontend:test .
 ```
 
-✅ **태스크 완료** — 프론트엔드 Dockerfile과 Nginx 설정을 작성했습니다.
+> [!NOTE]
+> **docker build 명령어 의미 요약**
+>
+> - **-t step9-frontend:test**  
+>   빌드될 프론트엔드 이미지의 이름을 **step9-frontend**, 태그를 **test**로 지정합니다.
+> - **. (마지막 마침표)**  
+>   현재 폴더(`~/3tier-project/my-frontend`)를 빌드 컨텍스트로 지정하여, 폴더 안의 `Dockerfile`과 `nginx.conf`, 소스 파일을 읽어 빌드합니다.
+
+> [!TIP]
+> **크로스플랫폼(buildx)으로 프론트엔드 이미지를 빌드할 때 (참고)**  
+> 이번 9-1 로컬 실습에서는 위 `docker build` 명령어만 실행하면 됩니다. 만약 Apple Silicon 맥에서 AWS 서버(`linux/amd64`) 배포용으로 빌드할 때(9-2 실습)는 아래 명령어를 사용합니다:
+> ```bash
+> docker buildx build --platform linux/amd64 -t step9-frontend:latest --load .
+> ```
+
+> [!OUTPUT]
+>
+> ```
+> [+] Building 22.4s (12/12) FINISHED
+>  => [build 1/5] FROM node:20-alpine
+>  ...
+>  => exporting to image
+>  => => naming to docker.io/library/step9-frontend:test
+> ```
+
+4. 빌드된 프론트엔드 이미지가 생성되었는지 확인합니다 (Node.js 빌드 도구가 제외되어 약 40~50MB의 가벼운 이미지가 생성됩니다):
+
+```bash
+docker images step9-frontend
+```
+
+> [!OUTPUT]
+>
+> ```
+> REPOSITORY       TAG       IMAGE ID       CREATED          SIZE
+> step9-frontend   test      f6e5d4c3b2a1   10 seconds ago   45.8MB
+> ```
+
+> [!TROUBLESHOOTING]
+> | 증상 | 원인 | 해결 방법 |
+> |------|------|-----------|
+> | `open Dockerfile: no such file or directory` | 다른 폴더에서 실행했거나 파일명이 `Dockerfile.txt`로 저장됨 | `cd ~/3tier-project/my-frontend` 이동 후 `ls`로 파일명이 정확히 `Dockerfile`인지 확인 |
+> | `"/nginx.conf": not found` | `nginx.conf`가 상위 폴더나 다른 위치에 있음 | `~/3tier-project/my-frontend/nginx.conf` 위치에 파일이 있는지 확인 |
+> | `npm ci` 실행 중 에러 발생 | `package-lock.json` 파일이 없는 자체 프로젝트 | Dockerfile의 `RUN npm ci`를 `RUN npm install`로 변경 후 다시 빌드 |
+
+✅ **태스크 완료** — 프론트엔드 Dockerfile과 Nginx 설정을 작성하고 이미지를 빌드했습니다.
 
 ---
 

@@ -168,6 +168,44 @@ VM (가상 머신):                      컨테이너 (Docker):
 └──────────────────────────────────────────────────────────────┘
 ```
 
+### 이미지를 빌드하는 곳 vs 실행하는 곳 (데이터와 파일은 어떻게 이동할까?)
+
+초보자가 Docker와 CI/CD를 배울 때 가장 많이 헷갈리는 것이 **"Dockerfile 안의 명령어는 어느 컴퓨터에서 실행되며, 내가 가진 파일과 데이터는 어디까지 이미지에 포함되는가?"**입니다.
+
+#### 1) Dockerfile 명령어가 실행되는 실제 공간
+
+- **내 PC(호스트 OS)를 직접 건드리지 않습니다**  
+  Dockerfile에 적힌 `WORKDIR /app`, `RUN npm ci`, `RUN ./gradlew build` 같은 명령어는 내 맥이나 윈도우 PC에 직접 폴더를 만들거나 설치하는 것이 아닙니다. Docker 엔진이 이미지를 만들기 위해 띄운 **격리된 '임시 빌드 컨테이너' 내부 공간**에서 실행됩니다.
+- **내 PC에 Java나 Node.js가 없어도 빌드가 됩니다**  
+  `FROM eclipse-temurin:17-jdk-alpine`이나 `FROM node:20-alpine`으로 가져온 컨테이너 내부의 JDK·Node.js를 사용해 빌드하므로, 내 로컬 PC(또는 GitHub Actions 서버)에 해당 언어 버전이 설치되어 있지 않아도 언제나 똑같이 빌드됩니다.
+
+#### 2) 실습 단계별 '빌드하는 곳' vs '실행하는 곳'
+
+Step 9의 각 세션마다 **Dockerfile을 읽어 이미지를 만드는 곳(Build)**과 **완성된 이미지를 받아 컨테이너를 띄우는 곳(Run)**이 다음과 같이 달라집니다:
+
+| 실습 단계 | 🔨 이미지를 빌드(`docker build`)하는 곳 | 🚀 이미지를 실행(`docker run` / `compose`)하는 곳 | 핵심 동작 및 특징 |
+| :--- | :---: | :---: | :--- |
+| **9-1 (로컬 실습)** | **내 로컬 PC** | **내 로컬 PC** | 내 PC에서 직접 이미지를 빌드하고, 내 PC에서 컨테이너 3개(프론트·백엔드·DB)를 띄워 확인합니다. |
+| **9-2 · 9-3 (AWS 수동 배포)** | **내 로컬 PC** (빌드 후 ECR로 업로드) | **Amazon EC2 / AWS Fargate** | 내 PC에서 빌드한 이미지를 **Amazon ECR**에 올려두면, EC2와 Fargate는 **소스 코드나 Dockerfile 없이 완성된 이미지만 다운로드(`docker pull`)하여 즉시 실행**합니다. |
+| **9-4 (CI/CD 자동 배포)** | **GitHub Actions 서버** (클라우드 가상머신) | **Amazon EC2** | 개발자가 GitHub에 코드(`Dockerfile` 포함)를 푸시하면, **GitHub의 클라우드 서버가 내 PC 대신 이미지를 빌드**해 ECR에 올리고 EC2가 새 이미지를 받아 재시작합니다. |
+
+#### 3) 🚨 컨테이너 빌드·실행 시 반드시 알아야 할 3가지 주의점
+
+> [!WARNING]
+> **이미지 안에 포함되는 것 vs 포함되지 않는 것**
+>
+> - **① 이미지 안에 구워지는 것 (애플리케이션 코드 & 빌드 결과물)**  
+>   Dockerfile의 **COPY**로 복사한 소스 코드와 빌드된 결과물(**app.jar**, **ROOT.war**, **dist/**)만 이미지 안에 **읽기 전용(불변)**으로 포장됩니다.  
+>   따라서 **소스 코드를 수정했다면 단순히 컨테이너만 껐다 켜서는 반영되지 않으며, 반드시 이미지를 새로 빌드(`docker build` 또는 `docker-compose up --build`)**해야 변경 사항이 반영됩니다.
+> - **② 이미지 안에 따라가지 않는 외부 데이터 (DB 데이터, 여행지 사진 등)**  
+>   내 PC에서 이미지를 빌드해 Amazon ECR에 올리고 EC2나 Fargate에서 내려받을 때, **내 PC에 있던 DB 테이블 데이터(sql/)나 여행지 사진 폴더(travel-image/)는 이미지 안에 포함되어 따라가지 않습니다.**  
+>   그래서 환경에 따라 데이터를 연결하는 방식이 달라집니다:
+>   - **로컬 (9-1)**: 내 PC의 `./sql`과 `./travel-image` 폴더를 컨테이너에 **볼륨 마운트(Volume Mount)**하여 직접 연결합니다 (**STORAGE_TYPE=local**).
+>   - **AWS (9-2 ~ 9-4)**: DB 데이터는 **Amazon RDS**에 적재하고, 여행지 사진은 **Amazon S3 버킷**에 업로드하여 백엔드 컨테이너가 네트워크로 가져오게 합니다 (**STORAGE_TYPE=s3**).
+> - **③ Git에 올라가지 않는 보안 설정 파일 (.env, application.properties)**  
+>   로컬(9-1)에서 빌드할 때는 내 PC 폴더에 만들어 둔 `application.properties` 파일이 이미지 안에 잘 복사됩니다.  
+>   하지만 **9-4 (GitHub Actions 자동 배포)**에서는 GitHub 서버가 저장소를 새로 클론해서 빌드하는데, `.gitignore`로 제외된 설정 파일은 GitHub에 없으므로 빌드가 실패합니다. 따라서 CI/CD에서는 **GitHub Secrets**에 설정 내용을 등록해 빌드 직전에 파일을 생성해 주어야 합니다.
+
 ### Dockerfile 핵심 명령어 (지시어)
 
 `Dockerfile`은 위에서 아래로 한 줄씩 실행되며, 자주 사용하는 핵심 명령어와 입력값은 다음과 같습니다:
@@ -234,6 +272,42 @@ ENTRYPOINT ["java", "-jar", "app.jar"]
 | `docker images`                              | 로컬 이미지 목록         |                                         |
 | `docker push <registry>/<이미지>:<태그>`     | 레지스트리에 업로드      |                                         |
 | `docker pull <registry>/<이미지>:<태그>`     | 레지스트리에서 다운로드  |                                         |
+
+### 크로스플랫폼 빌드: docker build vs docker buildx (--platform)
+
+> [!CONCEPT] 크로스플랫폼(Cross-Platform)과 CPU 아키텍처란?
+> **크로스플랫폼(Cross-Platform)**이란 서로 다른 운영체제(macOS, Windows, Linux)나 **서로 다른 CPU 설계 방식(아키텍처)**에서도 프로그램이 똑같이 동작하도록 만들거나 변환하는 것을 뜻합니다.
+>
+> Docker 컨테이너는 운영체제(Linux 커널) 차이는 해결해 주지만, **바탕이 되는 물리적인 CPU의 기계어 명령 체계(CPU 아키텍처)**까지 자동으로 바꿔주지는 못합니다. 현재 컴퓨터와 클라우드 서버의 CPU는 크게 두 가지 진영으로 나뉩니다:
+>
+> - **linux/amd64 (x86_64)**: 일반 **Windows PC(Intel/AMD)**, 구형 인텔 맥, 그리고 **대부분의 기본 AWS EC2(`t3`, `c7i-flex` 등) 및 Fargate 서버**가 사용하는 표준 아키텍처입니다.
+> - **linux/arm64 (aarch64)**: **Apple Silicon 맥(M1/M2/M3/M4)**, 스마트폰, 그리고 AWS의 저전력 서버(Graviton `t4g` 등)가 사용하는 아키텍처입니다.
+>
+> 따라서 **내 PC의 CPU와 배포할 서버의 CPU가 다를 때**, 상대방 CPU에 맞는 기계어로 이미지를 만들어주는 작업을 **크로스플랫폼 빌드(Cross-Platform Build)**라고 부릅니다.
+
+내 PC에서 이미지를 만들어 바로 실행할 때(9-1)나, 빌드하는 PC와 배포할 서버의 CPU 아키텍처가 같을 때(예: Windows **x86_64** PC → AWS EC2 **x86_64** 서버, 또는 9-4 GitHub Actions 서버 → AWS EC2)는 기본 `docker build` 명령어만으로도 충분합니다.
+
+하지만 **빌드하는 환경과 실행할 서버의 CPU 아키텍처가 다를 때(크로스플랫폼 조건)**는 **`docker buildx`**(BuildKit 확장 플러그인)와 **`--platform`** 옵션을 활용해야 합니다:
+
+- **사례 ① 내 PC(맥)에서 AWS 서버로 배포할 때 (Apple Silicon 맥 → AWS EC2/Fargate)**
+  - Apple Silicon 맥의 CPU는 **ARM64(`linux/arm64`)** 아키텍처이고, AWS 실습에서 사용하는 기본 EC2(`t3.small`, `c7i-flex.large`)와 Fargate는 **Intel/AMD 64비트(`linux/amd64`, x86_64)** 아키텍처입니다.
+  - 맥에서 아무 옵션 없이 빌드한 이미지(`arm64`)를 그대로 Amazon ECR에 올려서 AWS EC2(`amd64`)에서 실행하면, CPU 명령어 체계가 달라 **`exec format error`**를 내며 컨테이너가 즉시 종료됩니다.
+- **사례 ② 공개 리포지토리(Docker Hub 등)에 배포하거나 팀원들과 이미지를 공유할 때 (멀티 아키텍처 빌드)**
+  - 내가 만든 이미지를 **공개 리포지토리(Docker Hub, ECR Public 등)**에 올리거나 팀 프로젝트에서 공유할 때, 이미지를 받아 쓰는 사람이 **Windows PC(`amd64`)**일 수도 있고 **Apple Silicon 맥(`arm64`)**일 수도 있습니다.
+  - 이때 `buildx`로 두 플랫폼을 동시에 지정(`--platform linux/amd64,linux/arm64`)하여 푸시하면, **하나의 이미지 이름 안에 두 CPU용 버전이 모두 담겨서(Multi-Arch Image)** 다운로드하는 사람의 OS/CPU에 맞는 버전이 자동으로 선택됩니다 (우리가 `FROM nginx:alpine`, `FROM mysql:8.0`을 맥과 윈도우에서 구분 없이 똑같이 쓸 수 있는 이유도 공식 이미지들이 이렇게 멀티 아키텍처로 올라와 있기 때문입니다).
+
+| 구분 | `docker build` (기본 빌드) | `docker buildx build` (크로스플랫폼 확장 빌드) |
+| :--- | :--- | :--- |
+| **주 용도** | 현재 PC와 동일한 CPU 아키텍처용 이미지 빌드 | **다른 CPU 아키텍처(`--platform`)** 또는 멀티 아키텍처(`amd64,arm64`) 이미지 빌드 |
+| **사용 시점** | - **9-1 (로컬 실행)**: 맥/윈도우 구분 없이 내 PC에서 바로 띄울 때<br>- **Windows PC** 또는 **GitHub Actions(9-4)**에서 AWS용 이미지를 빌드할 때 | - **9-2 · 9-3 (AWS 수동 배포)**: **Apple Silicon 맥(M1~M4)**에서 AWS EC2/Fargate(`linux/amd64`)용 이미지를 빌드할 때<br>- **공개 리포지토리/팀 공유**: 맥(`arm64`)과 윈도우/리눅스(`amd64`) 사용자 모두 쓸 수 있는 통합 이미지를 올릴 때 |
+| **명령어 예시** | `docker build -t step9-backend:test .` | `docker buildx build --platform linux/amd64 -t step9-backend:latest --load .`<br>`docker buildx build --platform linux/amd64,linux/arm64 -t myrepo/app:v1 --push .` |
+
+> [!TIP]
+> **buildx 주요 옵션 의미**
+> - **--platform linux/amd64 (또는 linux/amd64,linux/arm64)**  
+>   빌드할 대상 CPU 아키텍처를 지정합니다. 쉼표(`,`)로 두 개 이상을 적으면 여러 CPU 환경에서 모두 돌아가는 멀티 아키텍처 이미지를 한 번에 생성합니다.
+> - **--load vs --push**  
+>   단일 플랫폼 빌드 결과를 내 로컬 Docker 목록(`docker images`)에 저장할 때는 `--load`를 붙이고, 멀티 아키텍처 이미지를 원격 레지스트리(Docker Hub, Amazon ECR 등)에 바로 업로드할 때는 `--push`를 붙입니다.
 
 ### Dockerfile 예시: Spring Boot (JAR)
 
