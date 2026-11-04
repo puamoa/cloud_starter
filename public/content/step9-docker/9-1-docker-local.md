@@ -468,7 +468,7 @@ Expand-Archive -Path ~/Downloads/travel-image.zip -DestinationPath travel-image 
 ```properties
 # 데이터베이스 설정 (환경변수에서 주입)
 jdbc.driver=com.mysql.cj.jdbc.Driver
-jdbc.url=jdbc:mysql://${DB_ENDPOINT}/${DB_NAME}
+jdbc.url=jdbc:mysql://${DB_ENDPOINT}:3306/${DB_NAME}
 jdbc.username=${DB_USERNAME}
 jdbc.password=${DB_PASSWORD}
 
@@ -493,7 +493,7 @@ logging.level.org.scoula=INFO
 ```yaml
 spring:
   datasource:
-    url: jdbc:mysql://${DB_ENDPOINT}/${DB_NAME}?useSSL=false&allowPublicKeyRetrieval=true&characterEncoding=UTF-8&serverTimezone=Asia/Seoul
+    url: jdbc:mysql://${DB_ENDPOINT}:3306/${DB_NAME}?useSSL=false&allowPublicKeyRetrieval=true&characterEncoding=UTF-8&serverTimezone=Asia/Seoul
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -501,6 +501,12 @@ spring:
     hibernate:
       ddl-auto: update
 ```
+
+> [!TIP]
+> **포트(:3306) 생략 가능 여부**  
+> MySQL의 기본 포트는 **3306**이므로, 접속 URL에서 `:3306`을 생략해도(`jdbc:mysql://${DB_ENDPOINT}/${DB_NAME}`) 동일하게 동작합니다. 이 가이드는 Step 8과 맞추기 위해 `:3306`을 명시했습니다.  
+> 이 경우 **.env**의 **DB_ENDPOINT**에는 포트 없이 호스트 이름(**db**)만 적어야 합니다. (`db:3306`으로 적으면 `db:3306:3306`이 되어 오류가 납니다.)  
+> 기본 포트가 아닌 DB를 쓴다면 `:3306` 자리를 해당 포트로 바꾸세요.
 
 > [!TIP]
 > **자체 보유 프로젝트(개인/팀 프로젝트)를 적용할 때 꼭 맞춰야 할 5가지 포인트**
@@ -864,7 +870,7 @@ docker build -t step9-frontend:test .
 
 > [!TIP]
 > **크로스플랫폼(buildx)으로 프론트엔드 이미지를 빌드할 때 (참고)**  
-> 이번 9-1 로컬 실습에서는 위 `docker build` 명령어만 실행하면 됩니다. 만약 Apple Silicon 맥에서 AWS 서버(`linux/amd64`) 배포용으로 빌드할 때(9-2 실습)는 아래 명령어를 사용합니다:
+> 이번 9-1 로컬 실습에서는 위 **docker build** 명령어만 실행하면 됩니다. 만약 Apple Silicon 맥에서 AWS 서버(**linux/amd64**) 배포용으로 빌드할 때(9-2 실습)는 아래 명령어를 사용합니다:
 > ```bash
 > docker buildx build --platform linux/amd64 -t step9-frontend:latest --load .
 > ```
@@ -903,124 +909,187 @@ docker images step9-frontend
 
 ---
 
-## 태스크 5: docker-compose.yml 작성
+## 태스크 5: docker-compose.yml 및 .env 작성
 
-📍 **실행 위치: 로컬 PC (`~/step9-docker/`)**
+📍 **실행 위치: 로컬 PC (`~/3tier-project`)**
+
+태스크 3과 4에서 각각 만든 백엔드·프론트엔드 이미지와 공식 MySQL 8.0 이미지를 하나로 묶어 실행할 **docker-compose.yml**과 환경변수 파일(**.env**)을 작성합니다.
 
 ### 5-1. .env 파일 작성
 
-1. 프로젝트 루트에 `.env` 파일을 생성합니다:
+> [!CONCEPT]
+> **.env 파일은 내 로컬 PC 설정인가요, Docker 컨테이너 설정인가요?**
+>
+> 파일 자체(`~/3tier-project/.env`)는 **내 로컬 PC 폴더에 저장**하지만, 그 안에 적힌 값들은 내 로컬 PC(Windows/macOS)가 아니라 **Docker 안에 새로 띄워지는 컨테이너(db, backend)들의 내부 환경 설정**입니다.
+>
+> ```
+> [내 로컬 PC의 ~/3tier-project/.env]
+>   DB_ENDPOINT=db
+>   DB_NAME=myapp
+>   DB_USERNAME=root
+>   DB_PASSWORD=devpassword123
+>        │
+>        ├──▶ ① [db 컨테이너 (MySQL 8.0)] 생성 시 주입
+>        │      - 컨테이너가 처음 켜질 때 root 비밀번호를 'devpassword123'으로 설정하고
+>        │      - 'myapp'이라는 초기 데이터베이스를 자동으로 생성함
+>        │
+>        └──▶ ② [backend 컨테이너 (Spring)] 실행 시 주입 (env_file: - .env)
+>               - 태스크 2-4(및 Step 8)에서 application.properties / application.yaml에 적어둔
+>                 ${DB_ENDPOINT}, ${DB_NAME}, ${DB_USERNAME}, ${DB_PASSWORD} 자리에
+>                 위 값들을 그대로 넣어서 ①번 db 컨테이너에 접속함
+> ```
+>
+> - **내 로컬 PC에 설치된 MySQL과는 완전히 무관합니다.**  
+>   내 PC에 MySQL이 깔려 있지 않거나 비밀번호가 달라도 상관없습니다. 새로 생성되는 **db 컨테이너**가 이 `.env` 파일의 비밀번호(**devpassword123**)와 DB 이름(**myapp**)으로 초기화되기 때문입니다.
+> - **왜 DB_ENDPOINT가 localhost가 아니라 db인가요?**  
+>   백엔드도 컨테이너 안에서 실행되므로, 백엔드 입장에서 **localhost**는 백엔드 컨테이너 자기 자신을 가리킵니다. 같은 **docker-compose.yml**로 묶인 컨테이너끼리는 서비스 이름(**db**)을 호스트 주소처럼 사용하여 찾아갑니다.
+
+1. 프로젝트 루트(`~/3tier-project`)로 이동하여 `.env` 파일을 생성합니다. 앞선 **태스크 2-4(및 Step 8)**의 백엔드 설정 파일에 적어둔 환경변수 이름과 **sql/00-init.sql**의 데이터베이스 이름(**myapp**)이 정확히 일치하도록 작성합니다:
 
 ```bash
-# ~/step9-docker/.env
-DB_HOST=db
-DB_PORT=3306
-DB_NAME=appdb
-DB_USER=root
+cd ~/3tier-project
+```
+
+```ini
+# ~/3tier-project/.env
+
+# 1. MySQL 컨테이너 초기 생성 및 백엔드 DB 접속 설정
+DB_ENDPOINT=db
+DB_NAME=myapp
+DB_USERNAME=root
 DB_PASSWORD=devpassword123
 
-# Spring 설정
-SPRING_DATASOURCE_URL=jdbc:mysql://db:3306/appdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul
-SPRING_DATASOURCE_USERNAME=root
-SPRING_DATASOURCE_PASSWORD=devpassword123
+# 2. 스토리지 타입 설정 (로컬 실습에서는 local, AWS 배포 시 s3)
+STORAGE_TYPE=local
 ```
 
-2. `.env.example` 파일도 생성합니다 (git에 포함용):
+2. 만약 `~/3tier-project` 폴더를 Git으로 관리하는 경우, 비밀번호가 담긴 `.env` 파일이 GitHub에 올라가지 않도록 `.gitignore`에 추가합니다:
 
 ```bash
-# ~/step9-docker/.env.example (이 파일은 git에 커밋)
-DB_HOST=db
-DB_PORT=3306
-DB_NAME=appdb
-DB_USER=root
-DB_PASSWORD=YOUR_PASSWORD_HERE
-
-SPRING_DATASOURCE_URL=jdbc:mysql://db:3306/appdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul
-SPRING_DATASOURCE_USERNAME=root
-SPRING_DATASOURCE_PASSWORD=YOUR_PASSWORD_HERE
-```
-
-3. `.gitignore`에 `.env`를 추가합니다:
-
-```bash
-echo ".env" >> .gitignore
-```
-
-### 5-2. SQL 초기화 파일 준비
-
-4. `sql/` 디렉토리를 만들고 초기화 파일을 준비합니다:
-
-```bash
-mkdir -p sql
-```
-
-5. `sql/01-schema.sql`에 테이블 생성 SQL을 작성합니다 (본인 프로젝트 기준):
-
-```sql
--- sql/01-schema.sql
-CREATE DATABASE IF NOT EXISTS appdb;
-USE appdb;
-
--- 예시: 게시판 테이블
-CREATE TABLE IF NOT EXISTS board (
-    id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    title VARCHAR(200) NOT NULL,
-    content TEXT,
-    writer VARCHAR(50),
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-);
+echo ".env" >> ~/3tier-project/.gitignore
 ```
 
 > [!TIP]
-> 본인 프로젝트의 스키마 SQL이 있다면 그대로 `sql/` 폴더에 넣으세요.  
-> 파일명 앞에 번호를 붙이면 순서대로 실행됩니다: `01-schema.sql`, `02-data.sql` 등.
+> **협업이나 Git 저장소 공유 시: .env.example 활용법**  
+> 실제 비밀번호가 들어있는 **.env** 파일은 Git에 올리지 않기 때문에, 팀원이나 다른 PC에서 프로젝트를 클론했을 때 *"어떤 환경변수들을 설정해야 하는지"* 알기 어렵습니다.  
+> 실무에서는 아래처럼 실제 비밀번호 자리만 비워둔 **.env.example** 샘플 파일을 만들어 Git에 함께 커밋해 두고, 클론 받은 사람이 이를 **.env**로 복사(`cp .env.example .env`)해서 값만 채워 쓰도록 안내합니다.
 >
-> CSV 데이터가 있다면 `03-load-csv.sh` 스크립트로 `LOAD DATA` 처리할 수 있습니다.
+> ```ini
+> # .env.example (Git 커밋용 양식 예시)
+> DB_ENDPOINT=db
+> DB_NAME=myapp
+> DB_USERNAME=root
+> DB_PASSWORD=YOUR_PASSWORD_HERE
+> STORAGE_TYPE=local
+> ```
+
+---
+
+### 5-2. 컨테이너 DB 초기화를 위한 SQL 파일 확인 및 준비
+
+> [!CONCEPT]
+> **~/3tier-project/sql/ 폴더의 파일들은 어디에 적용되나요?**  
+> 앞서 작성한 **.env**와 마찬가지로, `~/3tier-project/sql/` 폴더에 넣는 SQL·CSV 파일들은 **내 로컬 PC의 DB가 아니라 Docker 안에 새로 생성될 MySQL 컨테이너(db)를 초기화하기 위한 파일들**입니다.  
+> **docker-compose.yml**에서 이 `sql/` 폴더를 MySQL 컨테이너 내부의 `/docker-entrypoint-initdb.d` 경로로 연결(볼륨 마운트)해 두면, **MySQL 컨테이너가 맨 처음 생성될 때 폴더 안의 파일들을 이름순(00 → 01 → 02...)으로 자동 실행**하여 컨테이너 안의 **myapp** 데이터베이스에 테이블과 초기 데이터를 세팅합니다.
+
+본인의 실습 준비 상황에 맞춰 아래 **케이스 1 또는 케이스 2**를 확인하세요:
+
+#### 🟢 케이스 1: 태스크 2에서 이미 `sql/` 폴더를 준비한 경우 (기본 제공 샘플 / Step 8-3A)
+
+태스크 2에서 **step9-sample.zip** 또는 **sql.zip**의 압축을 풀어 `~/3tier-project/sql/` 폴더에 파일들이 이미 들어 있다면 **추가 작업 없이 바로 5-3으로 넘어가면 됩니다.** 아래 명령어로 파일 목록만 가볍게 확인하세요:
+
+```bash
+ls ~/3tier-project/sql
+```
+
+> [!OUTPUT]
+>
+> ```
+> 00-init.sql  01-board.sql  02-member.sql  03-travel.sql  04-load-travel.sh  travel.csv  travel_image.csv
+> ```
+
+#### 🔵 케이스 2: 처음 DB를 구성하는 경우 (Step 8-3C 신규 Spring Boot 또는 빈 `sql/` 폴더)
+
+아직 `~/3tier-project/sql/` 폴더 안에 SQL 파일이 없는 경우에는 아래 두 가지 방법 중 하나를 선택할 수 있습니다:
+
+- **방법 A (Spring Boot JPA 자동 생성 사용 — 별도 SQL 작성 불필요)**  
+  Spring Boot 프로젝트에서 `application.yaml`에 `ddl-auto: update`가 설정되어 있다면, `sql/` 폴더가 비어 있어도 **.env** 설정에 의해 빈 **myapp** 데이터베이스가 먼저 생성되고, 이어서 백엔드 컨테이너가 켜질 때 **JPA가 Entity 클래스를 바탕으로 테이블을 자동 생성**합니다. 빈 `sql/` 폴더만 있는지만 확인(`mkdir -p ~/3tier-project/sql`)하고 바로 **5-3**으로 이동하세요.
+- **방법 B (컨테이너가 켜질 때 초기 테이블·더미 데이터를 직접 넣고 싶은 경우)**  
+  `~/3tier-project/sql/01-schema.sql` 파일을 생성하여 컨테이너 DB(**myapp**)에 실행할 SQL을 작성합니다:
+
+```sql
+-- ~/3tier-project/sql/01-schema.sql
+USE myapp;
+
+-- 예시: 초기 테이블 생성 및 샘플 데이터 추가
+CREATE TABLE IF NOT EXISTS items (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    description VARCHAR(500),
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+INSERT INTO items (name, description) VALUES ('첫 번째 아이템', 'Docker MySQL 컨테이너 초기 데이터');
+```
+
+> [!TIP]
+> **자체 보유 프로젝트(개인/팀 프로젝트)의 SQL을 사용하는 경우**  
+> - 본인 프로젝트의 스키마/더미 데이터 SQL 파일이 있다면 `~/3tier-project/sql/` 폴더에 넣어두세요.  
+> - 파일명 앞에 **01-schema.sql**, **02-data.sql**처럼 번호를 붙이면 MySQL 컨테이너가 알파벳 순서대로 실행합니다.  
+> - 만약 SQL 파일 상단에 `CREATE DATABASE ...; USE ...;` 구문이 있다면, 그 데이터베이스 이름과 **.env** 파일의 **DB_NAME** 값을 반드시 똑같이 맞춰주세요.
+
+---
 
 ### 5-3. docker-compose.yml 작성
 
-6. 프로젝트 루트에 `docker-compose.yml`을 생성합니다:
+3. 프로젝트 루트(`~/3tier-project/docker-compose.yml`)에 3개의 컨테이너(**frontend**, **backend**, **db**)를 정의하는 `docker-compose.yml` 파일을 생성합니다:
 
 ```yaml
+# ~/3tier-project/docker-compose.yml
 services:
-  # ─── 프론트엔드 (Nginx + Vue.js) ───
+  # ─── 1. 프론트엔드 (Nginx + Vue.js) ───
   frontend:
     build:
-      context: .
-      dockerfile: Dockerfile.frontend
+      context: ./my-frontend
+      dockerfile: Dockerfile
     ports:
       - '80:80'
-    environment:
-      - BACKEND_HOST=backend
-      - BACKEND_PORT=8080
     depends_on:
       backend:
         condition: service_healthy
     restart: unless-stopped
 
-  # ─── 백엔드 (Spring Boot/Legacy) ───
+  # ─── 2. 백엔드 (Spring Boot JAR / Spring Legacy WAR) ───
   backend:
     build:
-      context: ./backend
+      context: ./my-backend
       dockerfile: Dockerfile
     ports:
       - '8080:8080'
     env_file:
       - .env
+    # [선택] 태스크 2-2에서 여행지 이미지(travel-image)를 준비한 경우 아래 2줄의 주석(#)을 해제하세요!
+    # volumes:
+    #   - ./travel-image:/tmp/upload/travel
     depends_on:
       db:
         condition: service_healthy
     healthcheck:
-      test: ['CMD', 'curl', '-f', 'http://localhost:8080/actuator/health']
+      test:
+        [
+          'CMD-SHELL',
+          'curl -s http://localhost:8080/ > /dev/null || wget -q -O /dev/null http://localhost:8080/ || exit 1',
+        ]
       interval: 10s
       timeout: 5s
       retries: 5
-      start_period: 30s
+      start_period: 40s
     restart: unless-stopped
 
-  # ─── 데이터베이스 (MySQL) ───
+  # ─── 3. 데이터베이스 (MySQL 8.0) ───
   db:
     image: mysql:8.0
+    command: --local-infile=1
     environment:
       - MYSQL_ROOT_PASSWORD=${DB_PASSWORD}
       - MYSQL_DATABASE=${DB_NAME}
@@ -1041,31 +1110,23 @@ volumes:
 ```
 
 > [!NOTE]
-> **주요 설정 설명:**
+> **docker-compose.yml 핵심 설정 한눈에 이해하기**
 >
-> - `depends_on.condition: service_healthy`: DB가 완전히 시작된 후에 백엔드 시작
-> - `healthcheck`: 컨테이너가 정상 동작하는지 주기적으로 확인
-> - `volumes.db-data`: MySQL 데이터를 Named Volume에 저장 (컨테이너 삭제해도 유지)
-> - `./sql:/docker-entrypoint-initdb.d`: DB 첫 시작 시 SQL 파일 자동 실행
-> - `env_file: .env`: 환경변수를 파일에서 로드
+> - **build.context (`./my-frontend`, `./my-backend`)의 의미**  
+>   태스크 3과 4에서는 직접 각 폴더(`cd my-backend`, `cd my-frontend`)로 들어가서 `docker build ... .`를 실행했습니다.  
+>   반면 **docker-compose.yml**은 상위 폴더인 `~/3tier-project/`에 위치하므로, **"현재 위치(`~/3tier-project`)를 기준으로 `./my-frontend` 폴더와 `./my-backend` 폴더를 각각의 빌드 작업 폴더(컨텍스트)로 삼아 그 안의 Dockerfile로 빌드하라"**고 경로를 지정해 주는 것입니다.
+> - **여행지 이미지 볼륨 마운트 (`./travel-image:/tmp/upload/travel`)와 OS별 경로 규칙**  
+>   콜론(`:`)을 기준으로 **왼쪽은 내 로컬 PC 경로**, **오른쪽은 컨테이너 내부(Linux) 경로**입니다.  
+>   - **왼쪽 (`./travel-image`)**: `docker-compose.yml`이 있는 폴더(`~/3tier-project`) 기준의 상대 경로이므로 **macOS와 Windows(WSL2/PowerShell) 모두 수정 없이 그대로 동작**합니다.  
+>   - **오른쪽 (`/tmp/upload/travel`)**: 백엔드 컨테이너 내부는 Windows 사용자라도 무조건 **Linux 환경**이므로, 태스크 2-4에서 설정한 `upload.local.path=/tmp/upload` 하위의 `/tmp/upload/travel`로 연결됩니다.
+> - **depends_on + condition: service_healthy (기동 순서 제어)**  
+>   컨테이너 3개가 동시에 켜질 때 DB가 아직 준비되지 않았는데 백엔드가 먼저 접속을 시도하면 에러가 발생합니다. **healthcheck**와 **service_healthy**를 함께 사용하면 **① db 준비 완료 → ② backend 시작 및 준비 완료 → ③ frontend 시작** 순서로 안전하게 기동됩니다.
+> - **백엔드 통합 healthcheck (`curl ... || wget ...`)**  
+>   Spring Boot(JAR)와 Spring Legacy(WAR) 구분 없이, 컨테이너 내부의 **8080 포트 서버가 응답을 시작했는지**를 확인합니다 (HTTP 상태 코드가 404여도 서버가 켜진 것으로 판단하며, 베이스 이미지에 `curl` 또는 `wget` 중 어느 것이 있든 동작합니다).
+> - **command: --local-infile=1 및 ./sql:/docker-entrypoint-initdb.d**  
+>   MySQL 8.0 컨테이너가 처음 켜질 때 `sql/` 폴더의 초기화 스크립트들과 CSV 파일(**travel.csv** 등) 로드를 허용하는 옵션입니다.
 
-> [!TIP]
-> **백엔드에 actuator가 없는 경우** (Spring Legacy 등):
->
-> healthcheck를 다음으로 변경하세요:
->
-> ```yaml
-> healthcheck:
->   test: ['CMD', 'curl', '-f', 'http://localhost:8080/']
->   interval: 10s
->   timeout: 5s
->   retries: 5
->   start_period: 40s
-> ```
->
-> Tomcat WAR 배포는 시작에 시간이 더 걸리므로 `start_period`를 40초 이상으로 설정합니다.
-
-✅ **태스크 완료** — docker-compose.yml과 환경 파일을 작성했습니다.
+✅ **태스크 완료** — 컨테이너 환경을 설정하는 `.env` 파일과 `docker-compose.yml` 작성을 완료했습니다.
 
 ---
 
